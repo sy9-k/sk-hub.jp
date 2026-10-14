@@ -9,8 +9,13 @@
 //       card(o)           … カード（Flex Message）を作る { alt, kicker, title, sub, rows: [[左, 右]], color, url, button }
 //       share(card, text) … LINE の友だち・グループに送る。LINE の外（ふつうのブラウザ）では、text を LINE の共有のリンクで送る
 //                            LINE の中では、カードのボタンの URL（/toolbox/ のページ）を、LINE のミニアプリで開くリンク（パーマネントリンク）に変える
-//       openExternal(url) … ふつうのブラウザで開く（LINE の中ではできないこと: ログイン・オンライン同期・招待コードでの参加）
+//       openExternal(url) … ふつうのブラウザで開く
 //       recommend()       … SK's Toolbox を友だちにすすめるカード
+//       signIn()          … LINE の中で SK Hub Systems アカウントにログイン（/toolbox/shared/line-account.js）。Promise<"ready" | "redirect" | "cancel">
+//                            この LINE につながったアカウントがなければ、新しく作るか・持っているアカウントにつなぐ方法を選んでもらう
+//       account()         … /toolbox/shared/line-account.js（status()・setNotify(on)。公式 LINE の友だちか・お知らせを LINE で受け取るか）
+//       bot               … 公式 LINE「SK Hub」{ id, url（友だちに追加する URL）}
+//       addFriend()       … 公式 LINE を友だちに追加する画面を開く
 //   ・LINE の名前・アイコンは画面に出すだけで、どこにも保存・送信しない。カードは、利用者が選んだ相手に、利用者の操作で送る
 (function () {
   "use strict";
@@ -30,7 +35,8 @@
   // LINE のミニアプリから来たとき（LIFF が付けるパラメーター）も
   if (!env && (q.has("liff.state") || q.has("liff.referrer"))) env = "prod";
 
-  var api = { inLine: !!env, ready: Promise.resolve(null), name: "", picture: "" };
+  var BOT_ID = "@324czrsr";
+  var api = { inLine: !!env, ready: Promise.resolve(null), name: "", picture: "", bot: { id: BOT_ID, url: "https://line.me/R/ti/p/" + encodeURIComponent(BOT_ID) } };
   window.SKLine = api;
   if (api.inLine) document.documentElement.classList.add("in-line");
 
@@ -95,6 +101,58 @@
     if (api.inLine && window.liff && window.liff.openWindow) { try { window.liff.openWindow({ url: full, external: true }); return; } catch (e) { /* 下へ */ } }
     location.href = full;
   };
+  api.addFriend = function () {
+    if (api.inLine && window.liff && window.liff.openWindow) { try { window.liff.openWindow({ url: api.bot.url, external: false }); return; } catch (e) { /* 下へ */ } }
+    var w = window.open(api.bot.url, "_blank", "noopener");
+    if (!w) location.href = api.bot.url;
+  };
+
+  // ---- SK Hub Systems アカウント（LINE の中だけ）----
+  var accountMod = null;
+  api.account = function () {
+    if (!accountMod) accountMod = import("/toolbox/shared/line-account.js").catch(function (e) { accountMod = null; throw e; });
+    return accountMod;
+  };
+  function lp(u) { return I18N && I18N.path ? I18N.path(u) : u; }
+  // この LINE につながったアカウントがないとき: 新しく作るか、持っているアカウントにつなぐか
+  function chooseNew() {
+    if (!window.M3) return Promise.resolve(null);
+    var body = document.createElement("div");
+    function para(text) { var p = document.createElement("p"); p.className = "tbs-dialog__text"; p.style.margin = "0 0 12px"; p.textContent = text; body.appendChild(p); return p; }
+    para(t("この LINE は、まだ SK Hub Systems アカウントにつながっていません。"));
+    para(t("はじめて使うときは「新しく作る」を選んでください。この LINE でログインするアカウントができます。"));
+    para(t("Google などで作ったアカウントがあるときは、ブラウザでそのアカウントにログインし、アカウントのページの「サインインとセキュリティ」で LINE をつないでから、もう一度お試しください。"));
+    var open = document.createElement("button");
+    open.type = "button";
+    open.className = "text-btn m3-state";
+    open.textContent = t("ブラウザで開く");
+    body.appendChild(open);
+    return window.M3.dialog({
+      title: t("SK Hub Systems アカウント"), icon: "account_circle", body: body, autofocus: false,
+      actions: [{ label: t("キャンセル"), value: null }, { label: t("新しく作る"), primary: true, value: "new" }],
+      onReady: function (close) { open.addEventListener("click", function () { close("browser"); }); }
+    });
+  }
+  api.signIn = function () {
+    if (!api.inLine) { location.href = lp("/account/") + "?next=" + encodeURIComponent(location.pathname + location.search); return Promise.resolve("redirect"); }
+    var mod;
+    return api.ready.then(function () {
+      var token = window.liff && window.liff.getAccessToken && window.liff.getAccessToken();
+      if (!token) { var e = new Error("no-liff"); e.code = "sk/no-liff"; throw e; }
+      return api.account().then(function (m) {
+        mod = m;
+        return m.signIn(token, false).catch(function (err) {
+          if (!err || err.code !== "sk/not-linked") throw err;
+          return chooseNew().then(function (v) {
+            if (v === "new") return mod.signIn(token, true);
+            if (v === "browser") api.openExternal(lp("/account/") + "#security");
+            return "cancel";
+          });
+        });
+      });
+    });
+  };
+
   api.recommend = function () {
     var url = "https://sk-hub.jp/toolbox/";
     return api.share(api.card({

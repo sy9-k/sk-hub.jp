@@ -2237,7 +2237,7 @@
           "list": [
             "端末の電源が切れている・スリープしている・インターネットにつながっていないときは、つながった後に反映されます。",
             "管理コンソールの「反映待ち」の台数で、まだ反映していない端末の数を確認できます。",
-            "SK Hub Systems が動いているかは [システム稼働状況](/status/) で確認できます。"
+            "SK Hub Systems が動いているかは [システム稼働状況](https://sk-hub.online/) で確認できます。"
           ]
         }
       ],
@@ -2253,7 +2253,7 @@
               "list": [
                 "If a device is off, asleep, or offline, settings are applied once it reconnects.",
                 "The \"Pending\" count in the management console shows how many devices haven't applied settings yet.",
-                "You can check whether SK Hub Systems is running on [System status](/status/)."
+                "You can check whether SK Hub Systems is running on [System status](https://sk-hub.online/)."
               ]
             }
           ]
@@ -2269,7 +2269,7 @@
               "list": [
                 "设备关机、休眠或未联网时，会在重新联网后应用。",
                 "可以在管理控制台的“待应用”数量中查看尚未应用设置的设备数。",
-                "可以在[系统运行状态](/status/)中确认 SK Hub Systems 是否正常运行。"
+                "可以在[系统运行状态](https://sk-hub.online/)中确认 SK Hub Systems 是否正常运行。"
               ]
             }
           ]
@@ -2285,7 +2285,7 @@
               "list": [
                 "裝置關機、休眠或未連上網路時，會在重新連線後套用。",
                 "可以在管理主控台的「等待套用」數量中查看尚未套用設定的裝置數。",
-                "可以在[系統運作狀態](/status/)中確認 SK Hub Systems 是否正常運作。"
+                "可以在[系統運作狀態](https://sk-hub.online/)中確認 SK Hub Systems 是否正常運作。"
               ]
             }
           ]
@@ -2301,7 +2301,7 @@
               "list": [
                 "기기의 전원이 꺼져 있거나 절전 중이거나 인터넷에 연결되어 있지 않으면, 연결된 뒤에 반영됩니다.",
                 "관리 콘솔의 '반영 대기' 대수로 아직 반영되지 않은 기기 수를 확인할 수 있습니다.",
-                "SK Hub Systems가 동작하는지는 [시스템 가동 상태](/status/)에서 확인할 수 있습니다."
+                "SK Hub Systems가 동작하는지는 [시스템 가동 상태](https://sk-hub.online/)에서 확인할 수 있습니다."
               ]
             }
           ]

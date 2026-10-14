@@ -568,14 +568,15 @@ img.yf-tile.yf-tile {
 @keyframes orb-dot { from { transform: scale(0); } }
 .status-row[data-state="ok"] .status-pill { background: var(--ok-soft); color: var(--ok-ink); }
 .status-row[data-state="slow"] .status-pill { background: var(--slow-soft); color: var(--slow-ink); }
-.status-row[data-state="down"] .status-pill { background: var(--down-soft); color: var(--down-ink); }
+.status-row[data-state="down"] .status-pill, .status-row[data-state="incident"] .status-pill { background: var(--down-soft); color: var(--down-ink); }
+.status-row[data-state="maint"] .status-pill { background: var(--lab-soft); color: var(--lab); }
 .status-row[data-state="setup"] .status-pill, .status-row[data-state="unknown"] .status-pill { background: var(--blue-soft); color: var(--blue-ink); }
 .status-row[data-state="checking"] .status-pill::before { background: none; border: 2px solid currentColor; border-right-color: transparent; animation: orb-spin .8s linear infinite; }
 .status-note { color: var(--muted); font-size: 13px; margin-top: 18px; }
 .status-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 12.5px; color: var(--muted); }
 .status-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .status-legend i { width: 9px; height: 9px; border-radius: 50%; }
-.st-ok { background: #16a34a; } .st-slow { background: #d97706; } .st-down { background: #dc2626; } .st-setup { background: #3b82f6; }
+.st-ok { background: #16a34a; } .st-slow { background: #d97706; } .st-down { background: #dc2626; } .st-setup { background: #3b82f6; } .st-maint { background: #8b5cf6; }
 .status-news { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
 .status-news li { position: relative; display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 0 0 22px 24px; }
 .status-news li::before { content: ""; position: absolute; left: -7px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); }
@@ -1188,8 +1189,6 @@ a.acct-notice-title:hover { color: var(--acct-link); text-decoration: underline;
 .lang-note { color: var(--muted); font-size: 12.5px; margin-top: 14px; transition: opacity .2s ease, transform .2s ease; }
 .lang-cancel { font-size: 14px; font-weight: 700; color: var(--muted); text-decoration: none; padding: 8px 14px; border-radius: 999px; }
 .lang-cancel:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, transparent); }
-/* 引っ越しのお知らせ（.sk-dn）は、言語の画面では出さない */
-.lang-page .sk-dn { display: none; }
 /* アプリ（MALU・Nagi・SK's Lab・LINE の中・アプリとして入れたもの。Toolbox は /toolbox/lang/）から開いたとき（<html data-lang-app>。/lang/lang.js）
    サイトのヘッダー・フッター・アクセス解析のカードを隠し、上に戻るボタンとアプリの名前の帯を出す */
 .lang-appbar { display: none; }
@@ -2073,23 +2072,3 @@ a.ha-service:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 1px va
 .dm-faq details[open] summary::after { content: "−"; }
 .dm-faq details p { padding: 0 20px 18px; color: var(--muted); font-size: 14.5px; }
 .dm-contact { margin-top: 24px; color: var(--muted); }
-
-/* ================================================================
-   sk-hub.jp への引っ越しのお知らせ（ヘッダーの下の帯。index.html の #sk-dn。build で全ページに入る）
-   ================================================================ */
-.sk-dn { display: flex; align-items: center; justify-content: center; gap: 8px 14px; flex-wrap: wrap; padding: 9px 52px 9px 16px; position: relative; background: var(--tint-blue); border-bottom: 1px solid var(--accent-line); color: var(--ink); font-size: 14px; line-height: 1.5; text-align: center; }
-.sk-dn[hidden] { display: none; }
-.sk-dn-text { margin: 0; }
-.sk-dn-text strong { font-weight: 700; }
-.sk-dn-text span { color: var(--muted); margin-left: .6em; }
-.sk-dn-more { flex: none; display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 13px; font-weight: 700; text-decoration: none; }
-.sk-dn-more:hover { filter: brightness(1.08); }
-.sk-dn-close { position: absolute; right: 10px; top: 50%; translate: 0 -50%; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
-.sk-dn-close:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
-@media (max-width: 600px) {
-  .sk-dn { flex-wrap: nowrap; justify-content: flex-start; gap: 10px; text-align: left; padding: 8px 44px 8px 16px; font-size: 13.5px; line-height: 1.4; }
-  .sk-dn-text { flex: 1; min-width: 0; }
-  .sk-dn-text span { display: none; }
-  .sk-dn-close { right: 6px; }
-}
-html.in-line .sk-dn { display: none; }

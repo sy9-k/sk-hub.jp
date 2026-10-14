@@ -47,22 +47,13 @@
     </a>
     <a class="hd-item" href="/about/">私について</a>
     <a class="hd-item" href="/products/" data-menu="products">プロダクト</a>
-    <a class="hd-item" href="/support/" data-menu="support" data-no-navigation="true">サポートと情報</a>
+    <a class="hd-item" href="https://support.sk-hub.jp/" data-menu="support" data-no-navigation="true">サポートと情報</a>
     <a class="hd-item hd-account" href="/account/" data-menu="account" data-account-link>アカウント</a>
     <a class="hd-item hd-lang" href="/lang/" data-lang-link><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg><span class="hd-lang-label">言語</span></a>
     <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
   </header>
   <div class="hd-menu" id="hd-menu"><div class="hd-menu-inner"><div class="hd-menu-content"></div></div></div>
   <div class="hd-backdrop" id="hd-backdrop"></div>
-  <!-- sk-hub.jp（新しいアドレス）のお知らせ（ヘッダーの下の帯。スタイルは /assets/site.css の sk-dn）
-       閉じたら、同じ段階（data-stage）のあいだは出さない（localStorage の sk_domain_notice）。文を変えたときは data-stage も変える
-       古いアドレス（sy9-k.github.io）では、同じ場所にオレンジの「古いアドレスです」の帯を出している -->
-  <div class="sk-dn" id="sk-dn" data-stage="new" role="region" aria-label="お知らせ" hidden>
-    <p class="sk-dn-text"><strong>SK の新しいアドレス sk-hub.jp へようこそ</strong><span>ブックマークやホーム画面のアイコンは、このアドレスで登録し直してください。</span></p>
-    <a class="sk-dn-more" href="/move/">データを移す</a>
-    <button class="sk-dn-close" type="button" aria-label="閉じる"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
-  <script>(function(){var b=document.getElementById("sk-dn"),k="sk_domain_notice",s=b.getAttribute("data-stage");try{if(localStorage.getItem(k)===s||/^\/domain\//.test(location.pathname)||/[?&](embed|line)\b/.test(location.search)||sessionStorage.getItem("sk_line"))return;}catch(e){return;}b.hidden=false;function done(){try{localStorage.setItem(k,s);}catch(e){}}b.querySelector(".sk-dn-close").addEventListener("click",function(){done();b.hidden=true;});b.querySelector(".sk-dn-more").addEventListener("click",done);})();</script>
 
   <main id="main">
     <!-- SK's Toolbox のホーム画面（Bento グリッド。見た目は /toolbox/home.css、中身は /toolbox/home.js。クラスは tbh- で始める） -->
@@ -218,6 +209,8 @@
         <p class="tbh-note"><a href="/toolbox/settings/">Toolbox の設定</a> · <a href="/products/">SK のプロダクト</a> · <a href="/policies/">利用規約・プライバシーポリシー</a></p>
       </footer>
     </div>
+    <!-- SaeTab 連携。LINE の中（?line= で開いたとき）では出さない -->
+    <script>if (!document.documentElement.classList.contains("in-line")) document.write('<script src="./saetab-bridge/saetab-bridge.js"><\/script>');</script>
     <!-- リマインダー（Todo）の共通: データの形・完了・時刻の通知 -->
     <script src="/toolbox/shared/m3.js"></script>
     <script src="/toolbox/shared/remind.js"></script>

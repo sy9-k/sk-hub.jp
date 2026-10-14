@@ -111,7 +111,7 @@
       "-",
       { label: t("私について"), run: go(sitePath("/about/")) },
       { label: t("プロダクト"), run: go(sitePath("/products/")) },
-      { label: t("サポートと情報"), run: go(sitePath("/support/")) },
+      { label: t("サポートと情報"), run: go(sitePath("https://support.sk-hub.jp/")) },
       { label: t("アカウント"), run: go(sitePath("/account/")) },
       "-",
       { label: t("言語…"), run: go("/toolbox/lang/?next=" + encodeURIComponent(location.pathname + location.search)) }
@@ -169,8 +169,8 @@
       { title: "SK", items: siteItems() },
       { title: t("ヘルプ"), items: [
         { label: t("検索・コマンド…"), key: MOD + "K", run: function () { if (window.SKSearch) SKSearch.open(); } },
-        { label: t("ヘルプとサポート"), run: go("/support/") },
-        { label: t("お問い合わせ"), run: go("/contact/") }
+        { label: t("ヘルプとサポート"), run: go("https://support.sk-hub.jp/") },
+        { label: t("お問い合わせ"), run: go("https://support.sk-hub.jp/contact/") }
       ] }
     ];
   }

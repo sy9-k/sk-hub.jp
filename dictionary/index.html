@@ -105,13 +105,6 @@
         <div class="settings-panel__body">
           <section id="settings-general" class="settings-section settings-section--active" aria-labelledby="settings-general-title">
             <h3 id="settings-general-title">基本設定</h3>
-            <div class="settings-item settings-item--news">
-              <div>
-                <p class="settings-item__title">SK の新しいアドレスは sk-hub.jp です</p>
-                <p class="settings-item__description">ブックマークやホーム画面のアイコンは、このアドレスで登録し直してください。</p>
-              </div>
-              <a class="settings-action" href="/domain/" target="_blank" rel="noopener">詳しく</a>
-            </div>
             <div class="settings-item">
               <div>
                 <p class="settings-item__title">デフォルト辞書</p>
@@ -168,14 +161,6 @@
                 <p class="settings-item__description">Service Worker キャッシュをクリアして再読み込みします。</p>
               </div>
               <button id="reset-cache" type="button" class="settings-action">再読み込み</button>
-            </div>
-            <!-- 新しいアドレス（sk-hub.jp）への引っ越し。まだ使えない（形だけ。切り替えのときに中身を作る。/domain/） -->
-            <div class="settings-item">
-              <div>
-                <p class="settings-item__title">新しいアドレスへの引っ越し</p>
-                <p class="settings-item__description">sk-hub.jp に切り替えたときに、この端末のデータをそのまま新しいアドレスへ移します。切り替えの準備ができたら使えるようになります。</p>
-              </div>
-              <button type="button" class="settings-action" disabled>準備中</button>
             </div>
           </section>
 
@@ -282,7 +267,6 @@
   <script src="/frameworks/check.js" defer></script>
   <!-- アクセス解析（Google アナリティクス。許可した人だけ） -->
   <script src="/assets/analytics.js" defer></script>
-  <script src="/assets/domain-snack.js" defer></script>
   <script src="/assets/maintenance.js" defer></script>
 </body>
 </html>

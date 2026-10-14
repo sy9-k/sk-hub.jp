@@ -2,6 +2,438 @@
   "_note": "アップデート情報。新しいものを上に足していく。category は SK / Y-FILTER. / SK Hub Systems / MALU / Nagi / Lab のどれか。トップ・ステータス・アップデートのページで表示される。 訳は各項目の i18n（en / zh-CN / zh-TW / ko の title・body・label）。ない言語は日本語で出る。",
   "items": [
     {
+      "date": "2026-10-14",
+      "category": "SK",
+      "title": "サポートとお問い合わせが「SK Hub Support」になりました",
+      "body": "サポート記事・お知らせ・お問い合わせを、新しいサポートサイト support.sk-hub.jp にまとめました。大きな検索とトピックから記事を探せます。言語や表示の設定、ログインは sk-hub.jp と同じものがそのまま使えます。これまでのサポートのページのアドレスを開くと、新しいページに移ります。",
+      "link": {
+        "href": "https://support.sk-hub.jp/",
+        "label": "SK Hub Support を開く"
+      },
+      "i18n": {
+        "en": {
+          "title": "Support and Contact are now \"SK Hub Support\"",
+          "body": "Support articles, news, and the contact form now live on our new support site, support.sk-hub.jp. Find articles with a large search box and topics. Your language and display settings and your sign-in on sk-hub.jp carry over. Old support page addresses take you to the new pages.",
+          "label": "Open SK Hub Support"
+        },
+        "zh-CN": {
+          "title": "支持与联系我们改为“SK Hub Support”",
+          "body": "支持文章、通知和联系我们已整合到新的支持网站 support.sk-hub.jp。可以通过大号搜索框和主题查找文章。语言、显示设置和登录状态与 sk-hub.jp 相同。打开以前的支持页面地址会跳转到新页面。",
+          "label": "打开 SK Hub Support"
+        },
+        "zh-TW": {
+          "title": "支援與聯絡我們改為「SK Hub Support」",
+          "body": "支援文章、公告與聯絡我們已整合到新的支援網站 support.sk-hub.jp。可以透過大型搜尋框與主題查找文章。語言、顯示設定與登入狀態與 sk-hub.jp 相同。開啟以前的支援頁面網址會轉到新頁面。",
+          "label": "開啟 SK Hub Support"
+        },
+        "ko": {
+          "title": "지원과 문의가 'SK Hub Support'가 되었습니다",
+          "body": "지원 글, 공지, 문의를 새 지원 사이트 support.sk-hub.jp로 모았습니다. 큰 검색창과 주제로 글을 찾을 수 있습니다. 언어·표시 설정과 로그인은 sk-hub.jp와 같은 것을 그대로 씁니다. 예전 지원 페이지 주소를 열면 새 페이지로 이동합니다.",
+          "label": "SK Hub Support 열기"
+        }
+      }
+    },
+    {
+      "date": "2026-10-14",
+      "category": "SK Hub Systems",
+      "title": "システム稼働状況を sk-hub.online に移しました",
+      "body": "システム稼働状況は、sk-hub.jp とは別の場所で動く sk-hub.online になりました。sk-hub.jp に障害が起きているときでも見られます。5 分ごとに各システムを確かめて、いまの状態と過去 90 日の記録、メンテナンス・障害のお知らせを出します。",
+      "link": {
+        "href": "https://sk-hub.online/",
+        "label": "稼働状況を見る"
+      },
+      "i18n": {
+        "en": {
+          "title": "System status has moved to sk-hub.online",
+          "body": "System status now lives on sk-hub.online, which runs separately from sk-hub.jp, so you can check it even when sk-hub.jp is having trouble. It checks each system every 5 minutes and shows the current status, the past 90 days, and maintenance and incident notices.",
+          "label": "View status"
+        },
+        "zh-CN": {
+          "title": "系统运行状态已迁至 sk-hub.online",
+          "body": "系统运行状态现在位于独立于 sk-hub.jp 运行的 sk-hub.online，即使 sk-hub.jp 出现故障也能查看。每 5 分钟检查一次各系统，显示当前状态、过去 90 天的记录以及维护和故障通知。",
+          "label": "查看运行状态"
+        },
+        "zh-TW": {
+          "title": "系統運作狀態已移至 sk-hub.online",
+          "body": "系統運作狀態現在位於獨立於 sk-hub.jp 運作的 sk-hub.online，即使 sk-hub.jp 發生故障也能查看。每 5 分鐘檢查一次各系統，顯示目前狀態、過去 90 天的紀錄以及維護與故障公告。",
+          "label": "查看運作狀態"
+        },
+        "ko": {
+          "title": "시스템 상태를 sk-hub.online으로 옮겼습니다",
+          "body": "시스템 상태는 sk-hub.jp와 별도로 동작하는 sk-hub.online이 되었습니다. sk-hub.jp에 장애가 있을 때도 볼 수 있습니다. 5분마다 각 시스템을 확인해 현재 상태와 지난 90일의 기록, 점검·장애 공지를 보여 줍니다.",
+          "label": "상태 보기"
+        }
+      }
+    },
+    {
+      "date": "2026-10-14",
+      "category": "SK Hub Systems",
+      "title": "LINE・Kakao・パスキーでログインできるようになりました",
+      "body": "SK Hub Systems アカウントに、Google・GitHub に加えて LINE・Kakao・パスキーでもログインできるようになりました。ログイン前の画面は「ログイン」と「新規登録」に分けました。あわせて、SK Hub Systems アカウント規約と SK プライバシーポリシーを改定しました（2026 年 10 月 14 日版）。",
+      "link": {
+        "href": "/account/",
+        "label": "アカウントを開く"
+      },
+      "i18n": {
+        "en": {
+          "title": "You can now sign in with LINE, Kakao, and passkeys",
+          "body": "In addition to Google and GitHub, you can now sign in to your SK Hub Systems account with LINE, Kakao, or a passkey. The sign-in screen is now split into \"Sign in\" and \"Sign up\". We've also revised the SK Hub Systems Account Terms and the SK Privacy Policy (October 14, 2026 version).",
+          "label": "Open your account"
+        },
+        "zh-CN": {
+          "title": "现在可以用 LINE、Kakao 和通行密钥登录",
+          "body": "除 Google 和 GitHub 外，现在还可以用 LINE、Kakao 或通行密钥登录 SK Hub Systems 账户。登录前的画面分为“登录”和“注册”。同时修订了 SK Hub Systems 账户条款和 SK 隐私政策（2026 年 10 月 14 日版）。",
+          "label": "打开账户"
+        },
+        "zh-TW": {
+          "title": "現在可以用 LINE、Kakao 與密碼金鑰登入",
+          "body": "除了 Google 與 GitHub，現在還可以用 LINE、Kakao 或密碼金鑰登入 SK Hub Systems 帳戶。登入前的畫面分為「登入」與「註冊」。同時修訂了 SK Hub Systems 帳戶條款與 SK 隱私權政策（2026 年 10 月 14 日版）。",
+          "label": "開啟帳戶"
+        },
+        "ko": {
+          "title": "LINE·Kakao·패스키로 로그인할 수 있게 되었습니다",
+          "body": "SK Hub Systems 계정에 Google·GitHub에 더해 LINE·Kakao·패스키로도 로그인할 수 있게 되었습니다. 로그인 전 화면은 '로그인'과 '회원가입'으로 나누었습니다. 아울러 SK Hub Systems 계정 약관과 SK 개인정보 처리방침을 개정했습니다(2026년 10월 14일판).",
+          "label": "계정 열기"
+        }
+      }
+    },
+    {
+      "date": "2026-10-14",
+      "category": "SK",
+      "title": "SK's Toolbox を Saetab の新しいタブに設定できるようになりました",
+      "body": "Search3958 の Saetab と連携して、SK's Toolbox のホームからボタン 1 つで、ブラウザの新しいタブに設定できるようになりました。",
+      "link": {
+        "href": "/toolbox/",
+        "label": "SK's Toolbox を開く"
+      },
+      "i18n": {
+        "en": {
+          "title": "You can now set SK's Toolbox as your Saetab new tab",
+          "body": "Working with Search3958's Saetab, you can now set SK's Toolbox as your browser's new tab with one button on the Toolbox home.",
+          "label": "Open SK's Toolbox"
+        },
+        "zh-CN": {
+          "title": "现在可以把 SK's Toolbox 设为 Saetab 的新标签页",
+          "body": "与 Search3958 的 Saetab 合作，现在可以在 SK's Toolbox 主页一键设为浏览器的新标签页。",
+          "label": "打开 SK's Toolbox"
+        },
+        "zh-TW": {
+          "title": "現在可以把 SK's Toolbox 設為 Saetab 的新分頁",
+          "body": "與 Search3958 的 Saetab 合作，現在可以在 SK's Toolbox 主頁一鍵設為瀏覽器的新分頁。",
+          "label": "開啟 SK's Toolbox"
+        },
+        "ko": {
+          "title": "SK's Toolbox를 Saetab 새 탭으로 설정할 수 있게 되었습니다",
+          "body": "Search3958의 Saetab과 연계해, SK's Toolbox 홈에서 버튼 하나로 브라우저의 새 탭으로 설정할 수 있게 되었습니다.",
+          "label": "SK's Toolbox 열기"
+        }
+      }
+    },
+    {
+      "date": "2026-10-14",
+      "category": "SK",
+      "title": "SK のアドレスが sk-hub.jp になりました",
+      "body": "SK のサイトとプロダクトのアドレスが、sy9-k.github.io から sk-hub.jp に変わりました。古いアドレスで使っていたデータ（SK's Toolbox・Nagi・MALU など）は、古いアドレスのお知らせから新しいアドレスに移せます。",
+      "link": {
+        "href": "/domain/",
+        "label": "引っ越しについて"
+      },
+      "i18n": {
+        "en": {
+          "title": "SK's address is now sk-hub.jp",
+          "body": "The address of SK's site and products has changed from sy9-k.github.io to sk-hub.jp. Data you used at the old address (SK's Toolbox, Nagi, MALU, and more) can be moved to the new address from the notice on the old address.",
+          "label": "About the move"
+        },
+        "zh-CN": {
+          "title": "SK 的地址改为 sk-hub.jp",
+          "body": "SK 网站和产品的地址已从 sy9-k.github.io 改为 sk-hub.jp。在旧地址使用的数据（SK's Toolbox、Nagi、MALU 等）可以通过旧地址上的通知迁移到新地址。",
+          "label": "关于迁移"
+        },
+        "zh-TW": {
+          "title": "SK 的網址改為 sk-hub.jp",
+          "body": "SK 網站與產品的網址已從 sy9-k.github.io 改為 sk-hub.jp。在舊網址使用的資料（SK's Toolbox、Nagi、MALU 等）可以透過舊網址上的公告移到新網址。",
+          "label": "關於搬遷"
+        },
+        "ko": {
+          "title": "SK의 주소가 sk-hub.jp가 되었습니다",
+          "body": "SK 사이트와 프로덕트의 주소가 sy9-k.github.io에서 sk-hub.jp로 바뀌었습니다. 예전 주소에서 쓰던 데이터(SK's Toolbox·Nagi·MALU 등)는 예전 주소의 안내에서 새 주소로 옮길 수 있습니다.",
+          "label": "이전 안내"
+        }
+      }
+    },
+    {
+      "date": "2026-10-13",
+      "category": "SK Hub Systems",
+      "title": "SK Hub Systems アカウント規約・SK プライバシーポリシーを改定しました",
+      "body": "アカウントを使ったときの記録（ブラウザのタイムゾーンから分かるおおまかな地域とサポートID）と、お問い合わせ・不正な利用への対応のために確認する情報を定めました。プライバシーポリシーの全文を 1 ページで読めるようにし、Google のユーザーデータの扱いの章を加えました。",
+      "link": {
+        "href": "/policies/privacy/",
+        "label": "プライバシーポリシーを読む"
+      },
+      "i18n": {
+        "en": {
+          "title": "We've revised the SK Hub Systems Account Terms and the SK Privacy Policy",
+          "body": "We've defined the records kept when you use your account (an approximate region from your browser's time zone, and your support ID) and the information we check to respond to inquiries and abuse. The full Privacy Policy can now be read on a single page, with a new chapter on how we handle Google user data.",
+          "label": "Read the Privacy Policy"
+        },
+        "zh-CN": {
+          "title": "修订了 SK Hub Systems 账户条款和 SK 隐私政策",
+          "body": "规定了使用账户时的记录（根据浏览器时区得知的大致地区和支持 ID），以及为回复咨询和处理不当使用而确认的信息。隐私政策全文现在可以在一个页面上阅读，并新增了关于 Google 用户数据处理的章节。",
+          "label": "阅读隐私政策"
+        },
+        "zh-TW": {
+          "title": "修訂了 SK Hub Systems 帳戶條款與 SK 隱私權政策",
+          "body": "規定了使用帳戶時的紀錄（從瀏覽器時區得知的大致地區與支援 ID），以及為回覆詢問與處理不當使用而確認的資訊。隱私權政策全文現在可以在一個頁面上閱讀，並新增了關於 Google 使用者資料處理的章節。",
+          "label": "閱讀隱私權政策"
+        },
+        "ko": {
+          "title": "SK Hub Systems 계정 약관과 SK 개인정보 처리방침을 개정했습니다",
+          "body": "계정을 사용할 때의 기록(브라우저 시간대로 알 수 있는 대략적인 지역과 지원 ID)과 문의·부정 이용 대응을 위해 확인하는 정보를 정했습니다. 개인정보 처리방침 전문을 한 페이지에서 읽을 수 있게 하고, Google 사용자 데이터 처리에 관한 장을 추가했습니다.",
+          "label": "개인정보 처리방침 읽기"
+        }
+      }
+    },
+    {
+      "date": "2026-10-13",
+      "category": "SK",
+      "title": "メンテナンス・障害のお知らせを出せるようにしました",
+      "body": "メンテナンスや障害があるときは、ページのいちばん上にお知らせの帯が出ます。使えないあいだは「ただいまメンテナンス中です」の画面になり、終わると自動で開き直します。サポートと稼働状況はいつでも見られます。",
+      "i18n": {
+        "en": {
+          "title": "We can now show maintenance and incident notices",
+          "body": "During maintenance or an incident, a notice bar appears at the top of the page. While a service can't be used, you'll see an \"Under maintenance\" screen that reopens automatically when it's over. Support and system status stay available at all times."
+        },
+        "zh-CN": {
+          "title": "现在可以显示维护和故障通知",
+          "body": "进行维护或发生故障时，页面顶部会显示通知横幅。无法使用期间会显示“正在维护”的画面，结束后会自动重新打开。支持和运行状态随时都可以查看。"
+        },
+        "zh-TW": {
+          "title": "現在可以顯示維護與故障公告",
+          "body": "進行維護或發生故障時，頁面頂端會顯示公告橫幅。無法使用期間會顯示「正在維護」的畫面，結束後會自動重新開啟。支援與運作狀態隨時都可以查看。"
+        },
+        "ko": {
+          "title": "점검·장애 공지를 표시할 수 있게 되었습니다",
+          "body": "점검이나 장애가 있을 때는 페이지 맨 위에 공지 띠가 나타납니다. 쓸 수 없는 동안에는 '점검 중' 화면이 되고, 끝나면 자동으로 다시 열립니다. 지원과 시스템 상태는 언제든 볼 수 있습니다."
+        }
+      }
+    },
+    {
+      "date": "2026-10-11",
+      "category": "SK",
+      "title": "MALU・Nagi・SK's Toolbox の設定を新しくしました",
+      "body": "3 つのアプリの設定を、同じ形の全画面の設定にそろえ、項目を増やしました。設定から更新を確認したり、バージョンを見たりできます。Nagi は、集中から休憩に変わるときの音を新しくしました。",
+      "i18n": {
+        "en": {
+          "title": "New settings for MALU, Nagi, and SK's Toolbox",
+          "body": "Settings in all three apps now share the same full-screen design, with more options. You can check for updates and see the version from settings. Nagi also has a new sound for switching from focus to a break."
+        },
+        "zh-CN": {
+          "title": "更新了 MALU、Nagi 和 SK's Toolbox 的设置",
+          "body": "三款应用的设置统一为相同样式的全屏设置，并增加了选项。可以在设置中检查更新、查看版本。Nagi 还更换了从专注切换到休息时的提示音。"
+        },
+        "zh-TW": {
+          "title": "更新了 MALU、Nagi 與 SK's Toolbox 的設定",
+          "body": "三款應用程式的設定統一為相同樣式的全螢幕設定，並增加了選項。可以在設定中檢查更新、查看版本。Nagi 也更換了從專注切換到休息時的提示音。"
+        },
+        "ko": {
+          "title": "MALU·Nagi·SK's Toolbox의 설정을 새롭게 했습니다",
+          "body": "세 앱의 설정을 같은 모양의 전체 화면 설정으로 맞추고 항목을 늘렸습니다. 설정에서 업데이트를 확인하거나 버전을 볼 수 있습니다. Nagi는 집중에서 휴식으로 바뀔 때의 소리를 새로 바꿨습니다."
+        }
+      }
+    },
+    {
+      "date": "2026-10-11",
+      "category": "SK Hub Systems",
+      "title": "GitHub でログインできるようになりました",
+      "body": "SK Hub Systems アカウントに、Google に加えて GitHub のアカウントでもログインできるようになりました。",
+      "link": {
+        "href": "/account/",
+        "label": "アカウントを開く"
+      },
+      "i18n": {
+        "en": {
+          "title": "You can now sign in with GitHub",
+          "body": "In addition to Google, you can now sign in to your SK Hub Systems account with your GitHub account.",
+          "label": "Open your account"
+        },
+        "zh-CN": {
+          "title": "现在可以用 GitHub 登录",
+          "body": "除 Google 外，现在还可以用 GitHub 账户登录 SK Hub Systems 账户。",
+          "label": "打开账户"
+        },
+        "zh-TW": {
+          "title": "現在可以用 GitHub 登入",
+          "body": "除了 Google，現在還可以用 GitHub 帳戶登入 SK Hub Systems 帳戶。",
+          "label": "開啟帳戶"
+        },
+        "ko": {
+          "title": "GitHub로 로그인할 수 있게 되었습니다",
+          "body": "SK Hub Systems 계정에 Google에 더해 GitHub 계정으로도 로그인할 수 있게 되었습니다.",
+          "label": "계정 열기"
+        }
+      }
+    },
+    {
+      "date": "2026-10-10",
+      "category": "SK",
+      "title": "SK's Toolbox をアプリとして入れやすくし、通知を新しくしました",
+      "body": "SK's Toolbox をホーム画面やパソコンにアプリとして入れる方法のページを作りました。アプリとして開くと、タイトルバーのデザインやメニューバーを設定で選べます。SK's Toolbox・Nagi・SK Hub Systems のお知らせの通知は見た目をそろえ、Clock のアラームは通知から「スヌーズ」「止める」を押せるようにしました。",
+      "link": {
+        "href": "/toolbox/install/",
+        "label": "アプリとして入れる"
+      },
+      "i18n": {
+        "en": {
+          "title": "Easier to install SK's Toolbox as an app, and new notifications",
+          "body": "We've added a page showing how to install SK's Toolbox as an app on your home screen or computer. When opened as an app, you can choose the title bar design and a menu bar in settings. Notifications from SK's Toolbox, Nagi, and SK Hub Systems now share one look, and Clock alarms can be snoozed or stopped right from the notification.",
+          "label": "Install as an app"
+        },
+        "zh-CN": {
+          "title": "SK's Toolbox 更易作为应用安装，通知焕然一新",
+          "body": "新增了介绍如何将 SK's Toolbox 作为应用安装到主屏幕或电脑上的页面。作为应用打开时，可以在设置中选择标题栏样式和菜单栏。SK's Toolbox、Nagi 和 SK Hub Systems 的通知外观已统一，Clock 的闹钟可以直接在通知中“稍后提醒”或“停止”。",
+          "label": "作为应用安装"
+        },
+        "zh-TW": {
+          "title": "SK's Toolbox 更容易安裝為應用程式，通知煥然一新",
+          "body": "新增了說明如何將 SK's Toolbox 安裝到主畫面或電腦上的頁面。以應用程式開啟時，可以在設定中選擇標題列樣式與選單列。SK's Toolbox、Nagi 與 SK Hub Systems 的通知外觀已統一，Clock 的鬧鐘可以直接在通知中「稍後提醒」或「停止」。",
+          "label": "安裝為應用程式"
+        },
+        "ko": {
+          "title": "SK's Toolbox를 앱으로 설치하기 쉬워졌고, 알림을 새롭게 했습니다",
+          "body": "SK's Toolbox를 홈 화면이나 컴퓨터에 앱으로 설치하는 방법을 안내하는 페이지를 만들었습니다. 앱으로 열면 제목 표시줄 디자인과 메뉴 막대를 설정에서 고를 수 있습니다. SK's Toolbox·Nagi·SK Hub Systems 알림의 모양을 맞추고, Clock 알람은 알림에서 '다시 알림'·'중지'를 누를 수 있게 했습니다.",
+          "label": "앱으로 설치"
+        }
+      }
+    },
+    {
+      "date": "2026-10-08",
+      "category": "SK",
+      "title": "SK's Toolbox に Timetable と Roulette を追加しました",
+      "body": "時間割の「Timetable」は、試験の週や行事などの特別な日程に対応し、管理者がクラスに時間割や連絡（お知らせ・持ち物・提出物・変更）を配信できます。回して決める「Roulette」も加わりました。",
+      "link": {
+        "href": "/toolbox/timetable/",
+        "label": "Timetable を開く"
+      },
+      "i18n": {
+        "en": {
+          "title": "Timetable and Roulette join SK's Toolbox",
+          "body": "Timetable handles special schedules like exam weeks and events, and lets an admin send the timetable and class notices (news, things to bring, assignments, changes) to a class. Roulette, for spinning to decide, has been added too.",
+          "label": "Open Timetable"
+        },
+        "zh-CN": {
+          "title": "SK's Toolbox 新增 Timetable 和 Roulette",
+          "body": "课程表“Timetable”支持考试周、活动等特殊日程，管理员可以向班级发布课程表和通知（公告、携带物品、提交作业、变更）。还新增了转一转来决定的“Roulette”。",
+          "label": "打开 Timetable"
+        },
+        "zh-TW": {
+          "title": "SK's Toolbox 新增 Timetable 與 Roulette",
+          "body": "課表「Timetable」支援考試週、活動等特殊日程，管理員可以向班級發布課表與聯絡事項（公告、攜帶物品、繳交作業、變更）。也新增了轉一轉來決定的「Roulette」。",
+          "label": "開啟 Timetable"
+        },
+        "ko": {
+          "title": "SK's Toolbox에 Timetable과 Roulette를 추가했습니다",
+          "body": "시간표 'Timetable'은 시험 주간이나 행사 같은 특별 일정에 대응하며, 관리자가 반에 시간표와 연락(공지·준비물·제출물·변경)을 배포할 수 있습니다. 돌려서 정하는 'Roulette'도 추가되었습니다.",
+          "label": "Timetable 열기"
+        }
+      }
+    },
+    {
+      "date": "2026-10-07",
+      "category": "SK",
+      "title": "小さなアプリを集めた「SK's Toolbox」を公開しました",
+      "body": "時計とアラームの「Clock」、関数電卓にもなる「Calc」、画像も入るメモ帳「Memo」、リマインダー「Todo」、あと何日を数える「Countdown」を、ひとつのホームから使えます。SK Hub Systems アカウントに接続すると、データを端末のあいだで同期できます（任意・暗号化）。",
+      "link": {
+        "href": "/toolbox/",
+        "label": "SK's Toolbox を開く"
+      },
+      "i18n": {
+        "en": {
+          "title": "We've released \"SK's Toolbox\", a set of small apps",
+          "body": "Use Clock (clock and alarms), Calc (also a scientific calculator), Memo (notes with images), Todo (reminders), and Countdown (days until) from one home screen. Connect your SK Hub Systems account to sync your data between devices (optional, encrypted).",
+          "label": "Open SK's Toolbox"
+        },
+        "zh-CN": {
+          "title": "推出小应用合集“SK's Toolbox”",
+          "body": "可以在同一个主页使用时钟与闹钟“Clock”、也能当科学计算器的“Calc”、可插入图片的记事本“Memo”、提醒事项“Todo”以及倒数天数的“Countdown”。连接 SK Hub Systems 账户后，可以在设备之间同步数据（可选、加密）。",
+          "label": "打开 SK's Toolbox"
+        },
+        "zh-TW": {
+          "title": "推出小工具合集「SK's Toolbox」",
+          "body": "可以在同一個主頁使用時鐘與鬧鐘「Clock」、也能當工程計算機的「Calc」、可插入圖片的記事本「Memo」、提醒事項「Todo」以及倒數天數的「Countdown」。連接 SK Hub Systems 帳戶後，可以在裝置之間同步資料（可選、加密）。",
+          "label": "開啟 SK's Toolbox"
+        },
+        "ko": {
+          "title": "작은 앱을 모은 'SK's Toolbox'를 공개했습니다",
+          "body": "시계와 알람 'Clock', 공학용 계산기도 되는 'Calc', 이미지도 넣을 수 있는 메모장 'Memo', 리마인더 'Todo', 남은 날을 세는 'Countdown'을 하나의 홈에서 쓸 수 있습니다. SK Hub Systems 계정에 연결하면 기기 간에 데이터를 동기화할 수 있습니다(선택·암호화).",
+          "label": "SK's Toolbox 열기"
+        }
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "category": "SK Hub Systems",
+      "title": "SK Hub Systems の紹介ページを公開しました",
+      "body": "SK のサービスを支えるサーバー基盤「SK Hub Systems」と、SK Hub Systems アカウントでできることを紹介するページを公開しました。",
+      "link": {
+        "href": "/sk-hub-systems/",
+        "label": "SK Hub Systems について"
+      },
+      "i18n": {
+        "en": {
+          "title": "We've published the SK Hub Systems pages",
+          "body": "We've published pages introducing SK Hub Systems, the server platform behind SK's services, and what you can do with an SK Hub Systems account.",
+          "label": "About SK Hub Systems"
+        },
+        "zh-CN": {
+          "title": "发布了 SK Hub Systems 介绍页面",
+          "body": "发布了介绍支撑 SK 各项服务的服务器平台“SK Hub Systems”以及 SK Hub Systems 账户功能的页面。",
+          "label": "关于 SK Hub Systems"
+        },
+        "zh-TW": {
+          "title": "發布了 SK Hub Systems 介紹頁面",
+          "body": "發布了介紹支撐 SK 各項服務的伺服器平台「SK Hub Systems」以及 SK Hub Systems 帳戶功能的頁面。",
+          "label": "關於 SK Hub Systems"
+        },
+        "ko": {
+          "title": "SK Hub Systems 소개 페이지를 공개했습니다",
+          "body": "SK의 서비스를 뒷받침하는 서버 기반 'SK Hub Systems'와 SK Hub Systems 계정으로 할 수 있는 것을 소개하는 페이지를 공개했습니다.",
+          "label": "SK Hub Systems 소개"
+        }
+      }
+    },
+    {
+      "date": "2026-09-28",
+      "category": "SK",
+      "title": "SK's Brand のページを公開し、表示を選べるようにしました",
+      "body": "SK のプロダクトに共通するデザインとことばのきまりをまとめた「SK's Brand」のページを公開しました。また、ヘッダーのアカウントのメニューから、ライト・ダークとテーマカラー（7 色）を選べるようになりました。",
+      "link": {
+        "href": "/brand/",
+        "label": "SK's Brand を見る"
+      },
+      "i18n": {
+        "en": {
+          "title": "We've published SK's Brand and added display options",
+          "body": "We've published \"SK's Brand\", a page on the design and writing rules shared across SK's products. You can also now choose light or dark mode and a theme color (7 colors) from the account menu in the header.",
+          "label": "See SK's Brand"
+        },
+        "zh-CN": {
+          "title": "发布了 SK's Brand 页面，并可以选择显示方式",
+          "body": "发布了汇总 SK 各产品共同的设计与用语规范的“SK's Brand”页面。此外，现在可以在页眉的账户菜单中选择浅色、深色和主题色（7 种颜色）。",
+          "label": "查看 SK's Brand"
+        },
+        "zh-TW": {
+          "title": "發布了 SK's Brand 頁面，並可以選擇顯示方式",
+          "body": "發布了彙整 SK 各產品共同的設計與用語規範的「SK's Brand」頁面。此外，現在可以在頁首的帳戶選單中選擇淺色、深色與主題色（7 種顏色）。",
+          "label": "查看 SK's Brand"
+        },
+        "ko": {
+          "title": "SK's Brand 페이지를 공개하고 표시를 고를 수 있게 했습니다",
+          "body": "SK 프로덕트에 공통되는 디자인과 말의 규칙을 정리한 'SK's Brand' 페이지를 공개했습니다. 또한 헤더의 계정 메뉴에서 라이트·다크와 테마 색상(7가지)을 고를 수 있게 되었습니다.",
+          "label": "SK's Brand 보기"
+        }
+      }
+    },
+    {
       "date": "2026-09-27",
       "category": "Nagi",
       "title": "集中タイマー「Nagi」を公開しました",
@@ -103,7 +535,7 @@
       "title": "お問い合わせフォームを新しくしました",
       "body": "お問い合わせを、このサイトのフォームから直接送れるようになりました。サポートIDを自動で添えられます。あわせて、見つからないページの案内と、SNS で共有したときの表示を整えました。",
       "link": {
-        "href": "/contact/",
+        "href": "https://support.sk-hub.jp/contact/",
         "label": "お問い合わせ"
       },
       "i18n": {

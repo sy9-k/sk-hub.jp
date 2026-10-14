@@ -523,6 +523,13 @@
       if (hint) {
         btn("m3-btn m3-btn--tonal", t("アカウントを管理"), lp("/account/"));
         btn("text-btn", t("ログアウト"), lp("/account/?signout=1"));
+      } else if (IN_LINE) {
+        // LINE の中: LINE でログイン（Google などのログインの画面は、LINE の中では使えない）
+        var lineBtn = el("button", "m3-btn m3-state tbs-line-login", t("LINE でログイン"));
+        lineBtn.type = "button";
+        lineBtn.addEventListener("click", function () { lineSignIn(lineBtn); });
+        actions.appendChild(lineBtn);
+        btn("text-btn", t("詳しく"), lp("/sk-hub-systems/account/"));
       } else {
         btn("m3-btn", t("ログイン"), lp("/account/") + "?next=" + encodeURIComponent(here));
         btn("text-btn", t("詳しく"), lp("/sk-hub-systems/account/"));
@@ -533,8 +540,90 @@
     return sec;
   }
 
+  // ---- LINE の中: SK Hub Systems アカウントにログイン（/toolbox/shared/line.js の SKLine.signIn）----
+  function lineSignIn(button) {
+    if (!window.SKLine || !SKLine.signIn) return;
+    if (button) button.disabled = true;
+    SKLine.signIn().then(function (r) {
+      if (r === "ready") { refreshUi(); lineToast(t("ログインしました")); }
+    }, function (e) {
+      var code = e && e.code;
+      lineToast(code === "sk/no-liff" ? t("LINE のアプリの中で開いたときだけ、LINE でログインできます。")
+        : code === "sk/api-unreachable" || code === "auth/network-request-failed" ? t("ログインのサーバーに接続できませんでした。インターネットの接続を確認してください。")
+          : t("時間をおいてもう一度お試しください。"), t("ログインできませんでした"));
+    }).then(function () { if (button) button.disabled = false; });
+  }
+  function lineToast(text, title) {
+    if (window.M3) M3.dialog({ title: title || "", body: el("p", "tbs-dialog__text", text), actions: [{ label: t("OK"), primary: true, value: null }] });
+  }
+
+  // ---- LINE の中: 公式 LINE（SK Hub）。友だちに追加・お知らせを LINE で受け取る ----
+  //   状態は api.sk-hub.jp に聞く（/toolbox/shared/line-account.js の status()。ログインしているときだけ）
+  function lineSection() {
+    var sec = section(t("公式 LINE"));
+    sec.appendChild(el("p", "tbs-text", t("SK Hub の公式 LINE を友だちに追加すると、SK Hub Systems アカウントのお知らせ（お問い合わせへの返事など）を LINE で受け取れます。お知らせの中身は LINE に送りません。")));
+    var box = el("div");
+    sec.appendChild(box);
+    var state = null, loading = false, loadedFor = null;
+    function note(title, sub) {
+      var r = el("div", "tbs-item");
+      r.appendChild(label(title, sub));
+      box.appendChild(r);
+    }
+    function draw() {
+      box.textContent = "";
+      var hint = readHint();
+      // 友だちに追加（いつでも出す）
+      var friend = !!(hint && state && state.friend);
+      var add = el("a", "tbs-item tbs-item--link m3-state");
+      add.href = "https://line.me/R/ti/p/%40324czrsr";
+      add.appendChild(icon(friend ? "check_circle" : "person_add"));
+      add.appendChild(label(t("公式 LINE を友だちに追加"), friend ? t("友だちになっています") : "SK Hub（@324czrsr）"));
+      add.appendChild(icon("open_in_new"));
+      add.addEventListener("click", function (e) { if (window.SKLine) { e.preventDefault(); SKLine.addFriend(); } });
+      box.appendChild(add);
+      if (!hint) { note(t("お知らせを LINE で受け取る"), t("LINE でログインすると選べます")); return; }
+      if (!state) { note(t("お知らせを LINE で受け取る"), loading ? t("確かめています…") : t("読み込めませんでした")); return; }
+      if (!state.linked) { note(t("お知らせを LINE で受け取る"), t("このアカウントには LINE がつながっていません。アカウントのページの「サインインとセキュリティ」で LINE をつなぐと選べます")); return; }
+      var row = el("label", "tbs-item tbs-item--switch m3-state");
+      row.appendChild(label(t("お知らせを LINE で受け取る"), state.friend === false ? t("公式 LINE を友だちに追加すると届きます") : t("新しいお知らせがあると、公式 LINE で知らせます")));
+      var input = el("input", "tbs-switch");
+      input.type = "checkbox";
+      input.setAttribute("role", "switch");
+      input.checked = !!state.notify;
+      row.appendChild(input);
+      input.addEventListener("change", function () {
+        input.disabled = true;
+        SKLine.account().then(function (m) { return m.setNotify(input.checked); }).then(function (r) {
+          state.notify = !!r.notify;
+        }, function () {
+          lineToast(t("時間をおいてもう一度お試しください。"), t("変更できませんでした"));
+        }).then(draw);
+      });
+      box.appendChild(row);
+    }
+    function load() {
+      var hint = readHint();
+      loadedFor = hint ? hint.name + "|" + hint.photo : "";
+      state = null;
+      if (!hint || !window.SKLine || !SKLine.account) { draw(); return; }
+      loading = true;
+      draw();
+      SKLine.account().then(function (m) { return m.status(); }).then(function (s) { state = s; }, function () { state = null; })
+        .then(function () { loading = false; draw(); });
+    }
+    // ログイン・ログアウトしたら読み直す
+    updaters.push(function () {
+      var hint = readHint();
+      if ((hint ? hint.name + "|" + hint.photo : "") !== loadedFor) load(); else draw();
+    });
+    // line.js は設定の画面より後に読み込まれるので、少し待ってから読む
+    setTimeout(load, 0);
+    return sec;
+  }
+
   // 設定の画面（MALU・Nagi の設定と同じ形。左にカテゴリ、右に中身。スマホではカテゴリが上に横並び）
-  //   全体 … 全般・アカウントと同期（LINE の中では「LINE」）・見た目・操作・通知・データ・このアプリについて
+  //   全体 … 全般・アカウントと同期（LINE の中では LINE でログインし、公式 LINE の設定も）・見た目・操作・通知・データ・このアプリについて
   //   アプリ別 … Clock・Calc・Memo・Todo・Countdown・Timetable・Roulette（そのアプリの設定・データ・開く・ビルド）
   var APP_DESC = {
     clock: t("時計・アラーム・タイマー・世界時計"),
@@ -781,17 +870,6 @@
 
     // ---- 全般 ----
     var general = page("general", "tune", t("全般"), null, t("言語・ホームの最初の画面"), "#3b82f6");
-    // お知らせ: 新しいアドレス sk-hub.jp（/domain/。LINE の中では出さない。アプリを開いたときの 1 回だけの知らせは /assets/domain-snack.js）
-    if (!IN_LINE) {
-      var news = section(t("お知らせ"));
-      var newsRow = el("a", "tbs-item tbs-item--link tbs-item--news m3-state");
-      newsRow.href = "/domain/";
-      newsRow.appendChild(icon("campaign"));
-      newsRow.appendChild(label(t("SK の新しいアドレスは sk-hub.jp です"), t("ブックマークやホーム画面のアイコンは、このアドレスで登録し直してください。")));
-      newsRow.appendChild(icon("chevron_right"));
-      news.appendChild(newsRow);
-      general.appendChild(news);
-    }
     var basic = section(t("基本"));
     var langName = "";
     if (I18N) I18N.LANGS.forEach(function (l) { if (l.code === I18N.lang) langName = l.name; });
@@ -811,23 +889,17 @@
     if (!installed && !IN_LINE) links.appendChild(linkRow("/toolbox/install/", "install_mobile", t("アプリとして入れる方法"), t("ホーム画面・Dock から開けて、オフラインでも使えます")));
     general.appendChild(links);
 
-    // ---- アカウントと同期（LINE の中では、ログインとオンライン同期は出さない。LINE の中の画面では Google のログインができないため）----
-    if (!IN_LINE) {
-      var acc = page("account", "account_circle", t("アカウントと同期"), null, t("SK Hub Systems アカウント・オンライン同期"), "#0ea5a4");
-      acc.appendChild(accountSection());
-      // オンライン同期（任意。中身は /toolbox/shared/sync.js）
-      var syncSec = section(t("オンライン同期"));
-      var syncBox = el("div");
-      syncBox.setAttribute("data-tb-sync", "");
-      syncSec.appendChild(syncBox);
-      if (window.SKToolboxSync) SKToolboxSync.mount(syncBox);
-      acc.appendChild(syncSec);
-    } else {
-      var linePage = page("line", "chat", "LINE", null, t("LINE の中の SK's Toolbox"), "#06c755");
-      var lineSec = section("LINE");
-      lineSec.appendChild(el("p", "tbs-text", t("LINE の中の SK's Toolbox です。データはこの LINE の中だけに保存されます。ほかの端末と同期したり、SK Hub Systems アカウントを使ったりするときは、ブラウザで開いてください。")));
-      linePage.appendChild(lineSec);
-    }
+    // ---- アカウントと同期（LINE の中では、LINE でログインする。公式 LINE の設定も出す）----
+    var acc = page("account", "account_circle", t("アカウントと同期"), null, IN_LINE ? t("LINE でログイン・オンライン同期・公式 LINE") : t("SK Hub Systems アカウント・オンライン同期"), "#0ea5a4");
+    acc.appendChild(accountSection());
+    // オンライン同期（任意。中身は /toolbox/shared/sync.js）
+    var syncSec = section(t("オンライン同期"));
+    var syncBox = el("div");
+    syncBox.setAttribute("data-tb-sync", "");
+    syncSec.appendChild(syncBox);
+    if (window.SKToolboxSync) SKToolboxSync.mount(syncBox);
+    acc.appendChild(syncSec);
+    if (IN_LINE) acc.appendChild(lineSection());
 
     // ---- 見た目 ----
     var look = page("look", "palette", t("見た目"), null, t("テーマ・テーマカラー・動き"), "#8b5cf6");
@@ -917,7 +989,7 @@
     }
 
     // ---- データ ----
-    var dataPage = page("data", "storage", t("データ"), null, t("アプリごとのデータ・バックアップ・引っ越し"), "#22a06b");
+    var dataPage = page("data", "storage", t("データ"), null, t("アプリごとのデータ・バックアップ"), "#22a06b");
     var data = section(t("この端末のデータ"));
     var dataNote = el("p", "tbs-text");
     data.appendChild(dataNote);
@@ -958,17 +1030,6 @@
     var appsData = section(t("アプリごとのデータ"));
     APPS.forEach(function (a) { appsData.appendChild(dataRow(a)); });
     dataPage.appendChild(appsData);
-    // 新しいアドレス（sk-hub.jp）への引っ越し。まだ使えない（形だけ。切り替えのときに中身を作る。/domain/）
-    var move = section(t("引っ越し"));
-    var moveRow = el("div", "tbs-item");
-    moveRow.appendChild(icon("local_shipping"));
-    moveRow.appendChild(label(t("新しいアドレスへの引っ越し"), t("sk-hub.jp に切り替えたときに、この端末のデータをそのまま新しいアドレスへ移します。切り替えの準備ができたら使えるようになります。")));
-    var moveBtn = el("button", "m3-btn m3-btn--tonal m3-state", t("準備中"));
-    moveBtn.type = "button";
-    moveBtn.disabled = true;
-    moveRow.appendChild(moveBtn);
-    move.appendChild(moveRow);
-    dataPage.appendChild(move);
     // まとめてバックアップ（Clock・Calc・Memo（画像も）・Todo・Countdown・Timetable・Roulette・この設定）
     var backup = section(t("バックアップ"));
     var backupRow = el("div", "tbs-item tbs-item--backup");
@@ -1011,7 +1072,7 @@
 
     // ---- このアプリについて ----
     var about = page("about", "info", t("このアプリについて"), null, t("更新・バージョン・規約"), "#64748b");
-    about.appendChild(aboutHead("/toolbox/icon.svg", "SK's Toolbox", t("毎日ちょっと使う、小さなアプリを集めた SK の道具箱です。")));
+    about.appendChild(aboutHead("/toolbox/icon.svg", IN_LINE ? "LINE in SK's Toolbox" : "SK's Toolbox", t("毎日ちょっと使う、小さなアプリを集めた SK の道具箱です。")));
     var aboutSec = section("");
     // 更新の確認（Nagi・MALU と同じ。この画面の Service Worker に新しい版がないか確かめる。見つけたらボタンが「再読み込み」に変わる）
     var upd = el("div", "tbs-item tbs-item--update");
@@ -1225,8 +1286,8 @@
     inLine: IN_LINE
   };
 
-  // オンライン同期（任意）。見本（?embed）では読み込まない
-  if (!/[?&]embed\b/.test(location.search) && !IN_LINE) {
+  // オンライン同期（任意）。見本（?embed）では読み込まない（LINE の中でも、LINE でログインすれば使える）
+  if (!/[?&]embed\b/.test(location.search)) {
     var sync = document.createElement("script");
     sync.src = "/toolbox/shared/sync.js";
     (document.head || document.documentElement).appendChild(sync);

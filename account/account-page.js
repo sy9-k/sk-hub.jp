@@ -36,6 +36,7 @@ const errText = (err) => {
   if (code === "auth/provider-already-linked") return t("その方法は、もうつながっています。");
   if (code === "auth/requires-recent-login") return t("安全のため、もう一度ログインしてからお試しください。");
   if (code === "sk/last-login") return t("ログインの方法は、少なくとも 1 つ残す必要があります。");
+  if (code === "sk/api-unreachable") return t("SK Hub のログインのサーバー（api.sk-hub.jp）に接続できませんでした。フィルタリングや広告ブロックのアプリ・設定が止めていないか確かめてください。");
   if (code === "sk/signed-out") return t("ログインが切れました。ページを開き直してから、もう一度お試しください。");
   if (code === "sk/unknown-provider") return t("このログインの方法は、まだ使えません。");
   if (code === "sk/cancelled") return t("ログインをやめました。");
@@ -179,6 +180,27 @@ function showReturned(status) {
   }
 }
 
+// 公式 LINE のトークの「持っているアカウントにつなぐ」から来たとき（?link=line）: ログインできたら、そのまま LINE をつなぐ
+const linkParam = new URLSearchParams(location.search).get("link");
+let linkTried = false;
+if (linkParam || new URLSearchParams(location.search).has("openExternalBrowser")) {
+  // LINE から戻ってくる先（returnTo）にも残らないように、URL からは先に消す
+  const url = new URL(location.href);
+  url.searchParams.delete("link");
+  url.searchParams.delete("openExternalBrowser");
+  history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+}
+function linkFromLine(user) {
+  if (linkParam !== "line" || linkTried || current.user !== user) return;
+  linkTried = true;
+  history.replaceState(null, "", location.pathname + location.search + "#security");
+  showSection("security");
+  if (loginsOf(user).includes("line")) { message(t("LINE はもうつながっています。LINE のトークに戻ってください。")); return; }
+  if (!availableLogins().includes("line")) return;
+  message(t("LINE をつなぎます…"));
+  linkLogin(user, "line").catch((err) => message(errText(err)));
+}
+
 function render(state) {
   renderView(state);
   showReturned(state.status);
@@ -244,6 +266,7 @@ function renderView(state) {
   loadExternalLogins(user).then(() => {
     if (current.user !== user) return;
     renderLogins(user);
+    linkFromLine(user);
     $("[data-acct-email-tile]").textContent = user.email || t("なし（{name} でログイン）", { name: loginsOf(user).map((k) => LOGIN_PROVIDERS[k].name).join("・") || "-" });
   });
   // 開発者なら受信箱・記事エディターの項目を出す（config/developers は登録された本人だけが読める）
@@ -511,7 +534,7 @@ function noticeItem(user, n) {
 
   if (n.source === "news") {
     const a = el("a", "acct-notice-title", n.title);
-    a.href = `/support/?a=${encodeURIComponent(n.id)}`;
+    a.href = `https://support.sk-hub.jp/?a=${encodeURIComponent(n.id)}`;
     li.appendChild(a);
     if (n.summary) li.appendChild(el("p", "acct-notice-body", n.summary));
     return li;
@@ -894,7 +917,7 @@ signedOutView.querySelectorAll("[data-acct-mode-tab]").forEach((btn) => btn.addE
   signedOutView.querySelector(`.acct-mode-tab[data-acct-mode-tab="${signinMode}"]`)?.focus();
 }));
 setSigninMode(signinMode, false);
-$("[data-acct-security-lead]").textContent = accountNames.length <= 1
+$("[data-acct-security-lead]").textContent = accountNames.length <= 1 && (accountNames[0] || "Google") === "Google"
   ? t("このアカウントには Google アカウントでログインします。SK がパスワードを発行・保存することはありません。")
   : t("このアカウントには、{names} のアカウントでログインします。SK がパスワードを発行・保存することはありません。2 段階認証などは、それぞれのアカウントで設定します。", { names: accountList });
 root.querySelectorAll("[data-acct-signin]").forEach((btn) => btn.addEventListener("click", async () => {
@@ -969,7 +992,7 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
   if (busy || !user) return;
   setBusy(true, btn);
   try {
-    const [teams, devices, notices, maluWords, maluHistory, backups, nagiData, timetableInbox, ...toolboxDocs] = await Promise.all([
+    const [teams, devices, notices, maluWords, maluHistory, backups, nagiData, timetableInbox, timetableUserInbox, ...toolboxDocs] = await Promise.all([
       getDocs(query(collection(db, "teams"), where("members", "array-contains", user.uid))),
       getDocs(query(collection(db, "devices"), where("ownerUid", "==", user.uid))),
       getDocs(collection(db, "accounts", user.uid, "notices")),
@@ -978,6 +1001,7 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
       getDocs(collection(db, "teams", user.uid, "backups")),
       getDoc(doc(db, "accounts", user.uid, "nagi", "data")),
       getDoc(inboxRef()).catch(() => null),
+      getDoc(doc(db, "timetableUserInbox", user.uid)).catch(() => null),
       ...TOOLBOX_DOCS.map((id) => getDoc(doc(db, "accounts", user.uid, "toolbox", id)))
     ]);
     // 日時は ISO 8601、バイト列（Toolbox の暗号文）は Base64 にする
@@ -1012,6 +1036,8 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
       toolbox: Object.fromEntries(toolboxDocs.filter((d) => d.exists()).map((d) => [d.id, plain(d.data())])),
       // SK's Toolbox の時間割の配信で、このアカウントのメールアドレスあてに配信された時間割の ID
       timetableInbox: timetableInbox && timetableInbox.exists() ? plain(timetableInbox.data()) : null,
+      // 招待コードで参加して、このアカウントで受け取っている時間割の ID
+      timetableUserInbox: timetableUserInbox && timetableUserInbox.exists() ? plain(timetableUserInbox.data()) : null,
       yFilterConsole: {
         teams: teams.docs.map((d) => ({ id: d.id, role: d.id === user.uid ? "owner" : "co-admin", ...plain(d.data()) })),
         devices: devices.docs.map((d) => ({ id: d.id, ...plain(d.data()) })),
@@ -1085,7 +1111,9 @@ async function deleteServiceData(uid) {
 
 // SK's Toolbox の時間割の配信: 自分のメールアドレスあての受け取り箱（配信された時間割の ID の一覧）
 const inboxRef = () => doc(db, "timetableInbox", String(current.user?.email || "").toLowerCase() || "-");
+//   招待コードで参加した時間割は、アカウント（UID）あての受け取り箱（timetableUserInbox）
 async function deleteTimetableInbox() {
+  if (current.user) await deleteRefs([doc(db, "timetableUserInbox", current.user.uid)]).catch(() => { /* ない */ });
   if (!current.user?.email) return;
   await deleteRefs([inboxRef()]).catch(() => { /* ない・確認していないメールアドレス */ });
 }
