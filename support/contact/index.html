@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- SK Hub Support のお問い合わせ（https://support.sk-hub.jp/contact/）。元は sk-hub.jp の /support/contact/（support/index.html と同じしくみ） -->
+  <script>(function(){var h=location.hostname;if(h==="sk-hub.jp"||h==="www.sk-hub.jp")location.replace("https://support.sk-hub.jp"+location.pathname.replace(/^\/support(?=\/|$)/,"")+location.search+location.hash);})();</script>
+  <script src="/assets/i18n.js"></script>
+  <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}"),d=document.documentElement;if(t.mode==="light"||t.mode==="dark")d.setAttribute("data-theme",t.mode);if(/^[a-z]{2,12}$/.test(t.accent||"")&&t.accent!=="blue")d.setAttribute("data-accent",t.accent);}catch(e){}})();</script>
+  <title>お問い合わせ | SK Hub Support</title>
+  <meta name="description" content="SK への不具合の報告・ご質問・ご要望はこちらから。">
+  <meta name="theme-color" content="#ffffff" data-theme-color>
+  <link rel="canonical" href="https://support.sk-hub.jp/contact/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SK Hub Support">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:title" content="お問い合わせ | SK Hub Support">
+  <meta property="og:description" content="SK への不具合の報告・ご質問・ご要望はこちらから。">
+  <meta property="og:url" content="https://support.sk-hub.jp/contact/">
+  <meta property="og:image" content="https://sk-hub.jp/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"></script>
+  <link rel="stylesheet" href="/assets/header.css">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="../support.css">
+</head>
+<body class="sp-page" data-sp-page="contact">
+  <a class="skip" href="#main">本文へ移動</a>
+  <!-- ヘッダーは sk-hub.jp と同じもの（header.css・site.js）。項目だけサポート向け（「SK のサイト」のメニューは support.js の SK_HEADER） -->
+  <header class="site-header">
+    <a class="hd-logo" href="../" aria-label="SK Hub Support ホーム">
+      <span class="hd-logo-image" aria-hidden="true"><img src="/assets/logo.svg" alt="" width="26" height="26"></span>
+      <span class="hd-logo-back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+    <a class="hd-item" href="../">サポート記事</a>
+    <a class="hd-item" href="../?type=news">お知らせ</a>
+    <a class="hd-item" href="./">お問い合わせ</a>
+    <a class="hd-item" href="https://sk-hub.jp/" data-menu="sk" data-no-navigation="true">SK のサイト</a>
+    <a class="hd-item hd-account" href="https://sk-hub.jp/account/" data-menu="account" data-account-link>アカウント</a>
+    <a class="hd-item hd-lang" href="https://sk-hub.jp/lang/" data-lang-link><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg><span class="hd-lang-label">言語</span></a>
+    <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
+  </header>
+  <div class="hd-menu" id="hd-menu"><div class="hd-menu-inner"><div class="hd-menu-content"></div></div></div>
+  <div class="hd-backdrop" id="hd-backdrop"></div>
+
+  <main id="main">
+    <section class="sp-hero sp-hero--compact">
+      <div class="sp-wrap">
+        <p class="sp-hero-kicker">Contact</p>
+        <h1>お問い合わせ</h1>
+        <p class="sp-hero-lead">不具合の報告、ご質問、ご要望を受け付けています。送る前に、<a href="../">サポート記事</a>で解決しないかもご覧ください。</p>
+      </div>
+    </section>
+
+    <section class="sp-section">
+      <div class="sp-wrap contact-layout">
+        <form class="card contact-form" data-contact novalidate>
+          <fieldset class="contact-field">
+            <legend>お問い合わせの種類</legend>
+            <div class="contact-chips">
+              <label><input type="radio" name="kind" value="bug" checked><span>不具合の報告</span></label>
+              <label><input type="radio" name="kind" value="question"><span>質問</span></label>
+              <label><input type="radio" name="kind" value="request"><span>要望・アイデア</span></label>
+              <label><input type="radio" name="kind" value="data"><span>データの確認・削除</span></label>
+              <label><input type="radio" name="kind" value="other"><span>その他</span></label>
+            </div>
+          </fieldset>
+
+          <label class="contact-field">
+            <span class="contact-label">どれについてか</span>
+            <select name="product">
+              <option value="y-filter">Y-FILTER.</option>
+              <option value="malu">MALU</option>
+              <option value="hub">SK Hub Systems・管理コンソール</option>
+              <option value="account">SK Hub Systems アカウント</option>
+              <option value="lab">SK's Lab</option>
+              <option value="site">このサイト</option>
+              <option value="other">その他</option>
+            </select>
+          </label>
+
+          <label class="contact-field">
+            <span class="contact-label">内容 <small data-contact-count>0 / 2000</small></span>
+            <textarea name="message" rows="7" maxlength="2000" required placeholder="起きたこと、使っている端末とブラウザ（例: Chromebook の Chrome）、再現する手順などを書いてください。"></textarea>
+          </label>
+
+          <label class="contact-field">
+            <span class="contact-label">返信先のメールアドレス <small>（返信が必要なときだけ）</small></span>
+            <input type="email" name="email" maxlength="254" autocomplete="email" placeholder="example@example.com">
+          </label>
+
+          <!-- いたずら対策（人には見えない欄。入力されていたら送らない） -->
+          <label class="contact-trap" aria-hidden="true">ウェブサイト<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+
+          <label class="contact-attach">
+            <input type="checkbox" name="attach" checked>
+            <span>サポートIDとブラウザの情報を添える <small>調査がスムーズになります（<code data-support-id>読み込み中…</code>）</small></span>
+          </label>
+
+          <!-- SK Hub Systems アカウントでログイン中だけ出す（contact.js。ログインは sk-hub.jp から受け取る） -->
+          <label class="contact-attach" data-contact-account hidden>
+            <input type="checkbox" name="account" checked>
+            <span>返事を SK Hub Systems アカウントのお知らせで受け取る <small>アカウントのページの「お知らせ」に届きます。メールアドレスを書かなくても返事を受け取れます</small></span>
+          </label>
+
+          <p class="contact-note">送信した内容は SK Hub Systems に保存し、<a href="https://sk-hub.jp/policies/privacy/">SK プライバシーポリシー</a>に従って、お問い合わせへの対応のためにだけ使います。</p>
+          <div class="btn-row">
+            <button class="btn btn-primary" type="submit" data-contact-submit>送信する</button>
+          </div>
+          <p class="acct-msg" data-contact-msg role="alert"></p>
+        </form>
+
+        <div class="card contact-done" data-contact-done hidden tabindex="-1">
+          <span class="tile-ico ti-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg></span>
+          <h2>送信しました</h2>
+          <p>お問い合わせありがとうございます。内容を確認して、必要に応じてご連絡します。</p>
+          <p class="contact-receipt">受付番号 <code data-contact-receipt></code></p>
+          <div class="btn-row">
+            <a class="btn btn-tonal" href="../">サポートを見る</a>
+            <button class="btn btn-tonal" type="button" data-contact-again>別のお問い合わせを送る</button>
+          </div>
+        </div>
+
+        <aside class="contact-side">
+          <div class="card">
+            <h2 class="acct-h">先に確かめると早いこと</h2>
+            <ul class="contact-links">
+              <li><a href="https://sk-hub.online/">システム稼働状況</a><small>障害が起きていないか</small></li>
+              <li><a href="../?type=news">お知らせ</a><small>変更や大切なお知らせ</small></li>
+              <li><a href="../">サポートの記事</a><small>使い方と困ったとき</small></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h2 class="acct-h">データの削除</h2>
+            <p class="contact-side-text">SK Hub Systems アカウントのデータは、お問い合わせをしなくても<a href="https://sk-hub.jp/account/">アカウント</a>のページから削除できます。</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="sp-footer">
+    <div class="sp-wrap sp-footer-inner">
+      <div class="sp-footer-brand">
+        <span class="sp-brand"><img src="/assets/logo.svg" alt="" width="24" height="24"><span class="sp-brand-name">SK Hub</span><span class="sp-brand-tag">Support</span></span>
+        <p>SK のプロダクトのサポートサイトです。</p>
+      </div>
+      <ul class="sp-footer-links">
+        <li><a href="https://sk-hub.jp/">SK ホーム</a></li>
+        <li><a href="https://sk-hub.jp/products/">プロダクト</a></li>
+        <li><a href="https://sk-hub.jp/account/">アカウント</a></li>
+        <li><a href="https://sk-hub.online/">システム稼働状況</a></li>
+        <li><a href="https://sk-hub.jp/updates/">アップデート</a></li>
+        <li><a href="https://sk-hub.jp/policies/">利用規約</a></li>
+        <li><a href="https://sk-hub.jp/policies/privacy/">プライバシーポリシー</a></li>
+        <li data-analytics-settings hidden><a href="#analytics">アクセス解析の設定</a></li>
+      </ul>
+      <p class="sp-footer-legal">© 2026 SK</p>
+    </div>
+  </footer>
+
+  <script>window.SKI18N && SKI18N.translatePage();</script>
+  <!-- support.js（橋渡し）を先に。contact.js はログインをそこから受け取る -->
+  <script src="../support.js" defer></script>
+  <script src="/assets/site.js" defer></script>
+  <script src="contact.js" defer></script>
+  <script src="/assets/maintenance.js" defer></script>
+</body>
+</html>

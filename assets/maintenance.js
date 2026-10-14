@@ -70,8 +70,10 @@
     if (!services.length) return true;
     return services.some(function (s) { return (SERVICE_PATHS[s] || []).some(function (p) { return path.indexOf(p) === 0; }); });
   }
-  function forThisPage(m, path) { return ALWAYS.test(path) || inService(m, path); }
-  function closesThisPage(m, path) { return !!m.close && !NEVER_CLOSE.test(path) && inService(m, path); }
+  // SK Hub Support（support.sk-hub.jp）は、困った人が来るところなので、帯はいつも出し、閉じない
+  var SUPPORT_SITE = location.hostname === "support.sk-hub.jp";
+  function forThisPage(m, path) { return SUPPORT_SITE || ALWAYS.test(path) || inService(m, path); }
+  function closesThisPage(m, path) { return !!m.close && !SUPPORT_SITE && !NEVER_CLOSE.test(path) && inService(m, path); }
   function skipping() { try { return sessionStorage.getItem(SKIP_KEY) === "1"; } catch (e) { return false; } }
 
   // M PLUS 1（Google Fonts。EU などでは読み込まない）

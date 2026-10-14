@@ -158,7 +158,7 @@
     var text = document.createElement("span");
     text.textContent = t("アクセス解析も許可");
     var more = document.createElement("a");
-    more.href = "/support/?a=site-analytics";
+    more.href = "https://support.sk-hub.jp/?a=site-analytics";
     more.target = "_blank";
     more.rel = "noopener";
     more.textContent = t("詳しく");

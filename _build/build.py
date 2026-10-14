@@ -33,10 +33,8 @@ pages = [
     ("products.html", "products/index.html", "プロダクト | SK", "SK がつくっているアプリ・ブラウザ拡張機能・サーバー基盤・小さな道具・実験中のツール（MALU・Nagi・Y-FILTER.・SK Hub Systems・SK's Toolbox・SK's Lab）の一覧。", False, True),
     ("brand.html", "brand/index.html", "SK's Brand | SK", "SK のプロダクトに共通するデザインとことばのきまり。大切にしていること・ロゴ・色・文字・形と動き・使う人との約束。", False, True),
     ("nagi.html", "products/nagi/index.html", "Nagi | SK", "集中と休憩をくり返して、勉強や作業の時間を記録する集中タイマー「Nagi」。1 日の目標と連続日数、端末のあいだの同期。", False, True),
-    ("support.html", "support/index.html", "サポート | SK", "SK からのお知らせと、Y-FILTER.・MALU・SK Hub Systems・SK's Lab の使い方や困ったときの記事。", True, True),
     ("hub-account.html", "sk-hub-systems/account/index.html", "SK Hub Systems アカウント | SK", "SK のサービスを、いつもの Google アカウントひとつで。使えるサービス、端末のあいだの同期、保存する情報、データのダウンロードと削除について。", False, True),
     ("account.html", "account/index.html", "SK Hub Systems アカウント | SK", "SK のサービスを 1 つの Google アカウントで使える「SK Hub Systems アカウント」。ログイン・アカウントの確認・削除。", True, True),
-    ("contact.html", "contact/index.html", "お問い合わせ | SK", "SK への不具合の報告・ご質問・ご要望はこちらから。", True, True),
     ("privacy.html", "policies/privacy/index.html", "SK プライバシーポリシー | SK", "SK のサービス（サイト・MALU・Nagi・SK's Toolbox・Y-FILTER.・SK Hub Systems アカウント）での情報の取り扱い。Google アカウントでログインしたときの情報（Google のユーザーデータ）の取り扱いを含みます。", True, True),
     ("policies.html", "policies/index.html", "利用規約・プライバシーポリシー | SK", "SK 利用規約・SK プライバシーポリシーと、SK Hub Systems アカウント・Y-FILTER. の利用規約。", True, True),
     ("lang.html", "lang/index.html", "Language | SK", "Choose your language / 言語を選択", True, False),
@@ -50,8 +48,6 @@ NOT_TRANSLATED = {"privacy.html"}  # お問い合わせの受信箱・記事エ�
 # ページごとに追加する <head> の中身と <body> のクラス
 EXTRA = {
     "account.html": ('  <script type="module" src="/account/account-page.js"></script>\n', None),
-    "contact.html": ('  <script src="/contact/contact.js" defer></script>\n', None),
-    "support.html": ('  <script src="/support/help.js" defer></script>\n', None),
     # 言語の画面。どこから開いたか（戻り先の next・LINE の中・アプリとして開いているか）を、画面が出る前に <html> に付ける
     #   data-lang-from="toolbox|malu|nagi|lab" … 戻り先のアプリ（?from= で指定もできる）
     #     Toolbox のときは、Toolbox の言語の画面（/toolbox/lang/。マテリアルデザイン）に移る
@@ -104,8 +100,8 @@ EXTRA = {
 
 # t("…") などで訳す文を探すファイル（ページの外でスクリプトが作る文字）
 RUNTIME_SOURCES = [
-    "assets/site.js", "assets/maintenance.js", "support/help.js", "support/articles.js", "account/account-page.js",
-    "contact/contact.js", "frameworks/check.js",
+    "assets/site.js", "assets/maintenance.js", "support/help.js", "support/articles.js", "support/support.js", "account/account-page.js",
+    "support/contact/contact.js", "frameworks/check.js",
     "dictionary/script.js", "dictionary/account.js", "assets/hub/sync-loader.js", "assets/analytics.js", "assets/nf-secret.js", "assets/terminal.js",
     "nagi/app.js", "nagi/account.js", "brand/brand.js", "assets/hub/account-button.js",
     "toolbox/clock/clock.js", "toolbox/calc/calc.js", "toolbox/memo/memo.js", "toolbox/todo/todo.js", "toolbox/countdown/countdown.js", "toolbox/clock/clock-tools.js", "toolbox/shared/settings.js", "toolbox/shared/m3.js", "toolbox/shared/remind.js", "toolbox/home.js",
@@ -123,6 +119,7 @@ STANDALONE_PAGES = [
     "toolbox/timetable/index.html", "toolbox/roulette/index.html", "toolbox/install/index.html", "toolbox/lang/index.html",
     "move/index.html", "moved/index.html",
     "view/index.html",
+    "support/index.html", "support/contact/index.html",
 ]
 # 英語だけに訳すページ（SK's Lab のツール。<html data-i18n-langs="ja en">）。ページの文とスクリプトの t("…") の両方を探す
 EN_ONLY_PAGES = ["qr-prj/index.html", "smart-dash/index.html"]

@@ -23,7 +23,7 @@
         items: [
           // 招待・招待コードでの参加も、この画面から
           { label: "管理者・共同管理者の招待", action: press("team-btn") },
-          ["共同管理者について", "/support/?a=hub-co-admins"]
+          ["共同管理者について", "https://support.sk-hub.jp/?a=hub-co-admins"]
         ]
       },
       help: {
@@ -32,9 +32,9 @@
           {
             title: "使い方",
             items: [
-              ["SK Hub Systems のサポート記事", "/support/#hub"],
-              ["端末を追加する（ペアリングコード）", "/support/?a=hub-add-device"],
-              ["設定が端末に反映されないとき", "/support/?a=hub-settings-not-applied"]
+              ["SK Hub Systems のサポート記事", "https://support.sk-hub.jp/#hub"],
+              ["端末を追加する（ペアリングコード）", "https://support.sk-hub.jp/?a=hub-add-device"],
+              ["設定が端末に反映されないとき", "https://support.sk-hub.jp/?a=hub-settings-not-applied"]
             ]
           },
           {
@@ -42,7 +42,7 @@
             items: [
               ["システム稼働状況", "https://sk-hub.online/"],
               ["SK Hub Systems 利用規約", "/policies/#sk-hub-systems"],
-              ["お問い合わせ", "/contact/?product=hub"]
+              ["お問い合わせ", "https://support.sk-hub.jp/contact/?product=hub"]
             ]
           }
         ]
@@ -62,7 +62,7 @@
       } : {
         title: "SK Hub Systems アカウント",
         items: [
-          ["SK Hub Systems アカウントとは", "/support/?a=account-about"],
+          ["SK Hub Systems アカウントとは", "https://support.sk-hub.jp/?a=account-about"],
           ["アカウントのページ", "/account/"],
           ["SK のホームページ", "/"]
         ]

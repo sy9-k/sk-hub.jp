@@ -5,7 +5,7 @@
 
   const UUID_KEY = "skhub_uuid"; // frameworks/check.js の CONFIG.UUID_KEY と同じ
 
-  // 多言語（assets/i18n.js）。t("日本語") で訳、lp("/support/") で同じ言語のページの URL
+  // 多言語（assets/i18n.js）。t("日本語") で訳、lp("/about/") で同じ言語のページの URL
   const I18N = window.SKI18N || { lang: "ja", LANGS: [], t: (s, v) => (v ? s.replace(/\{(\w+)\}/g, (m, k) => (v[k] != null ? v[k] : m)) : s), path: (u) => u, date: (s) => s };
   const t = I18N.t;
   const lp = I18N.path;
@@ -84,7 +84,7 @@
       appearance: true,
       items: [
         [t("ログイン・アカウントを作成"), lp("/account/")],
-        [t("SK Hub Systems アカウントとは"), lp("/support/?a=account-about")],
+        [t("SK Hub Systems アカウントとは"), lp("https://support.sk-hub.jp/?a=account-about")],
         [t("Y-FILTER. 管理コンソール"), "/y-filter/"]
       ]
     };
@@ -109,9 +109,9 @@
         {
           title: t("困ったとき"),
           items: [
-            [t("サポート記事"), lp("/support/")],
-            [t("お知らせ"), lp("/support/?type=news")],
-            [t("お問い合わせ"), lp("/contact/")],
+            [t("サポート記事"), lp("https://support.sk-hub.jp/")],
+            [t("お知らせ"), lp("https://support.sk-hub.jp/?type=news")],
+            [t("お問い合わせ"), lp("https://support.sk-hub.jp/contact/")],
             [t("システム稼働状況"), "https://sk-hub.online/"]
           ]
         },
@@ -852,7 +852,7 @@
         if (!latest) return;
         const text = newsLatest.querySelector("[data-news-latest-text]");
         if (text) text.textContent = latest.title;
-        newsLatest.href = lp(`/support/?a=${encodeURIComponent(latest.id)}`);
+        newsLatest.href = lp(`https://support.sk-hub.jp/?a=${encodeURIComponent(latest.id)}`);
         newsLatest.classList.toggle("is-important", !!latest.important);
         newsLatest.hidden = false;
       })
