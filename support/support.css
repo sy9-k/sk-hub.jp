@@ -1,0 +1,113 @@
+/* SK Hub Support（https://support.sk-hub.jp/）の見た目
+   ヘッダーは sk-hub.jp と同じ（/assets/header.css）。色・ボタン・記事の部品（help-*・contact-*）は /assets/site.css のものを使い、
+   ここではサポートサイトの骨組み（上の検索・トピック・解決しないとき・フッター）だけを決める。色はすべて site.css のトークンなので、ダークモードもそのまま効く */
+
+body.sp-page { display: flex; flex-direction: column; min-height: 100vh; }
+body.sp-page main { flex: 1; }
+.sp-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .sp-wrap { padding: 0 16px; } }
+
+/* ---------- 上の検索（ヒーロー） ---------- */
+.sp-hero {
+  position: relative; overflow: hidden; padding: 64px 0 40px; text-align: center;
+  background:
+    radial-gradient(60% 80% at 15% 0%, var(--mark), transparent 70%),
+    radial-gradient(50% 70% at 90% 10%, var(--tint-blue), transparent 70%),
+    var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.sp-hero-kicker { display: inline-flex; align-items: center; gap: 8px; color: var(--link); font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.sp-hero h1 { margin-top: 10px; font-size: clamp(30px, 5vw, 46px); font-weight: 800; letter-spacing: -.03em; }
+.sp-hero-lead { max-width: 620px; margin: 12px auto 0; color: var(--muted); font-size: 16px; }
+.sp-search {
+  display: flex; align-items: center; gap: 12px; max-width: 680px; height: 62px; margin: 28px auto 0; padding: 0 22px;
+  border-radius: 999px; background: var(--surface); box-shadow: var(--shadow), inset 0 0 0 1px var(--line); text-align: left;
+}
+.sp-search svg { width: 22px; height: 22px; color: var(--muted); flex: none; }
+.sp-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16.5px; }
+.sp-search:focus-within { box-shadow: var(--shadow), inset 0 0 0 2px var(--accent); }
+.sp-hero--compact { padding: 48px 0 36px; }
+.sp-hero--compact .sp-hero-lead a { font-weight: 700; }
+
+/* トピック（カテゴリごとのタイル。help.js が作る） */
+.sp-topics { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-width: 880px; margin: 28px auto 0; }
+.sp-topics:empty { display: none; }
+.sp-topic {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center;
+  padding: 14px 16px; border: 0; border-radius: 18px; background: var(--surface); color: var(--ink); text-align: left;
+  font: inherit; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); transition: transform .15s ease, box-shadow .15s ease;
+}
+.sp-topic:hover { transform: translateY(-2px); box-shadow: var(--shadow), inset 0 0 0 1px var(--line-strong); }
+.sp-topic[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
+.sp-topic-dot { grid-row: 1 / 3; width: 12px; height: 12px; border-radius: 50%; background: var(--link); }
+.sp-topic strong { font-size: 14.5px; font-weight: 800; line-height: 1.4; }
+.sp-topic small { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.sp-topic.cat-yf .sp-topic-dot { background: var(--yf); }
+.sp-topic.cat-hub .sp-topic-dot { background: var(--blue); }
+.sp-topic.cat-malu .sp-topic-dot { background: var(--malu); }
+.sp-topic.cat-nagi .sp-topic-dot { background: var(--nagi); }
+.sp-topic.cat-lab .sp-topic-dot { background: var(--lab); }
+
+/* ---------- 本文 ---------- */
+.sp-section { padding: 48px 0; }
+.sp-section + .sp-section { padding-top: 0; }
+.sp-section-title { font-size: clamp(22px, 3vw, 28px); font-weight: 800; letter-spacing: -.02em; margin-bottom: 18px; }
+
+/* 記事: 四角い枠に入れず、ページに広げる。右に「同じカテゴリの記事」（スマホでは下） */
+.sp-page .help-article {
+  max-width: none; margin: 0; padding: 4px 0 0; border: 0; border-radius: 0; background: none; box-shadow: none;
+  display: grid; grid-template-columns: minmax(0, 1fr) 260px; column-gap: 64px; align-items: start;
+}
+.sp-page .help-article[hidden] { display: none; }
+.sp-page .help-article > * { grid-column: 1; }
+.sp-page .help-article > h1 {
+  font-size: clamp(28px, 4.4vw, 44px); letter-spacing: -.025em; line-height: 1.3; margin-top: 16px;
+  padding-bottom: 26px; border-bottom: 1px solid var(--line);
+}
+.sp-page .help-body { max-width: 720px; margin-top: 30px; font-size: 16.5px; line-height: 1.95; }
+.sp-page .help-body h3 { font-size: 20px; margin-top: 40px; }
+.sp-page .doc-lang-note { max-width: 720px; margin-top: 20px; }
+.sp-page .help-article > .help-related {
+  grid-column: 2; grid-row: 1 / span 12; position: sticky; top: 84px;
+  margin: 0; padding: 4px 0 0 24px; border-top: 0; border-left: 1px solid var(--line);
+}
+.sp-page .help-related h2 { font-size: 13px; letter-spacing: .06em; }
+.sp-page .help-related li a { padding: 9px 0; font-size: 14.5px; border-bottom: 0; color: var(--ink); }
+.sp-page .help-related li a:hover { color: var(--link); }
+.sp-page .help-solved { max-width: 720px; margin-top: 44px; padding: 22px 0 0; border-radius: 0; background: none; border-top: 1px solid var(--line); color: var(--muted); }
+@media (max-width: 900px) {
+  .sp-page .help-article { grid-template-columns: minmax(0, 1fr); }
+  .sp-page .help-article > .help-related { grid-column: 1; grid-row: auto; position: static; margin-top: 40px; padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+}
+
+/* 解決しないときは */
+.sp-more-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.sp-more-card {
+  display: flex; flex-direction: column; gap: 6px; padding: 24px; border-radius: 24px; background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); text-decoration: none; transition: transform .15s ease, box-shadow .15s ease;
+}
+a.sp-more-card:hover { transform: translateY(-2px); box-shadow: var(--shadow), inset 0 0 0 1px var(--line-strong); }
+.sp-more-card strong { font-size: 17px; font-weight: 800; margin-top: 8px; }
+.sp-more-card > span:not(.sp-more-ico) { color: var(--muted); font-size: 14px; }
+.sp-more-card--contact { background: linear-gradient(140deg, var(--green-soft), var(--surface) 70%); }
+.sp-more-ico { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 14px; background: var(--accent); color: var(--accent-ink); }
+.sp-more-ico svg { width: 22px; height: 22px; }
+.sp-more-ico--green { background: var(--ok-soft); color: var(--ok-ink); }
+.sp-more-ico--ink { background: var(--ink); color: var(--bg); }
+.sp-id-card .id-box { margin-top: 10px; }
+@media (max-width: 860px) { .sp-more-grid { grid-template-columns: 1fr; } }
+
+/* ---------- フッター ---------- */
+.sp-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; }
+.sp-brand-name { font-weight: 800; letter-spacing: -.01em; }
+.sp-brand-tag { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 800; letter-spacing: .02em; }
+.sp-footer { margin-top: 32px; padding: 36px 0 28px; border-top: 1px solid var(--line); background: var(--surface); }
+.sp-footer-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 20px 40px; align-items: start; }
+.sp-footer-brand p { margin-top: 8px; color: var(--muted); font-size: 14px; }
+.sp-footer-brand .sp-brand-name { font-size: 15px; }
+.sp-footer-brand .sp-brand img { width: 24px; height: 24px; }
+.sp-footer-links { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.sp-footer-links a { color: var(--muted); font-size: 14px; font-weight: 600; text-decoration: none; }
+.sp-footer-links a:hover { color: var(--ink); text-decoration: underline; }
+.sp-footer-legal { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+@media (max-width: 700px) { .sp-footer-inner { grid-template-columns: 1fr; } }

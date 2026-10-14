@@ -512,7 +512,7 @@ function noticeItem(user, n) {
 
   if (n.source === "news") {
     const a = el("a", "acct-notice-title", n.title);
-    a.href = `/support/?a=${encodeURIComponent(n.id)}`;
+    a.href = `https://support.sk-hub.jp/?a=${encodeURIComponent(n.id)}`;
     li.appendChild(a);
     if (n.summary) li.appendChild(el("p", "acct-notice-body", n.summary));
     return li;

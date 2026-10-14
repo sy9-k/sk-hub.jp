@@ -1,4 +1,4 @@
-// お問い合わせフォーム（/contact/）
+// お問い合わせフォーム（https://support.sk-hub.jp/contact/。元は sk-hub.jp の /support/contact/）
 // SK Hub Systems（Cloud Firestore の contacts）に REST API で 1 件追加する。Firebase の SDK は使わない。
 // 送られた内容は、開発者だけが /inbox/ で読める（y-filter リポジトリの systems/firestore.rules）。
 (function () {
@@ -21,7 +21,7 @@
   const count = form.querySelector("[data-contact-count]");
   const message = form.elements.message;
 
-  // どれについてか: ページの ?product= で選んでおける（例: /contact/?product=y-filter）
+  // どれについてか: ページの ?product= で選んでおける（例: https://support.sk-hub.jp/contact/?product=y-filter）
   const preset = new URLSearchParams(location.search).get("product");
   if (preset && [...form.elements.product.options].some((o) => o.value === preset)) form.elements.product.value = preset;
 
@@ -31,12 +31,18 @@
   const supportId = () => { try { return localStorage.getItem("skhub_uuid") || ""; } catch (e) { return ""; } };
 
   // SK Hub Systems アカウントでログイン中なら、返事をアカウントのお知らせで受け取れる（uid を添えて、ログインの証明つきで送る）
+  // support.sk-hub.jp では、ログインは sk-hub.jp にあるので、橋渡し（support/support.js の SKBridge）から受け取る
+  const bridge = window.SKBridge;
+  const viaBridge = location.hostname === "support.sk-hub.jp" && !!bridge;
   const accountOption = form.querySelector("[data-contact-account]");
   const loggedIn = () => { try { return !!localStorage.getItem("skhub_account"); } catch (e) { return false; } };
-  if (accountOption) accountOption.hidden = !loggedIn();
+  const showAccountOption = () => { if (accountOption) accountOption.hidden = !loggedIn(); };
+  showAccountOption();
+  if (viaBridge) bridge.ready.then(showAccountOption);
   async function accountAuth() {
     if (!accountOption || accountOption.hidden || !form.elements.account.checked) return null;
     try {
+      if (viaBridge) return await bridge.token();
       const { currentUser } = await import("/assets/hub/account.js");
       const user = await currentUser();
       if (!user) return null;

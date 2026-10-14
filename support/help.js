@@ -1,4 +1,4 @@
-// サポート（お知らせ・サポート記事）
+// SK Hub Support（https://support.sk-hub.jp/）のお知らせ・サポート記事
 // 記事の読み込みと本文の表示は support/articles.js（window.SKArticles）。一覧は ?type=news|guide ・ #カテゴリ で絞り込み、記事は ?a=記事ID で開く。
 // support/articles.js（ページの最後で読み込む）のあとに動かすため、読み込みが終わってから始める
 document.addEventListener("DOMContentLoaded", function () {
@@ -18,8 +18,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const searchEl = document.querySelector("[data-help-search]");
   const typeBtns = [...root.querySelectorAll("[data-help-type]")];
   const heroEl = document.querySelector(".help-hero");
+  const topicsEl = document.querySelector("[data-help-topics]");
   const baseTitle = document.title;
-  const SUPPORT = I18N.path("/support/");
+  // 記事の URL。support.sk-hub.jp では /?a=…、sk-hub.jp の /support/ を手元で開いているときは /support/?a=…
+  const SUPPORT = location.hostname === "support.sk-hub.jp" ? "/" : "/support/";
 
   // 以前のページ内リンク（/support/#y-filter など）とカテゴリの対応（カテゴリは日本語で持ち、表示するときに訳す）
   const HASH_CATEGORY = { malu: "MALU", nagi: "Nagi", "y-filter": "Y-FILTER.", hub: "SK Hub Systems", account: "アカウント", lab: "SK's Lab", site: "このサイト", privacy: "情報と規約" };
@@ -51,6 +53,27 @@ document.addEventListener("DOMContentLoaded", function () {
     return meta;
   }
 
+  // ---------- トピック（上の大きなタイル。カテゴリごとの記事の数つき） ----------
+  function renderTopics() {
+    if (!topicsEl) return;
+    topicsEl.replaceChildren(...categories.map((c) => {
+      const b = el("button", `sp-topic ${CATEGORY_CLASS[c] || ""}`);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(state.category === c));
+      b.append(el("span", "sp-topic-dot"), el("strong", null, categoryName(c)),
+        el("small", null, t("{n} 件", { n: articles.filter((a) => a.category === c).length })));
+      b.addEventListener("click", () => {
+        state.category = state.category === c ? "" : c;
+        state.query = "";
+        if (searchEl) searchEl.value = "";
+        syncUrl();
+        renderList();
+        document.getElementById("articles").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      return b;
+    }));
+  }
+
   // ---------- 一覧 ----------
   function renderCats() {
     catsEl.replaceChildren(...["", ...categories].map((c) => {
@@ -65,6 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function renderList() {
     typeBtns.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.helpType === state.type)));
     renderCats();
+    renderTopics();
     const q = state.query.trim().toLowerCase();
     let shown = articles.filter((a) =>
       (!state.type || a.type === state.type) &&
@@ -136,7 +160,8 @@ document.addEventListener("DOMContentLoaded", function () {
     articleEl.hidden = false;
     listView.hidden = true;
     if (heroEl) heroEl.hidden = true;
-    document.title = `${a.title} | ${t("サポート")} | SK`;
+    document.title = `${a.title} | SK Hub Support`;
+    document.dispatchEvent(new Event("sp:route"));
     window.scrollTo({ top: 0 });
   }
 
@@ -147,6 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.title = baseTitle;
     if (push) syncUrl(true);
     renderList();
+    document.dispatchEvent(new Event("sp:route"));
   }
 
   // 一覧の絞り込みを URL に反映する（?type=news など）
@@ -155,6 +181,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (state.type) params.set("type", state.type);
     const url = `${SUPPORT}${params.toString() ? `?${params}` : ""}${state.category ? `#${Object.keys(HASH_CATEGORY).find((k) => HASH_CATEGORY[k] === state.category) || ""}` : ""}`;
     if (push) history.pushState({}, "", url); else history.replaceState({}, "", url);
+    document.dispatchEvent(new Event("sp:route"));
   }
 
   function route() {
@@ -173,6 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
   window.addEventListener("popstate", route);
+  window.addEventListener("hashchange", route);
 
   window.SKArticles.load()
     .then((data) => {
