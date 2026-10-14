@@ -1,6 +1,7 @@
 // サポートの記事（お知らせ・サポート記事）の読み込みと、本文の変換（window.SKArticles）
-// 記事は SK Hub Systems（Cloud Firestore の articles。公開中のものだけ誰でも読める）から読む。
-// 1 件もない・届かないときは /support/articles.json（予備。記事エディターの「バックアップ」で書き出したもの）を使う。
+// 記事は SK Hub Systems（Cloud Firestore の articles。公開中のものだけ誰でも読める）と /support/articles.json（予備。記事エディターの
+// 「バックアップ」で書き出したもの）の両方から読む。同じ ID は SK Hub Systems のほうを使い、articles.json にしかない記事も出す。
+// （そのため、記事エディターで記事を削除・非公開にしても articles.json に残っていれば出る。そのときは「バックアップ」で articles.json も新しくする）
 // 記事を書くのは /studio/（開発者だけ）。
 (function () {
   "use strict";
@@ -164,9 +165,9 @@
         const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null");
         if (cached && Date.now() - cached.t < CACHE_MS) return withCategories(cached.articles);
       } catch (e) { /* 読めなければ読み直す */ }
-      let articles = [];
-      try { articles = await fromHub(); } catch (e) { articles = []; }
-      if (!articles.length) articles = await fromJson();
+      const [hub, json] = await Promise.all([fromHub().catch(() => []), fromJson().catch(() => [])]);
+      const ids = new Set(hub.map((a) => a.id));
+      const articles = hub.concat(json.filter((a) => !ids.has(a.id)));
       try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), articles })); } catch (e) { /* 保存できなくても動く */ }
       return withCategories(articles);
     })();
