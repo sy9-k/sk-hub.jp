@@ -160,7 +160,9 @@ export const LOGIN_PROVIDERS = {
 const LOGIN_FLAGS = { github: GITHUB_LOGIN, microsoft: MICROSOFT_LOGIN, line: LINE_LOGIN, kakao: KAKAO_LOGIN, passkey: PASSKEY_LOGIN };
 // パスキーは、ブラウザが対応しているときだけ
 const passkeySupported = () => typeof window !== "undefined" && !!window.PublicKeyCredential && !!navigator.credentials;
-export const availableLogins = () => Object.keys(LOGIN_PROVIDERS).filter((k) => LOGIN_FLAGS[k] !== false && (k !== "passkey" || passkeySupported()));
+// LINE の中のブラウザ（ミニアプリ・トークで開いたリンク）では、LINE だけ（Google などのログインの画面は LINE の中では開けない）
+export const inLineApp = () => typeof navigator !== "undefined" && /\bLine\/\d/.test(navigator.userAgent);
+export const availableLogins = () => Object.keys(LOGIN_PROVIDERS).filter((k) => LOGIN_FLAGS[k] !== false && (k !== "passkey" || passkeySupported()) && (!inLineApp() || k === "line"));
 const isExternal = (key) => !!LOGIN_PROVIDERS[key]?.external;
 function provider(key = "google") {
   if (key === "github") {
@@ -240,6 +242,22 @@ async function goExternal(key, mode, returnTo = location.href, user = null) {
   location.assign(url);
   return new Promise(() => {});
 }
+
+// ---------- LINE ミニアプリ（SK's Toolbox）の中 ----------
+// LINE の中では LINE ログインの画面に移動しない。LIFF のアクセストークンを api.sk-hub.jp に送って、LINE ログインと同じアカウントに入る
+//   create … つながったアカウントがないとき、新しく作るか（false なら code sk/not-linked で断られる）
+export async function signInWithLiff(accessToken, create = false) {
+  const res = await api("/auth/liff", { method: "POST", body: { accessToken, create } });
+  const { user } = await signInWithCustomToken(auth, res.token);
+  if (!user.displayName && (res.name || res.picture)) {
+    await updateProfile(user, { displayName: res.name || null, photoURL: res.picture || null }).catch(() => {});
+  }
+  return { user, isNew: !!res.isNew };
+}
+
+// 公式 LINE（SK Hub）: 友だちか・お知らせを LINE で受け取るか（{ linked, friend, notify, bot: { id, url } }）
+export const lineStatus = (user) => api("/line/status", { user });
+export const setLineNotify = (user, on) => api("/line/notify", { method: "POST", user, body: { on: !!on } });
 
 // ---------- パスキー（WebAuthn） ----------
 // api.sk-hub.jp がくれたオプション（JSON。バイト列は base64url）を、ブラウザの形にする／ブラウザの結果を JSON にする

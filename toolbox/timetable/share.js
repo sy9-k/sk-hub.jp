@@ -3,8 +3,10 @@
 //   ・timetables/{ID}                  … { title, json: 時間割の JSON, ownerUid, updatedAt }。管理者と、配信先の人だけが読める
 //   ・timetables/{ID}/private/members  … { emails: [配信先のメールアドレス], updatedAt }。管理者だけ（受け取る人どうしには見えない）
 //   ・timetableInbox/{メールアドレス}   … { tids: [受け取る時間割の ID], updatedAt }。本人（Google のメールアドレスが一致し、確認済み）だけが読める
+//   ・timetableUserInbox/{UID}         … { tids, updatedAt, joinCode }。招待コードで参加した時間割（アカウントあて。LINE などメールアドレスのないアカウントでも受け取れる）
+//                                       本人が読む・有効な招待コードの時間割を 1 つ足す。管理者は外せる
 //   ・timetableInvites/{コード}         … { tid, title, ownerUid, expiresAt, createdAt }。招待コード（管理者が作る。コードを知っている人だけが読める）
-//   ・timetables/{ID}/joins/{UID}      … { email, name, photo, color, code, joinedAt }。参加している人（一覧は管理者だけ）
+//   ・timetables/{ID}/joins/{UID}      … { email（ない人は ""）, name, photo, color, code, joinedAt }。参加している人（一覧は管理者だけ）
 //                                       招待コードで参加したとき、またはメールアドレスの配信先の人が時間割を開いたとき（code は ""）に、本人が作る
 //   権限は y-filter リポジトリの systems/firestore.rules（「SK's Toolbox の時間割の配信」）
 import { ACCOUNT_TERMS_VERSION, currentUser, db, profileOf } from "/assets/hub/account.js";
@@ -22,7 +24,9 @@ async function inChunks(items, size, fn) {
   for (let i = 0; i < items.length; i += size) await Promise.all(items.slice(i, i + size).map(fn));
 }
 const inbox = (email) => doc(db, "timetableInbox", email);
+const userInbox = (uid) => doc(db, "timetableUserInbox", uid);
 const membersRef = (tid) => doc(db, "timetables", tid, "private", "members");
+const tidsOf = (snap) => (snap && snap.exists() && Array.isArray(snap.data().tids) ? snap.data().tids.filter((x) => typeof x === "string") : []);
 
 // 管理者か（config/developers は、登録された本人だけが読める）
 export async function isAdmin() {
@@ -38,12 +42,13 @@ export async function receive() {
   if (!user) return { status: "signed-out", items: [] };
   const acc = await getDoc(doc(db, "accounts", user.uid));
   if (!acc.exists() || acc.data().termsVersion !== ACCOUNT_TERMS_VERSION) return { status: "unregistered", items: [] };
+  // メールアドレスあて（管理者が配信先に入れた）と、アカウントあて（招待コードで参加した）の両方
   const email = (user.email || "").toLowerCase();
-  if (!email) return { status: "ready", items: [] };
-  let box;
-  try { box = await getDoc(inbox(email)); } catch (e) { return { status: "ready", items: [] }; }
-  if (!box.exists()) return { status: "ready", items: [] };
-  const tids = Array.isArray(box.data().tids) ? box.data().tids.filter((x) => typeof x === "string") : [];
+  const [byEmail, byUid] = await Promise.all([
+    email ? getDoc(inbox(email)).catch(() => null) : null,
+    getDoc(userInbox(user.uid)).catch(() => null)
+  ]);
+  const tids = [...new Set(tidsOf(byEmail).concat(tidsOf(byUid)))];
   const items = await Promise.all(tids.map(async (tid) => {
     try {
       const snap = await getDoc(doc(db, "timetables", tid));
@@ -82,6 +87,9 @@ export async function publish({ tid, title, json, emails }) {
 export async function unpublish(tid) {
   const emails = await loadMembers(tid).catch(() => []);
   await inChunks(emails, 20, (email) => setDoc(inbox(email), { tids: arrayRemove(tid), updatedAt: serverTimestamp() }, { merge: true }));
+  // 招待コードで参加した人（アカウントあての受け取り箱）
+  const joined = (await listJoins(tid).catch(() => [])).filter((p) => p.code);
+  await inChunks(joined, 20, (p) => setDoc(userInbox(p.uid), { tids: arrayRemove(tid), updatedAt: serverTimestamp() }, { merge: true }));
   await deleteDoc(membersRef(tid));
   await deleteDoc(doc(db, "timetables", tid));
 }
@@ -127,6 +135,7 @@ export async function listJoins(tid) {
 export async function removeJoin(tid, person) {
   if (person.uid) await deleteDoc(doc(db, "timetables", tid, "joins", person.uid));
   if (person.email) await setDoc(inbox(person.email), { tids: arrayRemove(tid), updatedAt: serverTimestamp() }, { merge: true });
+  if (person.uid && person.code) await setDoc(userInbox(person.uid), { tids: arrayRemove(tid), updatedAt: serverTimestamp() }, { merge: true });
 }
 function safePhoto(url) { const u = String(url || ""); return /^https:\/\//.test(u) && u.length <= 500 ? u : ""; }
 
@@ -167,22 +176,26 @@ export async function checkInvite(text) {
   if (!snap.exists()) return { status: "not-found", code };
   const d = snap.data();
   if (ms(d.expiresAt) <= Date.now()) return { status: "expired", code, title: String(d.title || "") };
-  let joined = false;
-  try { const box = await getDoc(inbox((user.email || "").toLowerCase())); joined = box.exists() && (box.data().tids || []).includes(d.tid); } catch (e) { /* まだない */ }
+  const email = user.email && user.emailVerified ? user.email.toLowerCase() : "";
+  const [byEmail, byUid] = await Promise.all([
+    email ? getDoc(inbox(email)).catch(() => null) : null,
+    getDoc(userInbox(user.uid)).catch(() => null)
+  ]);
+  const joined = tidsOf(byEmail).concat(tidsOf(byUid)).includes(d.tid);
   const prof = profileOf(user, acc.data());
-  return { status: "ready", code, tid: d.tid, title: String(d.title || ""), joined, email: (user.email || "").toLowerCase(), name: prof.name, photo: prof.photo, color: prof.colorValue };
+  return { status: "ready", code, tid: d.tid, title: String(d.title || ""), joined, email, name: prof.name, photo: prof.photo, color: prof.colorValue };
 }
-// 参加する人: 参加する（管理者に、名前とメールアドレスが伝わる）
+// 参加する人: 参加する（管理者に、名前と（あれば）メールアドレスが伝わる）
+//   受け取り箱はアカウントあて（timetableUserInbox/{UID}）。LINE などメールアドレスのないアカウントでも参加できる
 export async function joinWithCode(info) {
   const user = await currentUser();
   if (!user) throw fail("signed-out");
-  const email = (user.email || "").toLowerCase();
-  if (!email || !user.emailVerified) throw fail("no-email");
-  const box = await getDoc(inbox(email)).catch(() => null);
-  const tids = box && box.exists() && Array.isArray(box.data().tids) ? box.data().tids.filter((x) => typeof x === "string") : [];
+  const email = user.email && user.emailVerified ? user.email.toLowerCase() : "";
+  const box = await getDoc(userInbox(user.uid)).catch(() => null);
+  const tids = tidsOf(box);
   if (tids.length >= 20 && !tids.includes(info.tid)) throw fail("too-many");
   const batch = writeBatch(db);
   batch.set(doc(db, "timetables", info.tid, "joins", user.uid), { email, name: String(info.name || "").slice(0, 60), photo: safePhoto(info.photo), color: String(info.color || "").slice(0, 20), code: info.code, joinedAt: serverTimestamp() });
-  if (!tids.includes(info.tid)) batch.set(inbox(email), { tids: tids.concat([info.tid]), updatedAt: serverTimestamp(), joinCode: info.code });
+  if (!tids.includes(info.tid)) batch.set(userInbox(user.uid), { tids: tids.concat([info.tid]), updatedAt: serverTimestamp(), joinCode: info.code });
   await batch.commit();
 }

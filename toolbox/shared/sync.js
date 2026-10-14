@@ -475,7 +475,16 @@
       if (!c) {
         sub.textContent = t("Toolbox のデータは、この端末にだけ保存されています。");
         container.appendChild(el("p", "tsy-lead", t("SK Hub Systems アカウントを使うと、Todo・Memo・Countdown などを、スマホやパソコンのあいだで同期できます（任意）。データは端末で暗号化してから保存するので、SK にも中身は読めません。")));
-        if (!h) {
+        if (!h && document.documentElement.classList.contains("in-line")) {
+          // LINE の中: LINE でログイン（/toolbox/shared/line.js）。アカウントの作成・Toolbox への接続がまだなら /account/ に移動する
+          var lineGo = button("m3-btn", t("LINE でログインして使う"), function () {
+            if (!window.SKLine) return;
+            lineGo.disabled = true;
+            SKLine.signIn().then(function (r) { if (r === "ready") emit(); }, function () {
+              toast(t("ログインできませんでした。時間をおいてもう一度お試しください。"));
+            }).then(function () { lineGo.disabled = false; });
+          });
+        } else if (!h) {
           link("m3-btn", t("ログインして使う"), connectUrl());
         } else if (!connected(h)) {
           link("m3-btn", t("Toolbox に接続して使う"), connectUrl());

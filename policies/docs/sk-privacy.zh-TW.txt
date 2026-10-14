@@ -13,7 +13,8 @@ SK 隱私權政策
 (d) 聯絡：將聯絡表單中填寫的內容儲存在 SK Hub Systems 中。
 (e) SK Hub Systems 帳戶：僅於建立帳戶時，儲存用於登入的帳戶（Google、GitHub、LINE、Kakao）資訊（識別碼、姓名、大頭貼；Google、GitHub 另含電子郵件地址；不從 LINE、Kakao 取得電子郵件地址；註冊通行金鑰時為其公開金鑰等，不取得指紋、臉部等資訊）以及同意條款的日期等。登入後使用的瀏覽器的時區（大致地區）和支援 ID 也會作為使用紀錄儲存。
 (f) Nagi：專注記錄（開始專注的時間和專注的時長）及設定只儲存在瀏覽器中，不會傳送。但是，使用 SK Hub Systems 帳戶連接 Nagi 後，專注記錄和每日目標將儲存到本人的帳戶中。不會記錄學習的內容或瀏覽的網站。
-(g) SK's Toolbox：Clock、Calc、Memo、Todo、Countdown、Timetable、Roulette 的資料及設定只儲存在瀏覽器中，不會傳送。但是，使用 SK Hub Systems 帳戶連接 SK's Toolbox 並開始線上同步後，所選應用程式的資料會在裝置上以本人設定的同步密碼片語加密後，儲存到本人的帳戶中。解密金鑰只存在於本人的裝置中，開發者無法讀取其內容。Memo 的圖片不會傳送。此外，開發者使用 Timetable 傳送課表時，開發者作為接收者輸入的電子郵件地址和傳送的課表會儲存到 SK Hub Systems，僅用於向使用該電子郵件地址的 SK Hub Systems 帳戶登入的本人顯示課表。接收者之間互相看不到，停止傳送後即刪除。使用邀請碼加入傳送時，或接收者開啟傳送的課表時，名字、頭像、電子郵件地址及加入的日期時間會儲存到 SK Hub Systems，僅用於傳送課表的開發者確認或移除已加入的人（其他成員看不到）。此外，將 SK's Toolbox 作為 LINE 迷你應用程式開啟時，LINE 的個人檔案（名稱·大頭貼）僅用於畫面顯示，不會儲存或傳送。「用 LINE 傳送」僅在使用者操作時，透過 LINE 傳送給使用者選擇的對象。
+(g) SK's Toolbox：Clock、Calc、Memo、Todo、Countdown、Timetable、Roulette 的資料及設定只儲存在瀏覽器中，不會傳送。但是，使用 SK Hub Systems 帳戶連接 SK's Toolbox 並開始線上同步後，所選應用程式的資料會在裝置上以本人設定的同步密碼片語加密後，儲存到本人的帳戶中。解密金鑰只存在於本人的裝置中，開發者無法讀取其內容。Memo 的圖片不會傳送。此外，開發者使用 Timetable 傳送課表時，開發者作為接收者輸入的電子郵件地址和傳送的課表會儲存到 SK Hub Systems，僅用於向使用該電子郵件地址的 SK Hub Systems 帳戶登入的本人顯示課表。接收者之間互相看不到，停止傳送後即刪除。使用邀請碼加入傳送時，或接收者開啟傳送的課表時，名字、頭像、電子郵件地址（沒有電子郵件地址的 SK Hub Systems 帳戶除外）及加入的日期時間會儲存到 SK Hub Systems，僅用於傳送課表的開發者確認或移除已加入的人（其他成員看不到）。此外，將 SK's Toolbox 作為 LINE 迷你應用程式開啟時，LINE 的個人檔案（名稱·大頭貼）僅用於畫面顯示，不會儲存或傳送。但是，在 LINE 迷你應用程式中選擇登入 SK Hub Systems 帳戶時，與使用 LINE 登入相同，LINE 的識別碼、名稱及大頭貼依照 SK Hub Systems 帳戶條款處理。「用 LINE 傳送」僅在使用者操作時，透過 LINE 傳送給使用者選擇的對象。
+(h) SK Hub 官方 LINE：傳送到官方 LINE 的訊息僅用於回覆，不會儲存。選擇透過 LINE 接收 SK Hub Systems 帳戶的通知時，會儲存該選擇及開始接收的日期時間等，且官方 LINE 只會告知有新通知（通知的內容不會傳送到 LINE）。
 
 第三條 存取檢查中處理的資訊
 1.在本網站（包括 SK's Lab 的工具）、MALU、Nagi 及 Y-FILTER. 的管理主控台中，為因應不當使用及掌握使用情況，會進行存取檢查。
@@ -82,8 +83,8 @@ SK 隱私權政策
 (b) Firebase（SK Hub Systems、Google LLC）
 (c) Google Fonts（文字顯示、Google LLC）
 (d) Google Analytics（存取分析・Google LLC。依第四條之二，僅限允許時）
-(e) Cloudflare Workers・D1（LINE・Kakao・通行金鑰登入、Cloudflare, Inc.）
-(f) LINE 登入（LY Corporation）・Kakao 登入（Kakao Corp.）（僅限使用各自登入時）
+(e) Cloudflare Workers・D1（LINE・Kakao・通行金鑰登入、SK Hub 官方 LINE，Cloudflare, Inc.）
+(f) LINE 登入・LINE 迷你應用程式・LINE 官方帳號（LY Corporation）・Kakao 登入（Kakao Corp.）（僅限使用各自時）
 
 第十條 未成年人的資訊
 本服務預期也會由未成年人使用。開發者會努力不處理超出必要範圍的資訊。
@@ -124,3 +125,4 @@ SK 隱私權政策
 15.2026年10月13日，為明確 Google 使用者資料的處理方式，新增了第四條之三。
 16.2026年10月13日，配合 SK Hub Systems 帳戶使用紀錄的儲存，修訂了第二條及第三條。
 17.2026年10月14日，配合 SK Hub Systems 帳戶新增 LINE 帳戶、Kakao 帳戶及通行金鑰登入，修訂了第二條及第九條。
+18.2026年10月14日，配合在 LINE 迷你應用程式中登入 SK Hub Systems 帳戶、SK Hub 官方 LINE（透過 LINE 接收通知的功能）及沒有電子郵件地址的帳戶接收課表，修訂了第二條及第九條。

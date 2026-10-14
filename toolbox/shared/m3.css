@@ -689,9 +689,11 @@ body.tb-home-page .snackbar, body.tb-home-page .tsy-snackbar { z-index: 1021; }
 /* ---- LINE の中（LINE ミニアプリ。/toolbox/shared/line.js が <html class="in-line">）---- */
 /* アプリとして入れるボタン・案内と、Toolbox のホームのサイトのヘッダーは出さない（LINE の画面の上には LINE のバーがある） */
 html.in-line [data-install], html.in-line .tbh-tip--install { display: none !important; }
-/* LINE の中で使えない・出さないもの: ホームの表示の切りかえと編集・ヒント・Memo と Calc（機能をしぼる）・通知・ログインが必要なもの */
+/* LINE の中で使えない・出さないもの: ホームの表示の切りかえと編集・ヒント・Memo と Calc（機能をしぼる）・端末の通知 */
 html.in-line .tbh-views, html.in-line #home-edit, html.in-line .tbh-tips, html.in-line .tbh-app--noline,
-html.in-line #receive-hint, html.in-line [data-menu="notify"], html.in-line .tt-notify-on, html.in-line [data-menu="refresh"] { display: none !important; }
+html.in-line [data-menu="notify"], html.in-line .tt-notify-on { display: none !important; }
+/* LINE でログイン（設定の「アカウントと同期」） */
+.tbs-line-login { background: #06c755 !important; color: #fff !important; }
 .tbh-line { display: none; }
 html.in-line .tbh-line { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; padding: 16px 18px; border-radius: 24px; background: color-mix(in srgb, #06c755 12%, var(--md-surface-container-low, #f3f3fa)); }
 .tbh-line > svg { flex: none; width: 40px; height: 40px; }
