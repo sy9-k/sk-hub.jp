@@ -1179,7 +1179,19 @@
     });
 
     side.appendChild(none);
-    show("general");
+    // 公式 LINE のメニューの「LINE で SK Hub を始める」（/toolbox/settings/?login=line）: アカウントのページを開いて、LINE でログインを始める
+    var loginParam = IN_LINE && /[?&]login=line\b/.test(location.search);
+    show(loginParam ? "account" : "general", loginParam);
+    if (loginParam) {
+      try { history.replaceState(history.state, "", location.pathname + location.search.replace(/([?&])login=line(&|$)/, "$1").replace(/[?&]$/, "") + location.hash); } catch (e) { /* そのまま */ }
+      // line.js はこの画面より後に読み込まれるので、来るまで少し待つ（5 秒まで）
+      var tries = 0;
+      (function go() {
+        if (readHint()) return;
+        if (window.SKLine && SKLine.signIn) { lineSignIn(acc.querySelector(".tbs-line-login")); return; }
+        if (++tries < 50) setTimeout(go, 100);
+      })();
+    }
     refreshUi();
     var round = function () { roundCards(body); };
     updaters.push(round);
