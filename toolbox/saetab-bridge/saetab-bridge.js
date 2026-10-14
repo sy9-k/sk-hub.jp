@@ -120,29 +120,40 @@
   };
   const BRIDGE_PAGE_URL = "https://search3958.github.io/newtab/extension/saetab-bridge.html";
 
+  // 確認はツールボックス共通のダイアログ（/toolbox/shared/m3.js の M3.confirm）で出す
+  const t = (s) => (window.SKI18N ? window.SKI18N.t(s) : s);
+  const ask = (opts) => (window.M3 ? window.M3.confirm(opts) : Promise.resolve(confirm(opts.title + "\n\n" + opts.text)));
+
   // ボタンクリック時の処理
   const handleButtonClick = () => {
     if (isBridgeEnabled()) {
       // 有効時 → 連携解除確認
-      if (confirm("Saetabとの連携を解除しますか？解除後、Saetabの'同期と管理'欄から拡張機能を削除してください。")) {
+      ask({
+        title: t("Saetabとの連携を解除しますか？"),
+        text: t("解除したあと、Saetabの「同期と管理」から拡張機能を削除してください。"),
+        ok: t("連携を解除"),
+        icon: "link_off",
+        danger: true
+      }).then((yes) => {
+        if (!yes) return;
         setBridgeEnabled(false);
         log("bridgeを無効にしました。");
-      }
+      });
     } else {
       // 無効時 → 連携承認確認
-      const confirmed = confirm(
-        "タイムテーブルとメモの内容がSaetab 7に設定するためにSentaroに共有されます。どうしますか？\n\n承認する場合は「OK」を押してください。"
-      );
-      if (confirmed) {
+      ask({
+        title: t("Saetabを新しいタブに設定しますか？"),
+        text: t("Saetab 7に表示するため、時間割とメモの内容がSentaroさんに共有されます。"),
+        ok: t("共有して設定"),
+        icon: "tab"
+      }).then((yes) => {
+        if (!yes) return;
         setBridgeEnabled(true);
         log("bridgeを有効にしました。");
 
-        // 指定ページを新しいタブで開く
-        const opened = window.open(BRIDGE_PAGE_URL, "_blank", "noopener");
-        if (!opened) {
-          log("ポップアップがブロックされた可能性があります。");
-        }
-      }
+        // 指定ページを新しいタブで開く（ダイアログのボタンを押した流れの中なので、ブロックされない）
+        window.open(BRIDGE_PAGE_URL, "_blank", "noopener");
+      });
     }
   };
 
