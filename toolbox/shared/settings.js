@@ -1072,7 +1072,7 @@
 
     // ---- このアプリについて ----
     var about = page("about", "info", t("このアプリについて"), null, t("更新・バージョン・規約"), "#64748b");
-    about.appendChild(aboutHead("/toolbox/icon.svg", "SK's Toolbox", t("毎日ちょっと使う、小さなアプリを集めた SK の道具箱です。")));
+    about.appendChild(aboutHead("/toolbox/icon.svg", IN_LINE ? "LINE in SK's Toolbox" : "SK's Toolbox", t("毎日ちょっと使う、小さなアプリを集めた SK の道具箱です。")));
     var aboutSec = section("");
     // 更新の確認（Nagi・MALU と同じ。この画面の Service Worker に新しい版がないか確かめる。見つけたらボタンが「再読み込み」に変わる）
     var upd = el("div", "tbs-item tbs-item--update");
