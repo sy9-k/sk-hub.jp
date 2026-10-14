@@ -180,6 +180,27 @@ function showReturned(status) {
   }
 }
 
+// 公式 LINE のトークの「持っているアカウントにつなぐ」から来たとき（?link=line）: ログインできたら、そのまま LINE をつなぐ
+const linkParam = new URLSearchParams(location.search).get("link");
+let linkTried = false;
+if (linkParam || new URLSearchParams(location.search).has("openExternalBrowser")) {
+  // LINE から戻ってくる先（returnTo）にも残らないように、URL からは先に消す
+  const url = new URL(location.href);
+  url.searchParams.delete("link");
+  url.searchParams.delete("openExternalBrowser");
+  history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+}
+function linkFromLine(user) {
+  if (linkParam !== "line" || linkTried || current.user !== user) return;
+  linkTried = true;
+  history.replaceState(null, "", location.pathname + location.search + "#security");
+  showSection("security");
+  if (loginsOf(user).includes("line")) { message(t("LINE はもうつながっています。LINE のトークに戻ってください。")); return; }
+  if (!availableLogins().includes("line")) return;
+  message(t("LINE をつなぎます…"));
+  linkLogin(user, "line").catch((err) => message(errText(err)));
+}
+
 function render(state) {
   renderView(state);
   showReturned(state.status);
@@ -245,6 +266,7 @@ function renderView(state) {
   loadExternalLogins(user).then(() => {
     if (current.user !== user) return;
     renderLogins(user);
+    linkFromLine(user);
     $("[data-acct-email-tile]").textContent = user.email || t("なし（{name} でログイン）", { name: loginsOf(user).map((k) => LOGIN_PROVIDERS[k].name).join("・") || "-" });
   });
   // 開発者なら受信箱・記事エディターの項目を出す（config/developers は登録された本人だけが読める）

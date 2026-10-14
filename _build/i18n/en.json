@@ -3225,5 +3225,10 @@
   "招待コードで参加するには、SK Hub Systems アカウントにログインします。LINE でログインできます。": "To join with an invite code, sign in to your SK Hub Systems account. You can sign in with LINE.",
   "新しいお知らせがあると、公式 LINE で知らせます": "When there are new notices, the official LINE account lets you know",
   "新しく作る": "Create new",
-  "配信している人（管理者）に、あなたの名前（{name}）とアイコンが伝わります。ほかの参加者には見えません。": "Your name ({name}) and icon will be shared with the person sharing the timetable (the admin). Other members can't see them."
+  "配信している人（管理者）に、あなたの名前（{name}）とアイコンが伝わります。ほかの参加者には見えません。": "Your name ({name}) and icon will be shared with the person sharing the timetable (the admin). Other members can't see them.",
+  "LINE のアプリの中で開いたときだけ、LINE でログインできます。": "You can sign in with LINE only when this is opened inside the LINE app.",
+  "LINE はもうつながっています。LINE のトークに戻ってください。": "LINE is already connected. Please go back to the LINE chat.",
+  "LINE をつなぎます…": "Connecting LINE…",
+  "変更できませんでした": "Couldn't change it",
+  "時間をおいてもう一度お試しください。": "Please try again later."
 }
