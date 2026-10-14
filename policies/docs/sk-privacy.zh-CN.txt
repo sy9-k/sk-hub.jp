@@ -14,7 +14,7 @@ SK 隐私政策
 (e) SK Hub Systems 账户：仅在创建账户时，保存用于登录的账号（Google、GitHub、LINE、Kakao）信息（标识符、姓名、头像；Google、GitHub 还包括邮箱地址；不从 LINE、Kakao 获取邮箱地址；注册通行密钥时为其公钥等，不获取指纹、面部等信息）以及同意条款的日期等。登录后使用的浏览器的时区（大致地区）和支持 ID 也会作为使用记录保存。
 (f) Nagi：专注记录（开始专注的时间和专注的时长）及设置只保存在浏览器中，不会发送。但是，使用 SK Hub Systems 账户连接 Nagi 后，专注记录和每日目标将保存到本人的账户中。不会记录学习的内容或浏览的网站。
 (g) SK's Toolbox：Clock、Calc、Memo、Todo、Countdown、Timetable、Roulette 的数据及设置只保存在浏览器中，不会发送。但是，使用 SK Hub Systems 账户连接 SK's Toolbox 并开始在线同步后，所选应用的数据会在设备上使用本人设定的同步密码短语加密后，保存到本人的账户中。解密密钥只存在于本人的设备中，开发者无法读取其内容。Memo 的图片不会发送。此外，开发者使用 Timetable 发送课程表时，开发者作为接收者输入的邮箱地址和发送的课程表会保存到 SK Hub Systems，仅用于向使用该邮箱地址的 SK Hub Systems 账户登录的本人显示课程表。接收者之间互相看不到，停止发送后即删除。使用邀请码加入发送时，或接收者打开发送的课程表时，名字、头像、邮箱地址（没有邮箱地址的 SK Hub Systems 账户除外）及加入的日期时间会保存到 SK Hub Systems，仅用于发送课程表的开发者确认或移除已加入的人（其他成员看不到）。此外，将 SK's Toolbox 作为 LINE 迷你应用打开时，LINE 的个人资料（名称·头像）仅用于画面显示，不会保存或发送。但是，在 LINE 迷你应用中选择登录 SK Hub Systems 账户时，与使用 LINE 登录相同，LINE 的识别码、名称及头像按照 SK Hub Systems 账户条款处理。“用 LINE 发送”仅在用户操作时，通过 LINE 发送给用户选择的对象。
-(h) SK Hub 官方 LINE：发送到官方 LINE 的消息仅用于回复，不会保存。但是，在聊天中通过“咨询”发送的内容，在发送前确认期间（最长 15 分钟）会临时保存，发送后与第四条的咨询相同，保存到 SK Hub Systems（LINE 已关联 SK Hub Systems 账户时，为了回复会一并附上该账户的识别码）。此外，选择“聊天咨询”时，将通过 LINE 官方账号的聊天功能（LY Corporation）与开发者直接交流。该对话会保留在 LINE 官方账号中，发送的文字内容也会按每次咨询作为第四条的咨询保存到 SK Hub Systems（结束咨询或 24 小时内没有消息时结束）。选择通过 LINE 接收 SK Hub Systems 账户的通知时，会保存该选择及开始接收的日期时间等，并且官方 LINE 只会告知有新通知（通知的内容不会发送到 LINE）。
+(h) SK Hub 官方 LINE：发送到官方 LINE 的消息仅用于回复，不会保存。但是，在聊天中通过“咨询”发送的内容，在发送前确认期间（最长 15 分钟）会临时保存，发送后与第四条的咨询相同，保存到 SK Hub Systems（LINE 已关联 SK Hub Systems 账户时，为了回复会一并附上该账户的识别码）。此外，选择“聊天咨询”时，将通过 LINE 官方账号的聊天功能（LY Corporation）与开发者直接交流。该对话会保留在 LINE 官方账号中，发送的文字内容也会按每次咨询作为第四条的咨询保存到 SK Hub Systems（结束咨询或 24 小时内没有消息时结束）。选择“问 AI”时，发送的文字内容及之前的对话会为了生成回答而由 Cloudflare Workers AI（Cloudflare, Inc.）处理（不会用于训练模型）。该对话自最后一条消息起最多临时保存 30 分钟，转接给负责人时作为第四条的咨询保存。AI 的回答可能不正确。选择通过 LINE 接收 SK Hub Systems 账户的通知时，会保存该选择及开始接收的日期时间等，并且官方 LINE 只会告知有新通知（通知的内容不会发送到 LINE）。
 
 第三条 访问检查中处理的信息
 1.在本网站（包括 SK's Lab 的工具）、MALU、Nagi 及 Y-FILTER. 的管理控制台中，为应对不当使用和了解使用情况，会进行访问检查。
@@ -83,7 +83,7 @@ SK 隐私政策
 (b) Firebase（SK Hub Systems、Google LLC）
 (c) Google Fonts（文字显示、Google LLC）
 (d) Google Analytics（访问分析・Google LLC。按照第四条之二，仅限允许时）
-(e) Cloudflare Workers・D1（LINE・Kakao・通行密钥登录、SK Hub 官方 LINE，Cloudflare, Inc.）
+(e) Cloudflare Workers・D1・Workers AI（LINE・Kakao・通行密钥登录、SK Hub 官方 LINE，Cloudflare, Inc.）
 (f) LINE 登录・LINE 迷你应用・LINE 官方账号（LY Corporation）・Kakao 登录（Kakao Corp.）（仅限使用各自时）
 
 第十条 未成年人的信息
@@ -125,4 +125,4 @@ SK 隐私政策
 15.2026年10月13日，为明确 Google 用户数据的处理方式，新增了第四条之三。
 16.2026年10月13日，配合 SK Hub Systems 账户使用记录的保存，修订了第二条及第三条。
 17.2026年10月14日，配合 SK Hub Systems 账户新增 LINE 账号、Kakao 账号及通行密钥登录，修订了第二条及第九条。
-18.2026年10月14日，配合在 LINE 迷你应用中登录 SK Hub Systems 账户、SK Hub 官方 LINE（通过 LINE 接收通知的功能・在聊天中咨询・聊天咨询）及没有邮箱地址的账户接收课程表，修订了第二条及第九条。
+18.2026年10月14日，配合在 LINE 迷你应用中登录 SK Hub Systems 账户、SK Hub 官方 LINE（通过 LINE 接收通知的功能・在聊天中咨询・聊天咨询・问 AI）及没有邮箱地址的账户接收课程表，修订了第二条及第九条。
