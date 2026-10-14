@@ -895,7 +895,7 @@ signedOutView.querySelectorAll("[data-acct-mode-tab]").forEach((btn) => btn.addE
   signedOutView.querySelector(`.acct-mode-tab[data-acct-mode-tab="${signinMode}"]`)?.focus();
 }));
 setSigninMode(signinMode, false);
-$("[data-acct-security-lead]").textContent = accountNames.length <= 1
+$("[data-acct-security-lead]").textContent = accountNames.length <= 1 && (accountNames[0] || "Google") === "Google"
   ? t("このアカウントには Google アカウントでログインします。SK がパスワードを発行・保存することはありません。")
   : t("このアカウントには、{names} のアカウントでログインします。SK がパスワードを発行・保存することはありません。2 段階認証などは、それぞれのアカウントで設定します。", { names: accountList });
 root.querySelectorAll("[data-acct-signin]").forEach((btn) => btn.addEventListener("click", async () => {
@@ -970,7 +970,7 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
   if (busy || !user) return;
   setBusy(true, btn);
   try {
-    const [teams, devices, notices, maluWords, maluHistory, backups, nagiData, timetableInbox, ...toolboxDocs] = await Promise.all([
+    const [teams, devices, notices, maluWords, maluHistory, backups, nagiData, timetableInbox, timetableUserInbox, ...toolboxDocs] = await Promise.all([
       getDocs(query(collection(db, "teams"), where("members", "array-contains", user.uid))),
       getDocs(query(collection(db, "devices"), where("ownerUid", "==", user.uid))),
       getDocs(collection(db, "accounts", user.uid, "notices")),
@@ -979,6 +979,7 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
       getDocs(collection(db, "teams", user.uid, "backups")),
       getDoc(doc(db, "accounts", user.uid, "nagi", "data")),
       getDoc(inboxRef()).catch(() => null),
+      getDoc(doc(db, "timetableUserInbox", user.uid)).catch(() => null),
       ...TOOLBOX_DOCS.map((id) => getDoc(doc(db, "accounts", user.uid, "toolbox", id)))
     ]);
     // 日時は ISO 8601、バイト列（Toolbox の暗号文）は Base64 にする
@@ -1013,6 +1014,8 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
       toolbox: Object.fromEntries(toolboxDocs.filter((d) => d.exists()).map((d) => [d.id, plain(d.data())])),
       // SK's Toolbox の時間割の配信で、このアカウントのメールアドレスあてに配信された時間割の ID
       timetableInbox: timetableInbox && timetableInbox.exists() ? plain(timetableInbox.data()) : null,
+      // 招待コードで参加して、このアカウントで受け取っている時間割の ID
+      timetableUserInbox: timetableUserInbox && timetableUserInbox.exists() ? plain(timetableUserInbox.data()) : null,
       yFilterConsole: {
         teams: teams.docs.map((d) => ({ id: d.id, role: d.id === user.uid ? "owner" : "co-admin", ...plain(d.data()) })),
         devices: devices.docs.map((d) => ({ id: d.id, ...plain(d.data()) })),
@@ -1086,7 +1089,9 @@ async function deleteServiceData(uid) {
 
 // SK's Toolbox の時間割の配信: 自分のメールアドレスあての受け取り箱（配信された時間割の ID の一覧）
 const inboxRef = () => doc(db, "timetableInbox", String(current.user?.email || "").toLowerCase() || "-");
+//   招待コードで参加した時間割は、アカウント（UID）あての受け取り箱（timetableUserInbox）
 async function deleteTimetableInbox() {
+  if (current.user) await deleteRefs([doc(db, "timetableUserInbox", current.user.uid)]).catch(() => { /* ない */ });
   if (!current.user?.email) return;
   await deleteRefs([inboxRef()]).catch(() => { /* ない・確認していないメールアドレス */ });
 }

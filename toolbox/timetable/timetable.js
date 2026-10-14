@@ -1323,11 +1323,14 @@
     window.M3.prompt({ title: t("招待コードで参加"), label: t("招待コード（例: K7QM-3XRA）"), placeholder: "XXXX-XXXX", ok: t("次へ"), maxLength: 20 }).then(function (v) { if (v) doJoin(v); });
   }
   function doJoin(code) {
-    // LINE の中では、ログイン（Google）ができないので、ブラウザで開いて参加してもらう
-    if (window.SKLine && SKLine.inLine) {
-      window.M3.dialog({ title: t("ブラウザで開いて参加します"), icon: "open_in_browser", body: el("p", "tbs-dialog__text", t("招待コードでの参加には、SK Hub Systems アカウントでのログインが必要です。LINE の中ではログインできないので、ブラウザで開きます。")),
-        actions: [{ label: t("キャンセル"), value: null }, { label: t("ブラウザで開く"), primary: true, value: "open" }] })
-        .then(function (v) { if (v === "open") SKLine.openExternal("/toolbox/timetable/?join=" + encodeURIComponent(code)); });
+    // LINE の中では、LINE でログインしてから参加する（/toolbox/shared/line.js）
+    if (!hint() && window.SKLine && SKLine.inLine) {
+      window.M3.dialog({ title: t("ログインしてください"), icon: "login", body: el("p", "tbs-dialog__text", t("招待コードで参加するには、SK Hub Systems アカウントにログインします。LINE でログインできます。")),
+        actions: [{ label: t("キャンセル"), value: null }, { label: t("LINE でログイン"), primary: true, value: "login" }] })
+        .then(function (v) {
+          if (v !== "login") return;
+          return SKLine.signIn().then(function (r) { if (r === "ready") doJoin(code); }, function () { say(t("ログインできませんでした。時間をおいてもう一度お試しください。")); });
+        });
       return;
     }
     if (!hint()) {
@@ -1348,7 +1351,9 @@
         var p1 = el("p", "tt-info");
         p1.append(icon("school"), el("span", "", t("「{title}」の時間割と連絡が届くようになります（見るだけ）。", { title: info.title })));
         var p2 = el("p", "tt-info");
-        p2.append(icon("visibility"), el("span", "", t("配信している人（管理者）に、あなたの名前（{name}）とメールアドレス（{email}）が伝わります。ほかの参加者には見えません。", { name: info.name || t("名前なし"), email: info.email })));
+        p2.append(icon("visibility"), el("span", "", info.email
+          ? t("配信している人（管理者）に、あなたの名前（{name}）とメールアドレス（{email}）が伝わります。ほかの参加者には見えません。", { name: info.name || t("名前なし"), email: info.email })
+          : t("配信している人（管理者）に、あなたの名前（{name}）とアイコンが伝わります。ほかの参加者には見えません。", { name: info.name || t("名前なし") })));
         body.append(p1, p2);
         return window.M3.dialog({ title: t("「{title}」に参加しますか？", { title: info.title }), icon: "group_add", body: body, actions: [{ label: t("キャンセル"), value: null }, { label: t("参加する"), primary: true, value: "join" }] }).then(function (v) {
           if (v !== "join") return;
@@ -1698,6 +1703,17 @@
   $("menu-refresh").hidden = !signedIn;
   $("receive-hint").hidden = signedIn || Object.keys(data.received).length > 0;
   $("receive-login").href = (I18N && I18N.path ? I18N.path("/account/") : "/account/") + "?next=" + encodeURIComponent(location.pathname);
+  // LINE の中では、LINE でログインする（/toolbox/shared/line.js）。ログインできたら受け取る
+  $("receive-login").addEventListener("click", function (e) {
+    if (!window.SKLine || !SKLine.inLine) return;
+    e.preventDefault();
+    SKLine.signIn().then(function (r) {
+      if (r !== "ready") return;
+      $("receive-hint").hidden = true;
+      $("menu-refresh").hidden = false;
+      receive(true);
+    }, function () { say(t("ログインできませんでした。時間をおいてもう一度お試しください。")); });
+  });
   if (signedIn) {
     receive(false);
     setInterval(function () { if (document.visibilityState === "visible") receive(false); }, 30 * 60 * 1000);
