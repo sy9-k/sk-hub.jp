@@ -35,8 +35,7 @@
   /* ================= 色（日本風 = 既定 / 韓国風 = data-ui="kr"） ================= */
   :root {
     --font: "M PLUS Rounded 1c", "Noto Sans JP", "Noto Sans KR", sans-serif;
-    --body: #fbfbfd; --bumper: #e5245a; --bumper2: #ff6f95; --hw: #3a3a48;
-    --screen: linear-gradient(160deg, #ffd6ec 0%, #f2c3ff 28%, #c9d3ff 58%, #bfe8ff 100%);
+        --screen: linear-gradient(160deg, #ffd6ec 0%, #f2c3ff 28%, #c9d3ff 58%, #bfe8ff 100%);
     --ink: #2a1840; --ink2: #6a5a84;
     --red: linear-gradient(#ff6a6f, #e3202e 52%, #b5121e);
     --orange: linear-gradient(#ffc04d, #fb8e14 52%, #df6c00);
@@ -58,8 +57,7 @@
   }
   [data-ui="kr"] {
     --font: "Noto Sans KR", "Noto Sans JP", sans-serif;
-    --body: #14161f; --bumper: #18c8e8; --bumper2: #ff3fa4; --hw: #c9d6ff;
-    --screen: radial-gradient(120% 90% at 20% 0%, #1a2a6a 0%, #0c1030 55%, #05060f 100%);
+        --screen: radial-gradient(120% 90% at 20% 0%, #1a2a6a 0%, #0c1030 55%, #05060f 100%);
     --ink: #e8f6ff; --ink2: #8ea4d8;
     --red: linear-gradient(160deg, rgba(255, 63, 164, .3), rgba(255, 63, 164, .08));
     --orange: linear-gradient(160deg, rgba(255, 225, 77, .28), rgba(255, 225, 77, .06));
@@ -81,31 +79,9 @@
   }
   #stage { font-family: var(--font); }
 
-  /* ================= 本体（白い枠と、左右の色つきのふち、下のボタン） ================= */
-  .device {
-    position: absolute; inset: 0; border-radius: 36px; background: var(--body);
-    display: grid; grid-template-rows: 1fr 60px; padding: 18px 24px 0;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08), 0 20px 60px rgba(0, 0, 0, .5);
-  }
-  .device::before, .device::after {
-    content: ""; position: absolute; top: 6%; bottom: 6%; width: 12px; border-radius: 10px;
-    background: linear-gradient(var(--bumper2), var(--bumper)); box-shadow: 0 0 12px rgba(0, 0, 0, .15);
-  }
-  .device::before { left: -4px; } .device::after { right: -4px; }
-  [data-orient="port"] .device { padding: 14px 14px 0; border-radius: 30px; }
-  .screen {
-    position: relative; overflow: hidden; border-radius: 14px; background: #000;
-    display: grid; grid-template-rows: 46px 1fr 56px; box-shadow: 0 0 0 6px #111;
-  }
-  .hw { display: flex; align-items: center; gap: 10px; padding: 0 6px; color: var(--hw); }
-  .hw .brand { font-size: 13px; font-weight: 800; letter-spacing: .12em; opacity: .55; }
-  .hw .spk { display: grid; grid-template-columns: repeat(5, 4px); gap: 3px; margin-left: 6px; opacity: .35; }
-  .hw .spk i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
-  .hw .sp { flex: 1; }
-  .hw button { height: 36px; min-width: 92px; padding: 0 14px; border-radius: 8px; border: 2px solid currentColor; font-size: 15px; font-weight: 800; }
-  .hw .stop { color: #e3202e; }
-  [data-ui="kr"] .hw .stop { color: #ff4a6a; }
-
+  /* ================= 画面（枠なし。拡大・縮小した画面いっぱいを使う） ================= */
+  .device { position: absolute; inset: 0; display: grid; }
+  .screen { position: relative; overflow: hidden; background: #000; display: grid; grid-template-rows: 46px 1fr 60px; }
   /* ================= 上の帯 ================= */
   .status { display: flex; align-items: center; gap: 10px; padding: 0 14px; background: var(--status); color: var(--ink); border-bottom: 1px solid rgba(0, 0, 0, .08); }
   .status .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, #ffa53a, #ff4f8f); color: #fff; font-weight: 900; }
@@ -240,6 +216,11 @@
   .dock .g { background: linear-gradient(#7ee08a, #2fb84a); box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
   .dock .w { background: #fff; color: #2a1840; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
   .dock .y { background: linear-gradient(#ffe46a, #f2b400); color: #3a2400; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+  .dock .r { background: linear-gradient(#ff6a6f, #d81f2c); box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+  [data-ui="kr"] .dock .r { background: transparent; box-shadow: inset 0 0 0 1.5px #ff4a6a, 0 0 12px rgba(255, 74, 106, .3); color: #ff9aae; }
+  [data-orient="port"] .dock { gap: 6px; padding: 0 8px; }
+  [data-orient="port"] .dock button { padding: 0 10px; font-size: 12px; }
+  [data-orient="port"] .dock .mini span { display: none; }
   .dock .y[aria-pressed="true"] { background: linear-gradient(#ff8ad0, #e22a86); color: #fff; }
   .dock .mini { flex: 1; min-width: 0; height: 40px; padding: 0 6px; border-radius: 10px; background: rgba(255, 255, 255, .08); justify-content: flex-start; text-align: left; }
   .dock .mini img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; background: rgba(255, 255, 255, .1); flex: none; }
@@ -576,6 +557,9 @@
         <button class="mini" id="miniNow"><img id="mArt" src="" alt=""><span id="mTitle">—</span></button>
         <button class="w" id="installBtn" hidden data-l="install">アプリに入れる</button>
         <button class="y" id="easyBtn" aria-pressed="false" data-l="easy">らくらく</button>
+        <button class="w" id="dockTop" data-l="top">TOP</button>
+        <button class="w" id="dockRemote" data-l="remote">リモコン</button>
+        <button class="r" id="dockStop" data-l="stop">演奏中止</button>
       </div>
 
       <!-- 曲の詳しい情報 -->
@@ -608,16 +592,6 @@
       <div id="toast" role="status" aria-live="polite"><div class="big"></div><div class="sub"></div><div class="no"></div></div>
     </div>
 
-    <!-- 本体の下のボタン -->
-    <div class="hw">
-      <span class="brand">LYRICS FLOW REMOTE</span>
-      <span class="spk" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-      <span class="sp"></span>
-      <button class="stop" id="hwStop" data-l="stop">演奏中止</button>
-      <button id="hwTop" data-l="top">TOP</button>
-      <button id="hwBack" data-l="back">戻る</button>
-      <button id="hwRemote" data-l="remote">リモコン</button>
-    </div>
   </div>
 </div>
 
@@ -1258,11 +1232,10 @@
     volUp: () => vol(10), volDown: () => vol(-10), queue: () => go('queue'),
   };
   $$('[data-op]').forEach((b) => { b.onclick = () => { if (navigator.vibrate) navigator.vibrate(10); OPS[b.dataset.op](); }; });
-  $('#hwStop').onclick = OPS.skip;
-  $('#hwTop').onclick = goTop;
-  $('#hwBack').onclick = back;
-  $('#hwRemote').onclick = () => go('pad');
   $('#dockBack').onclick = back;
+  $('#dockTop').onclick = goTop;
+  $('#dockRemote').onclick = () => go('pad');
+  $('#dockStop').onclick = OPS.skip;
   $('#miniNow').onclick = () => go('pad');
   $('#omakase').onclick = omakase;
 
