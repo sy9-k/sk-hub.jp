@@ -22,6 +22,9 @@
     --solid: #4a3a8c;
     --anchor: 50%;  /* いまの行を置く高さ */
     --ease: cubic-bezier(.2, .75, .2, 1);
+    --lf-ease: cubic-bezier(.22, 1, .36, 1);     /* 選んだ動き（JS で入れ替える） */
+    --lf-ease-out: cubic-bezier(.22, 1, .36, 1); /* 行きすぎない版（色・ぼかし用） */
+    --lf-dur: .6s;
     --kfill: #1f5bff;
   }
   [data-kcolor="red"]    { --kfill: #ff2f5f; }
@@ -98,13 +101,14 @@
     /* 日本語は文節で折り返す（対応ブラウザのみ）・行末の約物はぶら下げる・折り返した行の長さをそろえる */
     word-break: normal; word-break: auto-phrase; line-break: strict; overflow-wrap: break-word;
     hanging-punctuation: allow-end;
-    transition: transform .7s var(--ease);
     will-change: transform;
   }
   .line .txt {
     display: inline-block; transform-origin: left center; text-wrap: balance;
     color: rgba(255, 255, 255, .38);
-    transition: color .4s, transform .5s var(--ease), filter .5s, opacity .5s, text-shadow .5s;
+    /* 色・大きさ・ぼかしの変わり方も、選んだ動き（イージング）に合わせる */
+    transition: color calc(var(--lf-dur) * .8) var(--lf-ease-out), transform var(--lf-dur) var(--lf-ease),
+                filter var(--lf-dur) var(--lf-ease-out), opacity var(--lf-dur) var(--lf-ease-out), text-shadow var(--lf-dur) var(--lf-ease-out);
   }
   .line.past .txt { color: rgba(255, 255, 255, .2); }
   .line.active .txt { color: #fff; }
@@ -186,7 +190,7 @@
             mask-image: linear-gradient(transparent, #000 16%, #000 80%, transparent);
   }
   [data-theme="glow"] #lines { padding: 0 4vw 0 3vw; }
-  [data-theme="glow"] .line { padding: .36em 0; transition: transform .95s cubic-bezier(.3, 1.22, .45, 1); }
+  [data-theme="glow"] .line { padding: .36em 0; }
   [data-theme="glow"] .line .txt { color: rgba(255, 255, 255, .36); transform: scale(.97); }
   [data-theme="glow"] .line[data-d="1"] .txt { filter: blur(.6px); }
   [data-theme="glow"] .line[data-d="2"] .txt { filter: blur(1.3px); }
@@ -286,8 +290,8 @@
     font-size: calc(var(--size) * 1.5); line-height: 1.25;
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .55));
   }
-  .kline.enter { animation: kin .3s var(--ease); }
-  @keyframes kin { from { opacity: 0; } to { opacity: 1; } }
+  .kline.enter { animation: kin var(--lf-dur) var(--lf-ease); }
+  @keyframes kin { from { opacity: 0; transform: translateY(.22em); } to { opacity: 1; transform: none; } }
   .kline .base, .kline .fill { display: block; padding: 0 .2em; paint-order: stroke fill; }
   /* 歌う前: 白い文字に黒いふち / 歌ったあと: 色の文字に白いふち */
   .kline .base { color: #fff; -webkit-text-stroke: .17em #111; }
@@ -423,6 +427,12 @@
     font-size: 24px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-family: var(--lf-family); font-weight: var(--lf-weight); letter-spacing: var(--lf-spacing);
     font-feature-settings: var(--lf-feat); font-synthesis: none;
+  }
+  #easePreview { position: relative; height: 34px; margin-top: 10px; border-radius: 12px; background: rgba(0, 0, 0, .28); overflow: hidden; }
+  #easePreview::before { content: ""; position: absolute; left: 20px; right: 20px; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: rgba(255, 255, 255, .14); }
+  #easePreview i {
+    position: absolute; left: 20px; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 14px rgba(255, 255, 255, .6); will-change: transform;
   }
   #offsetLabel { font-size: 13px; min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
   .hint { font-size: 11px; color: rgba(255, 255, 255, .45); margin: 12px 4px 0; line-height: 1.6; }
@@ -571,6 +581,16 @@
   </div>
   <div id="fontPreview">歌詞のサンプル Lyrics 123</div>
 
+  <h3>動き（イージング）</h3>
+  <div class="row">
+    <button class="chip" data-ease="auto">おすすめ</button>
+    <button class="chip" data-ease="spring">ばね</button>
+    <button class="chip" data-ease="smooth">なめらか</button>
+    <button class="chip" data-ease="snappy">キビキビ</button>
+    <button class="chip" data-ease="none">なし</button>
+  </div>
+  <div id="easePreview" title="押すと動きを試せます"><i></i></div>
+
   <h3>表示</h3>
   <div class="row">
     <label>文字の大きさ</label>
@@ -587,7 +607,7 @@
     <button class="chip" id="fs">全画面</button>
     <button class="chip" id="logout">ログアウト</button>
   </div>
-  <p class="hint">テーマのおすすめ: Apple Music 風は SF Pro・ヒラギノ（Apple 以外は Inter・Noto Sans JP）、Spotify 風は Figtree、カラオケは極太ゴシック。手書き風・ポップは、いちばん太いのが用意されている太さまでです。<br>キー: T テーマ / F 全画面 / + − 文字の大きさ / [ ] タイミング / スペース 再生・一時停止<br>再生の操作には Spotify Premium が必要です。歌詞は LRCLIB から読み込みます。</p>
+  <p class="hint">テーマのおすすめ: Apple Music 風は SF Pro・ヒラギノ（Apple 以外は Inter・Noto Sans JP）、Spotify 風は Figtree、カラオケは極太ゴシック。手書き風・ポップは、いちばん太いのが用意されている太さまでです。<br>動き: ばね は少し行きすぎて戻る（Apple Music 風のおすすめ）、なめらか はゆっくり止まる、キビキビ はすばやく止まる。端末で「視差効果を減らす」をオンにしていると、おすすめは なし になります。<br>キー: T テーマ / F 全画面 / + − 文字の大きさ / [ ] タイミング / E 動き / スペース 再生・一時停止<br>再生の操作には Spotify Premium が必要です。歌詞は LRCLIB から読み込みます。</p>
 </div>
 
 <div id="toast" role="status"></div>
@@ -1109,6 +1129,8 @@
     state.karaoke = type === 'synced' ? toKaraoke(lines) : [];
     state.kShown = [null, null];
     state.activeIndex = -1;
+    springs.length = 0;
+    snapNext = true;
   }
 
   function findIndex(lines, ms) {
@@ -1120,21 +1142,110 @@
     return ans;
   }
 
-  // 一覧で流すテーマ: 行ごとに動かす（Apple Music 風は、いまの行より下の行ほど少し遅れて動く）
+  // ================= 行の動き（イージング） =================
+  // 行ごとにばねで動かす。動いている途中で次の行に変わっても、勢いを保ったまま向きを変えるので、
+  // CSS の transition のように途中でカクッとしない。
+  //   k = ばねの強さ（大きいほど速い）、c = 減衰（小さいほど行きすぎて揺れる。c = 2√k でちょうど行きすぎない）
+  //   stagger = 下の行ほど遅れて動き出す間隔（ms）、css = 色や大きさの変わり方、dur = その長さ（秒）
+  const EASES = {
+    spring: { k: 190, c: 19, stagger: 45, css: 'cubic-bezier(.34, 1.45, .64, 1)', out: 'cubic-bezier(.22, 1, .36, 1)', dur: .55 },
+    smooth: { k: 110, c: 21, stagger: 22, css: 'cubic-bezier(.22, 1, .36, 1)', out: 'cubic-bezier(.22, 1, .36, 1)', dur: .6 },
+    snappy: { k: 420, c: 41, stagger: 0, css: 'cubic-bezier(.2, .9, .1, 1)', out: 'cubic-bezier(.2, .9, .1, 1)', dur: .25 },
+    none:   { k: 0, c: 0, stagger: 0, css: 'linear', out: 'linear', dur: 0 },
+  };
+  const THEME_EASE = { glow: 'spring', bold: 'smooth', karaoke: 'smooth', simple: 'smooth' };
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let easePref = store.get('lf_ease') || 'auto';
+  function easeName() {
+    if (EASES[easePref]) return easePref;
+    return reducedMotion ? 'none' : (THEME_EASE[theme()] || 'smooth');
+  }
+  function applyEaseCss() {
+    const e = EASES[easeName()];
+    root.style.setProperty('--lf-ease', e.css);
+    root.style.setProperty('--lf-ease-out', e.out);
+    root.style.setProperty('--lf-dur', e.dur + 's');
+  }
+  function setEase(name, preview) {
+    easePref = EASES[name] ? name : 'auto';
+    store.set('lf_ease', easePref);
+    $$('.chip[data-ease]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ease === easePref)));
+    applyEaseCss();
+    if (preview) playPreview();
+  }
+
+  // ばねを dt 秒すすめる（フレームが飛んでも安定するよう、細かく分けて計算する）
+  function stepSpring(s, e, dt) {
+    let t = dt;
+    while (t > 0) {
+      const h = Math.min(t, 1 / 240);
+      s.v += (-e.k * (s.y - s.to) - e.c * s.v) * h;
+      s.y += s.v * h;
+      t -= h;
+    }
+  }
+  const settled = (s) => Math.abs(s.to - s.y) < .05 && Math.abs(s.v) < .05;
+
+  const springs = [];      // 行ごとの { y: いまの位置, v: 速さ, to: 行き先, at: 動き出す時刻 }
+  const plain = { y: 0, v: 0, to: 0 }; // タイミングのない歌詞をまとめて流すとき
+  let snapNext = true;     // 曲が変わった直後は、動かさずにその位置へ置く
+
+  // 一覧で流すテーマ: いまの行が基準の高さに来るよう、全部の行の行き先を決める
   function layoutLines(idx) {
     const children = $('#lines').children;
     if (!children.length) return;
     const target = children[Math.max(idx, 0)];
-    const y = target.offsetTop + target.offsetHeight / 2;
-    const stagger = theme() === 'glow';
+    const to = -(target.offsetTop + target.offsetHeight / 2);
+    const e = EASES[easeName()];
+    const now = performance.now();
     for (let i = 0; i < children.length; i++) {
       const c = children[i];
       c.classList.toggle('active', i === idx);
       c.classList.toggle('past', i < idx);
       c.dataset.d = String(Math.min(Math.abs(i - Math.max(idx, 0)), 4));
-      c.style.transitionDelay = stagger ? Math.max(0, Math.min(i - idx + 1, 8)) * 45 + 'ms' : '0ms';
-      c.style.transform = `translateY(${-y}px)`;
+      const s = springs[i] || (springs[i] = { y: to, v: 0, to, at: 0 });
+      s.to = to;
+      // いまの行の 1 つ上から下へ、少しずつ遅れて動き出す
+      s.at = now + Math.max(0, Math.min(i - idx + 1, 8)) * e.stagger;
+      if (snapNext || !e.k) { s.y = to; s.v = 0; c.style.transform = `translate3d(0, ${to}px, 0)`; }
     }
+    springs.length = children.length;
+    snapNext = false;
+  }
+
+  function stepLines(dt) {
+    const e = EASES[easeName()];
+    if (!e.k) return;
+    const children = $('#lines').children;
+    const now = performance.now();
+    for (let i = 0; i < springs.length; i++) {
+      const s = springs[i];
+      if (now < s.at || s.y === s.to) continue;
+      if (settled(s)) { s.y = s.to; s.v = 0; }
+      else stepSpring(s, e, dt);
+      children[i].style.transform = `translate3d(0, ${s.y.toFixed(2)}px, 0)`;
+    }
+  }
+
+  // パネルの見本: 押すたびに点が左右に動く
+  const pv = { y: 0, v: 0, to: 0 };
+  let pvRaf = 0;
+  function playPreview() {
+    const box = $('#easePreview');
+    const dot = box.querySelector('i');
+    pv.to = pv.to > 0 ? 0 : box.clientWidth - 40;
+    const e = EASES[easeName()];
+    cancelAnimationFrame(pvRaf);
+    if (!e.k) { pv.y = pv.to; pv.v = 0; dot.style.transform = `translateX(${pv.y}px)`; return; }
+    let last = performance.now();
+    const tick = (now) => {
+      stepSpring(pv, e, Math.min((now - last) / 1000, 1 / 20));
+      last = now;
+      if (settled(pv)) { pv.y = pv.to; pv.v = 0; }
+      dot.style.transform = `translateX(${pv.y.toFixed(2)}px)`;
+      if (pv.y !== pv.to) pvRaf = requestAnimationFrame(tick);
+    };
+    pvRaf = requestAnimationFrame(tick);
   }
 
   // カラオケ: 上の段と下の段に交互に行を出し、歌っている行を左から塗っていく
@@ -1183,8 +1294,11 @@
     }
   }
 
-  function frame() {
+  let lastTs = 0;
+  function frame(ts) {
     requestAnimationFrame(frame);
+    const dt = lastTs ? Math.min((ts - lastTs) / 1000, 1 / 20) : 0;
+    lastTs = ts;
     if (!state.track) return;
     const raw = Math.max(0, Math.min(rawMs(), state.track.duration));
     const ms = Math.max(0, Math.min(raw + state.offsetMs, state.track.duration));
@@ -1199,13 +1313,16 @@
     if (ly.type === 'synced') {
       if (theme() === 'karaoke') { renderKaraoke(ms); return; }
       const idx = findIndex(ly.lines, ms);
-      if (idx === state.activeIndex) return;
-      state.activeIndex = idx;
-      layoutLines(idx);
+      if (idx !== state.activeIndex) { state.activeIndex = idx; layoutLines(idx); }
+      stepLines(dt);
     } else {
-      // 非同期歌詞: 曲の長さに合わせて一定速度でひたすら流す
+      // 非同期歌詞: 曲の長さに合わせて一定速度でひたすら流す（シークしたときは、ばねで追いつく）
       const el = $('#lines');
-      el.style.transform = `translateY(${-(ms / state.track.duration) * el.scrollHeight}px)`;
+      plain.to = -(ms / state.track.duration) * el.scrollHeight;
+      const e = EASES[easeName()];
+      if (snapNext || !e.k) { plain.y = plain.to; plain.v = 0; snapNext = false; }
+      else stepSpring(plain, EASES.smooth, dt);
+      el.style.transform = `translate3d(0, ${plain.y.toFixed(2)}px, 0)`;
     }
   }
 
@@ -1221,6 +1338,7 @@
     store.set('lf_theme', name);
     $$('.tp').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === name)));
     $('#kcolors').hidden = name !== 'karaoke';
+    applyEaseCss();
     relayout();
   }
   function setKColor(c) {
@@ -1301,6 +1419,8 @@
   $$('.tp').forEach((b) => { b.onclick = () => setTheme(b.dataset.pick); });
   $$('.chip[data-kcolor]').forEach((b) => { b.onclick = () => setKColor(b.dataset.kcolor); });
   $$('.fchip').forEach((b) => { b.onclick = () => setFont(b.dataset.font); });
+  $$('.chip[data-ease]').forEach((b) => { b.onclick = () => setEase(b.dataset.ease, true); });
+  $('#easePreview').onclick = playPreview;
   $$('.chip[data-weight]').forEach((b) => { b.onclick = () => setWeight(b.dataset.weight); });
   // フォントのファイルが届くと字の幅や高さが変わるので、行の位置とカラオケの文字の大きさを測り直す
   if (document.fonts) document.fonts.addEventListener('loadingdone', relayout);
@@ -1318,6 +1438,11 @@
     if (e.key === 'f' || e.key === 'F') toggleFullscreen();
     else if (e.key === 't' || e.key === 'T') setTheme(THEMES[(THEMES.indexOf(theme()) + 1) % THEMES.length]);
     else if (e.key === 'Escape') togglePanel(false);
+    else if (e.key === 'e' || e.key === 'E') {
+      const order = ['auto', 'spring', 'smooth', 'snappy', 'none'];
+      setEase(order[(order.indexOf(easePref) + 1) % order.length]);
+      toast('動き: ' + { auto: 'おすすめ', spring: 'ばね', smooth: 'なめらか', snappy: 'キビキビ', none: 'なし' }[easePref]);
+    }
     else if (e.key === ' ' && e.target === document.body) { e.preventDefault(); togglePlay(); }
     else if (e.key === '+' || e.key === '=') changeFont(4);
     else if (e.key === '-') changeFont(-4);
@@ -1332,6 +1457,7 @@
     setKColor(root.getAttribute('data-kcolor') || 'blue');
     setFont(root.getAttribute('data-font') || 'auto');
     setWeight(root.getAttribute('data-weight') || 'auto');
+    setEase(easePref);
     applyFontSize();
     applyOffset();
     setVolumeUI(50);
