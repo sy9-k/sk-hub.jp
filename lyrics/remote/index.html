@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-ui="jp">
+<html lang="ja" data-ui="jp" data-orient="land">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -14,293 +14,372 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="選曲リモコン">
-<!-- 画面の種類（日本風 / 韓国風）を、画面が出る前に付ける -->
-<script>(function(){try{var u=localStorage.getItem("lf_remote_ui");if(u==="kr"){document.documentElement.setAttribute("data-ui","kr");document.documentElement.lang="ko";}}catch(e){}})();</script>
+<!-- 画面の種類（日本風 / 韓国風）と向きを、画面が出る前に付ける -->
+<script>(function(){var d=document.documentElement;try{if(localStorage.getItem("lf_remote_ui")==="kr"){d.setAttribute("data-ui","kr");d.lang="ko";}if(localStorage.getItem("lf_remote_easy")==="on")d.setAttribute("data-easy","");}catch(e){}d.setAttribute("data-orient",innerWidth/innerHeight>=.95?"land":"port");})();</script>
 <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=Noto+Sans+KR:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@700;800&display=swap"></script>
 <style>
+  /* =====================================================================
+     しくみ: 画面は決まった大きさ（横長は高さ 800・縦長は幅 720。もう一方は画面の比に合わせる）で作り、
+     ブラウザの大きさに合わせて丸ごと拡大・縮小する（どの画面でも大きく、配置もくずれない）
+     ===================================================================== */
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; }
-  body { overflow: hidden; color: #fff; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: #0b0716; color: #fff; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
   button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
   input { user-select: text; -webkit-user-select: text; }
   [hidden] { display: none !important; }
   svg { display: block; }
   [lang="ko"] { font-family: "Noto Sans KR", "Apple SD Gothic Neo", sans-serif; }
+  #stage { position: fixed; left: 50%; top: 50%; width: 1280px; height: 800px; transform-origin: center; transform: translate(-50%, -50%); }
 
-  /* =====================================================================
-     色・形（日本風 = 既定 / 韓国風 = data-ui="kr"）
-     ===================================================================== */
+  /* ================= 色（日本風 = 既定 / 韓国風 = data-ui="kr"） ================= */
   :root {
     --font: "M PLUS Rounded 1c", "Noto Sans JP", "Noto Sans KR", sans-serif;
-    --bg: radial-gradient(120% 80% at 80% 0%, #4a1a6e 0%, #1c0d36 45%, #0d0820 100%);
-    --bar: linear-gradient(#2a1650, #1a0d34);
-    --field: #fff; --field-fg: #1a1030;
-    --tile-r: linear-gradient(#ff5a5f, #d81f2c 55%, #b0121e);
-    --tile-o: linear-gradient(#ffb43a, #f58a0c 55%, #d96a00);
-    --tile-b: linear-gradient(#5d9bff, #2c66e8 55%, #1a46b8);
-    --tile-g: linear-gradient(#3fd6c0, #13a892 55%, #0b7e6e);
-    --tile-v: linear-gradient(#b980ff, #8a4ae8 55%, #6428c0);
-    --tile-radius: 12px;
-    --tile-edge: 0 0 0 2px rgba(255, 255, 255, .7), 0 4px 0 rgba(0, 0, 0, .35), 0 8px 18px rgba(0, 0, 0, .35);
-    --row: linear-gradient(90deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .04));
-    --row-edge: rgba(255, 255, 255, .14);
+    --body: #fbfbfd; --bumper: #e5245a; --bumper2: #ff6f95; --hw: #3a3a48;
+    --screen: linear-gradient(160deg, #ffd6ec 0%, #f2c3ff 28%, #c9d3ff 58%, #bfe8ff 100%);
+    --ink: #2a1840; --ink2: #6a5a84;
+    --red: linear-gradient(#ff6a6f, #e3202e 52%, #b5121e);
+    --orange: linear-gradient(#ffc04d, #fb8e14 52%, #df6c00);
+    --navy: linear-gradient(#3d6ee8, #1f4ac4 52%, #16349a);
+    --teal: linear-gradient(#45d8c4, #14a892 52%, #0b7e6e);
+    --purple: linear-gradient(#b884ff, #8a4ae8 52%, #6428c0);
+    --pink: linear-gradient(#ff8ad0, #f24aa8 52%, #c81f80);
+    --white-tile: linear-gradient(#ffffff, #eef0f8);
+    --edge: 0 0 0 2px #fff, 0 3px 0 rgba(60, 20, 80, .35), 0 6px 14px rgba(60, 20, 80, .25);
+    --status: linear-gradient(#ffffff, #f1eaff);
+    --dock: linear-gradient(#3b2a66, #24174a);
+    --list-bg: linear-gradient(170deg, #2a1650 0%, #1a0d34 100%);
+    --row: linear-gradient(90deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04));
+    --row-edge: rgba(255, 255, 255, .16);
     --accent: #ffd23f;
     --reserve: radial-gradient(circle at 40% 30%, #ff8a8a 0%, #e8222f 45%, #a10f19 100%);
-    --back: linear-gradient(#5fe08a, #1fae55);
     --pad-bg: radial-gradient(120% 90% at 50% 0%, #a3162a 0%, #5a0a18 55%, #2a0610 100%);
-    --key: linear-gradient(#ffffff, #e4e4ee);
-    --key-fg: #222;
+    --key: linear-gradient(#ffffff, #e4e4ee); --key-fg: #222;
   }
   [data-ui="kr"] {
     --font: "Noto Sans KR", "Noto Sans JP", sans-serif;
-    --bg: radial-gradient(120% 80% at 20% 0%, #10204e 0%, #090b22 55%, #05060f 100%);
-    --bar: linear-gradient(#0e1438, #090c24);
-    --field: rgba(255, 255, 255, .08); --field-fg: #fff;
-    --tile-r: linear-gradient(160deg, rgba(255, 63, 164, .28), rgba(255, 63, 164, .08));
-    --tile-o: linear-gradient(160deg, rgba(255, 225, 77, .26), rgba(255, 225, 77, .06));
-    --tile-b: linear-gradient(160deg, rgba(45, 226, 255, .26), rgba(45, 226, 255, .06));
-    --tile-g: linear-gradient(160deg, rgba(80, 255, 160, .24), rgba(80, 255, 160, .06));
-    --tile-v: linear-gradient(160deg, rgba(139, 92, 255, .32), rgba(139, 92, 255, .08));
-    --tile-radius: 18px;
-    --tile-edge: inset 0 0 0 1.5px rgba(255, 255, 255, .16);
+    --body: #14161f; --bumper: #18c8e8; --bumper2: #ff3fa4; --hw: #c9d6ff;
+    --screen: radial-gradient(120% 90% at 20% 0%, #1a2a6a 0%, #0c1030 55%, #05060f 100%);
+    --ink: #e8f6ff; --ink2: #8ea4d8;
+    --red: linear-gradient(160deg, rgba(255, 63, 164, .3), rgba(255, 63, 164, .08));
+    --orange: linear-gradient(160deg, rgba(255, 225, 77, .28), rgba(255, 225, 77, .06));
+    --navy: linear-gradient(160deg, rgba(45, 226, 255, .26), rgba(45, 226, 255, .06));
+    --teal: linear-gradient(160deg, rgba(80, 255, 160, .24), rgba(80, 255, 160, .06));
+    --purple: linear-gradient(160deg, rgba(139, 92, 255, .34), rgba(139, 92, 255, .08));
+    --pink: linear-gradient(160deg, rgba(255, 110, 200, .32), rgba(255, 110, 200, .08));
+    --white-tile: linear-gradient(160deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .03));
+    --edge: inset 0 0 0 1.5px rgba(255, 255, 255, .2);
+    --status: linear-gradient(#10163c, #0a0d26);
+    --dock: linear-gradient(#0e1438, #080b20);
+    --list-bg: radial-gradient(120% 80% at 20% 0%, #10204e 0%, #090b22 55%, #05060f 100%);
     --row: rgba(255, 255, 255, .05);
-    --row-edge: rgba(45, 226, 255, .18);
+    --row-edge: rgba(45, 226, 255, .2);
     --accent: #2de2ff;
     --reserve: radial-gradient(circle at 40% 30%, #fff4a8 0%, #ffd400 45%, #d18a00 100%);
-    --back: linear-gradient(#2a3366, #1a2050);
     --pad-bg: radial-gradient(120% 90% at 50% 0%, #1a1f4a 0%, #0b0d24 60%, #05060f 100%);
-    --key: radial-gradient(circle at 50% 35%, #2a3170, #151a42);
-    --key-fg: #e6f7ff;
+    --key: radial-gradient(circle at 50% 35%, #2a3170, #151a42); --key-fg: #e6f7ff;
   }
-  body { font-family: var(--font); background: var(--bg); }
+  #stage { font-family: var(--font); }
 
-  /* ================= 画面の枠 ================= */
-  .shell { height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
-  .bar {
-    display: flex; align-items: center; gap: 8px;
-    padding: max(8px, env(safe-area-inset-top)) 10px 8px; background: var(--bar);
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+  /* ================= 本体（白い枠と、左右の色つきのふち、下のボタン） ================= */
+  .device {
+    position: absolute; inset: 0; border-radius: 36px; background: var(--body);
+    display: grid; grid-template-rows: 1fr 60px; padding: 18px 24px 0;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08), 0 20px 60px rgba(0, 0, 0, .5);
   }
-  .topbtn {
-    flex: none; height: 38px; padding: 0 12px; border-radius: 10px; font-weight: 800; font-size: 14px;
-    background: linear-gradient(#ffe46a, #f2b400); color: #3a2400; box-shadow: 0 2px 0 #9a6a00;
-    display: flex; align-items: center; gap: 4px;
+  .device::before, .device::after {
+    content: ""; position: absolute; top: 6%; bottom: 6%; width: 12px; border-radius: 10px;
+    background: linear-gradient(var(--bumper2), var(--bumper)); box-shadow: 0 0 12px rgba(0, 0, 0, .15);
   }
-  .crumb {
-    flex: 1; min-width: 0; height: 38px; padding: 0 12px; border-radius: 8px; display: flex; align-items: center;
-    background: var(--field); color: var(--field-fg); font-weight: 800; font-size: 16px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  .device::before { left: -4px; } .device::after { right: -4px; }
+  [data-orient="port"] .device { padding: 14px 14px 0; border-radius: 30px; }
+  .screen {
+    position: relative; overflow: hidden; border-radius: 14px; background: #000;
+    display: grid; grid-template-rows: 46px 1fr 56px; box-shadow: 0 0 0 6px #111;
   }
-  .uiswitch { flex: none; display: flex; border-radius: 10px; overflow: hidden; border: 1.5px solid rgba(255, 255, 255, .3); font-size: 12px; font-weight: 800; }
-  .uiswitch button { padding: 0 10px; height: 35px; color: rgba(255, 255, 255, .6); }
-  .uiswitch button[aria-pressed="true"] { background: #fff; color: #1a1030; }
+  .hw { display: flex; align-items: center; gap: 10px; padding: 0 6px; color: var(--hw); }
+  .hw .brand { font-size: 13px; font-weight: 800; letter-spacing: .12em; opacity: .55; }
+  .hw .spk { display: grid; grid-template-columns: repeat(5, 4px); gap: 3px; margin-left: 6px; opacity: .35; }
+  .hw .spk i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+  .hw .sp { flex: 1; }
+  .hw button { height: 36px; min-width: 92px; padding: 0 14px; border-radius: 8px; border: 2px solid currentColor; font-size: 15px; font-weight: 800; }
+  .hw .stop { color: #e3202e; }
+  [data-ui="kr"] .hw .stop { color: #ff4a6a; }
+
+  /* ================= 上の帯 ================= */
+  .status { display: flex; align-items: center; gap: 10px; padding: 0 14px; background: var(--status); color: var(--ink); border-bottom: 1px solid rgba(0, 0, 0, .08); }
+  .status .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, #ffa53a, #ff4f8f); color: #fff; font-weight: 900; }
+  .status .name { font-weight: 900; font-size: 18px; letter-spacing: .04em; }
+  .status .name small { margin-left: 6px; font-size: 11px; color: var(--ink2); font-weight: 700; }
+  .status .help { padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; background: linear-gradient(#ff9ac7, #f24aa8); color: #fff; }
+  .status .sp { flex: 1; }
+  .status .conn { font-size: 12px; font-weight: 800; color: var(--ink2); display: flex; align-items: center; gap: 6px; }
+  .status .conn i { width: 9px; height: 9px; border-radius: 50%; background: #bbb; }
+  .status .conn.on i { background: #20c46a; box-shadow: 0 0 8px #20c46a; }
+  .status .clock { font-size: 15px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .uiswitch { display: flex; border-radius: 9px; overflow: hidden; border: 1.5px solid rgba(0, 0, 0, .2); font-size: 12px; font-weight: 800; }
+  .uiswitch button { padding: 0 10px; height: 28px; color: var(--ink2); }
+  .uiswitch button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  [data-ui="kr"] .uiswitch { border-color: rgba(255, 255, 255, .25); }
+  [data-ui="kr"] .uiswitch button[aria-pressed="true"] { background: #fff; color: #0a0d26; }
+
+  /* ================= 画面の中身 ================= */
+  .views { position: relative; overflow: hidden; background: var(--screen); display: grid; grid-template-rows: auto 1fr; }
+  .vbar { display: flex; gap: 8px; align-items: center; padding: 10px 12px 0; }
+  .topbtn { height: 38px; padding: 0 14px; border-radius: 9px; font-weight: 900; font-size: 15px; background: linear-gradient(#ffe46a, #f2b400); color: #3a2400; box-shadow: 0 2px 0 #9a6a00; }
   [data-ui="kr"] .topbtn { background: linear-gradient(135deg, #ff3fa4, #8b5cff); color: #fff; box-shadow: 0 0 14px rgba(255, 63, 164, .45); }
-  [data-ui="kr"] .crumb { border: 1.5px solid rgba(45, 226, 255, .4); box-shadow: 0 0 14px rgba(45, 226, 255, .15); }
-
-  #views { position: relative; overflow: hidden; }
-  .view { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 20px; animation: vin .28s cubic-bezier(.2, .8, .2, 1); }
-  @keyframes vin { from { opacity: 0; transform: translateX(12px); } }
-
-  .foot {
-    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; align-items: center;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: var(--bar); border-top: 1px solid rgba(255, 255, 255, .08);
-  }
-  .backbtn {
-    height: 40px; padding: 0 14px 0 8px; border-radius: 999px; background: var(--back); font-weight: 800; font-size: 14px;
-    display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 0 rgba(0, 0, 0, .35);
-  }
-  .backbtn i { width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 255, 255, .9); color: #1a8a45; display: grid; place-items: center; font-style: normal; font-weight: 900; }
-  [data-ui="kr"] .backbtn i { color: #1a2050; }
-  .mini { display: flex; align-items: center; gap: 8px; min-width: 0; text-align: left; }
-  .mini img { width: 38px; height: 38px; border-radius: 6px; object-fit: cover; background: rgba(255, 255, 255, .1); flex: none; }
-  .mini .lb { font-size: 10px; font-weight: 800; color: var(--accent); }
-  .mini .tt { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .footbtn { height: 40px; padding: 0 12px; border-radius: 10px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .12); }
-  .footbtn.stop { background: linear-gradient(#ff5a5f, #c4141f); box-shadow: 0 2px 0 #7a0a12; }
-  [data-ui="kr"] .footbtn.stop { background: linear-gradient(#ff4a6a, #b0103a); }
+  .crumb { flex: 1; min-width: 0; height: 38px; padding: 0 14px; border-radius: 8px; display: flex; align-items: center; background: #fff; color: #1a1030; font-weight: 900; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 0 0 2px rgba(0, 0, 0, .12); }
+  [data-ui="kr"] .crumb { background: rgba(255, 255, 255, .08); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .45); }
+  .vwrap { position: relative; overflow: hidden; grid-row: 2; } /* 上のバーを隠しても、中身は 2 行目（残りの高さ全部）に */
+  .view { position: absolute; inset: 0; overflow-y: auto; padding: 12px; animation: vin .28s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes vin { from { opacity: 0; transform: translateX(14px); } }
+  .view.dark { background: var(--list-bg); }
 
   /* ================= TOP ================= */
-  .home { display: grid; gap: 12px; grid-template-columns: 1fr; max-width: 1100px; margin: 0 auto; }
-  @media (min-width: 820px) { .home { grid-template-columns: minmax(280px, 38%) 1fr; } }
-  .nowcard {
-    border-radius: 14px; padding: 12px; background: rgba(0, 0, 0, .35); border: 1.5px solid rgba(255, 255, 255, .14);
-    display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center;
-  }
-  @media (min-width: 820px) { .nowcard { grid-template-columns: 1fr; align-content: start; } .nowcard img { width: 100%; height: auto; aspect-ratio: 1; } }
-  .nowcard img { width: 96px; height: 96px; border-radius: 10px; object-fit: cover; background: rgba(255, 255, 255, .08); box-shadow: 0 6px 18px rgba(0, 0, 0, .4); }
-  .nowcard .lb { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; background: var(--accent); color: #2a1a00; }
-  [data-ui="kr"] .nowcard .lb { color: #04202a; }
-  .nowcard .tt { margin-top: 6px; font-size: 18px; font-weight: 900; line-height: 1.3; }
-  .nowcard .aa { font-size: 13px; color: rgba(255, 255, 255, .7); margin-top: 2px; }
-  .nowcard .bar2 { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .15); margin-top: 10px; overflow: hidden; }
-  .nowcard .bar2 i { display: block; height: 100%; width: 0; background: var(--accent); }
-  .install { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .install button { padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, .12); font-size: 12px; font-weight: 800; }
-  .install p { margin: 0; font-size: 11px; color: rgba(255, 255, 255, .6); line-height: 1.6; }
+  #v-home { overflow: hidden; }
+  .home { height: 100%; display: grid; gap: 12px;
+    grid-template-columns: 450px 1fr; grid-template-rows: 54px 150px 104px 1fr;
+    grid-template-areas: "tv search" "tv big" "tv pills" "left2 lower"; }
+  [data-orient="port"] .home { grid-template-columns: 1fr; grid-template-rows: 264px 54px 150px 104px 214px 1fr;
+    grid-template-areas: "tv" "search" "big" "pills" "lower" "left2"; }
 
-  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-content: start; }
-  @media (min-width: 560px) { .tiles { grid-template-columns: repeat(4, 1fr); } }
+  /* テレビのような「演奏中」の画面 */
+  .tv { grid-area: tv; display: grid; grid-template-rows: 1fr 34px 42px; border-radius: 14px; overflow: hidden; background: #1b1b22; box-shadow: 0 0 0 4px #2b2b33, 0 8px 22px rgba(60, 20, 80, .35); }
+  [data-ui="kr"] .tv { box-shadow: 0 0 0 2px rgba(45, 226, 255, .5), 0 0 26px rgba(45, 226, 255, .2); }
+  .tvscreen { position: relative; overflow: hidden; margin: 8px 8px 0; border-radius: 8px; background: radial-gradient(120% 120% at 30% 20%, #3c2a72, #12091f); }
+  .tvnow { position: absolute; inset: 0; display: grid; grid-template-columns: 46% 1fr; gap: 14px; align-items: center; padding: 14px; }
+  [data-orient="port"] .tvnow { grid-template-columns: 200px 1fr; }
+  .tvnow img { width: 100%; aspect-ratio: 1; border-radius: 10px; object-fit: cover; background: rgba(255, 255, 255, .08); box-shadow: 0 10px 24px rgba(0, 0, 0, .5); }
+  .tvnow .lb { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 900; background: var(--accent); color: #2a1a00; }
+  [data-ui="kr"] .tvnow .lb { color: #04202a; }
+  .tvnow .tt { margin-top: 8px; font-size: 22px; font-weight: 900; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .tvnow .aa { margin-top: 4px; font-size: 14px; color: rgba(255, 255, 255, .75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tvnow .no { margin-top: 8px; font-size: 12px; color: rgba(255, 255, 255, .55); font-variant-numeric: tabular-nums; }
+  .tvpanel { position: absolute; inset: 0; padding: 14px; overflow: hidden; }
+  .tvpanel h4 { margin: 0 0 10px; font-size: 14px; color: var(--accent); }
+  .tvnext { display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .tvnext img { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; background: rgba(255, 255, 255, .08); }
+  .tvnext b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tvnext span { font-size: 12px; color: rgba(255, 255, 255, .65); }
+  .tvtip { font-size: 17px; font-weight: 800; line-height: 1.7; animation: vin .4s; }
+  .tvbar { display: flex; align-items: center; gap: 10px; padding: 0 14px; color: rgba(255, 255, 255, .7); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .tvbar .track { flex: 1; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+  .tvbar .track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #4be08a, #20c46a); }
+  [data-ui="kr"] .tvbar .track i { background: linear-gradient(90deg, #2de2ff, #8b5cff); }
+  .tvtabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 8px 8px; }
+  .tvtabs button { border-radius: 6px; font-size: 13px; font-weight: 900; background: #2c2c36; color: #ddd; border: 1px solid #44444f; }
+  .tvtabs button[aria-pressed="true"] { background: linear-gradient(#ffe46a, #f2b400); color: #3a2400; border-color: transparent; }
+  [data-ui="kr"] .tvtabs button[aria-pressed="true"] { background: linear-gradient(135deg, #2de2ff, #8b5cff); color: #fff; }
+
+  /* 検索バー */
+  .search { grid-area: search; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-radius: 10px; background: #2b2a3a; color: #fff; font-size: 18px; font-weight: 800; box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 4px 12px rgba(60, 20, 80, .3); text-align: left; }
+  .search svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+  [data-ui="kr"] .search { background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .55), 0 0 16px rgba(45, 226, 255, .2); }
+
+  /* タイル */
   .tile {
-    position: relative; overflow: hidden; min-height: 86px; padding: 10px 8px; border-radius: var(--tile-radius);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
-    font-weight: 900; font-size: 16px; line-height: 1.2; box-shadow: var(--tile-edge);
-    text-shadow: 0 2px 0 rgba(0, 0, 0, .3);
+    position: relative; overflow: hidden; border-radius: 12px; box-shadow: var(--edge);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center;
+    font-weight: 900; line-height: 1.15; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .28);
   }
-  .tile.big { grid-column: span 1; min-height: 112px; font-size: 20px; }
-  .tile::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 48%; background: linear-gradient(rgba(255, 255, 255, .32), rgba(255, 255, 255, .06)); pointer-events: none; }
+  .tile::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 46%; background: linear-gradient(rgba(255, 255, 255, .34), rgba(255, 255, 255, .06)); pointer-events: none; }
   .tile:active { transform: translateY(2px); filter: brightness(1.08); }
-  .tile svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-  .tile .sub { font-size: 10px; font-weight: 700; opacity: .75; text-shadow: none; }
-  .t-r { background: var(--tile-r); } .t-o { background: var(--tile-o); } .t-b { background: var(--tile-b); } .t-g { background: var(--tile-g); } .t-v { background: var(--tile-v); }
+  .tile svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .tile .sub { font-size: 11px; font-weight: 700; opacity: .8; text-shadow: none; }
+  .sub:empty { display: none; }
+  .t-r { background: var(--red); } .t-o { background: var(--orange); } .t-n { background: var(--navy); } .t-t { background: var(--teal); }
+  .t-v { background: var(--purple); } .t-p { background: var(--pink); }
+  .t-w { background: var(--white-tile); color: #e22a86; text-shadow: none; }
+  .big { grid-area: big; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .big .tile { font-size: 28px; }
+  .big .tile svg { width: 44px; height: 44px; }
+  .pills { grid-area: pills; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; gap: 8px; }
+  .pills .tile { border-radius: 999px; font-size: 17px; flex-direction: row; gap: 6px; }
+  .lower { grid-area: lower; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr 1fr; gap: 10px; }
+  .lower .tile { font-size: 17px; }
+  .lower .tile svg { width: 28px; height: 28px; }
+  .left2 { grid-area: left2; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; }
+  [data-orient="port"] .left2 { grid-template-columns: 1.2fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .banner {
+    grid-row: span 2; position: relative; overflow: hidden; border-radius: 12px; box-shadow: var(--edge);
+    background: radial-gradient(circle at 80% 20%, #ffe36b 0 8%, transparent 9%), linear-gradient(150deg, #ff5fae, #8a4ae8 60%, #3a2aa8);
+    padding: 14px; text-align: left; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  }
+  .banner b { font-size: 24px; line-height: 1.25; text-shadow: 0 3px 0 rgba(60, 0, 80, .45); }
+  .banner span { font-size: 12px; font-weight: 800; opacity: .9; }
+  .banner i { position: absolute; color: #fff; font-style: normal; opacity: .85; animation: tw 2.2s ease-in-out infinite; }
+  @keyframes tw { 50% { opacity: .2; transform: scale(.7); } }
+  [data-ui="kr"] .banner { background: radial-gradient(circle at 80% 20%, #2de2ff 0 6%, transparent 7%), linear-gradient(150deg, #ff3fa4, #3a1a8a 60%, #0a1040); box-shadow: inset 0 0 0 1.5px rgba(255, 63, 164, .7), 0 0 18px rgba(255, 63, 164, .25); }
+  .hints { border-radius: 12px; padding: 10px; background: #fff; color: #2a1840; box-shadow: var(--edge); overflow: hidden; text-align: left; }
+  [data-orient="port"] .hints { grid-row: span 2; }
+  .hints h5 { margin: 0 0 6px; font-size: 13px; color: #e22a86; display: flex; align-items: center; gap: 6px; }
+  .hints button { display: inline-block; margin: 0 4px 5px 0; padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; background: #f3edff; color: #4a2a8a; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hints p { margin: 0; font-size: 12px; color: #8a7aa4; }
+  [data-ui="kr"] .hints { background: rgba(255, 255, 255, .06); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 225, 77, .5); }
+  [data-ui="kr"] .hints h5 { color: #ffe97a; }
+  [data-ui="kr"] .hints button { background: rgba(255, 255, 255, .1); color: #fff; }
+  .left2 .small { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  [data-orient="port"] .left2 .small { grid-template-columns: 1fr; grid-row: span 2; }
+  .left2 .small .tile { font-size: 15px; }
+
+  /* 韓国風のタイル: ネオンのふち */
   [data-ui="kr"] .tile::before { display: none; }
   [data-ui="kr"] .tile { text-shadow: 0 0 12px currentColor; }
-  [data-ui="kr"] .t-r { color: #ff7cc4; box-shadow: inset 0 0 0 1.5px rgba(255, 63, 164, .7), 0 0 18px rgba(255, 63, 164, .25); }
-  [data-ui="kr"] .t-o { color: #ffe97a; box-shadow: inset 0 0 0 1.5px rgba(255, 225, 77, .65), 0 0 18px rgba(255, 225, 77, .2); }
-  [data-ui="kr"] .t-b { color: #7aefff; box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .65), 0 0 18px rgba(45, 226, 255, .22); }
-  [data-ui="kr"] .t-g { color: #8dffc2; box-shadow: inset 0 0 0 1.5px rgba(80, 255, 160, .6), 0 0 18px rgba(80, 255, 160, .2); }
-  [data-ui="kr"] .t-v { color: #c4abff; box-shadow: inset 0 0 0 1.5px rgba(139, 92, 255, .7), 0 0 18px rgba(139, 92, 255, .25); }
-  [data-ui="kr"] .tile .sub { color: rgba(255, 255, 255, .7); }
-  .sub:empty { display: none; }
+  [data-ui="kr"] .t-r { color: #ff7cc4; box-shadow: inset 0 0 0 1.5px rgba(255, 63, 164, .75), 0 0 18px rgba(255, 63, 164, .25); }
+  [data-ui="kr"] .t-o { color: #ffe97a; box-shadow: inset 0 0 0 1.5px rgba(255, 225, 77, .7), 0 0 16px rgba(255, 225, 77, .2); }
+  [data-ui="kr"] .t-n { color: #7aefff; box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .7), 0 0 16px rgba(45, 226, 255, .22); }
+  [data-ui="kr"] .t-t { color: #8dffc2; box-shadow: inset 0 0 0 1.5px rgba(80, 255, 160, .65), 0 0 16px rgba(80, 255, 160, .2); }
+  [data-ui="kr"] .t-v { color: #c4abff; box-shadow: inset 0 0 0 1.5px rgba(139, 92, 255, .75), 0 0 16px rgba(139, 92, 255, .25); }
+  [data-ui="kr"] .t-p { color: #ffaee0; box-shadow: inset 0 0 0 1.5px rgba(255, 110, 200, .7), 0 0 16px rgba(255, 110, 200, .22); }
+  [data-ui="kr"] .t-w { color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .45); }
+  [data-ui="kr"] .tile .sub { color: rgba(255, 255, 255, .7); text-shadow: none; }
+
+  /* ================= 下の帯（画面の中） ================= */
+  .dock { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--dock); }
+  .dock button, .dock .chip { height: 38px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 900; display: flex; align-items: center; gap: 6px; }
+  .dock .g { background: linear-gradient(#7ee08a, #2fb84a); box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+  .dock .w { background: #fff; color: #2a1840; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+  .dock .y { background: linear-gradient(#ffe46a, #f2b400); color: #3a2400; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+  .dock .y[aria-pressed="true"] { background: linear-gradient(#ff8ad0, #e22a86); color: #fff; }
+  .dock .mini { flex: 1; min-width: 0; height: 40px; padding: 0 6px; border-radius: 10px; background: rgba(255, 255, 255, .08); justify-content: flex-start; text-align: left; }
+  .dock .mini img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; background: rgba(255, 255, 255, .1); flex: none; }
+  .dock .mini span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+  [data-ui="kr"] .dock .g { background: transparent; box-shadow: inset 0 0 0 1.5px #50ffa0; color: #a8ffd0; }
+  [data-ui="kr"] .dock .w { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .5); color: #fff; }
+  [data-ui="kr"] .dock .y { background: transparent; box-shadow: inset 0 0 0 1.5px #ffe14d; color: #ffe97a; }
+  [data-ui="kr"] .dock .y[aria-pressed="true"] { background: rgba(255, 225, 77, .2); }
 
   /* ================= 探す ================= */
-  .find { max-width: 1100px; margin: 0 auto; }
-  @media (min-width: 900px) { .find { display: grid; grid-template-columns: 400px 1fr; gap: 16px; align-items: start; } .find .left { position: sticky; top: 0; } }
+  .find { display: grid; grid-template-columns: 430px 1fr; gap: 16px; align-items: start; min-height: 100%; }
+  [data-orient="port"] .find { grid-template-columns: 1fr; }
+  .find .left { position: sticky; top: 0; }
+  [data-orient="port"] .find .left { position: static; }
   .modes { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-  .modes button { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .1); }
-  .modes button[aria-pressed="true"] { background: var(--tile-r); box-shadow: 0 0 0 2px rgba(255, 255, 255, .6); }
+  .modes button { padding: 9px 16px; border-radius: 10px; font-size: 14px; font-weight: 900; background: rgba(255, 255, 255, .12); }
+  .modes button[aria-pressed="true"] { background: var(--red); box-shadow: 0 0 0 2px rgba(255, 255, 255, .6); }
   [data-ui="kr"] .modes button[aria-pressed="true"] { background: transparent; box-shadow: inset 0 0 0 1.5px #ff3fa4, 0 0 12px rgba(255, 63, 164, .4); color: #ff9bd2; }
   .sbox { display: flex; gap: 6px; }
   .sbox .f { flex: 1; position: relative; }
-  #q { width: 100%; height: 48px; padding: 0 40px 0 14px; border-radius: 10px; border: 0; font: inherit; font-size: 17px; font-weight: 700; color: var(--field-fg); background: var(--field); outline: none; }
-  [data-ui="kr"] #q { border: 1.5px solid rgba(45, 226, 255, .45); }
-  #qclear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; color: #888; font-size: 18px; }
-  #kanaBtn { height: 48px; padding: 0 12px; border-radius: 10px; font-weight: 800; font-size: 13px; background: rgba(255, 255, 255, .12); }
-  #kanaBtn[aria-pressed="true"] { background: var(--tile-b); }
+  #q { width: 100%; height: 52px; padding: 0 40px 0 14px; border-radius: 10px; border: 0; font: inherit; font-size: 19px; font-weight: 800; color: #1a1030; background: #fff; outline: none; }
+  [data-ui="kr"] #q { color: #fff; background: rgba(255, 255, 255, .08); border: 1.5px solid rgba(45, 226, 255, .45); }
+  #qclear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; color: #888; font-size: 20px; }
+  #kanaBtn { height: 52px; padding: 0 14px; border-radius: 10px; font-weight: 900; font-size: 14px; background: rgba(255, 255, 255, .14); }
+  #kanaBtn[aria-pressed="true"] { background: var(--navy); }
   [data-ui="kr"] #kanaBtn { display: none; }
   #kana { margin-top: 8px; padding: 8px; border-radius: 12px; background: rgba(0, 0, 0, .3); }
   .kgrid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; direction: rtl; }
-  .kgrid button, .krow button { height: 42px; border-radius: 8px; background: var(--key); color: var(--key-fg); font-weight: 800; font-size: 17px; direction: ltr; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+  .kgrid button, .krow button { height: 46px; border-radius: 8px; background: var(--key); color: var(--key-fg); font-weight: 900; font-size: 19px; direction: ltr; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
   .kgrid .blank { visibility: hidden; }
   .krow { display: grid; grid-template-columns: repeat(4, 1fr) 1.4fr 1.4fr 1.4fr; gap: 4px; margin-top: 4px; }
-  .krow .fn { font-size: 12px; }
+  .krow .fn { font-size: 13px; }
   .krow .del { background: linear-gradient(#ffd0d4, #f2a3aa); }
-  .hint { margin: 8px 2px; font-size: 12px; color: rgba(255, 255, 255, .55); line-height: 1.6; }
+  .hint { margin: 8px 2px; font-size: 13px; color: rgba(255, 255, 255, .6); line-height: 1.6; }
 
   /* ================= 一覧 ================= */
-  .lhead { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 2px 8px; }
-  .lhead b { font-size: 15px; }
-  .lhead span { font-size: 12px; color: rgba(255, 255, 255, .6); }
-  .tabs2 { display: flex; gap: 4px; margin-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
-  .tabs2 button { flex: none; padding: 8px 12px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .7); }
-  .tabs2 button[aria-pressed="true"] { background: var(--tile-v); color: #fff; }
+  .lhead { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 2px 8px; }
+  .lhead b { font-size: 17px; }
+  .lhead span { font-size: 13px; color: rgba(255, 255, 255, .6); }
+  .tabs2 { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; border-bottom: 2px solid rgba(255, 255, 255, .15); }
+  .tabs2 button { flex: none; padding: 9px 13px; border-radius: 8px 8px 0 0; font-size: 14px; font-weight: 900; background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .72); }
+  .tabs2 button[aria-pressed="true"] { background: var(--purple); color: #fff; }
   .row {
-    display: grid; grid-template-columns: 26px minmax(0, 1.3fr) minmax(0, 1fr) auto; align-items: center; gap: 10px;
-    min-height: 54px; padding: 6px 8px 6px 10px; margin-bottom: 4px; border-radius: 8px; background: var(--row);
-    border: 1px solid var(--row-edge); text-align: left; width: 100%;
-    animation: rin .25s ease both;
+    display: grid; grid-template-columns: 30px minmax(0, 1.3fr) minmax(0, 1fr) auto; align-items: center; gap: 12px;
+    min-height: 60px; padding: 6px 8px 6px 10px; margin-bottom: 5px; border-radius: 8px; background: var(--row);
+    border: 1px solid var(--row-edge); text-align: left; width: 100%; animation: rin .25s ease both; cursor: pointer;
   }
   @keyframes rin { from { opacity: 0; transform: translateY(4px); } }
-  .row .ic { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; background: rgba(255, 255, 255, .12); font-size: 14px; }
-  .row .t { font-weight: 800; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row .a { font-size: 13px; color: rgba(255, 255, 255, .78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 5px; align-items: center; }
-  .row .a::before { content: ""; flex: none; width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(#b980ff, #7a3ae0); }
-  [data-ui="kr"] .row .a::before { background: linear-gradient(#2de2ff, #1a8ad8); }
-  .row .no { display: block; font-size: 11px; color: rgba(255, 255, 255, .5); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .row .ic { width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center; background: linear-gradient(#ff8ad0, #c81f80); font-size: 15px; }
+  [data-ui="kr"] .row .ic { background: linear-gradient(#2de2ff, #1a8ad8); }
+  .row .t { font-weight: 900; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .a { font-size: 15px; color: rgba(255, 255, 255, .82); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 6px; align-items: center; }
+  .row .a::before { content: ""; flex: none; width: 16px; height: 16px; border-radius: 4px; background: linear-gradient(#b980ff, #7a3ae0); }
+  [data-ui="kr"] .row .a::before { background: linear-gradient(#ff7cc4, #c81f80); }
+  .row .no { display: block; font-size: 12px; color: rgba(255, 255, 255, .5); font-variant-numeric: tabular-nums; margin-top: 2px; }
   .row.cur { border-color: var(--accent); }
-  .row .tag { display: inline-block; margin-right: 5px; padding: 1px 6px; border-radius: 5px; font-size: 10px; background: var(--accent); color: #1a1000; vertical-align: 2px; }
-  .rsv { width: 46px; height: 46px; border-radius: 50%; background: var(--reserve); font-weight: 900; font-size: 13px; box-shadow: 0 3px 0 rgba(0, 0, 0, .4), inset 0 2px 0 rgba(255, 255, 255, .35); text-shadow: 0 1px 0 rgba(0, 0, 0, .3); }
+  .row .tag { display: inline-block; margin-right: 6px; padding: 1px 7px; border-radius: 5px; font-size: 11px; background: var(--accent); color: #1a1000; vertical-align: 2px; }
+  .rsv { width: 54px; height: 54px; border-radius: 50%; background: var(--reserve); font-weight: 900; font-size: 15px; box-shadow: 0 3px 0 rgba(0, 0, 0, .4), inset 0 2px 0 rgba(255, 255, 255, .35); text-shadow: 0 1px 0 rgba(0, 0, 0, .3); }
   [data-ui="kr"] .rsv { color: #3a2400; text-shadow: none; }
   .rsv.done { background: radial-gradient(circle at 40% 30%, #9cffc4, #20c46a 50%, #0d7a3e); color: #fff; }
-  @media (max-width: 560px) {
-    .row { grid-template-columns: 26px minmax(0, 1fr) auto; }
-    .row .a.wide { display: none; }
-    .row .a.narrow { display: flex; }
-  }
+  [data-orient="port"] .row { grid-template-columns: 30px minmax(0, 1fr) auto; }
+  [data-orient="port"] .row .a.wide { display: none; }
+  [data-orient="port"] .row .a.narrow { display: flex; }
   .row .a.narrow { display: none; }
-  .empty { padding: 36px 10px; text-align: center; color: rgba(255, 255, 255, .6); font-size: 14px; line-height: 1.8; }
-  .more { width: 100%; margin-top: 6px; padding: 12px; border-radius: 10px; background: rgba(255, 255, 255, .08); font-weight: 800; color: rgba(255, 255, 255, .75); }
+  .empty { padding: 40px 10px; text-align: center; color: rgba(255, 255, 255, .65); font-size: 16px; line-height: 1.8; }
+  .more { width: 100%; margin-top: 6px; padding: 14px; border-radius: 10px; background: rgba(255, 255, 255, .1); font-weight: 900; color: rgba(255, 255, 255, .8); }
 
-  /* ================= リモコン（番号で予約・操作） ================= */
+  /* らくらく（文字を大きく） */
+  [data-easy] .row .t { font-size: 23px; }
+  [data-easy] .row .a { font-size: 18px; }
+  [data-easy] .row { min-height: 74px; }
+  [data-easy] .rsv { width: 64px; height: 64px; font-size: 18px; }
+  [data-easy] .tile { font-size: 1.12em; }
+
+  /* ================= リモコン ================= */
   #v-pad { background: var(--pad-bg); }
-  .pad { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; }
-  @media (min-width: 760px) { .pad { grid-template-columns: 1fr 1fr; align-items: start; } }
-  .padbox { padding: 12px; border-radius: 16px; background: rgba(0, 0, 0, .3); border: 1.5px solid rgba(255, 255, 255, .15); }
-  .disp {
-    display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 14px; border-radius: 10px; margin-bottom: 10px;
-    background: #0a0a14; border: 2px solid rgba(255, 255, 255, .25); font-variant-numeric: tabular-nums;
-  }
-  .disp small { font-size: 11px; color: rgba(255, 255, 255, .6); font-weight: 800; }
-  .disp b { flex: 1; text-align: right; font-size: 34px; letter-spacing: .08em; color: var(--accent); font-family: ui-monospace, "SF Mono", Menlo, monospace; text-shadow: 0 0 10px currentColor; }
-  .disp .found { font-size: 12px; color: rgba(255, 255, 255, .8); max-width: 45%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .keys button { height: 58px; border-radius: 999px; background: var(--key); color: var(--key-fg); font-size: 26px; font-weight: 900; box-shadow: 0 3px 0 rgba(0, 0, 0, .45), inset 0 -3px 0 rgba(0, 0, 0, .08); font-family: ui-rounded, var(--font); }
-  [data-ui="kr"] .keys button { border-radius: 50%; width: 64px; height: 64px; justify-self: center; box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .55), 0 0 12px rgba(45, 226, 255, .25); }
-  .keys .clr { font-size: 14px; background: linear-gradient(#5fe0c8, #1aa890); color: #fff; }
-  .keys .ok { font-size: 18px; background: var(--reserve); color: #fff; }
+  .pad { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  [data-orient="port"] .pad { grid-template-columns: 1fr; }
+  .padbox { padding: 14px; border-radius: 16px; background: rgba(0, 0, 0, .3); border: 1.5px solid rgba(255, 255, 255, .15); }
+  .disp { display: flex; align-items: center; gap: 10px; height: 70px; padding: 0 14px; border-radius: 10px; margin-bottom: 12px; background: #0a0a14; border: 2px solid rgba(255, 255, 255, .25); }
+  .disp small { font-size: 12px; color: rgba(255, 255, 255, .6); font-weight: 800; }
+  .disp b { flex: 1; text-align: right; font-size: 38px; letter-spacing: .08em; color: var(--accent); font-family: ui-monospace, "SF Mono", Menlo, monospace; text-shadow: 0 0 10px currentColor; }
+  .disp .found { font-size: 13px; color: rgba(255, 255, 255, .85); max-width: 45%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .keys button { height: 66px; border-radius: 999px; background: var(--key); color: var(--key-fg); font-size: 30px; font-weight: 900; box-shadow: 0 3px 0 rgba(0, 0, 0, .45), inset 0 -3px 0 rgba(0, 0, 0, .08); }
+  [data-ui="kr"] .keys button { border-radius: 50%; width: 74px; height: 74px; justify-self: center; box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .55), 0 0 12px rgba(45, 226, 255, .25); }
+  .keys .clr { font-size: 16px; background: linear-gradient(#5fe0c8, #1aa890); color: #fff; }
+  .keys .ok { font-size: 21px; background: var(--reserve); color: #fff; }
   [data-ui="kr"] .keys .clr { background: radial-gradient(circle at 50% 35%, #ff6a8a, #a8103a); color: #fff; }
   [data-ui="kr"] .keys .ok { color: #3a2400; }
-  .ctls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .ctls button {
-    min-height: 58px; padding: 6px 4px; border-radius: 10px; font-size: 13px; font-weight: 900; line-height: 1.2;
-    background: var(--tile-b); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .4);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  }
-  .ctls button .sub { font-size: 9px; opacity: .75; }
-  .ctls .o { background: var(--tile-o); }
-  .ctls .r { background: var(--tile-r); }
-  .ctls .g { background: var(--tile-g); }
-  .ctls .wide { grid-column: span 3; min-height: 50px; }
+  .ctls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .ctls button { min-height: 72px; padding: 6px 4px; border-radius: 10px; font-size: 15px; font-weight: 900; line-height: 1.2; background: var(--navy); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .4); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .ctls button .sub { font-size: 10px; opacity: .75; }
+  .ctls .o { background: var(--orange); } .ctls .r { background: var(--red); } .ctls .g { background: var(--teal); }
   [data-ui="kr"] .ctls button { background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .55); color: #9af2ff; }
   [data-ui="kr"] .ctls .o { box-shadow: inset 0 0 0 1.5px rgba(255, 225, 77, .7); color: #ffe97a; }
   [data-ui="kr"] .ctls .r { box-shadow: inset 0 0 0 1.5px rgba(255, 74, 106, .8), 0 0 14px rgba(255, 74, 106, .3); color: #ff9aae; }
   [data-ui="kr"] .ctls .g { box-shadow: inset 0 0 0 1.5px rgba(80, 255, 160, .7); color: #a8ffd0; }
-  .ptitle { margin: 0 0 8px; font-size: 13px; font-weight: 800; color: rgba(255, 255, 255, .7); }
+  .ptitle { margin: 0 0 10px; font-size: 14px; font-weight: 900; color: rgba(255, 255, 255, .75); }
 
-  /* ================= 曲の詳しい情報 ================= */
-  #detail { position: fixed; inset: 0; z-index: 20; display: grid; place-items: end center; background: rgba(0, 0, 0, .55); animation: fade .2s; }
+  /* ================= 重ねて出すもの（曲の詳しい情報・使い方・予約しました） ================= */
+  .overlay { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(0, 0, 0, .55); animation: fade .2s; padding: 20px; }
   @keyframes fade { from { opacity: 0; } }
-  .sheet {
-    width: min(640px, 100%); max-height: 92%; overflow-y: auto; padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
-    border-radius: 18px 18px 0 0; background: linear-gradient(#2a1650, #160b2e); border: 1.5px solid rgba(255, 255, 255, .18); border-bottom: 0;
-    animation: up .3s cubic-bezier(.2, .9, .2, 1);
-  }
-  @media (min-width: 700px) { #detail { place-items: center; } .sheet { border-radius: 18px; border-bottom: 1.5px solid rgba(255, 255, 255, .18); } }
+  .sheet { width: min(640px, 100%); max-height: 100%; overflow-y: auto; padding: 18px; border-radius: 18px; background: linear-gradient(#2a1650, #160b2e); border: 1.5px solid rgba(255, 255, 255, .2); animation: up .3s cubic-bezier(.2, .9, .2, 1); }
   [data-ui="kr"] .sheet { background: linear-gradient(#111842, #080a1e); border-color: rgba(45, 226, 255, .35); }
-  @keyframes up { from { transform: translateY(40px); opacity: 0; } }
-  .dtop { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 14px; align-items: center; }
-  .dtop img { width: 110px; height: 110px; border-radius: 10px; object-fit: cover; background: rgba(255, 255, 255, .08); }
-  .dl { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; align-items: center; margin: 4px 0; }
-  .dl i { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font-style: normal; font-size: 13px; background: linear-gradient(#b980ff, #7a3ae0); }
+  @keyframes up { from { transform: translateY(30px); opacity: 0; } }
+  .dtop { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; align-items: center; }
+  .dtop img { width: 130px; height: 130px; border-radius: 10px; object-fit: cover; background: rgba(255, 255, 255, .08); }
+  .dl { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; align-items: center; margin: 5px 0; }
+  .dl i { width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; font-style: normal; font-size: 14px; background: linear-gradient(#ff8ad0, #c81f80); }
   [data-ui="kr"] .dl i { background: linear-gradient(#2de2ff, #1a8ad8); }
-  .dl span { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dl.big span { font-size: 20px; }
+  .dl span { font-size: 17px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dl.big span { font-size: 23px; }
   .dl .num { font-variant-numeric: tabular-nums; letter-spacing: .06em; color: var(--accent); }
-  .chips2 { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
-  .chips2 span { padding: 5px 9px; border-radius: 7px; font-size: 12px; font-weight: 800; background: rgba(255, 255, 255, .1); }
+  .chips2 { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+  .chips2 span { padding: 6px 10px; border-radius: 7px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .1); }
   .chips2 .ok { background: rgba(47, 210, 122, .25); color: #9fffc8; }
   .chips2 .no { background: rgba(255, 255, 255, .06); color: rgba(255, 255, 255, .5); }
   .dact { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 8px; }
-  .dact .now2 { height: 52px; padding: 0 16px; border-radius: 12px; font-weight: 900; background: var(--tile-o); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .4); }
+  .dact .now2 { height: 56px; padding: 0 18px; border-radius: 12px; font-weight: 900; font-size: 16px; background: var(--orange); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .4); }
   [data-ui="kr"] .dact .now2 { background: transparent; box-shadow: inset 0 0 0 1.5px #ffe14d; color: #ffe97a; }
-  .dact .close { margin-right: auto; height: 44px; padding: 0 14px; border-radius: 999px; background: rgba(255, 255, 255, .1); font-weight: 800; }
-  .dact .rsv { width: 78px; height: 78px; font-size: 18px; }
-
-  /* ================= 予約しました ================= */
+  .dact .close { margin-right: auto; height: 46px; padding: 0 16px; border-radius: 999px; background: rgba(255, 255, 255, .12); font-weight: 900; }
+  .dact .rsv { width: 86px; height: 86px; font-size: 20px; }
+  .help li { margin: 6px 0; font-size: 15px; line-height: 1.7; }
+  .help h3 { margin: 0 0 8px; }
   #toast {
-    position: fixed; z-index: 30; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.9);
-    width: min(360px, calc(100vw - 40px)); padding: 18px 20px; border-radius: 18px; text-align: center;
+    position: absolute; z-index: 30; left: 50%; top: 44%; transform: translate(-50%, -50%) scale(.9);
+    width: 420px; max-width: 90%; padding: 20px 22px; border-radius: 20px; text-align: center;
     background: linear-gradient(160deg, #ffb935, #ff7a1a); color: #3a1700; box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
     opacity: 0; pointer-events: none; transition: opacity .25s, transform .35s cubic-bezier(.3, 1.4, .5, 1); font-weight: 900;
   }
   [data-ui="kr"] #toast { background: linear-gradient(160deg, #2de2ff, #8b5cff); color: #fff; }
   #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   #toast.err { background: linear-gradient(160deg, #ff7a9a, #e0335f); color: #fff; }
-  #toast .big { font-size: 22px; }
-  #toast .sub { margin-top: 6px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #toast .no { margin-top: 6px; font-size: 13px; opacity: .85; font-variant-numeric: tabular-nums; }
+  #toast .big { font-size: 26px; }
+  #toast .sub { margin-top: 6px; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #toast .no { margin-top: 6px; font-size: 14px; opacity: .85; font-variant-numeric: tabular-nums; }
 
   /* ================= ログイン ================= */
-  #login { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: var(--bg); text-align: center; }
+  #login { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: #120a24; text-align: center; font-family: "Noto Sans JP", sans-serif; }
   #login h1 { font-size: 24px; margin: 0 0 8px; }
   #login p { color: rgba(255, 255, 255, .7); line-height: 1.8; font-size: 14px; }
   #login a { display: inline-block; margin-top: 10px; padding: 14px 24px; border-radius: 999px; background: #1ed760; color: #000; font-weight: 800; text-decoration: none; }
@@ -312,158 +391,235 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="ic-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
   <symbol id="ic-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+  <symbol id="ic-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></symbol>
   <symbol id="ic-keys" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></symbol>
   <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
-  <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
   <symbol id="ic-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
   <symbol id="ic-remote" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="3"/><circle cx="12" cy="7" r="1.6"/><path d="M10 12h4M10 15h4M10 18h4"/></symbol>
-  <symbol id="ic-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
-  <symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></symbol>
+  <symbol id="ic-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></symbol>
+  <symbol id="ic-guitar" viewBox="0 0 24 24"><path d="M19 3l2 2-6 6M14 10a4 4 0 0 0-5.7 0L4 14.3a3 3 0 0 0 0 4.2l1.5 1.5a3 3 0 0 0 4.2 0L14 15.7a4 4 0 0 0 0-5.7z"/><circle cx="9" cy="15" r="1.4"/></symbol>
+  <symbol id="ic-wave" viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M22 12h-1"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="ic-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></symbol>
+  <symbol id="ic-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/></symbol>
 </svg>
 
-<div class="shell" id="shell" hidden>
-  <header class="bar">
-    <button class="topbtn" id="goTop" data-l="top">TOP</button>
-    <div class="crumb" id="crumb">TOP</div>
-    <div class="uiswitch" role="group" aria-label="画面の種類">
-      <button data-ui-pick="jp" title="日本のカラオケ風">日本</button>
-      <button data-ui-pick="kr" title="韓国のノレバン風" lang="ko">한국</button>
+<div id="stage" hidden>
+  <div class="device">
+    <div class="screen">
+      <!-- 上の帯 -->
+      <div class="status">
+        <span class="logo">♪</span>
+        <span class="name">選曲リモコン<small>Lyrics Flow</small></span>
+        <button class="help" id="helpBtn" data-l="help">使い方</button>
+        <span class="sp"></span>
+        <span class="conn" id="conn"><i></i><span data-l="offline">未接続</span></span>
+        <span class="clock" id="clock">--:--</span>
+        <div class="uiswitch" role="group" aria-label="画面の種類">
+          <button data-ui-pick="jp" title="日本のカラオケ風">日本</button>
+          <button data-ui-pick="kr" title="韓国のノレバン風" lang="ko">한국</button>
+        </div>
+      </div>
+
+      <!-- 中身 -->
+      <div class="views">
+        <div class="vbar" id="vbar" hidden>
+          <button class="topbtn" id="goTop" data-l="top">TOP</button>
+          <div class="crumb" id="crumb"></div>
+        </div>
+        <div class="vwrap">
+          <!-- TOP -->
+          <section class="view" id="v-home">
+            <div class="home">
+              <div class="tv">
+                <div class="tvscreen">
+                  <div class="tvnow" id="tvNow">
+                    <img id="hArt" src="" alt="">
+                    <div style="min-width:0">
+                      <span class="lb" id="hLb">演奏中</span>
+                      <div class="tt" id="hTitle">—</div>
+                      <div class="aa" id="hArtist"></div>
+                      <div class="no" id="hNo"></div>
+                    </div>
+                  </div>
+                  <div class="tvpanel" id="tvNext" hidden><h4 data-l="nextUp">次の曲</h4><div id="tvNextList"></div></div>
+                  <div class="tvpanel" id="tvTips" hidden><h4 data-l="news">お知らせ</h4><div class="tvtip" id="tvTip"></div></div>
+                </div>
+                <div class="tvbar"><span id="hTime">0:00</span><div class="track"><i id="hBar"></i></div><span id="hDur">0:00</span></div>
+                <div class="tvtabs">
+                  <button data-tv="now" aria-pressed="true" data-l="playing">演奏中</button>
+                  <button data-tv="next" data-l="nextUp">次の曲</button>
+                  <button data-tv="tips" data-l="news">お知らせ</button>
+                </div>
+              </div>
+
+              <button class="search" data-go="song"><svg><use href="#ic-search"/></svg><span data-l="searchPh">タッチしてキーワードを入力</span></button>
+
+              <div class="big">
+                <button class="tile t-r" data-go="artist"><svg><use href="#ic-person"/></svg><span data-l="artist">歌手名</span><span class="sub" data-s="artist"></span></button>
+                <button class="tile t-r" data-go="song"><svg><use href="#ic-note"/></svg><span data-l="song">曲名</span><span class="sub" data-s="song"></span></button>
+                <button class="tile t-r" id="omakase"><svg><use href="#ic-dice"/></svg><span data-l="omakase">おまかせ予約</span><span class="sub" data-s="omakase"></span></button>
+              </div>
+
+              <div class="pills">
+                <button class="tile t-o" data-go="genre:j-pop" data-l="genre">ジャンル</button>
+                <button class="tile t-o" data-go="new" data-l="newSongs">新曲</button>
+                <button class="tile t-o" data-go="top" data-l="top50">よく聴くTOP50</button>
+                <button class="tile t-o" data-go="genre:anime" data-l="anime">アニメ</button>
+                <button class="tile t-o" data-go="genre:k-pop">K-POP</button>
+                <button class="tile t-o" data-go="genre:pop" data-l="western">洋楽</button>
+              </div>
+
+              <div class="lower">
+                <button class="tile t-n" data-go="queue"><svg><use href="#ic-list"/></svg><span data-l="queue">予約確認</span><span class="sub" data-s="queue"></span></button>
+                <button class="tile t-n" data-go="recent"><svg><use href="#ic-clock"/></svg><span data-l="recent">りれき</span><span class="sub" data-s="recent"></span></button>
+                <button class="tile t-n" data-go="pad"><svg><use href="#ic-keys"/></svg><span data-l="number">番号で予約</span><span class="sub" data-s="number"></span></button>
+                <button class="tile t-t" data-go="pad"><svg><use href="#ic-remote"/></svg><span data-l="remote">リモコン</span><span class="sub" data-s="remote"></span></button>
+                <button class="tile t-v" data-go="genre:vocaloid"><svg><use href="#ic-wave"/></svg><span data-l="vocaloid">ボカロ</span></button>
+                <button class="tile t-v" data-go="genre:rock"><svg><use href="#ic-guitar"/></svg><span data-l="rock">ロック</span></button>
+                <button class="tile t-n" data-go="genre:hip-hop"><svg><use href="#ic-mic"/></svg><span data-l="hiphop">ヒップホップ</span></button>
+                <a class="tile t-w" href="/lyrics/" style="text-decoration:none"><svg><use href="#ic-note"/></svg><span data-l="openFlow">歌詞の画面</span><span class="sub" data-s="openFlow"></span></a>
+              </div>
+
+              <div class="left2">
+                <a class="banner" href="/lyrics/" style="color:#fff;text-decoration:none">
+                  <i style="left:16px;top:14px;font-size:22px">✦</i><i style="right:24px;top:52px;font-size:14px;animation-delay:-.8s">✦</i><i style="left:46%;top:30px;font-size:12px;animation-delay:-1.4s">✦</i>
+                  <b data-l="bannerTitle">歌詞の画面で<br>ステージ気分！</b>
+                  <span data-l="bannerSub">テレビやパソコンで開いて、みんなで歌おう</span>
+                </a>
+                <div class="hints">
+                  <h5>🔎 <span data-l="recentWords">最近探した言葉</span></h5>
+                  <div id="homeHints"></div>
+                </div>
+                <div class="small">
+                  <button class="tile t-p" id="goKana"><span style="font-size:22px">あ</span><span data-l="kanaSearch">50音で探す</span></button>
+                  <button class="tile t-w" data-go="book"><svg><use href="#ic-book"/></svg><span data-l="book">目次本</span><span class="sub" data-s="book"></span></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 探す -->
+          <section class="view dark" id="v-find" hidden>
+            <div class="find">
+              <div class="left">
+                <div class="modes">
+                  <button data-mode="song" data-l="song">曲名</button>
+                  <button data-mode="artist" data-l="artist">歌手名</button>
+                </div>
+                <div class="sbox">
+                  <div class="f">
+                    <input id="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false">
+                    <button id="qclear" aria-label="消す">×</button>
+                  </div>
+                  <button id="kanaBtn" aria-pressed="false">50音</button>
+                </div>
+                <div id="kana" hidden>
+                  <div class="kgrid" id="kgrid"></div>
+                  <div class="krow">
+                    <button data-fn="dakuten">゛</button><button data-fn="handaku">゜</button><button data-fn="small">小</button><button data-k="ー">ー</button>
+                    <button class="fn" data-k=" ">空白</button><button class="fn del" data-fn="back">1 字消す</button><button class="fn del" data-fn="clear">全部消す</button>
+                  </div>
+                </div>
+                <p class="hint" id="findHint"></p>
+              </div>
+              <div>
+                <div class="lhead"><b id="findTitle"></b><span id="findInfo"></span></div>
+                <div id="findList"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 一覧 -->
+          <section class="view dark" id="v-list" hidden>
+            <div class="tabs2" id="listTabs"></div>
+            <div class="lhead"><b id="listTitle"></b><span id="listInfo"></span></div>
+            <div id="listBody"></div>
+          </section>
+
+          <!-- リモコン -->
+          <section class="view" id="v-pad" hidden>
+            <div class="pad">
+              <div class="padbox">
+                <p class="ptitle" data-l="padTitle">選曲番号で予約</p>
+                <div class="disp"><small data-l="songNo">選曲番号</small><span class="found" id="padFound"></span><b id="padNum">----</b></div>
+                <div class="keys" id="keys">
+                  <button>1</button><button>2</button><button>3</button>
+                  <button>4</button><button>5</button><button>6</button>
+                  <button>7</button><button>8</button><button>9</button>
+                  <button class="clr" data-l="clear">入力クリア</button><button>0</button><button class="ok" data-l="reserve">予約</button>
+                </div>
+                <p class="hint" data-l="padHint">探した曲・りれきに出た曲の番号で予約できます</p>
+              </div>
+              <div class="padbox">
+                <p class="ptitle" data-l="ctlTitle">演奏の操作</p>
+                <div class="ctls">
+                  <button class="o" data-op="rew"><span data-l="rew">早戻し</span><span class="sub">-10s</span></button>
+                  <button class="o" data-op="pause"><span id="pauseLbl">一時停止</span></button>
+                  <button class="o" data-op="ff"><span data-l="ff">早送り</span><span class="sub">+10s</span></button>
+                  <button data-op="volDown"><span data-l="volDown">音量 −</span></button>
+                  <button class="g" data-op="restart"><span data-l="restart">スタートやり直し</span></button>
+                  <button data-op="volUp"><span data-l="volUp">音量 ＋</span></button>
+                  <button data-op="queue"><span data-l="queue">予約確認</span></button>
+                  <button data-op="prev"><span data-l="prev">前の曲</span></button>
+                  <button class="r" data-op="skip"><span data-l="stop">演奏中止</span></button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- 下の帯 -->
+      <div class="dock">
+        <button class="g" id="dockBack">‹ <span data-l="back">もどる</span></button>
+        <button class="mini" id="miniNow"><img id="mArt" src="" alt=""><span id="mTitle">—</span></button>
+        <button class="w" id="installBtn" hidden data-l="install">アプリに入れる</button>
+        <button class="y" id="easyBtn" aria-pressed="false" data-l="easy">らくらく</button>
+      </div>
+
+      <!-- 曲の詳しい情報 -->
+      <div class="overlay" id="detail" hidden>
+        <div class="sheet" role="dialog" aria-modal="true">
+          <div class="dtop">
+            <img id="dArt" src="" alt="">
+            <div style="min-width:0">
+              <div class="dl big"><i>♪</i><span id="dTitle"></span></div>
+              <div class="dl"><i>👤</i><span id="dArtist"></span></div>
+              <div class="dl"><i>#</i><span class="num" id="dNo"></span></div>
+            </div>
+          </div>
+          <div class="chips2" id="dChips"></div>
+          <div class="dact">
+            <button class="close" id="dClose" data-l="close">閉じる</button>
+            <button class="now2" id="dNow" data-l="playNow">すぐ演奏</button>
+            <button class="rsv" id="dRsv" data-l="reserve">予約</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 使い方 -->
+      <div class="overlay" id="help" hidden>
+        <div class="sheet help"><h3 data-l="help">使い方</h3><ul id="helpList"></ul>
+          <div class="dact"><button class="close" id="helpClose" data-l="close">閉じる</button></div>
+        </div>
+      </div>
+
+      <div id="toast" role="status" aria-live="polite"><div class="big"></div><div class="sub"></div><div class="no"></div></div>
     </div>
-  </header>
 
-  <main id="views">
-    <!-- TOP -->
-    <section class="view" id="v-home">
-      <div class="home">
-        <div class="nowcard">
-          <img id="hArt" src="" alt="">
-          <div style="min-width:0">
-            <span class="lb" id="hLb" data-l="playing">演奏中</span>
-            <div class="tt" id="hTitle">—</div>
-            <div class="aa" id="hArtist"></div>
-            <div class="bar2"><i id="hBar"></i></div>
-            <div class="install" id="installBox" hidden>
-              <button id="installBtn" data-l="install">アプリとして入れる</button>
-              <p id="iosHint" hidden data-l="iosHint">iPhone・iPad は、共有ボタン →「ホーム画面に追加」で入れられます</p>
-            </div>
-          </div>
-        </div>
-        <div class="tiles">
-          <button class="tile big t-r" data-go="artist"><svg><use href="#ic-person"/></svg><span data-l="artist">歌手名</span><span class="sub" data-s="artist"></span></button>
-          <button class="tile big t-r" data-go="song"><svg><use href="#ic-note"/></svg><span data-l="song">曲名</span><span class="sub" data-s="song"></span></button>
-          <button class="tile big t-r" data-go="pad"><svg><use href="#ic-keys"/></svg><span data-l="number">番号で予約</span><span class="sub" data-s="number"></span></button>
-          <button class="tile t-o" data-go="recent"><svg><use href="#ic-clock"/></svg><span data-l="recent">りれき</span><span class="sub" data-s="recent"></span></button>
-          <button class="tile t-o" data-go="top"><svg><use href="#ic-star"/></svg><span data-l="topTracks">よく聴く曲</span><span class="sub" data-s="topTracks"></span></button>
-          <button class="tile t-v" data-go="genre:j-pop"><svg><use href="#ic-spark"/></svg><span data-l="jpop">J-POP</span><span class="sub" data-s="jpop"></span></button>
-          <button class="tile t-v" data-go="genre:k-pop"><svg><use href="#ic-spark"/></svg><span data-l="kpop">K-POP</span><span class="sub" data-s="kpop"></span></button>
-          <button class="tile t-v" data-go="genre:pop"><svg><use href="#ic-globe"/></svg><span data-l="western">洋楽</span><span class="sub" data-s="western"></span></button>
-          <button class="tile t-b" data-go="queue"><svg><use href="#ic-list"/></svg><span data-l="queue">予約確認</span><span class="sub" data-s="queue"></span></button>
-          <button class="tile t-g" data-go="pad"><svg><use href="#ic-remote"/></svg><span data-l="remote">リモコン</span><span class="sub" data-s="remote"></span></button>
-          <a class="tile t-b" href="/lyrics/" style="color:inherit;text-decoration:none"><svg><use href="#ic-note"/></svg><span data-l="openFlow">歌詞の画面</span><span class="sub" data-s="openFlow"></span></a>
-        </div>
-      </div>
-    </section>
-
-    <!-- 探す -->
-    <section class="view" id="v-find" hidden>
-      <div class="find">
-        <div class="left">
-          <div class="modes">
-            <button data-mode="song" data-l="song">曲名</button>
-            <button data-mode="artist" data-l="artist">歌手名</button>
-          </div>
-          <div class="sbox">
-            <div class="f">
-              <input id="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false">
-              <button id="qclear" aria-label="消す">×</button>
-            </div>
-            <button id="kanaBtn" aria-pressed="false">50音</button>
-          </div>
-          <div id="kana" hidden>
-            <div class="kgrid" id="kgrid"></div>
-            <div class="krow">
-              <button data-fn="dakuten">゛</button><button data-fn="handaku">゜</button><button data-fn="small">小</button><button data-k="ー">ー</button>
-              <button class="fn" data-k=" ">空白</button><button class="fn del" data-fn="back">1 字消す</button><button class="fn del" data-fn="clear">全部消す</button>
-            </div>
-          </div>
-          <p class="hint" id="findHint"></p>
-        </div>
-        <div>
-          <div class="lhead"><b id="findTitle"></b><span id="findInfo"></span></div>
-          <div id="findList"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 一覧（りれき・よく聴く曲・ジャンル・予約確認） -->
-    <section class="view" id="v-list" hidden>
-      <div style="max-width:1100px;margin:0 auto">
-        <div class="tabs2" id="listTabs"></div>
-        <div class="lhead"><b id="listTitle"></b><span id="listInfo"></span></div>
-        <div id="listBody"></div>
-      </div>
-    </section>
-
-    <!-- リモコン -->
-    <section class="view" id="v-pad" hidden>
-      <div class="pad">
-        <div class="padbox">
-          <p class="ptitle" data-l="padTitle">選曲番号で予約</p>
-          <div class="disp"><small data-l="songNo">選曲番号</small><span class="found" id="padFound"></span><b id="padNum">----</b></div>
-          <div class="keys" id="keys">
-            <button>1</button><button>2</button><button>3</button>
-            <button>4</button><button>5</button><button>6</button>
-            <button>7</button><button>8</button><button>9</button>
-            <button class="clr" data-l="clear">入力クリア</button><button>0</button><button class="ok" data-l="reserve">予約</button>
-          </div>
-          <p class="hint" data-l="padHint">探した曲・りれきに出た曲の番号で予約できます</p>
-        </div>
-        <div class="padbox">
-          <p class="ptitle" data-l="ctlTitle">演奏の操作</p>
-          <div class="ctls">
-            <button class="o" data-op="rew"><span data-l="rew">早戻し</span><span class="sub">-10s</span></button>
-            <button class="o" data-op="pause"><span data-l="pause" id="pauseLbl">一時停止</span></button>
-            <button class="o" data-op="ff"><span data-l="ff">早送り</span><span class="sub">+10s</span></button>
-            <button data-op="volDown"><span data-l="volDown">音量 −</span></button>
-            <button class="g" data-op="restart"><span data-l="restart">スタートやり直し</span></button>
-            <button data-op="volUp"><span data-l="volUp">音量 ＋</span></button>
-            <button data-op="queue"><span data-l="queue">予約確認</span></button>
-            <button data-op="prev"><span data-l="prev">前の曲</span></button>
-            <button class="r" data-op="skip"><span data-l="stop">演奏中止</span></button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="foot">
-    <button class="backbtn" id="goBack"><i>‹</i><span data-l="back">もどる</span></button>
-    <button class="mini" id="miniNow"><img id="mArt" src="" alt=""><div style="min-width:0"><div class="lb" id="mLb" data-l="playing">演奏中</div><div class="tt" id="mTitle">—</div></div></button>
-    <button class="footbtn" data-go="pad" data-l="remote">リモコン</button>
-    <button class="footbtn stop" id="footStop" data-l="stop">演奏中止</button>
-  </footer>
-</div>
-
-<div id="detail" hidden>
-  <div class="sheet" role="dialog" aria-modal="true">
-    <div class="dtop">
-      <img id="dArt" src="" alt="">
-      <div style="min-width:0">
-        <div class="dl big"><i>♪</i><span id="dTitle"></span></div>
-        <div class="dl"><i>👤</i><span id="dArtist"></span></div>
-        <div class="dl"><i>#</i><span class="num" id="dNo"></span></div>
-      </div>
-    </div>
-    <div class="chips2" id="dChips"></div>
-    <div class="dact">
-      <button class="close" id="dClose" data-l="close">閉じる</button>
-      <button class="now2" id="dNow" data-l="playNow">すぐ演奏</button>
-      <button class="rsv" id="dRsv" data-l="reserve">予約</button>
+    <!-- 本体の下のボタン -->
+    <div class="hw">
+      <span class="brand">LYRICS FLOW REMOTE</span>
+      <span class="spk" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="sp"></span>
+      <button class="stop" id="hwStop" data-l="stop">演奏中止</button>
+      <button id="hwTop" data-l="top">TOP</button>
+      <button id="hwBack" data-l="back">戻る</button>
+      <button id="hwRemote" data-l="remote">リモコン</button>
     </div>
   </div>
 </div>
-
-<div id="toast" role="status" aria-live="polite"><div class="big"></div><div class="sub"></div><div class="no"></div></div>
 
 <section id="login" hidden>
   <div>
@@ -486,59 +642,107 @@
   };
   const jget = (k, d) => { try { return JSON.parse(store.get(k) || '') ?? d; } catch { return d; } };
 
+  // ================= 画面の大きさに合わせる =================
+  // 横長は高さ 800、縦長は幅 720 の画面を、ブラウザいっぱいに拡大・縮小する
+  const stage = $('#stage');
+  let lastW = 0;
+  function fit() {
+    // 入力中にキーボードが出て高さだけ変わったときは、そのまま（画面がちぢむと打ちにくい）
+    if (document.activeElement && document.activeElement.tagName === 'INPUT' && innerWidth === lastW) return;
+    lastW = innerWidth;
+    const ratio = innerWidth / innerHeight;
+    const land = ratio >= .95;
+    // 画面の縦横の比に合わせて、横長は幅を・縦長は高さをのばす（すきまが出ないように）
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const W = land ? Math.round(clamp(800 * ratio, 1180, 1640)) : 720;
+    const H = land ? 800 : Math.round(clamp(720 / ratio, 1100, 1640));
+    const k = Math.min(innerWidth / W, innerHeight / H);
+    root.dataset.orient = land ? 'land' : 'port';
+    stage.style.width = W + 'px';
+    stage.style.height = H + 'px';
+    stage.style.transform = `translate(-50%, -50%) scale(${k})`;
+  }
+  addEventListener('resize', fit);
+  fit();
+
   // ================= 言葉（日本風 / 韓国風） =================
-  // 韓国風は韓国語で出し、ボタンには小さく日本語を添える（sub）
   const L = {
     jp: {
-      top: 'TOP', back: 'もどる', artist: '歌手名', song: '曲名', number: '番号で予約', recent: 'りれき', topTracks: 'よく聴く曲',
-      jpop: 'J-POP', kpop: 'K-POP', western: '洋楽', queue: '予約確認', remote: 'リモコン', openFlow: '歌詞の画面',
+      top: 'TOP', back: 'もどる', artist: '歌手名', song: '曲名', omakase: 'おまかせ予約', number: '番号で予約', recent: 'りれき', topTracks: 'よく聴く曲',
+      top50: 'よく聴くTOP50', genre: 'ジャンル', newSongs: '新曲', anime: 'アニメ', western: '洋楽', vocaloid: 'ボカロ', rock: 'ロック', hiphop: 'ヒップホップ',
+      queue: '予約確認', remote: 'リモコン', openFlow: '歌詞の画面', help: '使い方', easy: 'らくらく', install: 'アプリに入れる',
+      searchPh: 'タッチしてキーワードを入力', nextUp: '次の曲', news: 'お知らせ', online: '接続中', offline: '未接続',
+      bannerTitle: '歌詞の画面で\nステージ気分！', bannerSub: 'テレビやパソコンで開いて、みんなで歌おう', recentWords: '最近探した言葉', kanaSearch: '50音で探す',
+      noHints: 'まだありません。曲名や歌手名で探すと、ここに出ます',
       playing: '演奏中', paused: '一時停止中', idle: '演奏していません', idleTitle: 'Spotify で再生すると、ここに出ます',
       reserve: '予約', playNow: 'すぐ演奏', close: '閉じる', stop: '演奏中止', pause: '一時停止', resume: '再生', rew: '早戻し', ff: '早送り',
       restart: 'スタートやり直し', volUp: '音量 ＋', volDown: '音量 −', prev: '前の曲', clear: '入力クリア', songNo: '選曲番号',
       padTitle: '選曲番号で予約', ctlTitle: '演奏の操作', padHint: '探した曲・りれきに出た曲の番号で予約できます（曲の詳しい情報や一覧に出ています）',
-      install: 'アプリとして入れる', iosHint: 'iPhone・iPad は、共有ボタン →「ホーム画面に追加」で入れられます',
       searchSong: 'タッチして曲名を入力', searchArtist: 'タッチして歌手名を入力', findSong: '曲名で探す', findArtist: '歌手名で探す',
-      findHint: '「50音」で、デンモクのようなキーボードになります。最近探した言葉:', results: '「{q}」の検索結果', hits: '{n} 件',
+      findHint: '最近探した言葉:', results: '「{q}」の検索結果', hits: '{n} 件',
       emptySong: '曲名を入れると、Spotify から探します', emptyArtist: '歌手名を入れると、その歌手の曲が出ます', none: '曲が見つかりませんでした',
-      loading: '読み込み中…', more: 'もっと見る', recentTitle: 'りれき（最近聴いた曲）', topTitle: 'よく聴く曲', genreTitle: '{g} の曲',
+      loading: '読み込み中…', more: 'もっと見る', recentTitle: 'りれき（最近聴いた曲）', topTitle: 'よく聴く曲', genreTitle: '{g}', newTitle: '新曲（{y} 年）',
       queueTitle: '予約確認', queueNote: 'Spotify のキュー（次に流れる順）です。プレイリストの続きも並びます。予約の取り消しは Spotify のアプリでしてください。',
-      queueEmpty: '予約はありません', reserved: '予約しました', played: '演奏します', cantReserve: '予約できませんでした', cantOp: '操作できませんでした',
+      queueEmpty: '予約はありません', reserved: '予約しました', omakaseDone: 'おまかせで予約しました', played: '演奏します', cantReserve: '予約できませんでした', cantOp: '操作できませんでした',
       noNumber: 'その番号の曲が見つかりません', noNumberSub: '探した曲・りれきの番号を入れてください', relogin: 'もう一度ログインしてください（Lyrics Flow でログアウト → ログイン）',
+      err403: 'Spotify に断られました。少し待ってからもう一度試してください。続くときは、Spotify のアカウントがアプリの利用者に登録されているか確かめてください',
+      err403user: 'この Spotify のアカウントは、アプリの利用者に登録されていません（Spotify Developer Dashboard の User Management で追加）',
+      err429: '検索が多すぎました。少し待ってから試してください',
+      book: '目次本', bookTitle: '目次本（選曲番号の一覧）', bookNote: '選曲番号は、このリモコンの一覧に一度出た曲に付きます（Spotify の曲から作る番号で、お店のカラオケの番号とは違います）。探したり、りれきを見たりすると増えます。',
+      bookEmpty: 'まだありません。曲名・歌手名で探したり、りれきを開いたりすると、ここに番号が並びます',
+      noOmakase: 'おまかせできる曲がありません', noOmakaseSub: 'よく聴く曲・りれきから選びます',
       lyricsSynced: '♪ カラオケ対応（タイミングつき歌詞）', lyricsPlain: '歌詞あり（タイミングなし）', lyricsNone: '歌詞が見つかりません', lyricsChecking: '歌詞を確かめています…',
-      pos: '{n} 曲目', nowTag: '演奏中', mineTag: '予約', range4: '4 週間', range6: '半年', range1: '1 年',
+      pos: '{n} 曲目', nowTag: '演奏中', mineTag: '予約', range4: '4 週間', range6: '半年', range1: '1 年', noNext: '次の曲はまだありません',
+      tips: ['「おまかせ予約」は、よく聴く曲からランダムに 1 曲予約します', '「番号で予約」は、一覧に出た曲の選曲番号で予約できます', '曲の詳しい情報で、カラオケ対応（タイミングつき歌詞）か確かめられます', '歌詞の画面の設定で、韓国語・英語にカタカナのふりがなを付けられます', 'ホーム画面に入れると、アプリのように使えます', '「らくらく」を押すと、文字が大きくなります'],
+      helpList: ['曲名・歌手名で探して「予約」を押すと、Spotify のキュー（次に流れる順）に入ります', '▶「すぐ演奏」は、今の曲をやめてその曲をすぐ流します', '「番号で予約」: 一覧や曲の詳しい情報に出る選曲番号を打つと、その曲を予約できます', '「演奏中止」は次の曲へ進みます。リモコンで一時停止・早戻し・早送り・音量も変えられます', '予約・操作には Spotify Premium が必要です。予約の取り消しは Spotify のアプリでしてください', '上の「日本 / 한국」で、日本のカラオケ風と韓国のノレバン風を切り替えられます'],
     },
     kr: {
-      top: '홈', back: '뒤로', artist: '가수', song: '제목', number: '번호 예약', recent: '최근 곡', topTracks: '자주 듣는 곡',
-      jpop: 'J-POP', kpop: 'K-POP', western: '팝송', queue: '예약 목록', remote: '리모컨', openFlow: '가사 화면',
+      top: '홈', back: '뒤로', artist: '가수', song: '제목', omakase: '랜덤 예약', number: '번호 예약', recent: '최근 곡', topTracks: '자주 듣는 곡',
+      top50: 'TOP 50', genre: '장르', newSongs: '신곡', anime: '애니', western: '팝송', vocaloid: '보컬로이드', rock: '록', hiphop: '힙합',
+      queue: '예약 목록', remote: '리모컨', openFlow: '가사 화면', help: '사용법', easy: '큰 글씨', install: '앱 설치',
+      searchPh: '검색어를 입력하세요', nextUp: '다음 곡', news: '알림', online: '연결됨', offline: '연결 안 됨',
+      bannerTitle: '가사 화면에서\n무대처럼!', bannerSub: 'TV나 PC로 열고 다 같이 불러요', recentWords: '최근 검색어', kanaSearch: '50음 검색',
+      noHints: '아직 없어요. 제목이나 가수로 검색하면 여기에 나와요',
       playing: '연주 중', paused: '일시정지', idle: '연주 중이 아님', idleTitle: 'Spotify에서 재생하면 여기에 나와요',
       reserve: '예약', playNow: '바로 시작', close: '닫기', stop: '취소', pause: '일시정지', resume: '재생', rew: '되감기', ff: '빨리감기',
       restart: '처음부터', volUp: '볼륨 ＋', volDown: '볼륨 −', prev: '이전 곡', clear: '지우기', songNo: '곡번호',
       padTitle: '곡번호로 예약', ctlTitle: '반주 조작', padHint: '검색한 곡·최근 곡의 번호로 예약할 수 있어요',
-      install: '앱으로 설치', iosHint: 'iPhone·iPad는 공유 버튼 → "홈 화면에 추가"',
       searchSong: '제목을 입력하세요', searchArtist: '가수 이름을 입력하세요', findSong: '제목 검색', findArtist: '가수 검색',
       findHint: '최근 검색어:', results: '"{q}" 검색 결과', hits: '{n}곡',
       emptySong: '제목을 입력하면 Spotify에서 찾아요', emptyArtist: '가수 이름을 입력하면 그 가수의 곡이 나와요', none: '곡을 찾지 못했어요',
-      loading: '불러오는 중…', more: '더 보기', recentTitle: '최근 곡', topTitle: '자주 듣는 곡', genreTitle: '{g}',
+      loading: '불러오는 중…', more: '더 보기', recentTitle: '최근 곡', topTitle: '자주 듣는 곡', genreTitle: '{g}', newTitle: '신곡 ({y}년)',
       queueTitle: '예약 목록', queueNote: 'Spotify의 대기열(다음에 나오는 순서)이에요. 예약 취소는 Spotify 앱에서 해 주세요.',
-      queueEmpty: '예약된 곡이 없어요', reserved: '예약되었습니다', played: '바로 시작합니다', cantReserve: '예약하지 못했어요', cantOp: '조작하지 못했어요',
+      queueEmpty: '예약된 곡이 없어요', reserved: '예약되었습니다', omakaseDone: '랜덤으로 예약했어요', played: '바로 시작합니다', cantReserve: '예약하지 못했어요', cantOp: '조작하지 못했어요',
       noNumber: '그 번호의 곡이 없어요', noNumberSub: '검색한 곡·최근 곡의 번호를 입력하세요', relogin: '다시 로그인해 주세요 (Lyrics Flow에서 로그아웃 → 로그인)',
+      err403: 'Spotify가 거절했어요. 잠시 후 다시 시도해 주세요. 계속되면 Spotify 계정이 앱 사용자로 등록되어 있는지 확인해 주세요',
+      err403user: '이 Spotify 계정은 앱 사용자로 등록되어 있지 않아요 (Spotify Developer Dashboard의 User Management에서 추가)',
+      err429: '검색이 너무 많았어요. 잠시 후 다시 시도해 주세요',
+      book: '번호책', bookTitle: '번호책 (곡번호 목록)', bookNote: '곡번호는 이 리모컨 목록에 한 번 나온 곡에 붙어요 (Spotify 곡으로 만든 번호예요). 검색하거나 최근 곡을 보면 늘어나요.',
+      bookEmpty: '아직 없어요. 제목·가수로 검색하거나 최근 곡을 열면 번호가 여기에 나와요',
+      noOmakase: '랜덤으로 고를 곡이 없어요', noOmakaseSub: '자주 듣는 곡·최근 곡에서 골라요',
       lyricsSynced: '♪ 노래방 가능 (싱크 가사)', lyricsPlain: '가사 있음 (싱크 없음)', lyricsNone: '가사 없음', lyricsChecking: '가사 확인 중…',
-      pos: '{n}번째', nowTag: '연주 중', mineTag: '예약', range4: '4주', range6: '6개월', range1: '1년',
+      pos: '{n}번째', nowTag: '연주 중', mineTag: '예약', range4: '4주', range6: '6개월', range1: '1년', noNext: '다음 곡이 아직 없어요',
+      tips: ['"랜덤 예약"은 자주 듣는 곡에서 한 곡을 골라 예약해요', '"번호 예약"은 목록에 나온 곡번호로 예약할 수 있어요', '곡 정보에서 노래방 가능(싱크 가사)인지 확인할 수 있어요', '홈 화면에 추가하면 앱처럼 쓸 수 있어요', '"큰 글씨"를 누르면 글자가 커져요'],
+      helpList: ['제목·가수로 검색하고 "예약"을 누르면 Spotify 대기열에 들어가요', '"바로 시작"은 지금 곡을 멈추고 그 곡을 바로 틀어요', '"번호 예약": 목록이나 곡 정보에 나오는 곡번호를 입력해서 예약해요', '"취소"는 다음 곡으로 넘어가요. 리모컨에서 일시정지·되감기·빨리감기·볼륨도 바꿀 수 있어요', '예약·조작에는 Spotify Premium이 필요해요', '위의 "日本 / 한국"으로 일본 노래방 스타일과 한국 노래방 스타일을 바꿀 수 있어요'],
     },
   };
-  // 韓国風のボタンに添える日本語
-  const SUB = { artist: '歌手名', song: '曲名', number: '番号で予約', recent: 'りれき', topTracks: 'よく聴く曲', jpop: '', kpop: '', western: '洋楽', queue: '予約確認', remote: 'リモコン', openFlow: '歌詞の画面' };
+  const SUB = { book: '目次本', artist: '歌手名', song: '曲名', omakase: 'おまかせ予約', number: '番号で予約', recent: 'りれき', queue: '予約確認', remote: 'リモコン', openFlow: '歌詞の画面' };
   let ui = root.dataset.ui === 'kr' ? 'kr' : 'jp';
-  const t = (k, v) => { let s = (L[ui][k] ?? L.jp[k] ?? k); if (v) s = s.replace(/\{(\w+)\}/g, (m, x) => v[x] ?? m); return s; };
+  const t = (k, v) => { let s = (L[ui][k] ?? L.jp[k] ?? k); if (v && typeof s === 'string') s = s.replace(/\{(\w+)\}/g, (m, x) => v[x] ?? m); return s; };
   function applyUi() {
     root.dataset.ui = ui;
     root.lang = ui === 'kr' ? 'ko' : 'ja';
-    $$('[data-l]').forEach((el) => { el.textContent = t(el.dataset.l); });
+    $$('[data-l]').forEach((el) => {
+      const s = t(el.dataset.l);
+      if (s.includes('\n')) { el.textContent = ''; s.split('\n').forEach((p, i) => { if (i) el.append(document.createElement('br')); el.append(p); }); }
+      else el.textContent = s;
+    });
     $$('[data-s]').forEach((el) => { el.textContent = ui === 'kr' ? SUB[el.dataset.s] || '' : ''; });
     $$('[data-ui-pick]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.uiPick === ui)));
     if (cur) cur.render && cur.render();
-    setCrumb();
-    renderNow();
+    setCrumb(); renderNow(); renderHomeHints(); renderTip(); setConn(connected);
+    const hl = $('#helpList'); hl.textContent = '';
+    t('helpList').forEach((x) => { const li = document.createElement('li'); li.textContent = x; hl.appendChild(li); });
   }
   function setUi(u) { ui = u === 'kr' ? 'kr' : 'jp'; store.set('lf_remote_ui', ui); applyUi(); }
 
@@ -569,8 +773,32 @@
       return { ok: res.ok, status: res.status, reason };
     }
     if (res.status === 204) return null;
-    if (!res.ok) { const e = new Error('Spotify API ' + res.status); e.status = res.status; throw e; }
+    if (!res.ok) {
+      // 403・429・5xx は一時的なことがあるので、少し待って 1 回だけやり直す
+      if (!opts.retry && (res.status === 403 || res.status === 429 || res.status >= 500)) {
+        const wait = res.status === 429 ? Math.min(5000, (Number(res.headers.get('Retry-After')) || 1) * 1000) : 700;
+        await new Promise((r) => setTimeout(r, wait));
+        return api(path, { ...opts, retry: true }, retried);
+      }
+      let msg = '';
+      try { const j = await res.json(); msg = (j.error && (j.error.message || j.error.reason)) || ''; } catch {}
+      const e = new Error('Spotify API ' + res.status + (msg ? ': ' + msg : ''));
+      e.status = res.status; e.msg = msg;
+      throw e;
+    }
     return res.json();
+  }
+  // 読み込めなかった理由（403 のときは、よくある原因を添える）
+  function whyFailed(e) {
+    const m = e && e.msg ? '（' + e.status + ' ' + e.msg + '）' : e && e.status ? '（' + e.status + '）' : '';
+    if (e && e.status === 403) {
+      if (/registered|developer dashboard/i.test(e.msg || '')) return t('err403user') + m;
+      if (/scope/i.test(e.msg || '')) return t('relogin') + m;
+      return t('err403') + m;
+    }
+    if (e && e.status === 401) return t('relogin') + m;
+    if (e && e.status === 429) return t('err429') + m;
+    return t('none') + m;
   }
   function opError(r) {
     if (/premium/i.test(r.reason)) return ui === 'kr' ? 'Spotify Premium이 필요해요' : '予約・操作には Spotify Premium が必要です';
@@ -588,7 +816,7 @@
     for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
     return (kind || ui) === 'kr' ? String(10000 + (h % 90000)) : (1000 + (h % 9000)) + '-' + String(h % 100).padStart(2, '0');
   }
-  const fmt = (ms) => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  const fmt = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   const smallImg = (imgs) => (imgs && imgs.length ? (imgs.find((i) => i.width && i.width <= 300) || imgs[imgs.length - 1]).url : '');
   const bigImg = (imgs) => (imgs && imgs.length ? imgs[0].url : '');
   function trackOf(x) {
@@ -596,7 +824,7 @@
       art: smallImg(x.album && x.album.images), big: bigImg(x.album && x.album.images), dur: x.duration_ms };
   }
 
-  // 番号で予約できるよう、出てきた曲の番号を覚えておく（600 曲まで）
+  // 番号で予約できるよう、出てきた曲の番号を覚えておく
   const nos = jget('lf_remote_nos', {});
   function learn(tracks) {
     for (const tr of tracks) {
@@ -633,14 +861,14 @@
     el.querySelector('.no').textContent = no || '';
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), err ? 2600 : 1800);
+    toastTimer = setTimeout(() => el.classList.remove('show'), err ? 2600 : 1900);
   }
 
   const mine = new Set(jget('lf_remote_mine', []));
   function remember(id) { mine.add(id); store.set('lf_remote_mine', JSON.stringify([...mine].slice(-200))); }
 
-  // ================= 予約・すぐ演奏 =================
-  async function reserve(tr, btn) {
+  // ================= 予約・すぐ演奏・おまかせ =================
+  async function reserve(tr, btn, label) {
     if (btn) btn.disabled = true;
     const r = await api('/me/player/queue?uri=' + encodeURIComponent(tr.uri), { method: 'POST' });
     if (btn) btn.disabled = false;
@@ -649,7 +877,7 @@
     if (btn) { btn.classList.add('done'); btn.textContent = '✓'; }
     chime();
     if (navigator.vibrate) navigator.vibrate(30);
-    toast(t('reserved'), tr.name, t('songNo') + ' ' + songNo(tr.id));
+    toast(label || t('reserved'), tr.name, t('songNo') + ' ' + songNo(tr.id));
     setTimeout(refreshNow, 600);
     return true;
   }
@@ -659,13 +887,22 @@
     toast(t('played'), tr.name, t('songNo') + ' ' + songNo(tr.id));
     setTimeout(refreshNow, 600);
   }
+  async function omakase() {
+    let pool = [];
+    try { const d = await api('/me/top/tracks?limit=50&time_range=short_term'); pool = ((d && d.items) || []).map(trackOf); } catch {}
+    if (!pool.length) { try { const d = await api('/me/player/recently-played?limit=50'); pool = ((d && d.items) || []).map((x) => trackOf(x.track)); } catch {} }
+    const fresh = pool.filter((x) => !mine.has(x.id));
+    const list = fresh.length ? fresh : pool;
+    if (!list.length) { toast(t('noOmakase'), t('noOmakaseSub'), '', true); return; }
+    const pick = list[Math.floor(Math.random() * list.length)];
+    learn([pick]);
+    reserve(pick, null, t('omakaseDone'));
+  }
 
   // ================= 一覧の行 =================
   function rows(box, tracks, opts = {}) {
     if (!opts.append) box.textContent = '';
-    if (!tracks.length && !opts.append) {
-      const d = document.createElement('div'); d.className = 'empty'; d.textContent = opts.empty || t('none'); box.appendChild(d); return;
-    }
+    if (!tracks.length && !opts.append) { const d = document.createElement('div'); d.className = 'empty'; d.textContent = opts.empty || t('none'); box.appendChild(d); return; }
     learn(tracks);
     tracks.forEach((tr, i) => {
       const row = document.createElement('div');
@@ -676,21 +913,15 @@
       const mid = document.createElement('div'); mid.style.minWidth = '0';
       const tt = document.createElement('div'); tt.className = 't';
       if (tr.current) { const g = document.createElement('span'); g.className = 'tag'; g.textContent = t('nowTag'); tt.appendChild(g); }
-      else if (opts.queue) {
-        const g = document.createElement('span'); g.className = 'tag'; g.style.background = 'rgba(255,255,255,.2)'; g.style.color = '#fff';
-        g.textContent = (mine.has(tr.id) ? t('mineTag') + ' ・ ' : '') + t('pos', { n: tr.pos }); tt.appendChild(g);
-      }
+      else if (opts.queue) { const g = document.createElement('span'); g.className = 'tag'; g.style.cssText = 'background:rgba(255,255,255,.2);color:#fff'; g.textContent = (mine.has(tr.id) ? t('mineTag') + ' ・ ' : '') + t('pos', { n: tr.pos }); tt.appendChild(g); }
       tt.appendChild(document.createTextNode(tr.name)); markLang(tt, tr.name);
       const an = document.createElement('div'); an.className = 'a narrow'; an.textContent = tr.artists; markLang(an, tr.artists);
       const no = document.createElement('span'); no.className = 'no'; no.textContent = t('songNo') + ' ' + songNo(tr.id) + (tr.dur ? ' ・ ' + fmt(tr.dur) : '');
       mid.append(tt, an, no);
       const aw = document.createElement('div'); aw.className = 'a wide'; aw.textContent = tr.artists; markLang(aw, tr.artists);
       row.append(ic, mid, aw);
-      if (!opts.queue) {
-        const b = document.createElement('button'); b.className = 'rsv'; b.textContent = t('reserve');
-        b.onclick = (e) => { e.stopPropagation(); reserve(tr, b); };
-        row.append(b);
-      } else row.append(document.createElement('span'));
+      if (!opts.queue) { const b = document.createElement('button'); b.className = 'rsv'; b.textContent = t('reserve'); b.onclick = (e) => { e.stopPropagation(); reserve(tr, b); }; row.append(b); }
+      else row.append(document.createElement('span'));
       row.onclick = () => openDetail(tr);
       box.appendChild(row);
     });
@@ -705,24 +936,62 @@
     const [kind, arg] = name.split(':');
     const v = VIEWS[kind];
     if (!v) return;
-    if (push && cur) stack.push(cur.name);
+    if (push && cur && cur.name !== name) stack.push(cur.name);
     $$('.view').forEach((s) => { s.hidden = s.id !== v.el; });
+    $('#vbar').hidden = kind === 'home';
     cur = { name, kind, arg, render: () => v.render(arg) };
     v.render(arg);
     setCrumb();
-    if (location.hash !== '#' + kind && kind !== 'home') history.replaceState(null, '', '#' + (arg ? kind + ':' + arg : kind));
-    if (kind === 'home') history.replaceState(null, '', location.pathname);
+    history.replaceState(null, '', kind === 'home' ? location.pathname : '#' + name);
   }
   function back() { const p = stack.pop(); go(p || 'home', false); }
+  function goTop() { stack.length = 0; go('home', false); }
   function setCrumb() {
     if (!cur) return;
-    const names = { home: t('top'), song: t('song'), artist: t('artist'), pad: t('remote'), recent: t('recent'), top: t('topTracks'), queue: t('queue'), genre: t('genreTitle', { g: (cur.arg || '').toUpperCase() }) };
+    const names = { book: t('book'), home: t('top'), song: t('song'), artist: t('artist'), pad: t('remote'), recent: t('recent'), top: t('top50'), queue: t('queue'), new: t('newSongs'), genre: (cur.arg || '').toUpperCase() };
     const q = $('#q').value.trim();
-    $('#crumb').textContent = cur.kind === 'home' ? t('top') : t('top') + ' ＞ ' + names[cur.kind] + ((cur.kind === 'song' || cur.kind === 'artist') && q ? ' ＞ ' + q : '');
+    $('#crumb').textContent = names[cur.kind] + ((cur.kind === 'song' || cur.kind === 'artist') && q ? ' ＞ ' + q : '');
+    markLang($('#crumb'), $('#crumb').textContent);
   }
 
   // ---------- TOP ----------
-  VIEWS.home = { el: 'v-home', render() { renderNow(); } };
+  let tvTab = 'now';
+  VIEWS.home = { el: 'v-home', render() { renderNow(); renderHomeHints(); } };
+  $$('[data-tv]').forEach((b) => { b.onclick = () => setTv(b.dataset.tv); });
+  function setTv(name) {
+    tvTab = name;
+    $$('[data-tv]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tv === name)));
+    $('#tvNow').hidden = name !== 'now'; $('#tvNext').hidden = name !== 'next'; $('#tvTips').hidden = name !== 'tips';
+    if (name === 'next') loadTvNext();
+    if (name === 'tips') renderTip();
+  }
+  async function loadTvNext() {
+    const box = $('#tvNextList');
+    try {
+      const d = await api('/me/player/queue');
+      const q = ((d && d.queue) || []).filter((x) => x && x.type === 'track').slice(0, 4).map(trackOf);
+      box.textContent = '';
+      if (!q.length) { box.textContent = t('noNext'); return; }
+      learn(q);
+      q.forEach((tr) => {
+        const r = document.createElement('div'); r.className = 'tvnext';
+        const img = document.createElement('img'); img.src = tr.art || ''; img.alt = '';
+        const m = document.createElement('div'); m.style.minWidth = '0';
+        const b = document.createElement('b'); b.textContent = tr.name; markLang(b, tr.name);
+        const s = document.createElement('span'); s.textContent = tr.artists + ' ・ ' + t('songNo') + ' ' + songNo(tr.id); markLang(s, tr.artists);
+        m.append(b, s); r.append(img, m); box.appendChild(r);
+      });
+    } catch { box.textContent = t('noNext'); }
+  }
+  let tipI = 0;
+  function renderTip() { const tips = t('tips'); $('#tvTip').textContent = tips[tipI % tips.length]; }
+  setInterval(() => { if (tvTab === 'tips') { tipI++; renderTip(); } }, 6000);
+  function renderHomeHints() {
+    const box = $('#homeHints'); box.textContent = '';
+    const h = jget('lf_remote_hist', []);
+    if (!h.length) { const p = document.createElement('p'); p.textContent = t('noHints'); box.appendChild(p); return; }
+    h.slice(0, 8).forEach((q) => { const b = document.createElement('button'); b.textContent = q; markLang(b, q); b.onclick = () => { $('#q').value = q; go('song'); }; box.appendChild(b); });
+  }
 
   // ---------- 探す ----------
   let mode = 'song', seq = 0, nextUrl = null, typing = 0;
@@ -752,19 +1021,20 @@
       box.querySelector('.more')?.remove();
       rows(box, items, { append: !!more });
       if (nextUrl && items.length) { const m = document.createElement('button'); m.className = 'more'; m.textContent = t('more'); m.onclick = () => { m.remove(); runSearch(true); }; box.appendChild(m); }
-    } catch (e) { if (my === seq) rows(box, [], { empty: t('none') + ' (' + (e.status || '—') + ')' }); }
+    } catch (e) { if (my === seq) rows(box, [], { empty: whyFailed(e) }); }
   }
-  $('#q').addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => runSearch(), 350); });
-  $('#q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(typing); runSearch(); $('#q').blur(); } });
-  $('#q').addEventListener('change', () => { const q = $('#q').value.trim(); if (q) { const h = [q, ...jget('lf_remote_hist', []).filter((x) => x !== q)].slice(0, 8); store.set('lf_remote_hist', JSON.stringify(h)); renderHints(); } });
+  function saveHint() { const q = $('#q').value.trim(); if (!q) return; const h = [q, ...jget('lf_remote_hist', []).filter((x) => x !== q)].slice(0, 8); store.set('lf_remote_hist', JSON.stringify(h)); renderHints(); }
+  $('#q').addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => runSearch(), 550); });
+  $('#q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(typing); runSearch(); saveHint(); $('#q').blur(); } });
+  $('#q').addEventListener('change', saveHint);
   $('#qclear').onclick = () => { $('#q').value = ''; runSearch(); };
   $$('[data-mode]').forEach((b) => { b.onclick = () => go(b.dataset.mode, false); });
   function renderHints() {
     const p = $('#findHint'); p.textContent = '';
     const h = jget('lf_remote_hist', []);
-    if (!h.length) { if (ui === 'jp') p.textContent = '「50音」で、デンモクのようなキーボードになります。'; return; }
+    if (!h.length) return;
     p.append(t('findHint') + ' ');
-    h.forEach((q) => { const a = document.createElement('button'); a.textContent = q; a.style.cssText = 'margin:2px 4px 2px 0;padding:4px 8px;border-radius:7px;background:rgba(255,255,255,.12);font-size:12px'; markLang(a, q); a.onclick = () => { $('#q').value = q; runSearch(); }; p.append(a); });
+    h.forEach((q) => { const a = document.createElement('button'); a.textContent = q; a.style.cssText = 'margin:2px 4px 2px 0;padding:5px 10px;border-radius:7px;background:rgba(255,255,255,.12);font-size:13px'; markLang(a, q); a.onclick = () => { $('#q').value = q; runSearch(); }; p.append(a); });
   }
 
   // 50 音（日本風だけ）
@@ -784,7 +1054,7 @@
     const to = map[last] || inv[last];
     if (to) { inp.value = v.slice(0, -1) + to; kanaTyped(); }
   }
-  function kanaTyped() { clearTimeout(typing); typing = setTimeout(() => runSearch(), 450); }
+  function kanaTyped() { clearTimeout(typing); typing = setTimeout(() => { runSearch(); saveHint(); }, 600); }
   $('#kana').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     const inp = $('#q');
@@ -803,25 +1073,42 @@
     store.set('lf_remote_kana', on ? 'on' : 'off');
   }
   $('#kanaBtn').onclick = () => setKana($('#kana').hidden);
+  $('#goKana').onclick = () => { if (ui === 'jp') setKana(true); go('song'); };
 
   // ---------- 一覧 ----------
   let topRange = 'short_term';
   VIEWS.recent = { el: 'v-list', render: () => listView('recent') };
   VIEWS.top = { el: 'v-list', render: () => listView('top') };
+  VIEWS.new = { el: 'v-list', render: () => listView('new') };
   VIEWS.genre = { el: 'v-list', render: (g) => listView('genre', g) };
   VIEWS.queue = { el: 'v-list', render: () => listView('queue') };
+  VIEWS.book = { el: 'v-list', render: () => listView('book') };
   async function listView(kind, arg) {
     const tabs = $('#listTabs'), box = $('#listBody');
     tabs.textContent = '';
-    [['recent', t('recent')], ['top', t('topTracks')], ['genre:j-pop', 'J-POP'], ['genre:k-pop', 'K-POP'], ['genre:pop', t('western')], ['queue', t('queue')]].forEach(([k, label]) => {
+    [['recent', t('recent')], ['top', t('top50')], ['new', t('newSongs')], ['genre:j-pop', 'J-POP'], ['genre:k-pop', 'K-POP'], ['genre:anime', t('anime')], ['genre:vocaloid', t('vocaloid')],
+      ['genre:rock', t('rock')], ['genre:hip-hop', t('hiphop')], ['genre:pop', t('western')], ['queue', t('queue')], ['book', t('book')]].forEach(([k, label]) => {
       const b = document.createElement('button'); b.textContent = label;
       b.setAttribute('aria-pressed', String(k === (arg ? kind + ':' + arg : kind)));
       b.onclick = () => go(k, false);
       tabs.appendChild(b);
     });
+    tabs.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
     $('#listInfo').textContent = '';
     loadingIn(box);
     try {
+      if (kind === 'book') {
+        // 覚えている曲を、いまの画面の番号の順に
+        $('#listTitle').textContent = t('bookTitle');
+        const seen = new Set();
+        const list = Object.values(nos).filter((x) => x && x.id && !seen.has(x.id) && seen.add(x.id))
+          .sort((a, b) => songNo(a.id).localeCompare(songNo(b.id)));
+        $('#listInfo').textContent = t('hits', { n: list.length });
+        const n = document.createElement('p'); n.className = 'hint'; n.textContent = t('bookNote');
+        rows(box, list, { empty: t('bookEmpty') });
+        box.prepend(n);
+        return;
+      }
       if (kind === 'recent') {
         $('#listTitle').textContent = t('recentTitle');
         const d = await api('/me/player/recently-played?limit=50');
@@ -838,6 +1125,11 @@
           bar.appendChild(b);
         });
         box.prepend(bar);
+      } else if (kind === 'new') {
+        const y = new Date().getFullYear();
+        $('#listTitle').textContent = t('newTitle', { y });
+        const d = await api('/search?' + new URLSearchParams({ type: 'track', limit: '40', market: 'from_token', q: 'year:' + y }));
+        rows(box, ((d && d.tracks && d.tracks.items) || []).filter(Boolean).map(trackOf));
       } else if (kind === 'genre') {
         $('#listTitle').textContent = t('genreTitle', { g: arg.toUpperCase() });
         const d = await api('/search?' + new URLSearchParams({ type: 'track', limit: '40', market: 'from_token', q: 'genre:"' + arg + '"' }));
@@ -853,7 +1145,7 @@
         const n = document.createElement('p'); n.className = 'hint'; n.textContent = t('queueNote'); box.appendChild(n);
       }
     } catch (e) {
-      rows(box, [], { empty: e.status === 401 || e.status === 403 ? t('relogin') : t('none') });
+      rows(box, [], { empty: whyFailed(e) });
     }
   }
 
@@ -906,41 +1198,58 @@
       if (j && j.syncedLyrics) { lc.textContent = t('lyricsSynced'); lc.className = 'ok'; }
       else if (j && j.plainLyrics) { lc.textContent = t('lyricsPlain'); lc.className = ''; }
       else { lc.textContent = t('lyricsNone'); lc.className = 'no'; }
-    } catch { if (dTrack === tr) { lc.textContent = t('lyricsNone'); } }
+    } catch { if (dTrack === tr) lc.textContent = t('lyricsNone'); }
   }
   function closeDetail() { $('#detail').hidden = true; dTrack = null; }
   $('#dClose').onclick = closeDetail;
   $('#detail').addEventListener('click', (e) => { if (e.target.id === 'detail') closeDetail(); });
   $('#dRsv').onclick = () => dTrack && reserve(dTrack, $('#dRsv'));
   $('#dNow').onclick = () => { if (dTrack) { playNow(dTrack); closeDetail(); } };
+  const openHelp = () => { $('#help').hidden = false; };
+  $('#helpBtn').onclick = openHelp;
+  $('#helpClose').onclick = () => { $('#help').hidden = true; };
+  $('#help').addEventListener('click', (e) => { if (e.target.id === 'help') $('#help').hidden = true; });
 
   // ================= 演奏中と操作 =================
-  let player = null;
+  let player = null, connected = false, polledAt = 0;
+  function setConn(on) { connected = on; $('#conn').classList.toggle('on', on); $('#conn span').textContent = on ? t('online') : t('offline'); }
   function renderNow() {
     const it = player && player.item;
     const lb = !it ? t('idle') : player.is_playing ? t('playing') : t('paused');
     const title = it ? it.name : t('idleTitle');
     const ar = it && it.artists ? it.artists.map((a) => a.name).join(', ') : '';
-    const img = it ? smallImg(it.album && it.album.images) : '';
-    $('#hLb').textContent = lb; $('#mLb').textContent = lb;
-    $('#hTitle').textContent = title; $('#mTitle').textContent = title;
-    markLang($('#hTitle'), title); markLang($('#mTitle'), title);
+    $('#hLb').textContent = lb;
+    $('#hTitle').textContent = title; markLang($('#hTitle'), title);
+    $('#mTitle').textContent = it ? lb + ' ・ ' + title : title; markLang($('#mTitle'), title);
     $('#hArtist').textContent = ar; markLang($('#hArtist'), ar);
-    if ($('#hArt').getAttribute('src') !== (it ? bigImg(it.album && it.album.images) : '')) $('#hArt').src = it ? bigImg(it.album && it.album.images) : '';
-    if ($('#mArt').getAttribute('src') !== img) $('#mArt').src = img;
-    $('#hBar').style.width = it && it.duration_ms ? (player.progress_ms / it.duration_ms * 100).toFixed(1) + '%' : '0';
+    $('#hNo').textContent = it ? t('songNo') + ' ' + songNo(it.id) : '';
+    const big = it ? bigImg(it.album && it.album.images) : '', small = it ? smallImg(it.album && it.album.images) : '';
+    if ($('#hArt').getAttribute('src') !== big) $('#hArt').src = big;
+    if ($('#mArt').getAttribute('src') !== small) $('#mArt').src = small;
     $('#pauseLbl').textContent = player && player.is_playing ? t('pause') : t('resume');
+    tickBar();
   }
+  // 再生位置のバー（取得のあいだも進める）
+  function tickBar() {
+    const it = player && player.item;
+    if (!it) { $('#hBar').style.width = '0'; $('#hTime').textContent = '0:00'; $('#hDur').textContent = '0:00'; return; }
+    const pos = Math.min(it.duration_ms, (player.progress_ms || 0) + (player.is_playing ? performance.now() - polledAt : 0));
+    $('#hBar').style.width = (pos / it.duration_ms * 100).toFixed(1) + '%';
+    $('#hTime').textContent = fmt(pos); $('#hDur').textContent = fmt(it.duration_ms);
+  }
+  setInterval(tickBar, 500);
   async function refreshNow() {
-    try { player = await api('/me/player?additional_types=track'); } catch { /* 次を待つ */ }
+    try { player = await api('/me/player?additional_types=track'); polledAt = performance.now(); setConn(true); }
+    catch { setConn(false); }
     renderNow();
+    if (tvTab === 'next') loadTvNext();
   }
   async function op(method, path, body) {
     const r = await api(path, { method, body });
     if (!r.ok) toast(t('cantOp'), opError(r), '', true);
     setTimeout(refreshNow, 500);
   }
-  const seekBy = (d) => { if (!player || !player.item) return; op('PUT', '/me/player/seek?position_ms=' + Math.max(0, (player.progress_ms || 0) + d)); };
+  const seekBy = (d) => { if (!player || !player.item) return; op('PUT', '/me/player/seek?position_ms=' + Math.max(0, (player.progress_ms || 0) + (player.is_playing ? performance.now() - polledAt : 0) + d)); };
   const vol = (d) => { const v = player && player.device && player.device.volume_percent; if (v == null) { toast(t('cantOp'), '', '', true); return; } op('PUT', '/me/player/volume?volume_percent=' + Math.max(0, Math.min(100, v + d))); };
   const OPS = {
     rew: () => seekBy(-10000), ff: () => seekBy(10000), restart: () => op('PUT', '/me/player/seek?position_ms=0'),
@@ -949,23 +1258,41 @@
     volUp: () => vol(10), volDown: () => vol(-10), queue: () => go('queue'),
   };
   $$('[data-op]').forEach((b) => { b.onclick = () => { if (navigator.vibrate) navigator.vibrate(10); OPS[b.dataset.op](); }; });
-  $('#footStop').onclick = OPS.skip;
+  $('#hwStop').onclick = OPS.skip;
+  $('#hwTop').onclick = goTop;
+  $('#hwBack').onclick = back;
+  $('#hwRemote').onclick = () => go('pad');
+  $('#dockBack').onclick = back;
   $('#miniNow').onclick = () => go('pad');
+  $('#omakase').onclick = omakase;
+
+  // らくらく（文字を大きく）
+  function setEasy(on) { if (on) root.setAttribute('data-easy', ''); else root.removeAttribute('data-easy'); $('#easyBtn').setAttribute('aria-pressed', String(on)); store.set('lf_remote_easy', on ? 'on' : 'off'); }
+  $('#easyBtn').onclick = () => setEasy(!root.hasAttribute('data-easy'));
+
+  // 時計
+  function clock() { const d = new Date(); $('#clock').textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  setInterval(clock, 10000);
 
   // ================= アプリとして入れる（PWA） =================
   let installEvt = null;
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; if (!standalone) { $('#installBox').hidden = false; $('#installBtn').hidden = false; } });
-  $('#installBtn').onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; $('#installBox').hidden = true; };
-  if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) { $('#installBox').hidden = false; $('#installBtn').hidden = true; $('#iosHint').hidden = false; }
+  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; if (!standalone) $('#installBtn').hidden = false; });
+  $('#installBtn').onclick = async () => {
+    if (installEvt) { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; $('#installBtn').hidden = true; }
+    else toast(t('install'), ui === 'kr' ? '공유 버튼 → "홈 화면에 추가"' : '共有ボタン →「ホーム画面に追加」');
+  };
+  if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) $('#installBtn').hidden = false;
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
   // ================= 起動 =================
   $$('[data-go]').forEach((b) => { b.onclick = () => go(b.dataset.go); });
-  $('#goTop').onclick = () => { stack.length = 0; go('home', false); };
-  $('#goBack').onclick = back;
+  $('#goTop').onclick = goTop;
   $$('[data-ui-pick]').forEach((b) => { b.onclick = () => setUi(b.dataset.uiPick); });
-  addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (!$('#detail').hidden) closeDetail(); else back(); } });
+  addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!$('#detail').hidden) closeDetail(); else if (!$('#help').hidden) $('#help').hidden = true; else back();
+  });
 
   function main() {
     if (!store.get('lf_refresh')) {
@@ -973,9 +1300,11 @@
       $('#loginLink').onclick = () => store.set('lf_after_login', '/lyrics/remote/');
       return;
     }
-    $('#shell').hidden = false;
-    applyUi();
+    stage.hidden = false;
+    clock();
+    setEasy(store.get('lf_remote_easy') === 'on');
     setKana(store.get('lf_remote_kana') === 'on');
+    applyUi();
     const h = location.hash.slice(1);
     go(h && VIEWS[h.split(':')[0]] ? h : 'home', false);
     refreshNow();
