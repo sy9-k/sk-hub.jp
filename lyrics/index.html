@@ -450,6 +450,40 @@
   .in-sparks i:nth-child(8) { left: 46%; top: 8%; animation-delay: -2.1s; }
   .in-sparks i:nth-child(9) { left: 95%; top: 62%; animation-delay: -.45s; }
   .in-sparks i:nth-child(10) { left: 30%; top: 86%; animation-delay: -1.35s; }
+  /* ================= カラオケ: 予約待ちの画面（曲が終わって、次の曲がないとき） ================= */
+  #standby {
+    position: fixed; inset: 0; z-index: 4; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.2vh; padding: 4vh 5vw; text-align: center;
+    background: radial-gradient(circle at 18% 22%, rgba(70, 110, 255, .55), transparent 46%), radial-gradient(circle at 82% 74%, rgba(255, 70, 170, .45), transparent 46%), linear-gradient(160deg, #0b1446, #04061a);
+    font-family: "M PLUS Rounded 1c", var(--f-gothic); font-weight: 800; color: #fff; animation: sbIn .6s ease;
+  }
+  #standby[hidden] { display: none; }
+  @keyframes sbIn { from { opacity: 0; } }
+  .sb-orbs i { position: absolute; border-radius: 50%; filter: blur(2px); opacity: .5; background: radial-gradient(circle, rgba(255, 255, 255, .9), rgba(140, 170, 255, .2) 60%, transparent 70%); animation: sbFloat 14s ease-in-out infinite; }
+  .sb-orbs i:nth-child(1) { width: 18vmin; height: 18vmin; left: 8%; top: 62%; }
+  .sb-orbs i:nth-child(2) { width: 9vmin; height: 9vmin; left: 78%; top: 14%; animation-delay: -4s; }
+  .sb-orbs i:nth-child(3) { width: 13vmin; height: 13vmin; left: 64%; top: 70%; animation-delay: -8s; }
+  .sb-orbs i:nth-child(4) { width: 7vmin; height: 7vmin; left: 22%; top: 12%; animation-delay: -11s; }
+  @keyframes sbFloat { 50% { transform: translate(3vw, -5vh) scale(1.15); opacity: .8; } }
+  .sb-clock { position: relative; font-size: clamp(26px, 6vmin, 72px); letter-spacing: .06em; font-variant-numeric: tabular-nums; opacity: .9; }
+  .sb-title {
+    position: relative; font-size: clamp(30px, 8.4vmin, 104px); line-height: 1.2; letter-spacing: .04em;
+    -webkit-text-stroke: .09em #12207a; paint-order: stroke fill; text-shadow: 0 .06em .2em rgba(0, 0, 0, .4); animation: sbPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes sbPulse { 50% { transform: scale(1.04); } }
+  .sb-sub { position: relative; max-width: 46em; font-size: clamp(14px, 2.5vmin, 26px); line-height: 1.6; opacity: .88; }
+  .sb-room { position: relative; display: flex; align-items: center; gap: 2.4vmin; margin-top: 1vh; padding: 1.8vmin 2.6vmin; border-radius: 18px; background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2); text-align: left; }
+  .sb-room[hidden] { display: none; }
+  .sb-room b { display: block; font-size: clamp(16px, 3vmin, 32px); }
+  .sb-room span { font-size: clamp(12px, 1.9vmin, 20px); opacity: .8; font-weight: 700; }
+  #sbQr { flex: none; width: clamp(96px, 19vmin, 200px); aspect-ratio: 1; padding: .8vmin; border-radius: 10px; background: #fff; }
+  #sbQr img, #sbQr canvas { width: 100% !important; height: 100% !important; display: block; }
+  /* ノレバン: ネオンのピンクと水色 */
+  [data-theme="noraebang"] #standby {
+    background: radial-gradient(circle at 20% 25%, rgba(255, 40, 160, .5), transparent 45%), radial-gradient(circle at 80% 75%, rgba(40, 220, 255, .45), transparent 45%), linear-gradient(160deg, #1a0630, #05020f);
+    font-family: Jua, var(--f-gothic-ko);
+  }
+  [data-theme="noraebang"] .sb-title { -webkit-text-stroke: 0; color: #fff; text-shadow: 0 0 .15em #ff4fd0, 0 0 .4em #ff4fd0, 0 0 .9em #c400ff; }
   #inter {
     position: fixed; inset: 0; z-index: 4; overflow: hidden;
     display: flex; flex-direction: column; padding: max(22px, 3.2vh) 4vw 0;
@@ -822,6 +856,15 @@
   </aside>
 
   <main id="stage"><div id="lines"></div><div id="message"></div></main>
+</div>
+
+<!-- カラオケ: 予約待ちの画面 -->
+<div id="standby" hidden role="status">
+  <div class="sb-orbs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="sb-clock"></div>
+  <div class="sb-title"></div>
+  <div class="sb-sub"></div>
+  <div class="sb-room" hidden><div id="sbQr" aria-label="選曲リモコンの QR コード"></div><div><b></b><span></span></div></div>
 </div>
 
 <!-- 日本風カラオケ: 曲と曲のあいだの「次の演奏曲」画面（10 秒） -->
@@ -1227,6 +1270,8 @@
       state.shuffle = !!data.shuffle_state;
       state.repeat = data.repeat_state || 'off';
     }
+    state.noItem = !item || item.type !== 'track';
+    state.polled = true;
     if (!item || item.type !== 'track') {
       state.playing = false;
       updateButtons();
@@ -1838,6 +1883,71 @@
   // 10 秒たつか、「すぐに演奏する」・Enter・再生ボタンで演奏を始める（止めるには Premium が必要。
   // 止められないときは、画面だけ 10 秒出す）
   const INTER_MS = 10000;
+  // ================= カラオケ: 予約待ちの画面 =================
+  // 曲が終わって止まったとき・何も流れていないとき・1 分以上止まっているときに出す（MV の終わりの画面などを見せない）
+  // 出している間に予約が入ったら（キューの先頭が変わったら）、その曲から始める
+  const standby = { on: false, at: 0, nearEnd: null, pausedSince: 0, nextAt: null, qAt: 0, startedAt: 0, clock: '' };
+  function updateStandby(ts) {
+    if (ts - standby.at < 400) return;
+    standby.at = ts;
+    const now = performance.now();
+    if (state.playing) {
+      standby.pausedSince = 0;
+      if (state.track) {
+        const left = state.track.duration - rawMs();
+        if (left < 2500) standby.nearEnd = state.track.id;
+        else if (left > 6000 && standby.nearEnd === state.track.id) standby.nearEnd = null;
+      }
+    } else if (!standby.pausedSince) standby.pausedSince = now;
+    // 止まって 1.5 秒たったら MV は隠す（YouTube の一時停止・終わりの画面を出さない）
+    const hold = !state.playing && standby.pausedSince && now - standby.pausedSince > 1500;
+    if (hold !== !!mv.hold) { mv.hold = hold; updateBackground(); }
+    let on = false;
+    if (isKaraoke() && state.polled && !inter.active && !state.playing) {
+      on = state.noItem || !state.track || (state.track && standby.nearEnd === state.track.id) || now - standby.pausedSince > 60000;
+    }
+    if (on !== standby.on) setStandby(on);
+    if (!on) return;
+    const d = new Date();
+    const c = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+    if (c !== standby.clock) { standby.clock = c; $('#standby .sb-clock').textContent = c; }
+    // 予約が入ったか、4 秒ごとにキューを見る
+    if (now - standby.qAt > 4000) { standby.qAt = now; fetchQueue(true); }
+  }
+  function setStandby(on) {
+    standby.on = on;
+    const el = $('#standby');
+    if (on) {
+      standby.nextAt = state.next ? state.next.id : null;
+      renderStandby();
+      $('#nextUp').classList.remove('show');
+    }
+    el.hidden = !on;
+  }
+  function renderStandby() {
+    const ko = theme() === 'noraebang';
+    const el = $('#standby');
+    el.lang = ko ? 'ko' : 'ja';
+    el.querySelector('.sb-title').textContent = ko ? '노래를 예약해 주세요' : '曲を予約してください';
+    el.querySelector('.sb-sub').textContent = ko
+      ? '리모컨에서 곡을 골라 예약하면 바로 시작해요. Spotify에서 재생해도 시작돼요'
+      : '選曲リモコン（デンモク）で曲を選んで「予約」を押すと、すぐに始まります。Spotify で再生しても始まります';
+    const r = el.querySelector('.sb-room');
+    r.hidden = !room.id;
+    if (room.id) {
+      r.querySelector('b').textContent = ko ? '폰으로 QR을 읽어서 예약' : 'スマホで QR を読み取って予約';
+      r.querySelector('span').textContent = ko ? '로그인 없이 쓸 수 있어요' : 'ログインはいりません';
+      if (standby.qrFor !== room.url) { standby.qrFor = room.url; drawQr($('#sbQr'), room.url); }
+    }
+  }
+  // 予約待ちの間に予約が入ったら、その曲へ進めて流す
+  function startFromStandby(next) {
+    if (!standby.on || !next || next.id === standby.nextAt || performance.now() - standby.startedAt < 8000) return;
+    standby.startedAt = performance.now();
+    standby.nextAt = next.id;
+    command('POST', '/me/player/next', true).then(() => setTimeout(() => { if (!state.playing) command('PUT', '/me/player/play', true); }, 1500));
+  }
+
   const inter = { active: false, until: 0, trackId: null, timer: 0, paused: false, shown: -1 };
   let interOn = store.get('lf_inter') !== 'off';
   function setInter(on) {
@@ -1977,6 +2087,7 @@
       state.next = next;
       state.nextFor = forTrack;
       renderNextUp();
+      startFromStandby(next);
     } catch (e) {
       console.warn(e);
     } finally {
@@ -2014,7 +2125,7 @@
   // 毎フレーム: 出すかどうかと、あと何秒か
   function updateNextUp(raw) {
     const el = $('#nextUp');
-    if (!isKaraoke() || inter.active || !state.track || !state.next || state.nextFor !== state.track.id) { el.classList.remove('show'); return; }
+    if (!isKaraoke() || inter.active || standby.on || !state.track || !state.next || state.nextFor !== state.track.id) { el.classList.remove('show'); return; }
     const fresh = performance.now() < state.nextNewUntil;
     if (fresh !== nextFresh) renderNextUp();
     const left = state.track.duration - raw;
@@ -2041,7 +2152,7 @@
     let on = '';
     if (isKaraoke()) {
       if (SCENES[kbgPref]) on = 'scene';
-      else if (kbgPref === 'mv' && mv.ready) on = 'mv';
+      else if (kbgPref === 'mv' && mv.ready && !mv.hold) on = 'mv';
     }
     if (on) root.dataset.kbgOn = on; else delete root.dataset.kbgOn;
     if (on !== 'mv') { try { mv.player && mv.player.pauseVideo && mv.player.pauseVideo(); } catch {} }
@@ -2529,6 +2640,7 @@
     lastTs = ts;
     drawScene(ts, dt);
     if (ts - mvSyncedAt > 400) { mvSyncedAt = ts; syncMV(); }
+    updateStandby(ts);
     if (!state.track) return;
     const raw = Math.max(0, Math.min(rawMs(), state.track.duration));
     const ms = Math.max(0, Math.min(raw + state.offsetMs, state.track.duration));
@@ -2588,6 +2700,7 @@
       if (kbgPref === 'mv' && KARAOKE_THEMES.includes(name) && state.track && mv.trackId !== state.track.id) startMV(state.track);
     }
     if (typeof renderNextUp === 'function') { renderNextUp(); fetchQueue(true); }
+    if (typeof standby !== 'undefined' && standby.on) renderStandby();
   }
   function setKColor(c) {
     root.setAttribute('data-kcolor', c);
@@ -2694,6 +2807,7 @@
     $('#remoteLink').href = remoteUrl();
     if (!$('#panel').hidden) makeRemoteQr();
     $('#inter .in-room').hidden = !on;
+    if (standby.on) renderStandby();
     if (on && room.inQrFor !== room.url) { room.inQrFor = room.url; drawQr($('#inQr'), room.url); }
   }
   async function openRoom(prev) {

@@ -766,7 +766,7 @@
       pos: '{n} 曲目', nowTag: '演奏中', mineTag: '予約', range4: '4 週間', range6: '半年', range1: '1 年', noNext: '次の曲はまだありません',
       tips: ['「おまかせ予約」は、よく聴く曲からランダムに 1 曲予約します', '「番号で予約」は、一覧に出た曲の選曲番号で予約できます', '曲の詳しい情報で、カラオケ対応（タイミングつき歌詞）か確かめられます', '歌詞の画面の設定で、韓国語・英語にカタカナのふりがなを付けられます', 'ホーム画面に入れると、アプリのように使えます', '「らくらく」を押すと、文字が大きくなります'],
       srcCatalog: 'Apple Music のカタログから探しています。予約すると、Spotify で同じ曲を探して入れます', srcLyrics: '歌詞のデータベース（LRCLIB）から探しています。予約すると、Spotify で同じ曲を探して入れます',
-      searchSpotify: 'Spotify で探す', notOnSpotify: 'Spotify でこの曲が見つかりませんでした',
+      searchSpotify: 'Spotify で探す', newTitleCat: '新曲（いま人気の新しい曲）', srcChart: 'Apple Music のランキング（日本）から出しています。予約すると、Spotify で同じ曲を探して入れます', notOnSpotify: 'Spotify でこの曲が見つかりませんでした',
       roomOn: 'ルーム', roomOff: 'パソコン応答なし', rename: '名前を変える', leave: 'ルームから出る',
       nameTitle: 'ルームに入りました', nameNote: '予約すると、歌詞の画面に「〇〇さんの予約」と出ます。呼んでほしい名前を入れてください（あとから変えられます）。',
       namePh: 'ニックネーム', nameSkip: '名前なしで使う', nameOk: 'はじめる', roomWho: 'ルームに参加中（名前: {n}）', noName: 'なし',
@@ -804,7 +804,7 @@
       pos: '{n}번째', nowTag: '연주 중', mineTag: '예약', range4: '4주', range6: '6개월', range1: '1년', noNext: '다음 곡이 아직 없어요',
       tips: ['"랜덤 예약"은 자주 듣는 곡에서 한 곡을 골라 예약해요', '"번호 예약"은 목록에 나온 곡번호로 예약할 수 있어요', '곡 정보에서 노래방 가능(싱크 가사)인지 확인할 수 있어요', '홈 화면에 추가하면 앱처럼 쓸 수 있어요', '"큰 글씨"를 누르면 글자가 커져요'],
       srcCatalog: 'Apple Music 카탈로그에서 찾고 있어요. 예약하면 Spotify에서 같은 곡을 찾아 넣어요', srcLyrics: '가사 데이터베이스(LRCLIB)에서 찾고 있어요. 예약하면 Spotify에서 같은 곡을 찾아 넣어요',
-      searchSpotify: 'Spotify에서 찾기', notOnSpotify: 'Spotify에서 이 곡을 찾지 못했어요',
+      searchSpotify: 'Spotify에서 찾기', newTitleCat: '신곡 (지금 인기 있는 새 노래)', srcChart: 'Apple Music 차트(일본)에서 가져왔어요. 예약하면 Spotify에서 같은 곡을 찾아 넣어요', notOnSpotify: 'Spotify에서 이 곡을 찾지 못했어요',
       roomOn: '룸', roomOff: 'PC 응답 없음', rename: '이름 바꾸기', leave: '룸 나가기',
       nameTitle: '룸에 들어왔어요', nameNote: '예약하면 가사 화면에 "OO 님의 예약"이 나와요. 불러 줄 이름을 입력하세요 (나중에 바꿀 수 있어요).',
       namePh: '닉네임', nameSkip: '이름 없이 사용', nameOk: '시작', roomWho: '룸 참가 중 (이름: {n})', noName: '없음',
@@ -1435,6 +1435,19 @@
         rows(box, list, { empty: t('bookEmpty') });
         box.prepend(n);
         return;
+      }
+      if (kind === 'new' || kind === 'genre') {
+        // ジャンル・新曲は、Apple Music のランキング・カタログから（だめなときだけ Spotify）
+        let list = [];
+        try { catalogMod = catalogMod || await import('/lyrics/catalog.js'); list = await catalogMod.category(kind, arg); } catch (e) { console.warn(e); }
+        if (cur && cur.name !== (arg ? kind + ':' + arg : kind)) return;
+        if (list.length) {
+          $('#listTitle').textContent = kind === 'new' ? t('newTitleCat') : t('genreTitle', { g: (arg || '').toUpperCase() });
+          $('#listInfo').textContent = t('hits', { n: list.length });
+          rows(box, list);
+          const n = document.createElement('p'); n.className = 'hint'; n.textContent = t(arg === 'vocaloid' ? 'srcCatalog' : 'srcChart'); box.prepend(n);
+          return;
+        }
       }
       if (inRoom()) {
         // ルーム: パソコンの Spotify の一覧（よく聴く曲・りれきは、パソコンのアカウントのもの）

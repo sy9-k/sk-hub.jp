@@ -71,3 +71,55 @@ export async function pickSpotify(meta, find) {
     + (norm(x.name) === n || norm(x.name) === n2 ? 0 : norm(x.name).includes(n2) ? 3 : 8);
   return list.map((x, i) => ({ x, s: score(x) + i * 0.01 })).sort((p, q) => p.s - q.s)[0].x;
 }
+
+// ---------- カテゴリー（ジャンル・新曲）: Apple Music（iTunes）の日本のランキング ----------
+// ジャンルの番号は iTunes のもの
+const GENRES = { 'j-pop': 27, anime: 29, 'k-pop': 51, rock: 21, 'hip-hop': 18, pop: 14 };
+const GENRE_NAMES = { 'j-pop': 'J-Pop', anime: 'Anime', 'k-pop': 'K-Pop', rock: 'Rock', 'hip-hop': 'Hip-Hop/Rap', pop: 'Pop' };
+// JSON をそのまま読めればそれで、読めなければ JSONP で
+async function getJson(url, ms) {
+  try { const r = await fetch(url); if (r.ok) return await r.json(); } catch {}
+  return jsonp(url, ms);
+}
+const lab = (x) => (x && x.label) || '';
+function fromChart(e) {
+  const id = e && e.id && e.id.attributes && e.id.attributes['im:id'];
+  const imgs = (e && e['im:image']) || [];
+  const art = imgs.length ? lab(imgs[imgs.length - 1]) : '';
+  return {
+    id: 'it' + id, ext: 'it:' + id, uri: '', name: lab(e['im:name']), artists: lab(e['im:artist']),
+    album: lab(e['im:collection'] && e['im:collection']['im:name']), art, big: bigArt(art), dur: 0,
+    released: (e['im:releaseDate'] && e['im:releaseDate'].label) || '',
+  };
+}
+// ランキング（genre を省くと全体）
+export async function chart(genre) {
+  const g = GENRES[genre];
+  const d = await getJson(ITUNES + 'jp/rss/topsongs/limit=100' + (g ? '/genre=' + g : '') + '/json', 6000);
+  let list = d && d.feed && d.feed.entry;
+  if (list && !Array.isArray(list)) list = [list];
+  return (list || []).map(fromChart).filter((x) => /^it\d+$/.test(x.id) && x.name);
+}
+// カテゴリーの曲: kind は 'genre'（arg にジャンル）か 'new'（新曲）
+export async function category(kind, arg) {
+  if (kind === 'new') {
+    // いま人気の曲のうち、この 1 年に出たものを新しい順に
+    const list = await chart('');
+    const since = Date.now() - 365 * 864e5;
+    const fresh = list.filter((x) => Date.parse(x.released) > since).sort((a, b) => Date.parse(b.released) - Date.parse(a.released));
+    return fresh.length >= 10 ? fresh : list;
+  }
+  if (arg === 'vocaloid') {
+    // ボカロはランキングのジャンルがないので、カタログを言葉で探す
+    const [a, b] = await Promise.all([searchItunes('VOCALOID', 'song').catch(() => []), searchItunes('初音ミク', 'song').catch(() => [])]);
+    const seen = new Set();
+    return [...a, ...b].filter((x) => !seen.has(x.id) && seen.add(x.id));
+  }
+  let list = [];
+  try { list = await chart(arg); } catch {}
+  if (list.length) return list;
+  // ランキングが読めないときは、ジャンルの名前で探す
+  const p = new URLSearchParams({ term: GENRE_NAMES[arg] || arg, country: 'JP', media: 'music', entity: 'song', attribute: 'genreIndex', limit: '50', lang: 'ja_jp' });
+  const d = await jsonp(ITUNES + 'search?' + p);
+  return ((d && d.results) || []).filter((x) => x && x.kind === 'song' && x.trackId).map(fromItunes);
+}
