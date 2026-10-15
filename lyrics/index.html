@@ -400,21 +400,59 @@
   /* ================= 日本風カラオケ: 「次の演奏曲」画面 =================
      オレンジの画面に、枠つきの「次の演奏曲」、これから演奏する曲、その次からの 6 曲（番号つき）、
      キーの札（このアプリはキーを変えないので「標準」）、下に 10 秒のバー */
+  /* 色（オレンジ = 既定 / 青 = data-color="blue"） */
+  #inter {
+    --in-bg: linear-gradient(165deg, #ffbe2e 0%, #f7950c 48%, #e27300 100%);
+    --in-edge: #5b2a00; --in-shadow: rgba(90, 40, 0, .4); --in-dark: #6b3300;
+    --in-orb: radial-gradient(circle at 34% 28%, #fffbe0 0 8%, #ffe04a 30%, #f0a400 62%, #b86400 100%);
+    --in-ring: rgba(255, 236, 160, .55);
+    --in-row1: linear-gradient(90deg, rgba(255, 238, 150, .55), rgba(255, 238, 150, .15));
+    --in-row2: linear-gradient(90deg, rgba(255, 210, 90, .3), rgba(255, 210, 90, .05));
+    --in-artist: #e6f4ff; --in-artist-edge: #2a3a7a;
+  }
+  #inter[data-color="blue"] {
+    --in-bg: radial-gradient(130% 100% at 72% 8%, #5557ff 0%, #2b2de8 32%, #1915bd 64%, #0d0a80 100%);
+    --in-edge: #0b0a52; --in-shadow: rgba(4, 4, 50, .5); --in-dark: #16127a;
+    --in-orb: radial-gradient(circle at 34% 28%, #fff 0 8%, #c2bdff 26%, #6656ff 58%, #22149e 100%);
+    --in-ring: rgba(190, 190, 255, .4);
+    --in-row1: linear-gradient(90deg, rgba(150, 160, 255, .42), rgba(150, 160, 255, .1));
+    --in-row2: linear-gradient(90deg, rgba(90, 100, 255, .26), rgba(90, 100, 255, .04));
+    --in-artist: #ffffff; --in-artist-edge: #0b0a52;
+  }
+  /* 青のときだけ、きらきらまたたく光 */
+  .in-sparks { display: none; }
+  #inter[data-color="blue"] .in-sparks { display: block; }
+  .in-sparks i {
+    position: absolute; width: 1.3vmin; height: 1.3vmin; border-radius: 50%; pointer-events: none;
+    background: #fff; box-shadow: 0 0 1.2vmin .5vmin rgba(200, 200, 255, .9), 0 0 3vmin 1vmin rgba(140, 140, 255, .6);
+    animation: twinkle 2.4s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%, 100% { opacity: .15; transform: scale(.5); } 50% { opacity: 1; transform: scale(1); } }
+  .in-sparks i:nth-child(1) { left: 58%; top: 13%; }
+  .in-sparks i:nth-child(2) { left: 70%; top: 24%; animation-delay: -.6s; }
+  .in-sparks i:nth-child(3) { left: 84%; top: 9%; animation-delay: -1.2s; }
+  .in-sparks i:nth-child(4) { left: 64%; top: 36%; animation-delay: -1.8s; }
+  .in-sparks i:nth-child(5) { left: 91%; top: 31%; animation-delay: -.3s; }
+  .in-sparks i:nth-child(6) { left: 77%; top: 44%; animation-delay: -1.5s; }
+  .in-sparks i:nth-child(7) { left: 12%; top: 58%; animation-delay: -.9s; }
+  .in-sparks i:nth-child(8) { left: 46%; top: 8%; animation-delay: -2.1s; }
+  .in-sparks i:nth-child(9) { left: 95%; top: 62%; animation-delay: -.45s; }
+  .in-sparks i:nth-child(10) { left: 30%; top: 86%; animation-delay: -1.35s; }
   #inter {
     position: fixed; inset: 0; z-index: 4; overflow: hidden;
     display: flex; flex-direction: column; padding: max(22px, 3.2vh) 4vw 0;
-    background: linear-gradient(165deg, #ffbe2e 0%, #f7950c 48%, #e27300 100%);
+    background: var(--in-bg);
     font-family: "M PLUS Rounded 1c", Jua, var(--f-gothic); font-weight: 800; color: #fff;
     animation: inIn .45s var(--ease);
   }
   #inter[hidden] { display: none; }
   @keyframes inIn { from { opacity: 0; transform: scale(1.04); } }
   /* 白い文字に茶色のふち */
-  #inter .ol { -webkit-text-stroke: .11em #5b2a00; paint-order: stroke fill; text-shadow: 0 .06em 0 rgba(90, 40, 0, .45); }
+  #inter .ol { -webkit-text-stroke: .11em var(--in-edge); paint-order: stroke fill; text-shadow: 0 .06em 0 var(--in-shadow); }
   /* 飾りの玉と輪 */
   .in-orbs i { position: absolute; border-radius: 50%; pointer-events: none; animation: orb 7s ease-in-out infinite alternate; }
-  .in-orbs i:nth-child(odd) { background: radial-gradient(circle at 34% 28%, #fffbe0 0 8%, #ffe04a 30%, #f0a400 62%, #b86400 100%); box-shadow: 0 10px 30px rgba(120, 50, 0, .35); }
-  .in-orbs i:nth-child(even) { border: 1.6vmin solid rgba(255, 236, 160, .55); box-shadow: inset 0 0 0 .6vmin rgba(255, 255, 255, .35); }
+  .in-orbs i:nth-child(odd) { background: var(--in-orb); box-shadow: 0 10px 30px var(--in-shadow); }
+  .in-orbs i:nth-child(even) { border: 1.6vmin solid var(--in-ring); box-shadow: inset 0 0 0 .6vmin rgba(255, 255, 255, .35); }
   .in-orbs i:nth-child(1) { width: 11vmin; height: 11vmin; right: 4vw; top: 14vh; }
   .in-orbs i:nth-child(2) { width: 18vmin; height: 18vmin; left: 11vw; top: 32vh; animation-delay: -2s; }
   .in-orbs i:nth-child(3) { width: 15vmin; height: 15vmin; right: 2vw; top: 38vh; animation-delay: -3s; }
@@ -427,11 +465,11 @@
   .in-label {
     flex: none; padding: .25em .45em; border-radius: .35em; line-height: 1.12; text-align: center;
     font-size: clamp(22px, 4.6vmin, 48px); letter-spacing: .04em;
-    border: .1em solid #fff; box-shadow: 0 0 0 .07em #5b2a00, inset 0 0 0 .07em #5b2a00, 0 .12em .3em rgba(90, 40, 0, .35);
-    -webkit-text-stroke: .1em #5b2a00; paint-order: stroke fill;
+    border: .1em solid #fff; box-shadow: 0 0 0 .07em var(--in-edge), inset 0 0 0 .07em var(--in-edge), 0 .12em .3em var(--in-shadow);
+    -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill;
   }
   .in-now { min-width: 0; flex: 1; }
-  .in-title, .in-artist { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-text-stroke: .1em #5b2a00; paint-order: stroke fill; padding: .05em .1em; }
+  .in-title, .in-artist { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill; padding: .05em .1em; }
   .in-title { font-size: clamp(26px, 6.6vmin, 72px); line-height: 1.2; }
   .in-artist { font-size: clamp(20px, 5vmin, 54px); line-height: 1.2; }
   .in-key {
@@ -446,29 +484,29 @@
     display: grid; grid-template-columns: auto minmax(0, 1.25fr) auto minmax(0, 1fr) auto; align-items: center; gap: 1.4vw;
     height: min(9.4vh, 13vmin); padding: 0 1.2vw 0 .6vw; font-size: clamp(16px, 3.9vmin, 42px);
   }
-  .in-list li:nth-child(odd) { background: linear-gradient(90deg, rgba(255, 238, 150, .55), rgba(255, 238, 150, .15)); }
-  .in-list li:nth-child(even) { background: linear-gradient(90deg, rgba(255, 210, 90, .3), rgba(255, 210, 90, .05)); }
+  .in-list li:nth-child(odd) { background: var(--in-row1); }
+  .in-list li:nth-child(even) { background: var(--in-row2); }
   .in-no {
     counter-increment: in; width: 1.45em; height: 1.45em; display: grid; place-items: center; border-radius: .2em;
-    border: .09em solid #fff; box-shadow: 0 0 0 .06em #5b2a00, inset 0 0 0 .06em #5b2a00;
-    background: rgba(255, 255, 255, .18); -webkit-text-stroke: .09em #5b2a00; paint-order: stroke fill;
+    border: .09em solid #fff; box-shadow: 0 0 0 .06em var(--in-edge), inset 0 0 0 .06em var(--in-edge);
+    background: rgba(255, 255, 255, .18); -webkit-text-stroke: .09em var(--in-edge); paint-order: stroke fill;
   }
   .in-no::before { content: counter(in); }
-  .in-list li:first-child .in-no { background: #6b3300; }
-  .in-t, .in-a { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-text-stroke: .1em #5b2a00; paint-order: stroke fill; padding: .05em .08em; }
-  .in-a { color: #e6f4ff; -webkit-text-stroke-color: #2a3a7a; }
+  .in-list li:first-child .in-no { background: var(--in-dark); }
+  .in-t, .in-a { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill; padding: .05em .08em; }
+  .in-a { color: var(--in-artist); -webkit-text-stroke-color: var(--in-artist-edge); }
   .in-arrow { width: 0; height: 0; border-top: .38em solid transparent; border-bottom: .38em solid transparent; border-left: .6em solid #7b97ff; filter: drop-shadow(0 0 0 #2a3a7a) drop-shadow(1px 1px 0 #2a3a7a); }
   .in-badge {
     font-size: .42em; padding: .35em .5em; border-radius: .3em; line-height: 1;
     background: linear-gradient(145deg, #ff86dd, #e3299f); box-shadow: .18em .18em 0 #a8137a; color: #fff;
   }
   .in-list li.empty .in-t { opacity: .7; }
-  .in-more { position: relative; text-align: right; margin: 1vh 1.5vw 0; font-size: clamp(14px, 3vmin, 30px); -webkit-text-stroke: .1em #5b2a00; paint-order: stroke fill; min-height: 1.2em; }
+  .in-more { position: relative; text-align: right; margin: 1vh 1.5vw 0; font-size: clamp(14px, 3vmin, 30px); -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill; min-height: 1.2em; }
   .in-foot { position: relative; display: flex; align-items: center; gap: 14px; margin: 1.2vh 0 1.4vh; font-size: clamp(13px, 2.4vmin, 22px); }
-  .in-msg, .in-sec { -webkit-text-stroke: .1em #5b2a00; paint-order: stroke fill; }
+  .in-msg, .in-sec { -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill; }
   .in-sec { font-variant-numeric: tabular-nums; }
-  #inGo { margin-left: auto; padding: 8px 16px; border-radius: 999px; background: #fff; color: #7a3a00; font-size: 14px; font-weight: 800; box-shadow: 0 3px 0 #a85a00; }
-  .in-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(90, 40, 0, .25); }
+  #inGo { margin-left: auto; padding: 8px 16px; border-radius: 999px; background: #fff; color: var(--in-edge); font-size: 14px; font-weight: 800; box-shadow: 0 3px 0 var(--in-shadow); }
+  .in-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: var(--in-shadow); }
   .in-bar i { display: block; height: 100%; background: #fff; transform-origin: left; animation: inBar 10s linear forwards; }
   @keyframes inBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
   #inter [lang="ko"] { font-family: Jua, var(--f-gothic-ko); }
@@ -745,6 +783,7 @@
 <!-- 日本風カラオケ: 曲と曲のあいだの「次の演奏曲」画面（10 秒） -->
 <div id="inter" hidden role="dialog" aria-label="次の演奏曲">
   <div class="in-orbs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="in-sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="in-head">
     <div class="in-label">次の<br>演奏曲</div>
     <div class="in-now"><div class="in-title"></div><div class="in-artist"></div></div>
@@ -815,6 +854,12 @@
       <label>曲と曲のあいだに「次の演奏曲」（10 秒止める）</label>
       <button class="chip" data-inter="on">オン</button>
       <button class="chip" data-inter="off">オフ</button>
+    </div>
+    <div class="row" id="interColorRow">
+      <label>「次の演奏曲」の色</label>
+      <button class="chip" data-intercolor="orange"><span class="dot" style="background:#f7950c"></span>オレンジ</button>
+      <button class="chip" data-intercolor="blue"><span class="dot" style="background:#2b2de8"></span>青</button>
+      <button class="chip" id="interTry">試しに見る</button>
     </div>
     <h3>カラオケの背景</h3>
     <div class="row">
@@ -1566,7 +1611,16 @@
     if (!on && inter.active) endInterlude(true);
   }
 
-  async function startInterlude(track) {
+  let interColor = store.get('lf_intercolor') === 'blue' ? 'blue' : 'orange';
+  function setInterColor(c) {
+    interColor = c === 'blue' ? 'blue' : 'orange';
+    store.set('lf_intercolor', interColor);
+    $('#inter').dataset.color = interColor;
+    $$('.chip[data-intercolor]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.intercolor === interColor)));
+  }
+
+  // preview = 試しに見る（曲は止めない）
+  async function startInterlude(track, preview) {
     clearTimeout(inter.timer);
     Object.assign(inter, { active: true, trackId: track.id, until: performance.now() + INTER_MS, paused: false, shown: -1 });
     const el = $('#inter');
@@ -1582,8 +1636,8 @@
     $('#nextUp').classList.remove('show');
     inter.timer = setTimeout(() => endInterlude(true), INTER_MS);
 
-    // 曲を止めて、頭に戻す
-    const ok = await command('PUT', '/me/player/pause', true);
+    // 曲を止めて、頭に戻す（試しに見るときは止めない）
+    const ok = preview ? false : await command('PUT', '/me/player/pause', true);
     if (!inter.active || inter.trackId !== track.id) return;
     if (ok) {
       inter.paused = true;
@@ -2283,6 +2337,7 @@
     $$('.tp').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === name)));
     $('#kcolors').hidden = !KARAOKE_THEMES.includes(name);
     $('#interRow').hidden = name !== 'karaoke';
+    $('#interColorRow').hidden = name !== 'karaoke';
     if (name !== 'karaoke' && typeof endInterlude === 'function' && inter.active) endInterlude(true);
     // 間奏の表示（日本風は「間奏」、韓国風は「간주 중」）
     const brk = $('#kbreak');
@@ -2379,6 +2434,12 @@
   $$('.chip[data-kbg]').forEach((b) => { b.onclick = () => setKbg(b.dataset.kbg); });
   $$('.chip[data-inter]').forEach((b) => { b.onclick = () => setInter(b.dataset.inter === 'on'); });
   $('#inGo').onclick = () => endInterlude(true);
+  $$('.chip[data-intercolor]').forEach((b) => { b.onclick = () => setInterColor(b.dataset.intercolor); });
+  $('#interTry').onclick = () => {
+    if (!state.track) { toast('曲を再生すると試せます'); return; }
+    togglePanel(false);
+    startInterlude(state.track, true);
+  };
   $('#ytKey').value = store.get('lf_ytkey') || '';
   if (BUILTIN_YT_KEY) $('#ytKey').hidden = true;
   $('#ytKey').addEventListener('change', (e) => {
@@ -2436,6 +2497,7 @@
     setEase(easePref);
     setKbg(kbgPref);
     setInter(interOn);
+    setInterColor(interColor);
     applyFontSize();
     applyOffset();
     setVolumeUI(50);
