@@ -2,72 +2,72 @@
 <html lang="ja" data-theme="glow">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Lyrics Flow | SK's Lab</title>
 <meta name="description" content="Spotify で再生中の曲の歌詞を、再生に合わせてひたすら流し続ける SK's Lab のツール。">
-<meta name="theme-color" content="#0b0b0f">
+<meta name="theme-color" content="#000000">
 <link rel="canonical" href="https://sk-hub.jp/lyrics/">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <!-- テーマを、画面が出る前に付ける（ちらつかないように） -->
-<script>(function(){try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("lf_theme");if(/^(glow|bold|karaoke|simple)$/.test(t))document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
-<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@800&display=swap"></script>
+<script>(function(){try{var d=document.documentElement,t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("lf_theme");if(/^(glow|bold|karaoke|simple)$/.test(t))d.setAttribute("data-theme",t);var k=localStorage.getItem("lf_kcolor");if(/^(blue|red|purple)$/.test(k))d.setAttribute("data-kcolor",k);}catch(e){}})();</script>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=Figtree:wght@500;700;800&display=swap"></script>
 <style>
   :root {
-    --bg: #0b0b0f;
-    --fg: #ffffff;
     --size: 36px;
     --c1: #5b4bff;  /* ジャケットから取った色（取れなければこのまま） */
     --c2: #ff4f8b;
     --c3: #1fb5ff;
     --solid: #4a3a8c;
-    --anchor: 50%;   /* いまの行を置く高さ */
+    --anchor: 50%;  /* いまの行を置く高さ */
     --ease: cubic-bezier(.2, .75, .2, 1);
+    --kfill: #1f5bff;
   }
+  [data-kcolor="red"]    { --kfill: #ff2f5f; }
+  [data-kcolor="purple"] { --kfill: #a43cff; }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; height: 100%; overflow: hidden;
-    background: var(--bg); color: var(--fg);
+    background: #000; color: #fff;
     font-family: "Noto Sans JP", system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  body { transition: background-color 1.2s; }
   body.idle { cursor: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  svg { display: block; }
+  [hidden] { display: none !important; }
 
   /* ================= 背景 ================= */
   #bg {
-    position: fixed; inset: -10%; z-index: 0;
+    position: fixed; inset: -10%; z-index: 0; display: none;
     background-size: cover; background-position: center;
     filter: blur(70px) brightness(.4) saturate(1.4);
   }
-  #glow { position: fixed; inset: 0; z-index: 0; overflow: hidden; display: none; background: #000; }
+  #glow { position: fixed; inset: 0; z-index: 0; overflow: hidden; display: none; background: #111; }
   #glow .blob {
     position: absolute; width: 85vmax; height: 85vmax; border-radius: 50%;
-    filter: blur(90px); opacity: .8;
+    filter: blur(90px); opacity: .85;
     transition: background-color 1.5s;
     animation: drift 26s ease-in-out infinite alternate;
   }
   #glow .b1 { background: var(--c1); left: -25vmax; top: -30vmax; }
   #glow .b2 { background: var(--c2); right: -30vmax; top: 5vmax; animation-duration: 32s; animation-direction: alternate-reverse; }
   #glow .b3 { background: var(--c3); left: 5vmax; bottom: -45vmax; animation-duration: 38s; }
-  #glow::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, .28); }
+  #glow::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, .3); }
   @keyframes drift {
     0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
     50%  { transform: translate(14vmax, 8vmax) rotate(140deg) scale(1.18); }
     100% { transform: translate(-8vmax, 16vmax) rotate(260deg) scale(.92); }
   }
 
-  /* ================= 歌詞（一覧で流すテーマ） ================= */
-  #stage {
-    position: fixed; inset: 0; z-index: 1; overflow: hidden;
-    /* 上はヘッダーの下で消える・下はフッターの手前で消える */
-    -webkit-mask-image: linear-gradient(transparent 90px, #000 calc(90px + 12%), #000 82%, transparent calc(100% - 40px));
-            mask-image: linear-gradient(transparent 90px, #000 calc(90px + 12%), #000 82%, transparent calc(100% - 40px));
-  }
+  /* ================= 全体の並び ================= */
+  #app { position: fixed; inset: 0; z-index: 1; }
+  #stage { position: relative; overflow: hidden; height: 100%; }
   #lines { position: absolute; left: 0; right: 0; top: var(--anchor); padding: 0 7vw; }
   #lines.plain { will-change: transform; }
   .line {
     padding: .3em 0;
-    font-size: var(--size); font-weight: 800; line-height: 1.32;
+    font-size: min(var(--size), 7vw); font-weight: 800; line-height: 1.3;
     overflow-wrap: anywhere;
     transition: transform .7s var(--ease);
     will-change: transform;
@@ -78,180 +78,324 @@
     transition: color .4s, transform .5s var(--ease), filter .5s, opacity .5s, text-shadow .5s;
   }
   .line.past .txt { color: rgba(255, 255, 255, .2); }
-  .line.active .txt { color: var(--fg); }
+  .line.active .txt { color: #fff; }
   .line.note .txt { letter-spacing: .3em; }
-  #lines.plain .line .txt { color: var(--fg); }
-
-  /* --- シンプル --- */
-  [data-theme="simple"] .line .txt { filter: blur(.4px); }
-  [data-theme="simple"] .line.active .txt { transform: scale(1.05); filter: none; }
-
-  /* --- グロー（Apple Music 風）: 色が動く背景・離れた行ほどぼかす・ばねのように少しずつ遅れて動く --- */
-  [data-theme="glow"] #glow { display: block; }
-  [data-theme="glow"] #bg { display: none; }
-  [data-theme="glow"] { --anchor: 36%; }
-  [data-theme="glow"] .line { font-weight: 900; letter-spacing: -.01em; transition: transform .95s cubic-bezier(.3, 1.22, .45, 1); }
-  [data-theme="glow"] .line .txt { color: rgba(255, 255, 255, .42); transform: scale(.96); }
-  [data-theme="glow"] .line[data-d="1"] .txt { filter: blur(.8px); }
-  [data-theme="glow"] .line[data-d="2"] .txt { filter: blur(1.6px); }
-  [data-theme="glow"] .line[data-d="3"] .txt { filter: blur(2.4px); opacity: .85; }
-  [data-theme="glow"] .line[data-d="4"] .txt { filter: blur(3.2px); opacity: .7; }
-  [data-theme="glow"] .line.past .txt { color: rgba(255, 255, 255, .32); }
-  [data-theme="glow"] .line.active .txt {
-    color: #fff; transform: scale(1); filter: none; opacity: 1;
-    text-shadow: 0 0 28px rgba(255, 255, 255, .45);
-  }
-  [data-theme="glow"] header { background: none; }
-
-  /* --- ボールド（Spotify 風）: ジャケットの色をベタ塗り・歌った行は白、これからの行は黒 --- */
-  [data-theme="bold"] body { background: var(--solid); }
-  [data-theme="bold"] #bg { display: none; }
-  [data-theme="bold"] { --anchor: 32%; }
-  [data-theme="bold"] .line { font-weight: 900; letter-spacing: -.015em; line-height: 1.25; padding: .32em 0; }
-  [data-theme="bold"] .line .txt { color: rgba(0, 0, 0, .78); transition: color .25s; }
-  [data-theme="bold"] .line.past .txt { color: rgba(255, 255, 255, .62); }
-  [data-theme="bold"] .line.active .txt { color: #fff; }
-  [data-theme="bold"] #lines.plain .line .txt { color: #fff; }
-  [data-theme="bold"] header { background: linear-gradient(var(--solid) 40%, transparent); }
-  [data-theme="bold"] footer { background: linear-gradient(transparent, var(--solid) 60%); }
-
-  /* ================= カラオケ ================= */
-  #karaoke { position: fixed; inset: 0; z-index: 1; display: none; pointer-events: none; }
-  [data-theme="karaoke"][data-mode="synced"] #karaoke { display: block; }
-  [data-theme="karaoke"][data-mode="synced"] #stage { display: none; }
-  [data-theme="karaoke"] #bg { filter: blur(40px) brightness(.35) saturate(1.5); }
-  .krow { position: absolute; left: 5vw; right: 5vw; }
-  .krow.r0 { bottom: calc(14% + var(--size) * 2.4); text-align: left; }
-  .krow.r1 { bottom: 12%; text-align: right; }
-  .kline {
-    position: relative; display: inline-block; white-space: nowrap;
-    font-family: "M PLUS Rounded 1c", "Noto Sans JP", system-ui, sans-serif;
-    font-weight: 800; font-size: calc(var(--size) * 1.45); line-height: 1.3;
-    letter-spacing: .04em;
-  }
-  .kline.enter { animation: kin .35s var(--ease); }
-  @keyframes kin { from { opacity: 0; transform: translateY(.3em); } to { opacity: 1; transform: none; } }
-  .kline .base, .kline .fill { display: block; padding: 0 .12em; }
-  .kline .base {
-    color: #fff;
-    text-shadow:
-      3px 0 0 #102a6b, -3px 0 0 #102a6b, 0 3px 0 #102a6b, 0 -3px 0 #102a6b,
-      2px 2px 0 #102a6b, -2px 2px 0 #102a6b, 2px -2px 0 #102a6b, -2px -2px 0 #102a6b,
-      0 6px 14px rgba(0, 0, 0, .5);
-  }
-  .kline .fill {
-    position: absolute; inset: 0;
-    color: #2f8dff;
-    text-shadow:
-      3px 0 0 #fff, -3px 0 0 #fff, 0 3px 0 #fff, 0 -3px 0 #fff,
-      2px 2px 0 #fff, -2px 2px 0 #fff, 2px -2px 0 #fff, -2px -2px 0 #fff;
-    clip-path: inset(-30% calc(100% - var(--p, 0) * 100%) -30% -30%);
-  }
-  #ktitle {
-    position: absolute; left: 0; right: 0; top: 30%; text-align: center; padding: 0 6vw;
-    transition: opacity .6s; opacity: 0;
-  }
-  #ktitle.show { opacity: 1; }
-  #ktitle .kt-name {
-    font-family: "M PLUS Rounded 1c", "Noto Sans JP", sans-serif; font-weight: 800;
-    font-size: calc(var(--size) * 1.7); line-height: 1.2;
-    text-shadow: 0 0 0 transparent, 3px 3px 0 #102a6b, -3px 3px 0 #102a6b, 3px -3px 0 #102a6b, -3px -3px 0 #102a6b;
-  }
-  #ktitle .kt-artist { margin-top: .6em; font-size: calc(var(--size) * .7); font-weight: 700; color: #ffd84d; }
-  #ktitle .kt-bar { width: 40%; height: 3px; margin: .8em auto; background: linear-gradient(90deg, transparent, #ffd84d, transparent); }
+  #lines.plain .line .txt { color: #fff; }
 
   #message {
-    position: fixed; inset: 0; z-index: 2;
+    position: absolute; inset: 0; z-index: 2;
     display: flex; align-items: center; justify-content: center; text-align: center;
-    padding: 24px; font-size: 20px; color: rgba(255, 255, 255, .5); pointer-events: none;
+    padding: 24px; font-size: 20px; font-weight: 700; color: rgba(255, 255, 255, .55); pointer-events: none;
   }
+
+  /* ================= プレーヤー（ジャケット・曲名・シークバー・操作ボタン・音量） ================= */
+  #art { display: block; object-fit: cover; background: rgba(255, 255, 255, .08); }
+  #art[src=""] { visibility: hidden; }
+  .meta { min-width: 0; }
+  #title, #artist { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #bar { position: relative; cursor: pointer; touch-action: none; }
+  #bar::before { content: ""; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; } /* 押しやすく */
+  #barFill { height: 100%; width: 0; border-radius: inherit; }
+  .times { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+  .transport { display: flex; align-items: center; justify-content: center; }
+  .transport button { display: grid; place-items: center; position: relative; }
+  .transport button[disabled] { opacity: .3; cursor: default; }
+  #play .i-pause, #play.playing .i-play { display: none; }
+  #play.playing .i-pause { display: block; }
+  #repeat.one::after {
+    content: "1"; position: absolute; top: -1px; right: -3px;
+    font-size: 8px; font-weight: 800; line-height: 1; padding: 1px 2px; border-radius: 4px; background: currentColor;
+  }
+  #repeat.one::after { color: #000; background: #1ed760; }
+  .volume { display: flex; align-items: center; gap: 10px; }
+  body.novol .volume { visibility: hidden; }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; margin: 0;
+  }
+  input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--track-on) var(--v, 50%), var(--track-off) var(--v, 50%)); }
+  input[type="range"]::-moz-range-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--track-on) var(--v, 50%), var(--track-off) var(--v, 50%)); }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4px; border-radius: 50%; background: #fff; opacity: 0; transition: opacity .2s; }
+  input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #fff; opacity: 0; }
+  input[type="range"]:hover::-webkit-slider-thumb { opacity: 1; }
+  input[type="range"]:hover::-moz-range-thumb { opacity: 1; }
+
+  /* ===================================================================
+     グロー（Apple Music 風）: 左にジャケットとプレーヤー、右に歌詞
+     =================================================================== */
+  [data-theme="glow"] #glow { display: block; }
+  [data-theme="glow"] { --anchor: 34%; }
+  [data-theme="glow"] body { font-family: -apple-system, "SF Pro Display", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+  [data-theme="glow"] #app { display: grid; grid-template-columns: minmax(300px, 44%) 1fr; }
+  [data-theme="glow"] #player { display: flex; align-items: center; justify-content: center; padding: 5vh 2vw 5vh 5vw; min-width: 0; }
+  [data-theme="glow"] .pinner { width: min(100%, 56vh); display: flex; flex-direction: column; }
+  [data-theme="glow"] .now { display: flex; flex-direction: column; }
+  [data-theme="glow"] #art { width: 100%; aspect-ratio: 1; border-radius: 12px; box-shadow: 0 24px 60px rgba(0, 0, 0, .45); transition: transform .5s var(--ease); }
+  [data-theme="glow"] body.paused #art { transform: scale(.86); }
+  [data-theme="glow"] .meta { margin-top: 4.2vh; }
+  [data-theme="glow"] #title { font-size: 19px; font-weight: 700; }
+  [data-theme="glow"] #artist { font-size: 19px; font-weight: 500; color: rgba(255, 255, 255, .58); margin-top: 1px; }
+  [data-theme="glow"] .progress { margin-top: 2.6vh; }
+  [data-theme="glow"] #bar { height: 7px; border-radius: 4px; background: rgba(255, 255, 255, .22); overflow: visible; }
+  [data-theme="glow"] #barFill { background: rgba(255, 255, 255, .78); }
+  [data-theme="glow"] .times { margin-top: 8px; font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, .5); }
+  [data-theme="glow"] .transport { gap: 9%; margin-top: 2.4vh; }
+  [data-theme="glow"] .transport .side { display: none; }
+  [data-theme="glow"] .transport svg { fill: #fff; }
+  [data-theme="glow"] #prev svg, [data-theme="glow"] #next svg { width: 42px; height: 42px; }
+  [data-theme="glow"] #play svg { width: 54px; height: 54px; }
+  [data-theme="glow"] .transport button { transition: transform .15s; }
+  [data-theme="glow"] .transport button:active { transform: scale(.88); }
+  [data-theme="glow"] .ic-spot { display: none; }
+  [data-theme="glow"] .volume { margin-top: 3vh; --track-on: rgba(255, 255, 255, .78); --track-off: rgba(255, 255, 255, .22); }
+  [data-theme="glow"] .volume input { flex: 1; height: 16px; }
+  [data-theme="glow"] .volume input::-webkit-slider-runnable-track { height: 7px; border-radius: 4px; }
+  [data-theme="glow"] .volume input::-moz-range-track { height: 7px; border-radius: 4px; }
+  [data-theme="glow"] .volume input::-webkit-slider-thumb { margin-top: -2.5px; }
+  [data-theme="glow"] .volume svg { width: 18px; height: 18px; fill: rgba(255, 255, 255, .55); flex: none; }
+  [data-theme="glow"] #stage {
+    -webkit-mask-image: linear-gradient(transparent, #000 16%, #000 80%, transparent);
+            mask-image: linear-gradient(transparent, #000 16%, #000 80%, transparent);
+  }
+  [data-theme="glow"] #lines { padding: 0 4vw 0 3vw; }
+  [data-theme="glow"] .line { font-weight: 800; letter-spacing: -.01em; padding: .36em 0; transition: transform .95s cubic-bezier(.3, 1.22, .45, 1); }
+  [data-theme="glow"] .line .txt { color: rgba(255, 255, 255, .36); transform: scale(.97); }
+  [data-theme="glow"] .line[data-d="1"] .txt { filter: blur(.6px); }
+  [data-theme="glow"] .line[data-d="2"] .txt { filter: blur(1.3px); }
+  [data-theme="glow"] .line[data-d="3"] .txt { filter: blur(2px); opacity: .85; }
+  [data-theme="glow"] .line[data-d="4"] .txt { filter: blur(2.6px); opacity: .7; }
+  [data-theme="glow"] .line.past .txt { color: rgba(255, 255, 255, .3); }
+  [data-theme="glow"] .line.active .txt { color: #fff; transform: scale(1); filter: none; opacity: 1; text-shadow: 0 0 30px rgba(255, 255, 255, .35); }
+  /* 縦長・狭い画面: 上に小さな曲名、下にシークバーと操作ボタン */
+  @media (max-width: 860px), (max-aspect-ratio: 1/1) {
+    [data-theme="glow"] #app { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; grid-template-areas: "now" "stage" "progress" "transport"; }
+    [data-theme="glow"] #player, [data-theme="glow"] .pinner { display: contents; }
+    [data-theme="glow"] .now { grid-area: now; flex-direction: row; align-items: center; gap: 14px; padding: max(16px, env(safe-area-inset-top)) 92px 8px 20px; }
+    [data-theme="glow"] #art { width: 56px; border-radius: 6px; box-shadow: 0 8px 20px rgba(0, 0, 0, .35); }
+    [data-theme="glow"] body.paused #art { transform: none; }
+    [data-theme="glow"] .meta { margin-top: 0; }
+    [data-theme="glow"] #title, [data-theme="glow"] #artist { font-size: 16px; }
+    [data-theme="glow"] #stage { grid-area: stage; }
+    [data-theme="glow"] .progress { grid-area: progress; margin: 8px 24px 0; }
+    [data-theme="glow"] .transport { grid-area: transport; margin: 6px 0 max(18px, env(safe-area-inset-bottom)); gap: 16%; }
+    [data-theme="glow"] .volume { display: none; }
+    [data-theme="glow"] #lines { padding: 0 24px; }
+  }
+
+  /* ===================================================================
+     ボールド（Spotify 風）: 黒い枠の中にジャケット色の歌詞パネル、下に再生バー
+     =================================================================== */
+  [data-theme="bold"] body { font-family: Figtree, "Noto Sans JP", "Helvetica Neue", Arial, sans-serif; }
+  [data-theme="bold"] { --anchor: 30%; }
+  [data-theme="bold"] #app { display: grid; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "stage" "player"; }
+  [data-theme="bold"] #stage { grid-area: stage; height: auto; margin: 8px 8px 0; border-radius: 8px; background: var(--solid); transition: background-color 1.2s; }
+  [data-theme="bold"] #lines { padding: 0 max(32px, 6vw); max-width: 1100px; }
+  [data-theme="bold"] .line { font-weight: 800; letter-spacing: -.02em; line-height: 1.25; padding: .3em 0; font-family: Figtree, "Noto Sans JP", sans-serif; }
+  [data-theme="bold"] .line .txt { color: #000; transition: color .2s; }
+  [data-theme="bold"] .line.past .txt { color: rgba(255, 255, 255, .7); }
+  [data-theme="bold"] .line.active .txt { color: #fff; }
+  [data-theme="bold"] #lines.plain .line .txt { color: #fff; }
+  [data-theme="bold"] #message { color: rgba(255, 255, 255, .8); }
+  [data-theme="bold"] #player { grid-area: player; height: 80px; padding: 0 16px; }
+  [data-theme="bold"] .pinner {
+    height: 100%; display: grid; align-items: center; column-gap: 16px;
+    grid-template-columns: minmax(180px, 30%) minmax(0, 40%) minmax(140px, 30%);
+    grid-template-rows: auto auto; grid-template-areas: "now transport vol" "now progress vol";
+    align-content: center;
+  }
+  [data-theme="bold"] .now { grid-area: now; display: flex; align-items: center; gap: 14px; min-width: 0; }
+  [data-theme="bold"] #art { width: 56px; height: 56px; border-radius: 4px; flex: none; }
+  [data-theme="bold"] #title { font-size: 14px; font-weight: 600; }
+  [data-theme="bold"] #artist { font-size: 12px; color: #b3b3b3; margin-top: 3px; }
+  [data-theme="bold"] .transport { grid-area: transport; gap: 18px; }
+  [data-theme="bold"] .transport svg { fill: #b3b3b3; width: 16px; height: 16px; }
+  [data-theme="bold"] .transport .side svg { fill: none; stroke: #b3b3b3; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  [data-theme="bold"] .transport button:hover svg { fill: #fff; }
+  [data-theme="bold"] .transport .side:hover svg { fill: none; stroke: #fff; }
+  [data-theme="bold"] .transport .side.on svg { stroke: #1ed760; }
+  [data-theme="bold"] .transport .side.on::before { content: ""; position: absolute; bottom: -6px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: #1ed760; }
+  [data-theme="bold"] #play { width: 32px; height: 32px; border-radius: 50%; background: #fff; transition: transform .1s; }
+  [data-theme="bold"] #play:hover { transform: scale(1.06); }
+  [data-theme="bold"] #play svg, [data-theme="bold"] #play:hover svg { fill: #000; width: 16px; height: 16px; }
+  [data-theme="bold"] .ic-apple { display: none; }
+  [data-theme="bold"] .progress { grid-area: progress; display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  [data-theme="bold"] .times { display: contents; font-size: 11px; color: #b3b3b3; }
+  [data-theme="bold"] #time { order: 0; min-width: 34px; text-align: right; }
+  [data-theme="bold"] #bar { order: 1; flex: 1; height: 4px; border-radius: 2px; background: #4d4d4d; }
+  [data-theme="bold"] #remain { order: 2; min-width: 34px; }
+  [data-theme="bold"] #barFill { background: #fff; }
+  [data-theme="bold"] #bar:hover #barFill { background: #1ed760; }
+  [data-theme="bold"] .volume { grid-area: vol; justify-content: flex-end; --track-on: #fff; --track-off: #4d4d4d; }
+  [data-theme="bold"] .volume:hover { --track-on: #1ed760; }
+  [data-theme="bold"] .volume input { width: 93px; height: 12px; }
+  [data-theme="bold"] .volume svg { width: 16px; height: 16px; fill: #b3b3b3; }
+  [data-theme="bold"] .volume .vol-max { display: none; }
+  @media (max-width: 760px) {
+    [data-theme="bold"] .pinner { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "now transport" "progress progress"; }
+    [data-theme="bold"] .volume, [data-theme="bold"] .transport .side { display: none; }
+    [data-theme="bold"] #player { height: auto; padding: 10px 14px max(10px, env(safe-area-inset-bottom)); }
+    [data-theme="bold"] .transport { gap: 14px; }
+  }
+
+  /* ===================================================================
+     カラオケ（DAM 風）: 極太ゴシックに太いふち、上下 2 段に交互、左から色が変わる
+     =================================================================== */
+  [data-theme="karaoke"] #bg { display: block; filter: blur(30px) brightness(.32) saturate(1.5); }
+  [data-theme="karaoke"] #player { display: none; }
+  [data-theme="karaoke"][data-mode="synced"] #stage { display: none; }
+  #karaoke { position: fixed; inset: 0; z-index: 1; display: none; pointer-events: none; }
+  [data-theme="karaoke"][data-mode="synced"] #karaoke { display: block; }
+  #karaoke::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: linear-gradient(transparent, rgba(0, 0, 0, .55)); }
+  .krow { position: absolute; left: 4vw; right: 4vw; }
+  .krow.r0 { bottom: calc(10% + var(--size) * 2.45); text-align: left; }
+  .krow.r1 { bottom: 9%; text-align: right; }
+  .kline, #ktitle {
+    font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+    font-weight: 900; letter-spacing: .06em;
+  }
+  .kline {
+    position: relative; display: inline-block; white-space: nowrap;
+    font-size: calc(var(--size) * 1.5); line-height: 1.25;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .55));
+  }
+  .kline.enter { animation: kin .3s var(--ease); }
+  @keyframes kin { from { opacity: 0; } to { opacity: 1; } }
+  .kline .base, .kline .fill { display: block; padding: 0 .2em; paint-order: stroke fill; }
+  /* 歌う前: 白い文字に黒いふち / 歌ったあと: 色の文字に白いふち */
+  .kline .base { color: #fff; -webkit-text-stroke: .17em #111; }
+  .kline .fill {
+    position: absolute; inset: 0;
+    color: var(--kfill); -webkit-text-stroke: .17em #fff;
+    clip-path: inset(-30% calc(100% - var(--p, 0) * 100%) -30% -30%);
+  }
+  #ktitle { position: absolute; left: 0; right: 0; top: 26%; text-align: center; padding: 0 6vw; transition: opacity .6s; opacity: 0; }
+  #ktitle.show { opacity: 1; }
+  #ktitle > div { paint-order: stroke fill; }
+  #ktitle .kt-name { font-size: calc(var(--size) * 1.9); line-height: 1.25; -webkit-text-stroke: .14em #111; filter: drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
+  #ktitle .kt-artist { margin-top: .8em; font-size: calc(var(--size) * .85); color: #fff; -webkit-text-stroke: .16em var(--kfill); }
+  #ktitle .kt-bar { width: 50%; height: 4px; margin: .9em auto 0; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--kfill), transparent); }
+
+  /* ===================================================================
+     シンプル: ジャケットをぼかした背景、左上に曲名、下にシークバー
+     =================================================================== */
+  [data-theme="simple"] #bg { display: block; }
+  [data-theme="simple"] #player, [data-theme="simple"] .pinner { display: contents; }
+  [data-theme="simple"] .now { position: fixed; z-index: 3; top: 16px; left: 20px; right: 90px; display: flex; align-items: center; gap: 14px; }
+  [data-theme="simple"] #art { width: 52px; height: 52px; border-radius: 6px; }
+  [data-theme="simple"] #title { font-size: 17px; font-weight: 700; }
+  [data-theme="simple"] #artist { font-size: 14px; color: rgba(255, 255, 255, .6); }
+  [data-theme="simple"] .progress { position: fixed; z-index: 3; left: 20px; right: 20px; bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  [data-theme="simple"] .times { display: contents; font-size: 12px; color: rgba(255, 255, 255, .6); }
+  [data-theme="simple"] #bar { order: 1; flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .18); }
+  [data-theme="simple"] #remain { order: 2; }
+  [data-theme="simple"] #barFill { background: #fff; }
+  [data-theme="simple"] .transport, [data-theme="simple"] .volume { display: none; }
+  [data-theme="simple"] #stage {
+    -webkit-mask-image: linear-gradient(transparent 90px, #000 calc(90px + 12%), #000 82%, transparent calc(100% - 40px));
+            mask-image: linear-gradient(transparent 90px, #000 calc(90px + 12%), #000 82%, transparent calc(100% - 40px));
+  }
+  [data-theme="simple"] .line .txt { filter: blur(.4px); }
+  [data-theme="simple"] .line.active .txt { transform: scale(1.05); filter: none; }
 
   @media (prefers-reduced-motion: reduce) {
     #glow .blob { animation: none; }
     .line, .line .txt { transition-duration: .01s !important; }
   }
 
-  /* ================= ヘッダー / フッター ================= */
-  header {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 3;
-    display: flex; align-items: center; gap: 14px; padding: 16px 20px;
-    background: linear-gradient(rgba(0, 0, 0, .55), transparent);
-    transition: opacity .5s;
+  /* ================= 右上の設定ボタンとパネル ================= */
+  #menuBtn {
+    position: fixed; z-index: 5; top: max(16px, env(safe-area-inset-top)); right: 18px;
+    width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(255, 255, 255, .14);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    transition: opacity .5s, background .2s;
   }
-  body.idle header, body.idle footer { opacity: 0; }
-  body.idle #themePanel { opacity: 0; pointer-events: none; }
-  #art { width: 52px; height: 52px; border-radius: 6px; object-fit: cover; background: #222; flex: none; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
-  #art[src=""] { visibility: hidden; }
-  #meta { min-width: 0; flex: 1; }
-  #title  { font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #artist { font-size: 14px; color: rgba(255, 255, 255, .6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  button {
-    font: inherit; font-size: 13px; color: var(--fg); cursor: pointer;
-    background: rgba(255, 255, 255, .14); border: 0; border-radius: 999px; padding: 7px 12px;
-    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  }
-  button:hover { background: rgba(255, 255, 255, .24); }
-  button.primary { background: #1ed760; color: #000; font-weight: 700; padding: 12px 22px; font-size: 15px; }
-  #themeBtn { font-weight: 700; }
-  #offsetLabel { font-size: 12px; color: rgba(255, 255, 255, .6); align-self: center; min-width: 64px; text-align: center; }
+  #menuBtn:hover { background: rgba(255, 255, 255, .26); }
+  #menuBtn svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+  [data-theme="bold"] #menuBtn { top: 20px; right: 24px; background: rgba(0, 0, 0, .35); }
+  body.idle #menuBtn { opacity: 0; }
+  body.idle #panel { opacity: 0; pointer-events: none; }
 
-  footer {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 3;
-    padding: 12px 20px 16px; transition: opacity .5s;
-    display: flex; align-items: center; gap: 10px; font-size: 12px; color: rgba(255, 255, 255, .6);
-  }
-  #bar { flex: 1; height: 4px; background: rgba(255, 255, 255, .18); border-radius: 2px; overflow: hidden; }
-  #barFill { height: 100%; width: 0; background: var(--fg); }
-  #source { white-space: nowrap; }
-
-  /* ================= テーマの選択 ================= */
-  #themePanel {
-    position: fixed; top: 78px; right: 20px; z-index: 4;
-    width: min(420px, calc(100vw - 32px));
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px;
-    background: rgba(20, 20, 26, .72); border: 1px solid rgba(255, 255, 255, .1); border-radius: 18px;
-    -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+  #panel {
+    position: fixed; z-index: 6; top: calc(max(16px, env(safe-area-inset-top)) + 50px); right: 18px;
+    width: min(440px, calc(100vw - 32px)); max-height: calc(100vh - 90px); overflow: auto;
+    padding: 14px; border-radius: 20px;
+    background: rgba(28, 28, 32, .78); border: 1px solid rgba(255, 255, 255, .1);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .5);
+    font-family: "Noto Sans JP", system-ui, sans-serif;
     transition: opacity .3s;
   }
-  #themePanel[hidden] { display: none; }
+  #panel h3 { margin: 4px 4px 10px; font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .55); letter-spacing: .08em; }
+  #panel h3:not(:first-child) { margin-top: 18px; }
+  .themes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .tp {
-    display: flex; flex-direction: column; align-items: stretch; gap: 8px; text-align: left;
-    padding: 8px; border-radius: 12px; background: rgba(255, 255, 255, .06);
-    -webkit-backdrop-filter: none; backdrop-filter: none;
+    display: flex; flex-direction: column; gap: 7px; text-align: left;
+    padding: 8px; border-radius: 13px; background: rgba(255, 255, 255, .06);
     outline: 2px solid transparent; outline-offset: -2px;
   }
-  .tp[aria-pressed="true"] { outline-color: #fff; background: rgba(255, 255, 255, .12); }
+  .tp:hover { background: rgba(255, 255, 255, .1); }
+  .tp[aria-pressed="true"] { outline-color: #fff; background: rgba(255, 255, 255, .13); }
   .tp b { font-size: 14px; padding: 0 2px; }
-  .tp small { font-size: 11px; color: rgba(255, 255, 255, .55); padding: 0 2px 2px; }
-  .sw {
-    height: 74px; border-radius: 8px; overflow: hidden; position: relative;
-    display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 0 10px;
-    font-weight: 900; font-size: 12px; line-height: 1.1;
-  }
-  .sw i { font-style: normal; display: block; white-space: nowrap; }
-  .sw-glow { background: radial-gradient(circle at 20% 20%, #ff4f8b, transparent 60%), radial-gradient(circle at 80% 40%, #5b4bff, transparent 60%), radial-gradient(circle at 40% 100%, #1fb5ff, #111 70%); }
-  .sw-glow i { color: rgba(255,255,255,.4); filter: blur(.8px); }
-  .sw-glow i.on { color: #fff; filter: none; text-shadow: 0 0 10px rgba(255,255,255,.6); }
-  .sw-bold { background: #b8452f; }
-  .sw-bold i { color: rgba(0,0,0,.8); }
-  .sw-bold i.on { color: #fff; }
-  .sw-karaoke { background: linear-gradient(#1a1440, #0d2a4a); justify-content: flex-end; padding-bottom: 10px; font-family: "M PLUS Rounded 1c", sans-serif; }
-  .sw-karaoke i { color: #fff; text-shadow: 1px 0 #102a6b, -1px 0 #102a6b, 0 1px #102a6b, 0 -1px #102a6b; }
-  .sw-karaoke i.on { background: linear-gradient(90deg, #2f8dff 55%, #fff 55%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; }
-  .sw-karaoke i.r { text-align: right; }
+  .tp small { font-size: 11px; color: rgba(255, 255, 255, .55); padding: 0 2px 2px; margin-top: -4px; }
+  .sw { height: 78px; border-radius: 8px; overflow: hidden; position: relative; }
+  .sw i { position: absolute; font-style: normal; display: block; }
+  /* 見本: Apple Music 風 */
+  .sw-glow { background: radial-gradient(circle at 15% 20%, #ff4f8b, transparent 55%), radial-gradient(circle at 85% 30%, #5b4bff, transparent 60%), radial-gradient(circle at 40% 100%, #1fb5ff, #222 75%); }
+  .sw-glow .a { left: 9%; top: 18%; width: 28%; aspect-ratio: 1; border-radius: 4px; background: linear-gradient(135deg, #fff6, #fff2); box-shadow: 0 4px 10px #0004; }
+  .sw-glow .p { left: 9%; top: 74%; width: 28%; height: 3px; border-radius: 2px; background: #fff8; }
+  .sw-glow .l1, .sw-glow .l2, .sw-glow .l3 { left: 46%; height: 6px; border-radius: 3px; }
+  .sw-glow .l1 { top: 24%; width: 40%; background: #fff6; filter: blur(.6px); }
+  .sw-glow .l2 { top: 44%; width: 46%; background: #fff; box-shadow: 0 0 8px #fff8; }
+  .sw-glow .l3 { top: 64%; width: 36%; background: #fff6; filter: blur(.6px); }
+  /* 見本: Spotify 風 */
+  .sw-bold { background: #000; }
+  .sw-bold .panel { inset: 3px 3px 18px 3px; border-radius: 5px; background: #c0472f; }
+  .sw-bold .l1, .sw-bold .l2, .sw-bold .l3 { left: 10%; height: 7px; border-radius: 2px; }
+  .sw-bold .l1 { top: 18%; width: 55%; background: #fffb; }
+  .sw-bold .l2 { top: 36%; width: 65%; background: #fff; }
+  .sw-bold .l3 { top: 54%; width: 50%; background: #000; }
+  .sw-bold .pl { left: 47%; bottom: 4px; width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+  .sw-bold .bar { left: 30%; right: 30%; bottom: 1px; height: 2px; background: #555; }
+  /* 見本: カラオケ */
+  .sw-karaoke { background: linear-gradient(#20305a, #0a0f1f); font-family: "Noto Sans JP", sans-serif; font-weight: 900; font-size: 15px; }
+  .sw-karaoke i { paint-order: stroke fill; white-space: nowrap; }
+  .sw-karaoke .k1 { left: 7%; top: 22%; color: #fff; -webkit-text-stroke: 3px #111; }
+  .sw-karaoke .k1 span { color: var(--kfill); -webkit-text-stroke: 3px #fff; }
+  .sw-karaoke .k2 { right: 7%; top: 56%; color: #fff; -webkit-text-stroke: 3px #111; }
+  /* 見本: シンプル */
   .sw-simple { background: #0b0b0f; }
-  .sw-simple i { color: rgba(255,255,255,.35); }
-  .sw-simple i.on { color: #fff; }
+  .sw-simple .l1, .sw-simple .l2, .sw-simple .l3 { left: 10%; height: 7px; border-radius: 3px; }
+  .sw-simple .l1 { top: 26%; width: 50%; background: #fff4; }
+  .sw-simple .l2 { top: 46%; width: 62%; background: #fff; }
+  .sw-simple .l3 { top: 66%; width: 44%; background: #fff4; }
+
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .row + .row { margin-top: 8px; }
+  .row label { flex: 1; min-width: 120px; font-size: 13px; color: rgba(255, 255, 255, .8); padding-left: 4px; }
+  .chip {
+    font-size: 13px; padding: 8px 13px; border-radius: 999px; background: rgba(255, 255, 255, .1);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip:hover { background: rgba(255, 255, 255, .18); }
+  .chip[aria-pressed="true"] { background: #fff; color: #000; font-weight: 700; }
+  .chip .dot { width: 10px; height: 10px; border-radius: 50%; }
+  #offsetLabel { font-size: 13px; min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
+  .hint { font-size: 11px; color: rgba(255, 255, 255, .45); margin: 12px 4px 0; line-height: 1.6; }
+
+  #toast {
+    position: fixed; z-index: 20; left: 50%; bottom: 110px; transform: translate(-50%, 20px);
+    max-width: calc(100vw - 32px); padding: 11px 18px; border-radius: 12px;
+    background: rgba(30, 30, 34, .92); color: #fff; font-size: 14px; text-align: center;
+    opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   /* ================= セットアップ画面 ================= */
   #setup {
-    position: fixed; inset: 0; z-index: 10; overflow: auto;
+    position: fixed; inset: 0; z-index: 30; overflow: auto;
     display: flex; align-items: center; justify-content: center; padding: 16px;
-    background: var(--bg);
+    background: #0b0b0f; font-family: "Noto Sans JP", system-ui, sans-serif;
   }
-  #setup[hidden] { display: none; }
   .card { width: 100%; max-width: 560px; }
   .card h1 { font-size: 30px; margin: 0 0 6px; }
   .card p, .card li { color: #bbb; line-height: 1.7; font-size: 14px; }
@@ -262,73 +406,128 @@
     background: #1a1a20; color: #fff; border: 1px solid #333; border-radius: 8px;
   }
   .card label { font-size: 13px; color: #999; }
+  .card .primary { background: #1ed760; color: #000; font-weight: 700; padding: 12px 22px; font-size: 15px; border-radius: 999px; }
   .err { color: #ff6b6b; font-size: 14px; min-height: 1.4em; }
-
-  @media (max-width: 640px) {
-    header { flex-wrap: wrap; }
-    .controls { width: 100%; justify-content: flex-start; }
-    #themePanel { top: auto; bottom: 56px; right: 16px; }
-  }
 </style>
 </head>
-<body>
+<body class="paused">
+
+<!-- アイコン -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.8v14.4c0 .9 1 1.5 1.8 1l11.3-7.2c.7-.5.7-1.5 0-2L8.8 3.8C8 3.3 7 3.9 7 4.8z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="5.5" y="4" width="4.5" height="16" rx="1.2"/><rect x="14" y="4" width="4.5" height="16" rx="1.2"/></symbol>
+  <symbol id="i-next-a" viewBox="0 0 24 24"><path d="M1.5 6.6v10.8c0 .8.9 1.3 1.6.8l8.1-5.4c.6-.4.6-1.2 0-1.6L3.1 5.8c-.7-.5-1.6 0-1.6.8zM12 6.6v10.8c0 .8.9 1.3 1.6.8l8.1-5.4c.6-.4.6-1.2 0-1.6l-8.1-5.4c-.7-.5-1.6 0-1.6.8z"/></symbol>
+  <symbol id="i-next-s" viewBox="0 0 16 16"><path d="M12.7 1a.7.7 0 0 0-.7.7v5.15L2.05 1.107A.7.7 0 0 0 1 1.712v12.575a.7.7 0 0 0 1.05.607L12 9.149V14.3a.7.7 0 0 0 .7.7h1.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-1.6z"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 7h3.5c2 0 3 1 4.2 2.8l2.6 4.4C14.5 16 15.5 17 17.5 17H21M3 17h3.5c1.3 0 2.2-.5 3-1.4M14.5 8.4C15.3 7.5 16.2 7 17.5 7H21M18 4l3 3-3 3M18 14l3 3-3 3"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 12V9.5A3.5 3.5 0 0 1 7.5 6H20M17 3l3 3-3 3M20 12v2.5a3.5 3.5 0 0 1-3.5 3.5H4M7 21l-3-3 3-3"/></symbol>
+  <symbol id="i-vol-low" viewBox="0 0 24 24"><path d="M3 9.5v5c0 .6.4 1 1 1h3l4.4 3.7c.6.5 1.6.1 1.6-.8V5.6c0-.9-1-1.3-1.6-.8L7 8.5H4c-.6 0-1 .4-1 1z"/></symbol>
+  <symbol id="i-vol-high" viewBox="0 0 24 24"><path d="M3 9.5v5c0 .6.4 1 1 1h3l4.4 3.7c.6.5 1.6.1 1.6-.8V5.6c0-.9-1-1.3-1.6-.8L7 8.5H4c-.6 0-1 .4-1 1zM15.5 8.2a5 5 0 0 1 0 7.6l-1-1.2a3.4 3.4 0 0 0 0-5.2zM18 5.6a8.6 8.6 0 0 1 0 12.8l-1-1.2a7 7 0 0 0 0-10.4z"/></symbol>
+</svg>
 
 <div id="bg"></div>
 <div id="glow"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
 
-<div id="stage"><div id="lines"></div></div>
+<div id="app">
+  <aside id="player">
+    <div class="pinner">
+      <div class="now">
+        <img id="art" src="" alt="">
+        <div class="meta">
+          <div id="title">—</div>
+          <div id="artist"></div>
+        </div>
+      </div>
+      <div class="progress">
+        <div id="bar" role="slider" aria-label="再生位置"><div id="barFill"></div></div>
+        <div class="times"><span id="time">0:00</span><span id="remain">0:00</span></div>
+      </div>
+      <div class="transport">
+        <button class="side" id="shuffle" title="シャッフル"><svg viewBox="0 0 24 24"><use href="#i-shuffle"/></svg></button>
+        <button id="prev" title="前の曲">
+          <svg class="ic-apple" viewBox="0 0 24 24" style="transform:scaleX(-1)"><use href="#i-next-a"/></svg>
+          <svg class="ic-spot" viewBox="0 0 16 16" style="transform:scaleX(-1)"><use href="#i-next-s"/></svg>
+        </button>
+        <button id="play" title="再生 / 一時停止">
+          <svg class="i-play" viewBox="0 0 24 24"><use href="#i-play"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24"><use href="#i-pause"/></svg>
+        </button>
+        <button id="next" title="次の曲">
+          <svg class="ic-apple" viewBox="0 0 24 24"><use href="#i-next-a"/></svg>
+          <svg class="ic-spot" viewBox="0 0 16 16"><use href="#i-next-s"/></svg>
+        </button>
+        <button class="side" id="repeat" title="リピート"><svg viewBox="0 0 24 24"><use href="#i-repeat"/></svg></button>
+      </div>
+      <div class="volume">
+        <svg viewBox="0 0 24 24"><use href="#i-vol-low"/></svg>
+        <input type="range" id="vol" min="0" max="100" value="50" aria-label="音量">
+        <svg class="vol-max" viewBox="0 0 24 24"><use href="#i-vol-high"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <main id="stage"><div id="lines"></div><div id="message"></div></main>
+</div>
 
 <div id="karaoke">
-  <div id="ktitle"><div class="kt-name"></div><div class="kt-bar"></div><div class="kt-artist"></div></div>
+  <div id="ktitle"><div class="kt-name"></div><div class="kt-artist"></div><div class="kt-bar"></div></div>
   <div class="krow r0"><div class="kline"><span class="base"></span><span class="fill"></span></div></div>
   <div class="krow r1"><div class="kline"><span class="base"></span><span class="fill"></span></div></div>
 </div>
 
-<div id="message"></div>
+<button id="menuBtn" title="テーマと設定 ( T でテーマを切り替え )" aria-expanded="false" aria-controls="panel">
+  <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+</button>
 
-<header>
-  <img id="art" src="" alt="">
-  <div id="meta">
-    <div id="title">—</div>
-    <div id="artist"></div>
+<div id="panel" hidden>
+  <h3>テーマ</h3>
+  <div class="themes">
+    <button class="tp" data-pick="glow">
+      <span class="sw sw-glow"><i class="a"></i><i class="p"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i></span>
+      <b>Apple Music 風</b><small>左にジャケット、色が動く背景</small>
+    </button>
+    <button class="tp" data-pick="bold">
+      <span class="sw sw-bold"><i class="panel"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="bar"></i><i class="pl"></i></span>
+      <b>Spotify 風</b><small>ジャケット色のパネルと再生バー</small>
+    </button>
+    <button class="tp" data-pick="karaoke">
+      <span class="sw sw-karaoke"><i class="k1"><span>うたって</span>いる</i><i class="k2">つぎのぎょう</i></span>
+      <b>カラオケ</b><small>極太の文字、左から色が変わる</small>
+    </button>
+    <button class="tp" data-pick="simple">
+      <span class="sw sw-simple"><i class="l1"></i><i class="l2"></i><i class="l3"></i></span>
+      <b>シンプル</b><small>ジャケットをぼかした背景</small>
+    </button>
   </div>
-  <div class="controls">
-    <button id="themeBtn" title="見た目を選ぶ ( T )" aria-expanded="false">テーマ</button>
-    <button id="offMinus" title="歌詞を早める ( [ )">−0.25s</button>
+
+  <div id="kcolors">
+    <h3>カラオケの色</h3>
+    <div class="row">
+      <button class="chip" data-kcolor="blue"><span class="dot" style="background:#1f5bff"></span>青</button>
+      <button class="chip" data-kcolor="red"><span class="dot" style="background:#ff2f5f"></span>赤</button>
+      <button class="chip" data-kcolor="purple"><span class="dot" style="background:#a43cff"></span>紫</button>
+    </div>
+  </div>
+
+  <h3>表示</h3>
+  <div class="row">
+    <label>文字の大きさ</label>
+    <button class="chip" id="smaller" title="−">A−</button>
+    <button class="chip" id="bigger" title="+">A+</button>
+  </div>
+  <div class="row">
+    <label>歌詞のタイミング</label>
+    <button class="chip" id="offMinus" title="[">早く</button>
     <span id="offsetLabel">±0.00s</span>
-    <button id="offPlus" title="歌詞を遅らせる ( ] )">+0.25s</button>
-    <button id="smaller" title="文字を小さく ( - )">A−</button>
-    <button id="bigger" title="文字を大きく ( + )">A+</button>
-    <button id="fs" title="全画面 ( F )">全画面</button>
-    <button id="logout">ログアウト</button>
+    <button class="chip" id="offPlus" title="]">遅く</button>
   </div>
-</header>
-
-<div id="themePanel" hidden>
-  <button class="tp" data-pick="glow">
-    <span class="sw sw-glow"><i>ゆらめく光の中で</i><i class="on">いまの行が輝く</i><i>次の行はぼやけて</i></span>
-    <b>グロー</b><small>Apple Music 風・色が動く背景</small>
-  </button>
-  <button class="tp" data-pick="bold">
-    <span class="sw sw-bold"><i class="on">歌った行は白く</i><i>これからの行は黒</i><i>ジャケットの色で</i></span>
-    <b>ボールド</b><small>Spotify 風・ベタ塗りの背景</small>
-  </button>
-  <button class="tp" data-pick="karaoke">
-    <span class="sw sw-karaoke"><i class="on">左から色が変わる</i><i class="r">次の行はこちら</i></span>
-    <b>カラオケ</b><small>2 行表示・左から色が変わる</small>
-  </button>
-  <button class="tp" data-pick="simple">
-    <span class="sw sw-simple"><i>すっきりした</i><i class="on">シンプルな見た目</i><i>黒い背景</i></span>
-    <b>シンプル</b><small>ジャケットをぼかした背景</small>
-  </button>
+  <div class="row">
+    <button class="chip" id="fs">全画面</button>
+    <button class="chip" id="logout">ログアウト</button>
+  </div>
+  <p class="hint">キー: T テーマ / F 全画面 / + − 文字の大きさ / [ ] タイミング / スペース 再生・一時停止<br>再生の操作には Spotify Premium が必要です。歌詞は LRCLIB から読み込みます。</p>
 </div>
 
-<footer>
-  <span id="time">0:00</span>
-  <div id="bar"><div id="barFill"></div></div>
-  <span id="dur">0:00</span>
-  <span id="source"></span>
-</footer>
+<div id="toast" role="status"></div>
 
 <section id="setup" hidden>
   <div class="card">
@@ -358,12 +557,15 @@
   // 空のときは、使う人が自分の Client ID を入力する画面を出す
   const BUILTIN_CLIENT_ID = '';
   const REDIRECT_URI = location.origin + location.pathname;
-  const SCOPES = 'user-read-currently-playing user-read-playback-state';
+  // 再生の操作（一時停止・スキップ・シーク・音量）には user-modify-playback-state がいる（Premium のみ）
+  const SCOPES = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
+  const API = 'https://api.spotify.com/v1';
   const POLL_PLAYING_MS = 2000;
   const POLL_IDLE_MS = 5000;
   const THEMES = ['glow', 'bold', 'karaoke', 'simple'];
 
   const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
   const root = document.documentElement;
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -377,12 +579,16 @@
     progressMs: 0,        // 最後に取得した再生位置
     syncedAt: 0,          // progressMs を取得した performance.now()
     playing: false,
+    shuffle: false,
+    repeat: 'off',        // off | context | track
     lyrics: null,         // { type: 'synced'|'plain'|'instrumental'|'none', lines: [{t, text}] }
     karaoke: [],          // カラオケ用: 文字のある行だけ { t, end, text }
     activeIndex: -1,
-    kShown: [null, null], // カラオケの上下の行に出している行の番号
+    kShown: [null, null], // カラオケの上下の段に出している行の番号
     offsetMs: Number(store.get('lf_offset')) || 0,
     fontSize: Number(store.get('lf_size')) || 36,
+    holdUntil: 0,         // 操作した直後は、取得した状態で上書きしない
+    volHoldUntil: 0,
   };
   const lyricsCache = new Map();
   const theme = () => root.getAttribute('data-theme');
@@ -430,13 +636,14 @@
     store.set('lf_access', json.access_token);
     store.set('lf_expires', String(Date.now() + json.expires_in * 1000));
     if (json.refresh_token) store.set('lf_refresh', json.refresh_token);
+    if (json.scope) store.set('lf_scope', json.scope);
     return json.access_token;
   }
 
   async function handleCallback() {
     const q = new URLSearchParams(location.search);
     if (!q.has('code') && !q.has('error')) return;
-    history.replaceState(null, '', REDIRECT_URI);
+    history.replaceState(null, '', REDIRECT_URI + (q.get('theme') ? '?theme=' + q.get('theme') : ''));
     if (q.get('error')) throw new Error('認証がキャンセルされました: ' + q.get('error'));
     if (q.get('state') !== store.get('lf_state')) throw new Error('state が一致しません。もう一度ログインしてください。');
     await tokenRequest({
@@ -469,15 +676,13 @@
   }
 
   function logout() {
-    ['lf_access', 'lf_refresh', 'lf_expires'].forEach(store.del);
+    ['lf_access', 'lf_refresh', 'lf_expires', 'lf_scope'].forEach(store.del);
     location.reload();
   }
 
   async function spotify(path, retried = false) {
     const token = await getToken();
-    const res = await fetch('https://api.spotify.com/v1' + path, {
-      headers: { Authorization: 'Bearer ' + token },
-    });
+    const res = await fetch(API + path, { headers: { Authorization: 'Bearer ' + token } });
     if (res.status === 401 && !retried) { await refreshToken(); return spotify(path, true); }
     if (res.status === 429) {
       const wait = (Number(res.headers.get('Retry-After')) || 5) * 1000;
@@ -488,38 +693,80 @@
     return res.json();
   }
 
+  // 再生の操作（PUT / POST）。失敗したら理由を出す
+  async function command(method, path) {
+    try {
+      const token = await getToken();
+      const res = await fetch(API + path, { method, headers: { Authorization: 'Bearer ' + token } });
+      if (res.ok) { setTimeout(pollNow, 400); return true; }
+      let reason = '';
+      try { const j = await res.json(); reason = (j.error && (j.error.reason || j.error.message)) || ''; } catch {}
+      if (/premium/i.test(reason)) toast('再生の操作には Spotify Premium が必要です');
+      else if (res.status === 401 || res.status === 403) toast('操作するには、いちどログアウトしてログインし直してください');
+      else if (res.status === 404) toast('再生中のデバイスが見つかりません');
+      else toast('操作できませんでした（' + res.status + '）');
+    } catch (e) {
+      toast('操作できませんでした');
+    }
+    setTimeout(pollNow, 400);
+    return false;
+  }
+
   // ================= 再生状態のポーリング =================
+  let pollTimer = 0, pollSeq = 0;
+  function pollNow() { clearTimeout(pollTimer); poll(); }
+
   async function poll() {
+    const seq = ++pollSeq;
     let delay = POLL_IDLE_MS;
     try {
-      const data = await spotify('/me/player/currently-playing?additional_types=track');
-      const item = data && data.item;
-      if (!item || item.type !== 'track') {
-        state.playing = false;
-        if (!item) showMessage('Spotifyで曲を再生してください');
-        else showMessage('この再生中のコンテンツには対応していません');
-      } else {
-        state.progressMs = data.progress_ms || 0;
-        state.syncedAt = performance.now();
-        state.playing = !!data.is_playing;
-        if (!state.track || state.track.id !== item.id) {
-          onTrackChange({
-            id: item.id,
-            name: item.name,
-            artists: item.artists.map((a) => a.name),
-            album: item.album ? item.album.name : '',
-            duration: item.duration_ms,
-            art: item.album && item.album.images[0] ? item.album.images[0].url : '',
-          });
-        }
-        delay = state.playing ? POLL_PLAYING_MS : POLL_IDLE_MS;
-      }
+      const data = await spotify('/me/player?additional_types=track');
+      if (seq !== pollSeq) return; // あとから始めた取得がある
+      applyPlayer(data);
+      delay = state.playing ? POLL_PLAYING_MS : POLL_IDLE_MS;
     } catch (e) {
+      if (seq !== pollSeq) return;
       console.error(e);
       delay = e.retryAfter || POLL_IDLE_MS;
       if (/token|refresh/i.test(e.message)) { showMessage('再ログインが必要です'); setTimeout(logout, 1500); return; }
     }
-    setTimeout(poll, delay);
+    pollTimer = setTimeout(poll, delay);
+  }
+
+  function applyPlayer(data) {
+    const item = data && data.item;
+    const holding = performance.now() < state.holdUntil;
+    if (data && data.device) {
+      document.body.classList.toggle('novol', data.device.supports_volume === false || data.device.volume_percent == null);
+      if (performance.now() > state.volHoldUntil && data.device.volume_percent != null) setVolumeUI(data.device.volume_percent);
+    }
+    if (data && !holding) {
+      state.shuffle = !!data.shuffle_state;
+      state.repeat = data.repeat_state || 'off';
+    }
+    if (!item || item.type !== 'track') {
+      state.playing = false;
+      updateButtons();
+      if (!item) showMessage('Spotifyで曲を再生してください');
+      else showMessage('この再生中のコンテンツには対応していません');
+      return;
+    }
+    if (!holding) {
+      state.progressMs = data.progress_ms || 0;
+      state.syncedAt = performance.now();
+      state.playing = !!data.is_playing;
+    }
+    updateButtons();
+    if (!state.track || state.track.id !== item.id) {
+      onTrackChange({
+        id: item.id,
+        name: item.name,
+        artists: item.artists.map((a) => a.name),
+        album: item.album ? item.album.name : '',
+        duration: item.duration_ms,
+        art: item.album && item.album.images[0] ? item.album.images[0].url : '',
+      });
+    }
   }
 
   async function onTrackChange(track) {
@@ -533,9 +780,7 @@
     $('#bg').style.backgroundImage = track.art ? `url("${track.art}")` : 'none';
     $('#ktitle .kt-name').textContent = track.name;
     $('#ktitle .kt-artist').textContent = track.artists.join(', ');
-    $('#dur').textContent = fmt(track.duration);
     $('#lines').innerHTML = '';
-    $('#source').textContent = '';
     root.removeAttribute('data-mode');
     showMessage('歌詞を検索中…');
     if (track.art) applyColors(track.art);
@@ -550,6 +795,84 @@
     if (!state.track || state.track.id !== track.id) return; // 取得中に曲が変わった
     state.lyrics = lyrics;
     renderLyrics();
+  }
+
+  // ================= 操作ボタン =================
+  function rawMs() {
+    const elapsed = state.playing ? performance.now() - state.syncedAt : 0;
+    return state.progressMs + elapsed;
+  }
+  function hold() { state.holdUntil = performance.now() + 1500; }
+
+  function updateButtons() {
+    $('#play').classList.toggle('playing', state.playing);
+    document.body.classList.toggle('paused', !state.playing);
+    $('#shuffle').classList.toggle('on', state.shuffle);
+    $('#repeat').classList.toggle('on', state.repeat !== 'off');
+    $('#repeat').classList.toggle('one', state.repeat === 'track');
+  }
+
+  function togglePlay() {
+    if (!state.track) return;
+    state.progressMs = rawMs();
+    state.syncedAt = performance.now();
+    state.playing = !state.playing;
+    hold();
+    updateButtons();
+    command('PUT', state.playing ? '/me/player/play' : '/me/player/pause');
+  }
+  function seekTo(ms) {
+    if (!state.track) return;
+    state.progressMs = Math.max(0, Math.min(ms, state.track.duration));
+    state.syncedAt = performance.now();
+    state.activeIndex = -1;
+    hold();
+    command('PUT', '/me/player/seek?position_ms=' + Math.round(state.progressMs));
+  }
+
+  function setVolumeUI(v) {
+    const el = $('#vol');
+    el.value = v;
+    el.style.setProperty('--v', v + '%');
+  }
+  let volTimer = 0;
+  $('#vol').addEventListener('input', (e) => {
+    const v = Number(e.target.value);
+    setVolumeUI(v);
+    state.volHoldUntil = performance.now() + 2500;
+    clearTimeout(volTimer);
+    volTimer = setTimeout(() => command('PUT', '/me/player/volume?volume_percent=' + v), 250);
+  });
+
+  $('#play').onclick = togglePlay;
+  $('#next').onclick = () => command('POST', '/me/player/next');
+  $('#prev').onclick = () => {
+    // 3 秒より後なら曲の頭に戻る（Spotify と同じ）
+    if (rawMs() > 3000) seekTo(0); else command('POST', '/me/player/previous');
+  };
+  $('#shuffle').onclick = () => {
+    state.shuffle = !state.shuffle; hold(); updateButtons();
+    command('PUT', '/me/player/shuffle?state=' + state.shuffle);
+  };
+  $('#repeat').onclick = () => {
+    state.repeat = { off: 'context', context: 'track', track: 'off' }[state.repeat] || 'off';
+    hold(); updateButtons();
+    command('PUT', '/me/player/repeat?state=' + state.repeat);
+  };
+  // シークバー: 押した位置へ
+  $('#bar').addEventListener('pointerdown', (e) => {
+    if (!state.track) return;
+    const r = $('#bar').getBoundingClientRect();
+    seekTo((e.clientX - r.left) / r.width * state.track.duration);
+  });
+
+  let toastTimer = 0;
+  function toast(msg) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
   }
 
   // ================= ジャケットの色 =================
@@ -593,7 +916,7 @@
         root.style.setProperty('--c1', '#6b6b78');
         root.style.setProperty('--c2', '#3a3a44');
         root.style.setProperty('--c3', '#9a9aa8');
-        root.style.setProperty('--solid', '#3d3d45');
+        root.style.setProperty('--solid', '#535353');
         return;
       }
       const pick = (i) => top[Math.min(i, top.length - 1)];
@@ -601,7 +924,7 @@
       root.style.setProperty('--c1', hsl(a.h, Math.min(1, a.s * 1.1), .5));
       root.style.setProperty('--c2', hsl(b.h, Math.min(1, b.s * 1.1), .45));
       root.style.setProperty('--c3', hsl(c.h, Math.min(1, c.s * 1.1), .55));
-      // ボールド: 白い文字も黒い文字も読める明るさにそろえる
+      // Spotify 風: 白い文字も黒い文字も読める明るさにそろえる
       root.style.setProperty('--solid', hsl(a.h, Math.min(.6, Math.max(.35, a.s)), .42));
     };
     img.src = url;
@@ -703,9 +1026,6 @@
     el.style.transform = '';
     el.innerHTML = '';
     if (type === 'synced' || type === 'plain') root.setAttribute('data-mode', type);
-    $('#source').textContent = {
-      synced: '同期歌詞 · LRCLIB', plain: '非同期歌詞 · LRCLIB', instrumental: '', none: '',
-    }[type];
 
     if (type === 'instrumental') { showMessage('♪ インストゥルメンタル ♪'); return; }
     if (type === 'none' || !lines.length) { showMessage('歌詞が見つかりませんでした'); return; }
@@ -728,11 +1048,6 @@
     state.activeIndex = -1;
   }
 
-  function currentMs() {
-    const elapsed = state.playing ? performance.now() - state.syncedAt : 0;
-    return state.progressMs + elapsed + state.offsetMs;
-  }
-
   function findIndex(lines, ms) {
     let lo = 0, hi = lines.length - 1, ans = -1;
     while (lo <= hi) {
@@ -742,7 +1057,7 @@
     return ans;
   }
 
-  // 一覧で流すテーマ: 行ごとに動かす（グローは、いまの行より下の行ほど少し遅れて動く）
+  // 一覧で流すテーマ: 行ごとに動かす（Apple Music 風は、いまの行より下の行ほど少し遅れて動く）
   function layoutLines(idx) {
     const children = $('#lines').children;
     if (!children.length) return;
@@ -762,7 +1077,7 @@
   // カラオケ: 上の段と下の段に交互に行を出し、歌っている行を左から塗っていく
   function renderKaraoke(ms) {
     const k = state.karaoke;
-    const rows = document.querySelectorAll('#karaoke .kline');
+    const rows = $$('#karaoke .kline');
     const title = $('#ktitle');
     if (!k.length) { title.classList.remove('show'); return; }
 
@@ -797,7 +1112,7 @@
   // 画面の幅に入りきらない行は、文字を小さくする
   function fitKaraoke(row) {
     row.style.fontSize = '';
-    const max = innerWidth * .9;
+    const max = innerWidth * .92;
     const w = row.scrollWidth;
     if (w > max) {
       const size = parseFloat(getComputedStyle(row).fontSize);
@@ -808,9 +1123,12 @@
   function frame() {
     requestAnimationFrame(frame);
     if (!state.track) return;
-    const ms = Math.max(0, Math.min(currentMs(), state.track.duration));
-    $('#time').textContent = fmt(ms - state.offsetMs);
-    $('#barFill').style.width = (ms / state.track.duration * 100).toFixed(2) + '%';
+    const raw = Math.max(0, Math.min(rawMs(), state.track.duration));
+    const ms = Math.max(0, Math.min(raw + state.offsetMs, state.track.duration));
+    $('#time').textContent = fmt(raw);
+    $('#remain').textContent = '-' + fmt(state.track.duration - raw);
+    if (theme() === 'bold' || theme() === 'simple') $('#remain').textContent = fmt(state.track.duration);
+    $('#barFill').style.width = (raw / state.track.duration * 100).toFixed(2) + '%';
 
     const ly = state.lyrics;
     if (!ly || !ly.lines.length) return;
@@ -838,27 +1156,32 @@
     if (!THEMES.includes(name)) name = 'glow';
     root.setAttribute('data-theme', name);
     store.set('lf_theme', name);
-    document.querySelectorAll('.tp').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === name)));
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = name === 'bold' ? getComputedStyle(root).getPropertyValue('--solid').trim() || '#0b0b0f' : '#0b0b0f';
-    // 並べ直す
+    $$('.tp').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === name)));
+    $('#kcolors').hidden = name !== 'karaoke';
+    relayout();
+  }
+  function setKColor(c) {
+    root.setAttribute('data-kcolor', c);
+    store.set('lf_kcolor', c);
+    $$('[data-kcolor]').forEach((b) => { if (b.classList.contains('chip')) b.setAttribute('aria-pressed', String(b.dataset.kcolor === c)); });
+  }
+  function relayout() {
     state.activeIndex = -1;
     state.kShown = [null, null];
-    document.querySelectorAll('#karaoke .kline').forEach((r) => { r.style.fontSize = ''; });
+    $$('#karaoke .kline').forEach((r) => { r.style.fontSize = ''; });
   }
-  function toggleThemePanel(open) {
-    const panel = $('#themePanel');
+  function togglePanel(open) {
+    const panel = $('#panel');
     const show = open === undefined ? panel.hidden : open;
     panel.hidden = !show;
-    $('#themeBtn').setAttribute('aria-expanded', String(show));
+    $('#menuBtn').setAttribute('aria-expanded', String(show));
   }
 
-  // ================= 操作系 =================
+  // ================= 表示の設定 =================
   function applyFontSize() {
     root.style.setProperty('--size', state.fontSize + 'px');
     store.set('lf_size', String(state.fontSize));
-    state.activeIndex = -1; // 位置を再計算
-    state.kShown = [null, null];
+    relayout();
   }
   function changeFont(d) { state.fontSize = Math.max(16, Math.min(96, state.fontSize + d)); applyFontSize(); }
 
@@ -886,15 +1209,18 @@
     document.body.classList.remove('idle');
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      if (!$('#themePanel').hidden) toggleThemePanel(false);
+      if ($('#panel').matches(':hover')) return wake();
+      togglePanel(false);
       document.body.classList.add('idle');
-    }, 3000);
+    }, 3500);
   }
   ['mousemove', 'touchstart', 'keydown'].forEach((ev) => addEventListener(ev, wake, { passive: true }));
 
-  $('#themeBtn').onclick = (e) => { e.stopPropagation(); toggleThemePanel(); };
-  document.querySelectorAll('.tp').forEach((b) => { b.onclick = (e) => { e.stopPropagation(); setTheme(b.dataset.pick); }; });
-  addEventListener('click', (e) => { if (!$('#themePanel').hidden && !e.target.closest('#themePanel')) toggleThemePanel(false); });
+  $('#menuBtn').onclick = (e) => { e.stopPropagation(); togglePanel(); };
+  $('#panel').addEventListener('click', (e) => e.stopPropagation());
+  addEventListener('click', () => togglePanel(false));
+  $$('.tp').forEach((b) => { b.onclick = () => setTheme(b.dataset.pick); });
+  $$('.chip[data-kcolor]').forEach((b) => { b.onclick = () => setKColor(b.dataset.kcolor); });
   $('#offMinus').onclick = () => changeOffset(-250);
   $('#offPlus').onclick = () => changeOffset(250);
   $('#smaller').onclick = () => changeFont(-4);
@@ -905,22 +1231,25 @@
   $('#clientId').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 
   addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT') return;
+    if (e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'f' || e.key === 'F') toggleFullscreen();
     else if (e.key === 't' || e.key === 'T') setTheme(THEMES[(THEMES.indexOf(theme()) + 1) % THEMES.length]);
-    else if (e.key === 'Escape') toggleThemePanel(false);
+    else if (e.key === 'Escape') togglePanel(false);
+    else if (e.key === ' ' && e.target === document.body) { e.preventDefault(); togglePlay(); }
     else if (e.key === '+' || e.key === '=') changeFont(4);
     else if (e.key === '-') changeFont(-4);
     else if (e.key === '[') changeOffset(-250);
     else if (e.key === ']') changeOffset(250);
   });
-  addEventListener('resize', () => { state.activeIndex = -1; state.kShown = [null, null]; });
+  addEventListener('resize', relayout);
 
   // ================= 起動 =================
   async function main() {
     setTheme(theme());
+    setKColor(root.getAttribute('data-kcolor') || 'blue');
     applyFontSize();
     applyOffset();
+    setVolumeUI(50);
     $('#redirectShow').textContent = REDIRECT_URI;
     $('#clientId').value = store.get('lf_client_id') || '';
     if (BUILTIN_CLIENT_ID) {
