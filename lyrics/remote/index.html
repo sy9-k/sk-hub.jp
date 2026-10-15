@@ -210,6 +210,37 @@
   [data-ui="kr"] .t-w { color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .45); }
   [data-ui="kr"] .tile .sub { color: rgba(255, 255, 255, .7); text-shadow: none; }
 
+  /* ================= スマホ（縦長）: 前の形の画面 ================= */
+  .phome, .pswitch { display: none; }
+  [data-orient="port"] .home, [data-orient="port"] .status { display: none; }
+  [data-orient="port"] .screen { grid-template-rows: 1fr auto; background: #0d0820; }
+  [data-orient="port"] .views { background: radial-gradient(120% 80% at 80% 0%, #4a1a6e 0%, #1c0d36 45%, #0d0820 100%); }
+  [data-ui="kr"][data-orient="port"] .views { background: radial-gradient(120% 80% at 20% 0%, #10204e 0%, #090b22 55%, #05060f 100%); }
+  [data-orient="port"] #vbar, [data-orient="port"] #vbar[hidden] {
+    display: flex !important; padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+    background: linear-gradient(#2a1650, #1a0d34); border-bottom: 1px solid rgba(255, 255, 255, .08);
+  }
+  [data-ui="kr"][data-orient="port"] #vbar { background: linear-gradient(#0e1438, #090c24); }
+  [data-orient="port"] .pswitch { display: flex; border-color: rgba(255, 255, 255, .3); }
+  [data-orient="port"] .pswitch button { height: 36px; color: rgba(255, 255, 255, .6); }
+  [data-orient="port"] .pswitch button[aria-pressed="true"] { background: #fff; color: #1a1030; }
+  [data-orient="port"] #v-home { overflow-y: auto; }
+  [data-orient="port"] .phome { display: grid; gap: 12px; }
+  .pnow { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px; border-radius: 16px; background: rgba(0, 0, 0, .35); border: 1.5px solid rgba(255, 255, 255, .14); }
+  .pnow img { width: 112px; height: 112px; border-radius: 10px; object-fit: cover; background: rgba(255, 255, 255, .08); }
+  .pnow .lb { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 900; background: var(--accent); color: #2a1a00; }
+  [data-ui="kr"] .pnow .lb { color: #04202a; }
+  .pnow .tt { margin-top: 6px; font-size: 21px; font-weight: 900; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pnow .aa { margin-top: 2px; font-size: 14px; color: rgba(255, 255, 255, .75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbar { height: 6px; margin-top: 10px; border-radius: 3px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+  .pbar i { display: block; height: 100%; width: 0; background: var(--accent); }
+  .ptiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .ptiles .tile { min-height: 104px; font-size: 18px; }
+  .ptiles .tile.bigt { min-height: 128px; font-size: 21px; }
+  .ptiles .tile svg { width: 30px; height: 30px; }
+  [data-orient="port"] .dock { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); min-height: 66px; }
+  [data-orient="port"] #easyBtn, [data-orient="port"] #dockTop { display: none; }
+
   /* ================= 下の帯（画面の中） ================= */
   .dock { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--dock); }
   .dock button, .dock .chip { height: 38px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 900; display: flex; align-items: center; gap: 6px; }
@@ -220,7 +251,6 @@
   [data-ui="kr"] .dock .r { background: transparent; box-shadow: inset 0 0 0 1.5px #ff4a6a, 0 0 12px rgba(255, 74, 106, .3); color: #ff9aae; }
   [data-orient="port"] .dock { gap: 6px; padding: 0 8px; }
   [data-orient="port"] .dock button { padding: 0 10px; font-size: 12px; }
-  [data-orient="port"] .dock .mini span { display: none; }
   .dock .y[aria-pressed="true"] { background: linear-gradient(#ff8ad0, #e22a86); color: #fff; }
   .dock .mini { flex: 1; min-width: 0; height: 40px; padding: 0 6px; border-radius: 10px; background: rgba(255, 255, 255, .08); justify-content: flex-start; text-align: left; }
   .dock .mini img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; background: rgba(255, 255, 255, .1); flex: none; }
@@ -407,10 +437,38 @@
         <div class="vbar" id="vbar" hidden>
           <button class="topbtn" id="goTop" data-l="top">TOP</button>
           <div class="crumb" id="crumb"></div>
+          <div class="uiswitch pswitch" role="group" aria-label="画面の種類">
+            <button data-ui-pick="jp">日本</button>
+            <button data-ui-pick="kr" lang="ko">한국</button>
+          </div>
         </div>
         <div class="vwrap">
           <!-- TOP -->
           <section class="view" id="v-home">
+            <div class="phome">
+              <div class="pnow">
+                <img id="pArt" src="" alt="">
+                <div style="min-width:0">
+                  <span class="lb" id="pLb">演奏中</span>
+                  <div class="tt" id="pTitle">—</div>
+                  <div class="aa" id="pArtist"></div>
+                  <div class="pbar"><i id="pBar"></i></div>
+                </div>
+              </div>
+              <div class="ptiles">
+                <button class="tile bigt t-r" data-go="artist"><svg><use href="#ic-person"/></svg><span data-l="artist">歌手名</span><span class="sub" data-s="artist"></span></button>
+                <button class="tile bigt t-r" data-go="song"><svg><use href="#ic-note"/></svg><span data-l="song">曲名</span><span class="sub" data-s="song"></span></button>
+                <button class="tile bigt t-r" data-go="pad"><svg><use href="#ic-keys"/></svg><span data-l="number">番号で予約</span><span class="sub" data-s="number"></span></button>
+                <button class="tile t-o" data-go="recent"><svg><use href="#ic-clock"/></svg><span data-l="recent">りれき</span><span class="sub" data-s="recent"></span></button>
+                <button class="tile t-o" data-go="top"><svg><use href="#ic-dice"/></svg><span data-l="topTracks">よく聴く曲</span></button>
+                <button class="tile t-v" data-go="genre:j-pop"><svg><use href="#ic-wave"/></svg><span>J-POP</span></button>
+                <button class="tile t-v" data-go="genre:k-pop"><svg><use href="#ic-wave"/></svg><span>K-POP</span></button>
+                <button class="tile t-v" data-go="genre:pop"><svg><use href="#ic-mic"/></svg><span data-l="western">洋楽</span></button>
+                <button class="tile t-n" data-go="queue"><svg><use href="#ic-list"/></svg><span data-l="queue">予約確認</span><span class="sub" data-s="queue"></span></button>
+                <button class="tile t-t" data-go="pad"><svg><use href="#ic-remote"/></svg><span data-l="remote">リモコン</span><span class="sub" data-s="remote"></span></button>
+                <a class="tile t-n" href="/lyrics/" style="text-decoration:none"><svg><use href="#ic-note"/></svg><span data-l="openFlow">歌詞の画面</span><span class="sub" data-s="openFlow"></span></a>
+              </div>
+            </div>
             <div class="home">
               <div class="tv">
                 <div class="tvscreen">
@@ -630,8 +688,15 @@
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const W = land ? Math.round(clamp(800 * ratio, 1180, 1640)) : 720;
     const H = land ? 800 : Math.round(clamp(720 / ratio, 1100, 1640));
-    const k = Math.min(innerWidth / W, innerHeight / H);
     root.dataset.orient = land ? 'land' : 'port';
+    if (!land) {
+      // スマホ（縦長）: 画面の幅にそのまま合わせる（前の形の画面）
+      Object.assign(stage.style, { left: '0', top: '0', width: '100%', height: '100%', transform: 'none' });
+      return;
+    }
+    const k = Math.min(innerWidth / W, innerHeight / H);
+    stage.style.left = '50%';
+    stage.style.top = '50%';
     stage.style.width = W + 'px';
     stage.style.height = H + 'px';
     stage.style.transform = `translate(-50%, -50%) scale(${k})`;
@@ -1192,13 +1257,16 @@
     const lb = !it ? t('idle') : player.is_playing ? t('playing') : t('paused');
     const title = it ? it.name : t('idleTitle');
     const ar = it && it.artists ? it.artists.map((a) => a.name).join(', ') : '';
-    $('#hLb').textContent = lb;
+    $('#hLb').textContent = lb; $('#pLb').textContent = lb;
+    $('#pTitle').textContent = title; markLang($('#pTitle'), title);
+    $('#pArtist').textContent = ar; markLang($('#pArtist'), ar);
     $('#hTitle').textContent = title; markLang($('#hTitle'), title);
     $('#mTitle').textContent = it ? lb + ' ・ ' + title : title; markLang($('#mTitle'), title);
     $('#hArtist').textContent = ar; markLang($('#hArtist'), ar);
     $('#hNo').textContent = it ? t('songNo') + ' ' + songNo(it.id) : '';
     const big = it ? bigImg(it.album && it.album.images) : '', small = it ? smallImg(it.album && it.album.images) : '';
     if ($('#hArt').getAttribute('src') !== big) $('#hArt').src = big;
+    if ($('#pArt').getAttribute('src') !== big) $('#pArt').src = big;
     if ($('#mArt').getAttribute('src') !== small) $('#mArt').src = small;
     $('#pauseLbl').textContent = player && player.is_playing ? t('pause') : t('resume');
     tickBar();
@@ -1206,9 +1274,9 @@
   // 再生位置のバー（取得のあいだも進める）
   function tickBar() {
     const it = player && player.item;
-    if (!it) { $('#hBar').style.width = '0'; $('#hTime').textContent = '0:00'; $('#hDur').textContent = '0:00'; return; }
+    if (!it) { $('#pBar').style.width = '0'; $('#hBar').style.width = '0'; $('#hTime').textContent = '0:00'; $('#hDur').textContent = '0:00'; return; }
     const pos = Math.min(it.duration_ms, (player.progress_ms || 0) + (player.is_playing ? performance.now() - polledAt : 0));
-    $('#hBar').style.width = (pos / it.duration_ms * 100).toFixed(1) + '%';
+    $('#hBar').style.width = $('#pBar').style.width = (pos / it.duration_ms * 100).toFixed(1) + '%';
     $('#hTime').textContent = fmt(pos); $('#hDur').textContent = fmt(it.duration_ms);
   }
   setInterval(tickBar, 500);
