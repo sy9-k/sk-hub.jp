@@ -1,0 +1,124 @@
+/* SK Share の管理（/share/。もとは /view/editor/）— Material 3。色・共通の部品は /view/view.css と /toolbox/shared/m3.css、
+   上のバー・ナビゲーション・ログインの確認は /shared/admin.css
+   一覧と編集を横に並べるのは、左のナビゲーションの分も見て、画面の幅が 1080px より広いときだけ */
+.ad-main:has(.ve-main) { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+
+.ve-main { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 24px; align-items: start; }
+.ve-main > * { min-width: 0; }
+
+/* ---- 一覧（M3 の list） ---- */
+.ve-side { position: sticky; top: 72px; display: flex; flex-direction: column; max-height: calc(100dvh - 96px); }
+.ve-side__head { display: flex; align-items: center; gap: 10px; padding: 8px 8px 12px; }
+.ve-side__new { height: 40px; padding: 0 16px 0 12px; }
+.ve-side__new .msr { font-size: 20px; }
+.ve-side__title { margin: 0; font-size: 22px; font-weight: 700; }
+.ve-side__count { font-size: 13px; color: var(--md-on-surface-variant); }
+.ve-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; padding-bottom: 8px; }
+.ve-li {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 72px; padding: 10px 14px; border: 0; border-radius: 16px;
+  background: none; color: var(--md-on-surface); text-align: left; cursor: pointer;
+}
+.ve-li[aria-current="true"] { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.ve-li__icon { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); }
+.ve-li__icon.is-on { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.ve-li__icon .msr { font-size: 22px; }
+.ve-li__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ve-li__title { font-size: 15.5px; font-weight: 700; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ve-li__sub { font-size: 12.5px; color: var(--md-on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ve-li[aria-current="true"] .ve-li__sub { color: inherit; opacity: .85; }
+.ve-badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; margin-right: 6px; border-radius: 6px; font-size: 11px; font-weight: 700; vertical-align: 1px; }
+.ve-badge--on { background: color-mix(in srgb, #1e9e5a 18%, transparent); color: #137a43; }
+.ve-badge--off { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); }
+.ve-badge--expired { background: var(--md-error-container); color: var(--md-on-error-container); }
+:root[data-theme="dark"] .ve-badge--on { color: #7fd8a4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ve-badge--on { color: #7fd8a4; } }
+.ve-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 24px 8px; text-align: center; font-size: 14px; color: var(--md-on-surface-variant); }
+.ve-empty .msr { font-size: 40px; }
+
+/* ---- 編集 ---- */
+.ve-editor { display: flex; flex-direction: column; gap: 16px; animation: vw-rise .4s var(--md-emphasized) both; }
+.ve-editor__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 4px 0; }
+.ve-editor__head .ve-editor__title { flex: 1; min-width: 0; }
+.ve-editor__title { margin: 0; font-size: 24px; font-weight: 700; overflow-wrap: anywhere; }
+.ve-switch-row { display: inline-flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; cursor: pointer; flex: none; }
+.ve-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 24px; background: var(--md-surface-container-low); }
+.ve-card__titlebar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ve-card__title { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; font-weight: 700; color: var(--md-primary); }
+.ve-card__title .msr { font-size: 22px; }
+.ve-card .m3-field { border-radius: 8px 8px 0 0; }
+.ve-hint { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--md-on-surface-variant); }
+.ve-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; }
+.ve-password, .ve-row { display: flex; align-items: center; gap: 8px; }
+.ve-password .m3-field, .ve-grow { flex: 1; min-width: 0; }
+
+/* 中身の 1 件 */
+.ve-items { display: flex; flex-direction: column; gap: 10px; }
+.ve-items:empty { display: none; }
+.ve-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px; border-radius: 16px; background: var(--md-surface-container-lowest); box-shadow: inset 0 0 0 1px var(--md-outline-variant); }
+.ve-item.is-new { animation: vw-rise .35s var(--md-emphasized) both; }
+.ve-item__thumb { display: grid; place-items: center; width: 112px; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); }
+.ve-item__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.ve-item__thumb .msr { font-size: 32px; }
+.ve-item__fields { display: flex; flex-direction: column; gap: 8px; }
+.ve-item__fields .m3-field { padding-top: 6px; }
+.ve-item__file { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; color: var(--md-on-surface-variant); }
+.ve-item__file .m3-btn { height: 36px; padding: 0 16px; font-size: 13px; }
+.ve-item__file .msr { font-size: 18px; }
+.ve-item__file.is-error { color: var(--md-error); }
+.ve-item__tools { display: flex; flex-direction: column; }
+.ve-item__tools .icon-btn { width: 40px; height: 40px; }
+.ve-item__tools .msr { font-size: 20px; }
+.ve-add { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 配る */
+.ve-share { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.ve-qr { flex: none; padding: 12px; border-radius: 16px; background: #fff; line-height: 0; }
+.ve-qr img, .ve-qr canvas { width: 160px; height: 160px; image-rendering: pixelated; }
+.ve-share__text { flex: 1; min-width: 220px; }
+.ve-share__label { margin: 0; font-size: 12px; color: var(--md-on-surface-variant); }
+.ve-share__url, .ve-share__pw { margin: 2px 0 12px; font-size: 15px; overflow-wrap: anywhere; }
+.ve-share__pw { font-size: 20px; font-weight: 700; }
+.ve-share__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ve-share__actions .m3-btn { height: 36px; padding: 0 16px; font-size: 13px; }
+.ve-share__actions .msr { font-size: 18px; }
+
+.ve-actions {
+  position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 8px;
+  margin: 0 -8px; padding: 12px 8px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, var(--md-surface) 30%);
+}
+.ve-actions .m3-btn { height: 48px; padding: 0 28px; border-radius: 24px; font-size: 15px; }
+.ve-actions .text-btn { gap: 6px; white-space: nowrap; }
+.ve-actions .msr { font-size: 20px; }
+.ve-actions .m3-btn.is-busy .msr { display: none; }
+.ve-danger { color: var(--md-error); }
+
+.ve-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 360px; border-radius: 28px; border: 2px dashed var(--md-outline-variant); color: var(--md-on-surface-variant); text-align: center; padding: 24px; }
+.ve-placeholder .msr { font-size: 48px; }
+.ve-placeholder p { margin: 0; }
+.ve-placeholder[hidden] { display: none; }
+
+/* 新しいページ（M3 の extended FAB。せまい画面の一覧だけ。広い画面は一覧の上のボタン） */
+.ve-fab {
+  display: none; position: fixed; z-index: 15; right: max(24px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); align-items: center; gap: 12px; height: 56px; padding: 0 20px 0 16px; border: 0; border-radius: 16px; cursor: pointer;
+  background: var(--md-primary-container); color: var(--md-on-primary-container); font-size: 15px; font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3), 0 4px 8px 3px rgba(0, 0, 0, .15);
+}
+
+/* せまい画面: 一覧と編集を切りかえる（share.js の NARROW と同じ幅） */
+@media (max-width: 1080px) {
+  .ve-main { grid-template-columns: minmax(0, 1fr); }
+  .ve-side { position: static; max-height: none; }
+  .ve-main.is-editing .ve-side, .ve-main:not(.is-editing) .ve-editor, .ve-placeholder { display: none; }
+  .ve-side__new { display: none; }
+  body.ve-ready .ve-fab { display: inline-flex; }
+  body.ve-ready:has(.ve-main.is-editing) .ve-fab { display: none; }
+}
+@media (max-width: 520px) {
+  .ve-card { padding: 16px; border-radius: 20px; }
+  .ve-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .ve-item__thumb { grid-column: 1 / -1; width: 100%; }
+  .ve-qr img, .ve-qr canvas { width: 136px; height: 136px; }
+  .ve-actions .ve-label { display: none; }
+  .ve-actions .text-btn { width: 48px; height: 48px; padding: 0; border-radius: 50%; }
+}

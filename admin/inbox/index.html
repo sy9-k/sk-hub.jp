@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#faf8ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11131b" media="(prefers-color-scheme: dark)">
+<!-- 管理画面（開発者だけ・訳さない）。開くのは admin.sk-hub.jp（_workers/admin/ の Worker が sk-hub.jp/admin/ を中継する）。共通部分は /shared/（admin.js・admin.css） -->
+<script>if(/^(www\.)?sk-hub\.jp$/.test(location.hostname))location.replace("https://admin.sk-hub.jp"+location.pathname.replace(/^\/admin(?=\/)/,"")+location.search+location.hash);</script>
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}");if(t.mode==="light"||t.mode==="dark")document.documentElement.setAttribute("data-theme",t.mode);}catch(e){}})();</script>
+<title>お問い合わせ | SK 管理</title>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700;800&display=swap" data-icons="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"></script>
+<link rel="stylesheet" href="/toolbox/shared/m3.css">
+<link rel="stylesheet" href="/view/view.css">
+<link rel="stylesheet" href="/shared/admin.css">
+<script src="/toolbox/shared/m3.js" defer></script>
+<script type="module" src="/inbox/inbox.js"></script>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+</head>
+<body>
+  <main data-ad-ready hidden>
+    <div class="ad-head">
+      <div class="ad-head__text">
+        <h1 class="ad-head__title">お問い合わせ</h1>
+        <p class="ad-head__lead">お問い合わせフォーム（sk-hub.jp/contact/）から届いた内容です。対応済みにしたものは 1 年後に自動で消えます。</p>
+      </div>
+    </div>
+    <div class="ad-stack">
+      <div class="ad-tabs" role="tablist" aria-label="表示するお問い合わせ">
+        <button type="button" class="tbs-chip m3-state" data-inbox-filter="new" aria-pressed="true"><span class="msr" aria-hidden="true">mark_email_unread</span>未対応 <span data-inbox-count="new"></span></button>
+        <button type="button" class="tbs-chip m3-state" data-inbox-filter="done" aria-pressed="false"><span class="msr" aria-hidden="true">drafts</span>対応済み <span data-inbox-count="done"></span></button>
+        <button type="button" class="tbs-chip m3-state" data-inbox-filter="" aria-pressed="false"><span class="msr" aria-hidden="true">all_inbox</span>すべて</button>
+      </div>
+      <p class="ad-note" data-inbox-hint hidden></p>
+      <div class="ad-stack" data-inbox-list aria-live="polite"></div>
+    </div>
+  </main>
+</body>
+</html>

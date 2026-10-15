@@ -43,7 +43,7 @@ pages = [
 # フッターを出さないページ（SK's Toolbox のホーム画面。下にドックがある）
 NO_FOOTER = {"toolbox.html"}
 # 訳さないページ（開発者だけが使う）
-NOT_TRANSLATED = {"privacy.html"}  # お問い合わせの受信箱・記事エディターは、旧ドメインの管理画面（sy9-k.github.io/admin/）に移った
+NOT_TRANSLATED = {"privacy.html"}  # お問い合わせの受信箱・記事エディターは、管理画面（admin.sk-hub.jp）に移った
 
 # ページごとに追加する <head> の中身と <body> のクラス
 EXTRA = {
