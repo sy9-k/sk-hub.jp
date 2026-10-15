@@ -10,9 +10,9 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <!-- テーマを、画面が出る前に付ける（ちらつかないように） -->
-<script>(function(){try{var d=document.documentElement,t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("lf_theme");if(/^(glow|bold|karaoke|simple)$/.test(t))d.setAttribute("data-theme",t);var k=localStorage.getItem("lf_kcolor");if(/^(blue|red|purple)$/.test(k))d.setAttribute("data-kcolor",k);var f=localStorage.getItem("lf_font");if(/^(gothic|rounded|mincho|hand|pop)$/.test(f))d.setAttribute("data-font",f);var w=localStorage.getItem("lf_weight");if(/^(regular|bold|heavy)$/.test(w))d.setAttribute("data-weight",w);}catch(e){}})();</script>
+<script>(function(){try{var d=document.documentElement,t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("lf_theme");if(/^(glow|bold|karaoke|noraebang|simple)$/.test(t))d.setAttribute("data-theme",t);var k=localStorage.getItem("lf_kcolor");if(/^(blue|red|purple)$/.test(k))d.setAttribute("data-kcolor",k);var f=localStorage.getItem("lf_font");if(/^(gothic|rounded|mincho|hand|pop)$/.test(f))d.setAttribute("data-font",f);var w=localStorage.getItem("lf_weight");if(/^(regular|bold|heavy)$/.test(w))d.setAttribute("data-weight",w);}catch(e){}})();</script>
 <!-- 歌詞のフォント。CSS だけ先に読み、文字のファイルは画面で使った字のぶんだけ届く（日本語は字の範囲ごとに分かれている） -->
-<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800;900&family=Inter:wght@500;600;700;800;900&family=Figtree:wght@500;600;700;800;900&family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Zen+Old+Mincho:wght@500;700;900&family=Klee+One:wght@400;600&family=Dela+Gothic+One&display=swap"></script>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800;900&family=Inter:wght@500;600;700;800;900&family=Figtree:wght@500;600;700;800;900&family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Zen+Old+Mincho:wght@500;700;900&family=Klee+One:wght@400;600&family=Dela+Gothic+One&family=Noto+Sans+KR:wght@400;500;700;800;900&family=Jua&family=Nanum+Myeongjo:wght@400;700;800&family=Gaegu:wght@400;700&family=Black+Han+Sans&display=swap"></script>
 <style>
   :root {
     --size: 36px;
@@ -22,6 +22,9 @@
     --solid: #4a3a8c;
     --anchor: 50%;  /* いまの行を置く高さ */
     --ease: cubic-bezier(.2, .75, .2, 1);
+    --lf-ease: cubic-bezier(.22, 1, .36, 1);     /* 選んだ動き（JS で入れ替える） */
+    --lf-ease-out: cubic-bezier(.22, 1, .36, 1); /* 行きすぎない版（色・ぼかし用） */
+    --lf-dur: .6s;
     --kfill: #1f5bff;
   }
   [data-kcolor="red"]    { --kfill: #ff2f5f; }
@@ -31,21 +34,35 @@
      --lf-family 書体 / --lf-weight 太さ / --lf-spacing 字間 / --lf-feat 字詰め（palt = 仮名や約物を詰める）
      テーマごとのおすすめ → 自分で選んだ書体・太さで上書き（data-font・data-weight） */
   :root {
-    --f-gothic: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    --f-gothic-ko: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --f-gothic: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, var(--f-gothic-ko);
     --lf-family: var(--f-gothic); --lf-weight: 700; --lf-spacing: .01em; --lf-feat: "palt" 1;
+    --lf-family-ko: var(--f-gothic-ko);
   }
   /* Apple Music 風: Apple の端末では SF Pro とヒラギノ、それ以外では近い Inter と Noto Sans JP */
-  [data-theme="glow"]    { --lf-family: -apple-system, "SF Pro Display", Inter, "Hiragino Sans", "Noto Sans JP", sans-serif; --lf-weight: 800; --lf-spacing: -.012em; --lf-feat: "palt" 1, "kern" 1; }
+  [data-theme="glow"]    { --lf-family: -apple-system, "SF Pro Display", Inter, "Hiragino Sans", "Noto Sans JP", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+                           --lf-family-ko: -apple-system, "SF Pro Display", "Apple SD Gothic Neo", Inter, "Noto Sans KR", sans-serif; --lf-weight: 800; --lf-spacing: -.012em; --lf-feat: "palt" 1, "kern" 1; }
   /* Spotify 風: 丸みのある幾何学的な欧文（Figtree）と、太い日本語 */
-  [data-theme="bold"]    { --lf-family: Figtree, "Noto Sans JP", "Hiragino Sans", sans-serif; --lf-weight: 800; --lf-spacing: -.01em; --lf-feat: "palt" 1, "kern" 1; }
+  [data-theme="bold"]    { --lf-family: Figtree, "Noto Sans JP", "Hiragino Sans", var(--f-gothic-ko);
+                           --lf-family-ko: Figtree, var(--f-gothic-ko); --lf-weight: 800; --lf-spacing: -.01em; --lf-feat: "palt" 1, "kern" 1; }
   /* カラオケ: 極太ゴシックを詰めずに、字間を少し空けて読みやすく */
   [data-theme="karaoke"] { --lf-family: var(--f-gothic); --lf-weight: 900; --lf-spacing: .06em; --lf-feat: normal; }
+  /* ノレバン: 韓国語は Noto Sans KR の極太。字間は日本のカラオケより少し詰める */
+  [data-theme="noraebang"] { --lf-family: var(--f-gothic); --lf-family-ko: var(--f-gothic-ko); --lf-weight: 900; --lf-spacing: .02em; --lf-feat: normal; }
   [data-theme="simple"]  { --lf-family: var(--f-gothic); --lf-weight: 700; --lf-spacing: .02em; --lf-feat: "palt" 1; }
-  [data-font="gothic"]   { --lf-family: var(--f-gothic); }
-  [data-font="rounded"]  { --lf-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", var(--f-gothic); }
-  [data-font="mincho"]   { --lf-family: "Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif; --lf-spacing: .04em; }
-  [data-font="hand"]     { --lf-family: "Klee One", "Hiragino Maru Gothic ProN", var(--f-gothic); --lf-spacing: .03em; }
-  [data-font="pop"]      { --lf-family: "Dela Gothic One", var(--f-gothic); --lf-spacing: .02em; }
+  /* 韓国語: ゴシック = Noto Sans KR、丸ゴシック = Jua、明朝 = Nanum Myeongjo、手書き風 = Gaegu、ポップ = Black Han Sans */
+  [data-font="gothic"]   { --lf-family: var(--f-gothic); --lf-family-ko: var(--f-gothic-ko); }
+  [data-font="rounded"]  { --lf-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", Jua, var(--f-gothic); --lf-family-ko: Jua, var(--f-gothic-ko); }
+  [data-font="mincho"]   { --lf-family: "Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", "Nanum Myeongjo", serif; --lf-family-ko: "Nanum Myeongjo", AppleMyungjo, Batang, serif; --lf-spacing: .04em; }
+  [data-font="hand"]     { --lf-family: "Klee One", "Hiragino Maru Gothic ProN", Gaegu, var(--f-gothic); --lf-family-ko: Gaegu, var(--f-gothic-ko); --lf-spacing: .03em; }
+  [data-font="pop"]      { --lf-family: "Dela Gothic One", "Black Han Sans", var(--f-gothic); --lf-family-ko: "Black Han Sans", var(--f-gothic-ko); --lf-spacing: .02em; }
+  /* ハングルを含む行: 韓国語の書体で、単語（分かち書きの空白）の途中では折り返さない。
+     仮名を詰める palt は使わない */
+  .line[lang="ko"], .kline[lang="ko"], #ktitle [lang="ko"], #fontPreview [lang="ko"] {
+    font-family: var(--lf-family-ko); font-feature-settings: "kern" 1;
+  }
+  .line[lang="ko"] { word-break: keep-all; line-height: 1.36; }
+  #title[lang="ko"], #artist[lang="ko"] { font-family: var(--lf-family-ko); }
   [data-weight="regular"] { --lf-weight: 500; }
   [data-weight="bold"]    { --lf-weight: 700; }
   [data-weight="heavy"]   { --lf-weight: 900; }
@@ -53,7 +70,7 @@
   html, body {
     margin: 0; height: 100%; overflow: hidden;
     background: #000; color: #fff;
-    font-family: "Noto Sans JP", system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    font-family: "Noto Sans JP", system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   body.idle { cursor: none; }
@@ -98,13 +115,14 @@
     /* 日本語は文節で折り返す（対応ブラウザのみ）・行末の約物はぶら下げる・折り返した行の長さをそろえる */
     word-break: normal; word-break: auto-phrase; line-break: strict; overflow-wrap: break-word;
     hanging-punctuation: allow-end;
-    transition: transform .7s var(--ease);
     will-change: transform;
   }
   .line .txt {
     display: inline-block; transform-origin: left center; text-wrap: balance;
     color: rgba(255, 255, 255, .38);
-    transition: color .4s, transform .5s var(--ease), filter .5s, opacity .5s, text-shadow .5s;
+    /* 色・大きさ・ぼかしの変わり方も、選んだ動き（イージング）に合わせる */
+    transition: color calc(var(--lf-dur) * .8) var(--lf-ease-out), transform var(--lf-dur) var(--lf-ease),
+                filter var(--lf-dur) var(--lf-ease-out), opacity var(--lf-dur) var(--lf-ease-out), text-shadow var(--lf-dur) var(--lf-ease-out);
   }
   .line.past .txt { color: rgba(255, 255, 255, .2); }
   .line.active .txt { color: #fff; }
@@ -153,7 +171,7 @@
      =================================================================== */
   [data-theme="glow"] #glow { display: block; }
   [data-theme="glow"] { --anchor: 34%; }
-  [data-theme="glow"] body { font-family: -apple-system, "SF Pro Display", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+  [data-theme="glow"] body { font-family: -apple-system, "SF Pro Display", "Hiragino Sans", "Noto Sans JP", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif; }
   [data-theme="glow"] #app { display: grid; grid-template-columns: minmax(300px, 44%) 1fr; }
   [data-theme="glow"] #player { display: flex; align-items: center; justify-content: center; padding: 5vh 2vw 5vh 5vw; min-width: 0; }
   [data-theme="glow"] .pinner { width: min(100%, 56vh); display: flex; flex-direction: column; }
@@ -186,7 +204,7 @@
             mask-image: linear-gradient(transparent, #000 16%, #000 80%, transparent);
   }
   [data-theme="glow"] #lines { padding: 0 4vw 0 3vw; }
-  [data-theme="glow"] .line { padding: .36em 0; transition: transform .95s cubic-bezier(.3, 1.22, .45, 1); }
+  [data-theme="glow"] .line { padding: .36em 0; }
   [data-theme="glow"] .line .txt { color: rgba(255, 255, 255, .36); transform: scale(.97); }
   [data-theme="glow"] .line[data-d="1"] .txt { filter: blur(.6px); }
   [data-theme="glow"] .line[data-d="2"] .txt { filter: blur(1.3px); }
@@ -213,7 +231,7 @@
   /* ===================================================================
      ボールド（Spotify 風）: 黒い枠の中にジャケット色の歌詞パネル、下に再生バー
      =================================================================== */
-  [data-theme="bold"] body { font-family: Figtree, "Noto Sans JP", "Helvetica Neue", Arial, sans-serif; }
+  [data-theme="bold"] body { font-family: Figtree, "Noto Sans JP", "Noto Sans KR", "Helvetica Neue", Arial, sans-serif; }
   [data-theme="bold"] { --anchor: 30%; }
   [data-theme="bold"] #app { display: grid; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "stage" "player"; }
   [data-theme="bold"] #stage { grid-area: stage; height: auto; margin: 8px 8px 0; border-radius: 8px; background: var(--solid); transition: background-color 1.2s; }
@@ -268,11 +286,11 @@
   /* ===================================================================
      カラオケ（DAM 風）: 極太ゴシックに太いふち、上下 2 段に交互、左から色が変わる
      =================================================================== */
-  [data-theme="karaoke"] #bg { display: block; filter: blur(30px) brightness(.32) saturate(1.5); }
-  [data-theme="karaoke"] #player { display: none; }
-  [data-theme="karaoke"][data-mode="synced"] #stage { display: none; }
+  [data-theme="karaoke"] #bg, [data-theme="noraebang"] #bg { display: block; filter: blur(30px) brightness(.32) saturate(1.5); }
+  [data-theme="karaoke"] #player, [data-theme="noraebang"] #player { display: none; }
+  [data-theme="karaoke"][data-mode="synced"] #stage, [data-theme="noraebang"][data-mode="synced"] #stage { display: none; }
   #karaoke { position: fixed; inset: 0; z-index: 1; display: none; pointer-events: none; }
-  [data-theme="karaoke"][data-mode="synced"] #karaoke { display: block; }
+  [data-theme="karaoke"][data-mode="synced"] #karaoke, [data-theme="noraebang"][data-mode="synced"] #karaoke { display: block; }
   #karaoke::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: linear-gradient(transparent, rgba(0, 0, 0, .55)); }
   .krow { position: absolute; left: 4vw; right: 4vw; }
   .krow.r0 { bottom: calc(10% + var(--size) * 2.45); text-align: left; }
@@ -286,8 +304,8 @@
     font-size: calc(var(--size) * 1.5); line-height: 1.25;
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .55));
   }
-  .kline.enter { animation: kin .3s var(--ease); }
-  @keyframes kin { from { opacity: 0; } to { opacity: 1; } }
+  .kline.enter { animation: kin var(--lf-dur) var(--lf-ease); }
+  @keyframes kin { from { opacity: 0; transform: translateY(.22em); } to { opacity: 1; transform: none; } }
   .kline .base, .kline .fill { display: block; padding: 0 .2em; paint-order: stroke fill; }
   /* 歌う前: 白い文字に黒いふち / 歌ったあと: 色の文字に白いふち */
   .kline .base { color: #fff; -webkit-text-stroke: .17em #111; }
@@ -296,12 +314,74 @@
     color: var(--kfill); -webkit-text-stroke: .17em #fff;
     clip-path: inset(-30% calc(100% - var(--p, 0) * 100%) -30% -30%);
   }
+  /* 歌い出しの前のカウント: 1 秒ごとに点が 1 つ消える（上の段の左上） */
+  #kcount { position: absolute; left: 4vw; bottom: calc(10% + var(--size) * 4.5); display: flex; gap: calc(var(--size) * .3); visibility: hidden; }
+  #kcount i {
+    width: calc(var(--size) * .46); height: calc(var(--size) * .46); border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff 0 18%, var(--kfill) 60%);
+    box-shadow: 0 0 0 3px #111, 0 3px 8px rgba(0, 0, 0, .5);
+    transition: transform .25s var(--lf-ease-out), opacity .25s;
+  }
+  #kcount i.off { opacity: 0; transform: scale(.3); }
+  /* 間奏 */
+  #kbreak {
+    position: absolute; left: 0; right: 0; top: 36%; text-align: center; opacity: 0; transition: opacity .6s;
+    font-family: var(--lf-family); font-weight: var(--lf-weight); font-size: calc(var(--size) * 1.15); letter-spacing: .25em;
+    color: #fff; -webkit-text-stroke: .14em #111; paint-order: stroke fill; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .5));
+  }
+  #kbreak[lang="ko"] { font-family: var(--lf-family-ko); }
+  #kbreak.show { opacity: 1; }
+  #kbreak span { display: inline-block; animation: bob 1.2s ease-in-out infinite; }
+  #kbreak span:last-child { animation-delay: .6s; }
+  @keyframes bob { 50% { transform: translateY(-.25em); } }
   #ktitle { position: absolute; left: 0; right: 0; top: 26%; text-align: center; padding: 0 6vw; transition: opacity .6s; opacity: 0; }
   #ktitle.show { opacity: 1; }
   #ktitle > div { paint-order: stroke fill; }
   #ktitle .kt-name { font-size: calc(var(--size) * 1.9); line-height: 1.25; -webkit-text-stroke: .14em #111; filter: drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
   #ktitle .kt-artist { margin-top: .8em; font-size: calc(var(--size) * .85); color: #fff; -webkit-text-stroke: .16em var(--kfill); }
   #ktitle .kt-bar { width: 50%; height: 4px; margin: .9em auto 0; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--kfill), transparent); }
+
+  /* ===================================================================
+     ノレバン（韓国風）: 左上に曲番号と曲名、歌ったところは上から下へのグラデーション、
+     白い文字に紺のふち、黄色のアクセント
+     =================================================================== */
+  [data-theme="noraebang"] { --nb-top: #d4f8ff; --nb-mid: #2bb8ff; --nb-bot: #0a4fd8; --nb-edge: #0a0f2e; --nb-gold: #ffe14d; }
+  [data-theme="noraebang"][data-kcolor="red"]    { --nb-top: #ffe0f1; --nb-mid: #ff4fae; --nb-bot: #c4127a; }
+  [data-theme="noraebang"][data-kcolor="purple"] { --nb-top: #f0e2ff; --nb-mid: #b05cff; --nb-bot: #6a1fd1; }
+  [data-theme="noraebang"] #bg { filter: blur(24px) brightness(.36) saturate(1.8); }
+  [data-theme="noraebang"] #karaoke::before { height: 60%; background: linear-gradient(transparent, rgba(6, 2, 34, .75)); }
+  [data-theme="noraebang"] .krow { left: 6vw; right: 6vw; }
+  [data-theme="noraebang"] .kline { font-size: calc(var(--size) * 1.42); filter: drop-shadow(0 3px 0 rgba(0, 0, 0, .55)) drop-shadow(0 0 14px rgba(0, 0, 0, .35)); }
+  [data-theme="noraebang"] .kline .base { color: #fff; -webkit-text-stroke: .15em var(--nb-edge); }
+  /* 歌ったところ: 白いふちの上に、ふちのない同じ文字をグラデーションで重ねる
+     （ふちとグラデーションを 1 つの要素で描くと、ふちがグラデーションをつぶしてしまう） */
+  [data-theme="noraebang"] .kline .fill { color: var(--nb-mid); -webkit-text-stroke: .15em #fff; }
+  [data-theme="noraebang"] .kline .fill::after {
+    content: attr(data-text); position: absolute; inset: 0; padding: 0 .2em;
+    -webkit-text-stroke: 0; color: transparent;
+    background: linear-gradient(var(--nb-top) 18%, var(--nb-mid) 55%, var(--nb-bot) 90%);
+    -webkit-background-clip: text; background-clip: text;
+  }
+  [data-theme="noraebang"] #kcount { left: 6vw; }
+  [data-theme="noraebang"] #kcount i { background: radial-gradient(circle at 35% 30%, #fff 0 18%, var(--nb-gold) 55%, #e08a00); box-shadow: 0 0 0 3px var(--nb-edge), 0 3px 8px rgba(0, 0, 0, .5); }
+  [data-theme="noraebang"] #kbreak { color: var(--nb-gold); -webkit-text-stroke-color: var(--nb-edge); }
+  [data-theme="noraebang"] #ktitle .kt-name { -webkit-text-stroke-color: var(--nb-edge); }
+  [data-theme="noraebang"] #ktitle .kt-artist { color: var(--nb-gold); -webkit-text-stroke: .16em var(--nb-edge); }
+  [data-theme="noraebang"] #ktitle .kt-bar { background: linear-gradient(90deg, transparent, var(--nb-gold), transparent); }
+  /* 左上の曲番号と曲名 */
+  #nhead { display: none; position: absolute; top: max(18px, env(safe-area-inset-top)); left: 22px; right: 84px; align-items: center; gap: 14px; }
+  [data-theme="noraebang"] #nhead { display: flex; }
+  .nno {
+    flex: none; padding: 6px 12px 7px; border-radius: 10px; text-align: center; line-height: 1;
+    background: linear-gradient(#2d3290, #14164a); border: 2px solid rgba(255, 255, 255, .9);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .45); font-family: var(--f-gothic-ko); font-weight: 900;
+  }
+  .nno small { display: block; margin-bottom: 4px; font-size: 10px; letter-spacing: .25em; color: #9fdcff; }
+  .nno b { font-size: 26px; letter-spacing: .06em; color: var(--nb-gold); font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 #7a4b00; }
+  .ninfo { min-width: 0; text-shadow: 0 2px 6px rgba(0, 0, 0, .7); }
+  #ntitle { font-size: 20px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #nartist { margin-top: 4px; font-size: 14px; font-weight: 700; color: var(--nb-gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #ntitle[lang="ko"], #nartist[lang="ko"] { font-family: var(--f-gothic-ko); }
 
   /* ===================================================================
      シンプル: ジャケットをぼかした背景、左上に曲名、下にシークバー
@@ -391,6 +471,12 @@
   .sw-karaoke .k1 { left: 7%; top: 22%; color: #fff; -webkit-text-stroke: 3px #111; }
   .sw-karaoke .k1 span { color: var(--kfill); -webkit-text-stroke: 3px #fff; }
   .sw-karaoke .k2 { right: 7%; top: 56%; color: #fff; -webkit-text-stroke: 3px #111; }
+  .sw-noraebang { background: linear-gradient(#2c1a62, #0b1030); font-family: "Noto Sans KR", sans-serif; font-weight: 900; font-size: 15px; }
+  .sw-noraebang i { paint-order: stroke fill; white-space: nowrap; }
+  .sw-noraebang .nb { left: 6%; top: 9%; padding: 2px 5px; border-radius: 4px; border: 1px solid #fff; background: #1d2060; color: #ffe14d; font-size: 9px; letter-spacing: .05em; }
+  .sw-noraebang .k1 { left: 7%; top: 36%; color: #fff; -webkit-text-stroke: 3px #0a0f2e; }
+  .sw-noraebang .k1 span { color: #2bb8ff; -webkit-text-stroke: 3px #fff; }
+  .sw-noraebang .k2 { right: 7%; top: 64%; color: #fff; -webkit-text-stroke: 3px #0a0f2e; }
   /* 見本: シンプル */
   .sw-simple { background: #0b0b0f; }
   .sw-simple .l1, .sw-simple .l2, .sw-simple .l3 { left: 10%; height: 7px; border-radius: 3px; }
@@ -423,6 +509,12 @@
     font-size: 24px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-family: var(--lf-family); font-weight: var(--lf-weight); letter-spacing: var(--lf-spacing);
     font-feature-settings: var(--lf-feat); font-synthesis: none;
+  }
+  #easePreview { position: relative; height: 34px; margin-top: 10px; border-radius: 12px; background: rgba(0, 0, 0, .28); overflow: hidden; }
+  #easePreview::before { content: ""; position: absolute; left: 20px; right: 20px; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: rgba(255, 255, 255, .14); }
+  #easePreview i {
+    position: absolute; left: 20px; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 14px rgba(255, 255, 255, .6); will-change: transform;
   }
   #offsetLabel { font-size: 13px; min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
   .hint { font-size: 11px; color: rgba(255, 255, 255, .45); margin: 12px 4px 0; line-height: 1.6; }
@@ -514,6 +606,9 @@
 </div>
 
 <div id="karaoke">
+  <div id="nhead"><div class="nno"><small lang="ko">곡번호</small><b id="nnum">00000</b></div><div class="ninfo"><div id="ntitle"></div><div id="nartist"></div></div></div>
+  <div id="kbreak" aria-hidden="true"></div>
+  <div id="kcount" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   <div id="ktitle"><div class="kt-name"></div><div class="kt-artist"></div><div class="kt-bar"></div></div>
   <div class="krow r0"><div class="kline"><span class="base"></span><span class="fill"></span></div></div>
   <div class="krow r1"><div class="kline"><span class="base"></span><span class="fill"></span></div></div>
@@ -536,7 +631,11 @@
     </button>
     <button class="tp" data-pick="karaoke">
       <span class="sw sw-karaoke"><i class="k1"><span>うたって</span>いる</i><i class="k2">つぎのぎょう</i></span>
-      <b>カラオケ</b><small>極太の文字、左から色が変わる</small>
+      <b>カラオケ（日本風）</b><small>DAM 風・極太の文字、左から色が変わる</small>
+    </button>
+    <button class="tp" data-pick="noraebang">
+      <span class="sw sw-noraebang"><i class="nb">No.21058</i><i class="k1" lang="ko"><span>노래</span>하는 중</i><i class="k2" lang="ko">다음 가사</i></span>
+      <b>ノレバン（韓国風）</b><small>曲番号・グラデーションで色が変わる</small>
     </button>
     <button class="tp" data-pick="simple">
       <span class="sw sw-simple"><i class="l1"></i><i class="l2"></i><i class="l3"></i></span>
@@ -555,12 +654,12 @@
 
   <h3>フォント</h3>
   <div class="fonts">
-    <button class="fchip" data-font="auto"><span class="fs" style="font-family:-apple-system,Inter,'Hiragino Sans','Noto Sans JP',sans-serif;font-weight:800">あAa</span>テーマのおすすめ</button>
-    <button class="fchip" data-font="gothic"><span class="fs" style="font-family:'Noto Sans JP',sans-serif;font-weight:900">あAa</span>ゴシック</button>
-    <button class="fchip" data-font="rounded"><span class="fs" style="font-family:'M PLUS Rounded 1c',sans-serif;font-weight:800">あAa</span>丸ゴシック</button>
-    <button class="fchip" data-font="mincho"><span class="fs" style="font-family:'Zen Old Mincho',serif;font-weight:900">あAa</span>明朝</button>
-    <button class="fchip" data-font="hand"><span class="fs" style="font-family:'Klee One',cursive;font-weight:600">あAa</span>手書き風</button>
-    <button class="fchip" data-font="pop"><span class="fs" style="font-family:'Dela Gothic One',sans-serif">あAa</span>ポップ</button>
+    <button class="fchip" data-font="auto"><span class="fs" style="font-family:-apple-system,Inter,'Hiragino Sans','Noto Sans JP','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-weight:800">あ가A</span>テーマのおすすめ</button>
+    <button class="fchip" data-font="gothic"><span class="fs" style="font-family:'Noto Sans JP','Noto Sans KR',sans-serif;font-weight:900">あ가A</span>ゴシック</button>
+    <button class="fchip" data-font="rounded"><span class="fs" style="font-family:'M PLUS Rounded 1c',Jua,sans-serif;font-weight:800">あ가A</span>丸ゴシック</button>
+    <button class="fchip" data-font="mincho"><span class="fs" style="font-family:'Zen Old Mincho','Nanum Myeongjo',serif;font-weight:900">あ가A</span>明朝</button>
+    <button class="fchip" data-font="hand"><span class="fs" style="font-family:'Klee One',Gaegu,cursive;font-weight:600">あ가A</span>手書き風</button>
+    <button class="fchip" data-font="pop"><span class="fs" style="font-family:'Dela Gothic One','Black Han Sans',sans-serif">あ가A</span>ポップ</button>
   </div>
   <div class="row" style="margin-top:10px">
     <label>太さ</label>
@@ -569,7 +668,17 @@
     <button class="chip" data-weight="bold">太い</button>
     <button class="chip" data-weight="heavy">極太</button>
   </div>
-  <div id="fontPreview">歌詞のサンプル Lyrics 123</div>
+  <div id="fontPreview">歌詞のサンプル <span lang="ko">가사 샘플</span> Lyrics 123</div>
+
+  <h3>動き（イージング）</h3>
+  <div class="row">
+    <button class="chip" data-ease="auto">おすすめ</button>
+    <button class="chip" data-ease="spring">ばね</button>
+    <button class="chip" data-ease="smooth">なめらか</button>
+    <button class="chip" data-ease="snappy">キビキビ</button>
+    <button class="chip" data-ease="none">なし</button>
+  </div>
+  <div id="easePreview" title="押すと動きを試せます"><i></i></div>
 
   <h3>表示</h3>
   <div class="row">
@@ -587,7 +696,7 @@
     <button class="chip" id="fs">全画面</button>
     <button class="chip" id="logout">ログアウト</button>
   </div>
-  <p class="hint">テーマのおすすめ: Apple Music 風は SF Pro・ヒラギノ（Apple 以外は Inter・Noto Sans JP）、Spotify 風は Figtree、カラオケは極太ゴシック。手書き風・ポップは、いちばん太いのが用意されている太さまでです。<br>キー: T テーマ / F 全画面 / + − 文字の大きさ / [ ] タイミング / スペース 再生・一時停止<br>再生の操作には Spotify Premium が必要です。歌詞は LRCLIB から読み込みます。</p>
+  <p class="hint">テーマのおすすめ: Apple Music 風は SF Pro・ヒラギノ（Apple 以外は Inter・Noto Sans JP）、Spotify 風は Figtree、カラオケは極太ゴシック。手書き風・ポップは、いちばん太いのが用意されている太さまでです。ハングルを含む行は韓国語の書体（ゴシック Noto Sans KR・丸ゴシック Jua・明朝 Nanum Myeongjo・手書き風 Gaegu・ポップ Black Han Sans。Apple の端末では Apple SD Gothic Neo）で、単語の途中では折り返しません。<br>動き: ばね は少し行きすぎて戻る（Apple Music 風のおすすめ）、なめらか はゆっくり止まる、キビキビ はすばやく止まる。端末で「視差効果を減らす」をオンにしていると、おすすめは なし になります。<br>キー: T テーマ / F 全画面 / + − 文字の大きさ / [ ] タイミング / E 動き / スペース 再生・一時停止<br>再生の操作には Spotify Premium が必要です。歌詞は LRCLIB から読み込みます。</p>
 </div>
 
 <div id="toast" role="status"></div>
@@ -625,7 +734,9 @@
   const API = 'https://api.spotify.com/v1';
   const POLL_PLAYING_MS = 2000;
   const POLL_IDLE_MS = 5000;
-  const THEMES = ['glow', 'bold', 'karaoke', 'simple'];
+  const THEMES = ['glow', 'bold', 'karaoke', 'noraebang', 'simple'];
+  const KARAOKE_THEMES = ['karaoke', 'noraebang']; // 上下 2 段で左から塗るテーマ
+  const isKaraoke = () => KARAOKE_THEMES.includes(theme());
 
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => document.querySelectorAll(s);
@@ -843,6 +954,18 @@
     $('#bg').style.backgroundImage = track.art ? `url("${track.art}")` : 'none';
     $('#ktitle .kt-name').textContent = track.name;
     $('#ktitle .kt-artist').textContent = track.artists.join(', ');
+    // ノレバンの曲番号（曲の ID から作る 5 けたの飾りの番号。実際の曲番号ではない）
+    let h = 0;
+    for (const ch of track.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    $('#nnum').textContent = String(10000 + (h % 90000));
+    $('#ntitle').textContent = track.name;
+    $('#nartist').textContent = track.artists.join(', ');
+    markLang($('#ntitle'), track.name);
+    markLang($('#nartist'), track.artists.join(', '));
+    markLang($('#title'), track.name);
+    markLang($('#ktitle .kt-name'), track.name);
+    markLang($('#artist'), track.artists.join(', '));
+    markLang($('#ktitle .kt-artist'), track.artists.join(', '));
     $('#lines').innerHTML = '';
     root.removeAttribute('data-mode');
     showMessage('歌詞を検索中…');
@@ -1077,6 +1200,15 @@
     return out;
   }
 
+  // ================= 行の言語 =================
+  // ハングルがあれば韓国語、仮名があれば日本語。どちらでもなければ付けない（ページの言語のまま）
+  const HANGUL = /[\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uAC00-\uD7AF\uD7B0-\uD7FF]/;
+  const KANA = /[\u3040-\u30FF\u31F0-\u31FF]/;
+  function markLang(el, text) {
+    const l = HANGUL.test(text) ? 'ko' : KANA.test(text) ? 'ja' : '';
+    if (l) el.lang = l; else el.removeAttribute('lang');
+  }
+
   // ================= 描画 =================
   function showMessage(msg) {
     $('#message').textContent = msg || '';
@@ -1101,7 +1233,7 @@
       d.className = 'line';
       s.className = 'txt';
       if (!l.text) { s.textContent = '♪'; d.classList.add('note'); }
-      else s.textContent = l.text;
+      else { s.textContent = l.text; markLang(d, l.text); }
       d.appendChild(s);
       frag.appendChild(d);
     }
@@ -1109,6 +1241,8 @@
     state.karaoke = type === 'synced' ? toKaraoke(lines) : [];
     state.kShown = [null, null];
     state.activeIndex = -1;
+    springs.length = 0;
+    snapNext = true;
   }
 
   function findIndex(lines, ms) {
@@ -1120,21 +1254,110 @@
     return ans;
   }
 
-  // 一覧で流すテーマ: 行ごとに動かす（Apple Music 風は、いまの行より下の行ほど少し遅れて動く）
+  // ================= 行の動き（イージング） =================
+  // 行ごとにばねで動かす。動いている途中で次の行に変わっても、勢いを保ったまま向きを変えるので、
+  // CSS の transition のように途中でカクッとしない。
+  //   k = ばねの強さ（大きいほど速い）、c = 減衰（小さいほど行きすぎて揺れる。c = 2√k でちょうど行きすぎない）
+  //   stagger = 下の行ほど遅れて動き出す間隔（ms）、css = 色や大きさの変わり方、dur = その長さ（秒）
+  const EASES = {
+    spring: { k: 190, c: 19, stagger: 45, css: 'cubic-bezier(.34, 1.45, .64, 1)', out: 'cubic-bezier(.22, 1, .36, 1)', dur: .55 },
+    smooth: { k: 110, c: 21, stagger: 22, css: 'cubic-bezier(.22, 1, .36, 1)', out: 'cubic-bezier(.22, 1, .36, 1)', dur: .6 },
+    snappy: { k: 420, c: 41, stagger: 0, css: 'cubic-bezier(.2, .9, .1, 1)', out: 'cubic-bezier(.2, .9, .1, 1)', dur: .25 },
+    none:   { k: 0, c: 0, stagger: 0, css: 'linear', out: 'linear', dur: 0 },
+  };
+  const THEME_EASE = { glow: 'spring', bold: 'smooth', karaoke: 'smooth', noraebang: 'smooth', simple: 'smooth' };
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let easePref = store.get('lf_ease') || 'auto';
+  function easeName() {
+    if (EASES[easePref]) return easePref;
+    return reducedMotion ? 'none' : (THEME_EASE[theme()] || 'smooth');
+  }
+  function applyEaseCss() {
+    const e = EASES[easeName()];
+    root.style.setProperty('--lf-ease', e.css);
+    root.style.setProperty('--lf-ease-out', e.out);
+    root.style.setProperty('--lf-dur', e.dur + 's');
+  }
+  function setEase(name, preview) {
+    easePref = EASES[name] ? name : 'auto';
+    store.set('lf_ease', easePref);
+    $$('.chip[data-ease]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ease === easePref)));
+    applyEaseCss();
+    if (preview) playPreview();
+  }
+
+  // ばねを dt 秒すすめる（フレームが飛んでも安定するよう、細かく分けて計算する）
+  function stepSpring(s, e, dt) {
+    let t = dt;
+    while (t > 0) {
+      const h = Math.min(t, 1 / 240);
+      s.v += (-e.k * (s.y - s.to) - e.c * s.v) * h;
+      s.y += s.v * h;
+      t -= h;
+    }
+  }
+  const settled = (s) => Math.abs(s.to - s.y) < .05 && Math.abs(s.v) < .05;
+
+  const springs = [];      // 行ごとの { y: いまの位置, v: 速さ, to: 行き先, at: 動き出す時刻 }
+  const plain = { y: 0, v: 0, to: 0 }; // タイミングのない歌詞をまとめて流すとき
+  let snapNext = true;     // 曲が変わった直後は、動かさずにその位置へ置く
+
+  // 一覧で流すテーマ: いまの行が基準の高さに来るよう、全部の行の行き先を決める
   function layoutLines(idx) {
     const children = $('#lines').children;
     if (!children.length) return;
     const target = children[Math.max(idx, 0)];
-    const y = target.offsetTop + target.offsetHeight / 2;
-    const stagger = theme() === 'glow';
+    const to = -(target.offsetTop + target.offsetHeight / 2);
+    const e = EASES[easeName()];
+    const now = performance.now();
     for (let i = 0; i < children.length; i++) {
       const c = children[i];
       c.classList.toggle('active', i === idx);
       c.classList.toggle('past', i < idx);
       c.dataset.d = String(Math.min(Math.abs(i - Math.max(idx, 0)), 4));
-      c.style.transitionDelay = stagger ? Math.max(0, Math.min(i - idx + 1, 8)) * 45 + 'ms' : '0ms';
-      c.style.transform = `translateY(${-y}px)`;
+      const s = springs[i] || (springs[i] = { y: to, v: 0, to, at: 0 });
+      s.to = to;
+      // いまの行の 1 つ上から下へ、少しずつ遅れて動き出す
+      s.at = now + Math.max(0, Math.min(i - idx + 1, 8)) * e.stagger;
+      if (snapNext || !e.k) { s.y = to; s.v = 0; c.style.transform = `translate3d(0, ${to}px, 0)`; }
     }
+    springs.length = children.length;
+    snapNext = false;
+  }
+
+  function stepLines(dt) {
+    const e = EASES[easeName()];
+    if (!e.k) return;
+    const children = $('#lines').children;
+    const now = performance.now();
+    for (let i = 0; i < springs.length; i++) {
+      const s = springs[i];
+      if (now < s.at || s.y === s.to) continue;
+      if (settled(s)) { s.y = s.to; s.v = 0; }
+      else stepSpring(s, e, dt);
+      children[i].style.transform = `translate3d(0, ${s.y.toFixed(2)}px, 0)`;
+    }
+  }
+
+  // パネルの見本: 押すたびに点が左右に動く
+  const pv = { y: 0, v: 0, to: 0 };
+  let pvRaf = 0;
+  function playPreview() {
+    const box = $('#easePreview');
+    const dot = box.querySelector('i');
+    pv.to = pv.to > 0 ? 0 : box.clientWidth - 40;
+    const e = EASES[easeName()];
+    cancelAnimationFrame(pvRaf);
+    if (!e.k) { pv.y = pv.to; pv.v = 0; dot.style.transform = `translateX(${pv.y}px)`; return; }
+    let last = performance.now();
+    const tick = (now) => {
+      stepSpring(pv, e, Math.min((now - last) / 1000, 1 / 20));
+      last = now;
+      if (settled(pv)) { pv.y = pv.to; pv.v = 0; }
+      dot.style.transform = `translateX(${pv.y.toFixed(2)}px)`;
+      if (pv.y !== pv.to) pvRaf = requestAnimationFrame(tick);
+    };
+    pvRaf = requestAnimationFrame(tick);
   }
 
   // カラオケ: 上の段と下の段に交互に行を出し、歌っている行を左から塗っていく
@@ -1150,6 +1373,20 @@
     const before = ms < k[0].t - 3000;
     title.classList.toggle('show', ms < k[0].t - 1500);
 
+    // 歌い出しの前のカウント: 前の行から 4.5 秒以上あいているとき、最後の 4 秒で点が 1 秒に 1 つ消える
+    const next = k[d];
+    const prevEnd = d > 0 ? k[d - 1].end : 0;
+    let dots = 0;
+    if (ms < next.t && next.t - prevEnd >= 4500) {
+      const left = next.t - ms;
+      if (left <= 4000) dots = Math.ceil(left / 1000);
+    }
+    const cd = $('#kcount');
+    cd.style.visibility = dots ? 'visible' : 'hidden';
+    cd.querySelectorAll('i').forEach((el, i) => el.classList.toggle('off', i >= dots));
+    // 間奏: 前の行を歌い終わってから、カウントが始まるまで
+    $('#kbreak').classList.toggle('show', d > 0 && ms < next.t && ms > prevEnd + 1500 && next.t - ms > 4200);
+
     for (const r of [0, 1]) {
       // 段 r には、d と d+1 のうち番号の偶奇が合う方を出す
       const n = (d % 2 === r) ? d : d + 1;
@@ -1161,6 +1398,8 @@
         state.kShown[r] = n;
         row.querySelector('.base').textContent = k[n].text;
         row.querySelector('.fill').textContent = k[n].text;
+        row.querySelector('.fill').dataset.text = k[n].text; // ノレバンのグラデーション用
+        markLang(row, k[n].text);
         fitKaraoke(row);
         row.classList.remove('enter');
         void row.offsetWidth;
@@ -1183,8 +1422,11 @@
     }
   }
 
-  function frame() {
+  let lastTs = 0;
+  function frame(ts) {
     requestAnimationFrame(frame);
+    const dt = lastTs ? Math.min((ts - lastTs) / 1000, 1 / 20) : 0;
+    lastTs = ts;
     if (!state.track) return;
     const raw = Math.max(0, Math.min(rawMs(), state.track.duration));
     const ms = Math.max(0, Math.min(raw + state.offsetMs, state.track.duration));
@@ -1197,15 +1439,18 @@
     if (!ly || !ly.lines.length) return;
 
     if (ly.type === 'synced') {
-      if (theme() === 'karaoke') { renderKaraoke(ms); return; }
+      if (isKaraoke()) { renderKaraoke(ms); return; }
       const idx = findIndex(ly.lines, ms);
-      if (idx === state.activeIndex) return;
-      state.activeIndex = idx;
-      layoutLines(idx);
+      if (idx !== state.activeIndex) { state.activeIndex = idx; layoutLines(idx); }
+      stepLines(dt);
     } else {
-      // 非同期歌詞: 曲の長さに合わせて一定速度でひたすら流す
+      // 非同期歌詞: 曲の長さに合わせて一定速度でひたすら流す（シークしたときは、ばねで追いつく）
       const el = $('#lines');
-      el.style.transform = `translateY(${-(ms / state.track.duration) * el.scrollHeight}px)`;
+      plain.to = -(ms / state.track.duration) * el.scrollHeight;
+      const e = EASES[easeName()];
+      if (snapNext || !e.k) { plain.y = plain.to; plain.v = 0; snapNext = false; }
+      else stepSpring(plain, EASES.smooth, dt);
+      el.style.transform = `translate3d(0, ${plain.y.toFixed(2)}px, 0)`;
     }
   }
 
@@ -1220,7 +1465,12 @@
     root.setAttribute('data-theme', name);
     store.set('lf_theme', name);
     $$('.tp').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === name)));
-    $('#kcolors').hidden = name !== 'karaoke';
+    $('#kcolors').hidden = !KARAOKE_THEMES.includes(name);
+    // 間奏の表示（日本風は「間奏」、韓国風は「간주 중」）
+    const brk = $('#kbreak');
+    brk.lang = name === 'noraebang' ? 'ko' : 'ja';
+    brk.innerHTML = name === 'noraebang' ? '<span>♪</span> 간주 중 <span>♪</span>' : '<span>♪</span> 間奏 <span>♪</span>';
+    applyEaseCss();
     relayout();
   }
   function setKColor(c) {
@@ -1301,6 +1551,8 @@
   $$('.tp').forEach((b) => { b.onclick = () => setTheme(b.dataset.pick); });
   $$('.chip[data-kcolor]').forEach((b) => { b.onclick = () => setKColor(b.dataset.kcolor); });
   $$('.fchip').forEach((b) => { b.onclick = () => setFont(b.dataset.font); });
+  $$('.chip[data-ease]').forEach((b) => { b.onclick = () => setEase(b.dataset.ease, true); });
+  $('#easePreview').onclick = playPreview;
   $$('.chip[data-weight]').forEach((b) => { b.onclick = () => setWeight(b.dataset.weight); });
   // フォントのファイルが届くと字の幅や高さが変わるので、行の位置とカラオケの文字の大きさを測り直す
   if (document.fonts) document.fonts.addEventListener('loadingdone', relayout);
@@ -1318,6 +1570,11 @@
     if (e.key === 'f' || e.key === 'F') toggleFullscreen();
     else if (e.key === 't' || e.key === 'T') setTheme(THEMES[(THEMES.indexOf(theme()) + 1) % THEMES.length]);
     else if (e.key === 'Escape') togglePanel(false);
+    else if (e.key === 'e' || e.key === 'E') {
+      const order = ['auto', 'spring', 'smooth', 'snappy', 'none'];
+      setEase(order[(order.indexOf(easePref) + 1) % order.length]);
+      toast('動き: ' + { auto: 'おすすめ', spring: 'ばね', smooth: 'なめらか', snappy: 'キビキビ', none: 'なし' }[easePref]);
+    }
     else if (e.key === ' ' && e.target === document.body) { e.preventDefault(); togglePlay(); }
     else if (e.key === '+' || e.key === '=') changeFont(4);
     else if (e.key === '-') changeFont(-4);
@@ -1332,6 +1589,7 @@
     setKColor(root.getAttribute('data-kcolor') || 'blue');
     setFont(root.getAttribute('data-font') || 'auto');
     setWeight(root.getAttribute('data-weight') || 'auto');
+    setEase(easePref);
     applyFontSize();
     applyOffset();
     setVolumeUI(50);
