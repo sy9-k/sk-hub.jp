@@ -397,6 +397,124 @@
   #nartist { margin-top: 4px; font-size: 14px; font-weight: 700; color: var(--nb-gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #ntitle[lang="ko"], #nartist[lang="ko"] { font-family: var(--f-gothic-ko); }
 
+  /* ================= 日本風カラオケ: 「次の演奏曲」画面 =================
+     オレンジの画面に、枠つきの「次の演奏曲」、これから演奏する曲、その次からの 6 曲（番号つき）、
+     キーの札（このアプリはキーを変えないので「標準」）、下に 10 秒のバー */
+  /* 色（オレンジ = 既定 / 青 = data-color="blue"） */
+  #inter {
+    --in-bg: linear-gradient(165deg, #ffbe2e 0%, #f7950c 48%, #e27300 100%);
+    --in-edge: #5b2a00; --in-shadow: rgba(90, 40, 0, .4); --in-dark: #6b3300;
+    --in-orb: radial-gradient(circle at 34% 28%, #fffbe0 0 8%, #ffe04a 30%, #f0a400 62%, #b86400 100%);
+    --in-ring: rgba(255, 236, 160, .55);
+    --in-row1: linear-gradient(90deg, rgba(255, 238, 150, .55), rgba(255, 238, 150, .15));
+    --in-row2: linear-gradient(90deg, rgba(255, 210, 90, .3), rgba(255, 210, 90, .05));
+    --in-artist: #e6f4ff; --in-artist-edge: #2a3a7a;
+  }
+  #inter[data-color="blue"] {
+    --in-bg: radial-gradient(130% 100% at 72% 8%, #5557ff 0%, #2b2de8 32%, #1915bd 64%, #0d0a80 100%);
+    --in-edge: #0b0a52; --in-shadow: rgba(4, 4, 50, .5); --in-dark: #16127a;
+    --in-orb: radial-gradient(circle at 34% 28%, #fff 0 8%, #c2bdff 26%, #6656ff 58%, #22149e 100%);
+    --in-ring: rgba(190, 190, 255, .4);
+    --in-row1: linear-gradient(90deg, rgba(150, 160, 255, .42), rgba(150, 160, 255, .1));
+    --in-row2: linear-gradient(90deg, rgba(90, 100, 255, .26), rgba(90, 100, 255, .04));
+    --in-artist: #ffffff; --in-artist-edge: #0b0a52;
+  }
+  /* 青のときだけ、きらきらまたたく光 */
+  .in-sparks { display: none; }
+  #inter[data-color="blue"] .in-sparks { display: block; }
+  .in-sparks i {
+    position: absolute; width: 1.3vmin; height: 1.3vmin; border-radius: 50%; pointer-events: none;
+    background: #fff; box-shadow: 0 0 1.2vmin .5vmin rgba(200, 200, 255, .9), 0 0 3vmin 1vmin rgba(140, 140, 255, .6);
+    animation: twinkle 2.4s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%, 100% { opacity: .15; transform: scale(.5); } 50% { opacity: 1; transform: scale(1); } }
+  .in-sparks i:nth-child(1) { left: 58%; top: 13%; }
+  .in-sparks i:nth-child(2) { left: 70%; top: 24%; animation-delay: -.6s; }
+  .in-sparks i:nth-child(3) { left: 84%; top: 9%; animation-delay: -1.2s; }
+  .in-sparks i:nth-child(4) { left: 64%; top: 36%; animation-delay: -1.8s; }
+  .in-sparks i:nth-child(5) { left: 91%; top: 31%; animation-delay: -.3s; }
+  .in-sparks i:nth-child(6) { left: 77%; top: 44%; animation-delay: -1.5s; }
+  .in-sparks i:nth-child(7) { left: 12%; top: 58%; animation-delay: -.9s; }
+  .in-sparks i:nth-child(8) { left: 46%; top: 8%; animation-delay: -2.1s; }
+  .in-sparks i:nth-child(9) { left: 95%; top: 62%; animation-delay: -.45s; }
+  .in-sparks i:nth-child(10) { left: 30%; top: 86%; animation-delay: -1.35s; }
+  #inter {
+    position: fixed; inset: 0; z-index: 4; overflow: hidden;
+    display: flex; flex-direction: column; padding: max(22px, 3.2vh) 4vw 0;
+    background: var(--in-bg);
+    font-family: "M PLUS Rounded 1c", Jua, var(--f-gothic); font-weight: 800; color: #fff;
+    animation: inIn .45s var(--ease);
+  }
+  #inter[hidden] { display: none; }
+  @keyframes inIn { from { opacity: 0; transform: scale(1.04); } }
+  /* 白い文字に茶色のふち */
+  #inter .ol { -webkit-text-stroke: .11em var(--in-edge); paint-order: stroke fill; text-shadow: 0 .06em 0 var(--in-shadow); }
+  /* 飾りの玉と輪 */
+  .in-orbs i { position: absolute; border-radius: 50%; pointer-events: none; animation: orb 7s ease-in-out infinite alternate; }
+  .in-orbs i:nth-child(odd) { background: var(--in-orb); box-shadow: 0 10px 30px var(--in-shadow); }
+  .in-orbs i:nth-child(even) { border: 1.6vmin solid var(--in-ring); box-shadow: inset 0 0 0 .6vmin rgba(255, 255, 255, .35); }
+  .in-orbs i:nth-child(1) { width: 11vmin; height: 11vmin; right: 4vw; top: 14vh; }
+  .in-orbs i:nth-child(2) { width: 18vmin; height: 18vmin; left: 11vw; top: 32vh; animation-delay: -2s; }
+  .in-orbs i:nth-child(3) { width: 15vmin; height: 15vmin; right: 2vw; top: 38vh; animation-delay: -3s; }
+  .in-orbs i:nth-child(4) { width: 22vmin; height: 22vmin; left: -6vmin; bottom: 10vh; animation-delay: -1s; }
+  .in-orbs i:nth-child(5) { width: 9vmin; height: 9vmin; left: 22vw; bottom: 22vh; animation-delay: -4s; }
+  .in-orbs i:nth-child(6) { width: 13vmin; height: 13vmin; right: 26vw; top: 6vh; animation-delay: -5s; }
+  @keyframes orb { to { transform: translate(1.5vmin, -2vmin) rotate(25deg); } }
+
+  .in-head { position: relative; display: flex; align-items: center; gap: 3vw; padding-right: 64px; }
+  .in-label {
+    flex: none; padding: .25em .45em; border-radius: .35em; line-height: 1.12; text-align: center;
+    font-size: clamp(22px, 4.6vmin, 48px); letter-spacing: .04em;
+    border: .1em solid #fff; box-shadow: 0 0 0 .07em var(--in-edge), inset 0 0 0 .07em var(--in-edge), 0 .12em .3em var(--in-shadow);
+    -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill;
+  }
+  .in-now { min-width: 0; flex: 1; }
+  .in-title, .in-artist { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill; padding: .05em .1em; }
+  .in-title { font-size: clamp(26px, 6.6vmin, 72px); line-height: 1.2; }
+  .in-artist { font-size: clamp(20px, 5vmin, 54px); line-height: 1.2; }
+  .in-key {
+    flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: clamp(64px, 11vmin, 110px); aspect-ratio: 1; border-radius: 10px;
+    background: linear-gradient(145deg, #ff86dd, #e3299f); box-shadow: .5vmin .5vmin 0 #a8137a, 0 6px 18px rgba(120, 0, 70, .35);
+    font-size: clamp(11px, 1.8vmin, 17px); line-height: 1.1; color: #fff; transform: rotate(-4deg);
+  }
+  .in-key b { font-size: 2.1em; }
+  .in-list { position: relative; list-style: none; margin: 3vh 0 0; padding: 0; counter-reset: in; flex: 1; min-height: 0; }
+  .in-list li {
+    display: grid; grid-template-columns: auto minmax(0, 1.25fr) auto minmax(0, 1fr) auto; align-items: center; gap: 1.4vw;
+    height: min(9.4vh, 13vmin); padding: 0 1.2vw 0 .6vw; font-size: clamp(16px, 3.9vmin, 42px);
+  }
+  .in-list li:nth-child(odd) { background: var(--in-row1); }
+  .in-list li:nth-child(even) { background: var(--in-row2); }
+  .in-no {
+    counter-increment: in; width: 1.45em; height: 1.45em; display: grid; place-items: center; border-radius: .2em;
+    border: .09em solid #fff; box-shadow: 0 0 0 .06em var(--in-edge), inset 0 0 0 .06em var(--in-edge);
+    background: rgba(255, 255, 255, .18); -webkit-text-stroke: .09em var(--in-edge); paint-order: stroke fill;
+  }
+  .in-no::before { content: counter(in); }
+  .in-list li:first-child .in-no { background: var(--in-dark); }
+  .in-t, .in-a { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill; padding: .05em .08em; }
+  .in-a { color: var(--in-artist); -webkit-text-stroke-color: var(--in-artist-edge); }
+  .in-arrow { width: 0; height: 0; border-top: .38em solid transparent; border-bottom: .38em solid transparent; border-left: .6em solid #7b97ff; filter: drop-shadow(0 0 0 #2a3a7a) drop-shadow(1px 1px 0 #2a3a7a); }
+  .in-badge {
+    font-size: .42em; padding: .35em .5em; border-radius: .3em; line-height: 1;
+    background: linear-gradient(145deg, #ff86dd, #e3299f); box-shadow: .18em .18em 0 #a8137a; color: #fff;
+  }
+  .in-list li.empty .in-t { opacity: .7; }
+  .in-more { position: relative; text-align: right; margin: 1vh 1.5vw 0; font-size: clamp(14px, 3vmin, 30px); -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill; min-height: 1.2em; }
+  .in-foot { position: relative; display: flex; align-items: center; gap: 14px; margin: 1.2vh 0 1.4vh; font-size: clamp(13px, 2.4vmin, 22px); }
+  .in-msg, .in-sec { -webkit-text-stroke: .1em var(--in-edge); paint-order: stroke fill; }
+  .in-sec { font-variant-numeric: tabular-nums; }
+  #inGo { margin-left: auto; padding: 8px 16px; border-radius: 999px; background: #fff; color: var(--in-edge); font-size: 14px; font-weight: 800; box-shadow: 0 3px 0 var(--in-shadow); }
+  .in-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: var(--in-shadow); }
+  .in-bar i { display: block; height: 100%; background: #fff; transform-origin: left; animation: inBar 10s linear forwards; }
+  @keyframes inBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+  #inter [lang="ko"] { font-family: Jua, var(--f-gothic-ko); }
+  @media (max-width: 640px) {
+    .in-list li { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .in-list li .in-arrow, .in-list li .in-a { display: none; }
+  }
+
   /* ================= カラオケ: 次の曲（予約の札） =================
      曲の終わり 25 秒前と、キューに曲が足されたとき（予約が入ったとき）に、右上へすべり込む */
   #nextUp {
@@ -662,6 +780,21 @@
   <main id="stage"><div id="lines"></div><div id="message"></div></main>
 </div>
 
+<!-- 日本風カラオケ: 曲と曲のあいだの「次の演奏曲」画面（10 秒） -->
+<div id="inter" hidden role="dialog" aria-label="次の演奏曲">
+  <div class="in-orbs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="in-sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="in-head">
+    <div class="in-label">次の<br>演奏曲</div>
+    <div class="in-now"><div class="in-title"></div><div class="in-artist"></div></div>
+    <div class="in-key">原曲キー<b>±0</b></div>
+  </div>
+  <ol class="in-list"></ol>
+  <div class="in-more"></div>
+  <div class="in-foot"><span class="in-msg">まもなく演奏が始まります</span><span class="in-sec"></span><button id="inGo">すぐに演奏する（Enter）</button></div>
+  <div class="in-bar"><i></i></div>
+</div>
+
 <!-- カラオケ: 次の曲（予約の札） -->
 <div id="nextUp" role="status" aria-live="polite">
   <div class="nu-label"></div>
@@ -716,6 +849,17 @@
       <button class="chip" data-kcolor="blue"><span class="dot" style="background:#1f5bff"></span>青</button>
       <button class="chip" data-kcolor="red"><span class="dot" style="background:#ff2f5f"></span>赤</button>
       <button class="chip" data-kcolor="purple"><span class="dot" style="background:#a43cff"></span>紫</button>
+    </div>
+    <div class="row" id="interRow" style="margin-top:10px">
+      <label>曲と曲のあいだに「次の演奏曲」（10 秒止める）</label>
+      <button class="chip" data-inter="on">オン</button>
+      <button class="chip" data-inter="off">オフ</button>
+    </div>
+    <div class="row" id="interColorRow">
+      <label>「次の演奏曲」の色</label>
+      <button class="chip" data-intercolor="orange"><span class="dot" style="background:#f7950c"></span>オレンジ</button>
+      <button class="chip" data-intercolor="blue"><span class="dot" style="background:#2b2de8"></span>青</button>
+      <button class="chip" id="interTry">試しに見る</button>
     </div>
     <h3>カラオケの背景</h3>
     <div class="row">
@@ -965,7 +1109,8 @@
   }
 
   // 再生の操作（PUT / POST）。失敗したら理由を出す
-  async function command(method, path) {
+  async function command(method, path, quiet) {
+    const toast = quiet ? () => {} : say;
     try {
       const token = await getToken();
       const res = await fetch(API + path, { method, headers: { Authorization: 'Bearer ' + token } });
@@ -1042,6 +1187,7 @@
   }
 
   async function onTrackChange(track) {
+    const prev = state.track;
     state.track = track;
     state.lyrics = null;
     state.karaoke = [];
@@ -1073,6 +1219,9 @@
     mv.ready = false;
     updateBackground();
     if (kbgPref === 'mv' && isKaraoke()) startMV(track);
+    // 日本風カラオケ: 前の曲が終わって次の曲に変わったら、10 秒止めて「次の演奏曲」を出す
+    if (prev && theme() === 'karaoke' && interOn && state.playing) startInterlude(track);
+    else if (inter.active) endInterlude(false);
 
     let lyrics;
     try {
@@ -1103,6 +1252,7 @@
 
   function togglePlay() {
     if (!state.track) return;
+    if (inter.active) { endInterlude(true); return; }
     state.progressMs = rawMs();
     state.syncedAt = performance.now();
     state.playing = !state.playing;
@@ -1156,6 +1306,7 @@
   });
 
   let toastTimer = 0;
+  function say(msg) { toast(msg); }
   function toast(msg) {
     const el = $('#toast');
     el.textContent = msg;
@@ -1446,6 +1597,112 @@
     }
   }
 
+  // ================= 日本風カラオケ: 「次の演奏曲」画面 =================
+  // 曲が変わったら Spotify を止めて頭に戻し、10 秒のあいだ、これから演奏する曲と、その次からの 6 曲を出す。
+  // 10 秒たつか、「すぐに演奏する」・Enter・再生ボタンで演奏を始める（止めるには Premium が必要。
+  // 止められないときは、画面だけ 10 秒出す）
+  const INTER_MS = 10000;
+  const inter = { active: false, until: 0, trackId: null, timer: 0, paused: false, shown: -1 };
+  let interOn = store.get('lf_inter') !== 'off';
+  function setInter(on) {
+    interOn = on;
+    store.set('lf_inter', on ? 'on' : 'off');
+    $$('.chip[data-inter]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.inter === 'on') === on)));
+    if (!on && inter.active) endInterlude(true);
+  }
+
+  let interColor = store.get('lf_intercolor') === 'blue' ? 'blue' : 'orange';
+  function setInterColor(c) {
+    interColor = c === 'blue' ? 'blue' : 'orange';
+    store.set('lf_intercolor', interColor);
+    $('#inter').dataset.color = interColor;
+    $$('.chip[data-intercolor]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.intercolor === interColor)));
+  }
+
+  // preview = 試しに見る（曲は止めない）
+  async function startInterlude(track, preview) {
+    clearTimeout(inter.timer);
+    Object.assign(inter, { active: true, trackId: track.id, until: performance.now() + INTER_MS, paused: false, shown: -1 });
+    const el = $('#inter');
+    el.querySelector('.in-title').textContent = track.name;
+    el.querySelector('.in-artist').textContent = track.artists.join(', ');
+    markLang(el.querySelector('.in-title'), track.name);
+    markLang(el.querySelector('.in-artist'), track.artists.join(', '));
+    renderInterList(null);
+    // 10 秒のバーを最初から
+    const bar = el.querySelector('.in-bar i');
+    bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
+    el.hidden = false;
+    $('#nextUp').classList.remove('show');
+    inter.timer = setTimeout(() => endInterlude(true), INTER_MS);
+
+    // 曲を止めて、頭に戻す（試しに見るときは止めない）
+    const ok = preview ? false : await command('PUT', '/me/player/pause', true);
+    if (!inter.active || inter.trackId !== track.id) return;
+    if (ok) {
+      inter.paused = true;
+      state.progressMs = 0; state.syncedAt = performance.now(); state.playing = false;
+      state.holdUntil = performance.now() + INTER_MS;
+      state.activeIndex = -1; state.kShown = [null, null];
+      updateButtons();
+      command('PUT', '/me/player/seek?position_ms=0', true);
+    }
+    // これから先の曲（キュー）
+    try {
+      const q = await spotify('/me/player/queue');
+      if (inter.active && inter.trackId === track.id) renderInterList((q && q.queue) || []);
+    } catch (e) { console.warn(e); renderInterList([]); }
+  }
+
+  function renderInterList(items) {
+    const list = $('#inter .in-list');
+    list.textContent = '';
+    const rows = items ? items.slice(0, 6) : [];
+    for (let i = 0; i < 6; i++) {
+      const it = rows[i];
+      const li = document.createElement('li');
+      const cell = (cls, text) => { const d = document.createElement('div'); d.className = cls; if (text != null) d.textContent = text; li.appendChild(d); return d; };
+      cell('in-no');
+      if (it) {
+        const artists = it.artists ? it.artists.map((a) => a.name).join(', ') : (it.show ? it.show.name : '');
+        markLang(cell('in-t', it.name), it.name);
+        cell('in-arrow');
+        markLang(cell('in-a', artists), artists);
+        cell('in-badge', '標準');
+      } else {
+        li.className = 'empty';
+        cell('in-t', items ? '' : '読み込み中…');
+      }
+      list.appendChild(li);
+    }
+    const more = items && items.length > 6 ? items.length - 6 : 0;
+    $('#inter .in-more').textContent = more ? '他 ' + more + ' 曲' : '';
+  }
+
+  function endInterlude(play) {
+    if (!inter.active) return;
+    clearTimeout(inter.timer);
+    inter.active = false;
+    $('#inter').hidden = true;
+    if (play && inter.paused && state.track && state.track.id === inter.trackId) {
+      state.progressMs = 0; state.syncedAt = performance.now(); state.playing = true;
+      state.holdUntil = performance.now() + 1500;
+      state.activeIndex = -1; state.kShown = [null, null];
+      updateButtons();
+      command('PUT', '/me/player/play', true);
+    }
+  }
+
+  // 曲の終わりが近づいたら、終わる時刻に合わせて再生状態を取り直す（次の曲に変わったのを早く知るため）
+  let endPollFor = null;
+  function scheduleEndPoll(raw) {
+    if (theme() !== 'karaoke' || !interOn || !state.playing || !state.track || endPollFor === state.track.id) return;
+    const left = state.track.duration - raw;
+    if (left > 2500) return;
+    endPollFor = state.track.id;
+    setTimeout(pollNow, Math.max(0, left) + 350);
+  }
+
   // ================= カラオケ: 次の曲（予約の札） =================
   // 曲の ID から作る飾りの番号（実際のカラオケの番号ではない）。日本風は「1234-56」、韓国風は 5 けた
   function songNo(id, kind) {
@@ -1517,7 +1774,7 @@
   // 毎フレーム: 出すかどうかと、あと何秒か
   function updateNextUp(raw) {
     const el = $('#nextUp');
-    if (!isKaraoke() || !state.track || !state.next || state.nextFor !== state.track.id) { el.classList.remove('show'); return; }
+    if (!isKaraoke() || inter.active || !state.track || !state.next || state.nextFor !== state.track.id) { el.classList.remove('show'); return; }
     const fresh = performance.now() < state.nextNewUntil;
     if (fresh !== nextFresh) renderNextUp();
     const left = state.track.duration - raw;
@@ -2042,6 +2299,11 @@
     if (theme() === 'bold' || theme() === 'simple') $('#remain').textContent = fmt(state.track.duration);
     $('#barFill').style.width = (raw / state.track.duration * 100).toFixed(2) + '%';
     updateNextUp(raw);
+    scheduleEndPoll(raw);
+    if (inter.active) {
+      const s = Math.max(0, Math.ceil((inter.until - performance.now()) / 1000));
+      if (s !== inter.shown) { inter.shown = s; $('#inter .in-sec').textContent = s + ' 秒'; }
+    }
 
     const ly = state.lyrics;
     if (!ly || !ly.lines.length) return;
@@ -2074,6 +2336,9 @@
     store.set('lf_theme', name);
     $$('.tp').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === name)));
     $('#kcolors').hidden = !KARAOKE_THEMES.includes(name);
+    $('#interRow').hidden = name !== 'karaoke';
+    $('#interColorRow').hidden = name !== 'karaoke';
+    if (name !== 'karaoke' && typeof endInterlude === 'function' && inter.active) endInterlude(true);
     // 間奏の表示（日本風は「間奏」、韓国風は「간주 중」）
     const brk = $('#kbreak');
     brk.lang = name === 'noraebang' ? 'ko' : 'ja';
@@ -2167,6 +2432,14 @@
   $$('.chip[data-ease]').forEach((b) => { b.onclick = () => setEase(b.dataset.ease, true); });
   $('#easePreview').onclick = playPreview;
   $$('.chip[data-kbg]').forEach((b) => { b.onclick = () => setKbg(b.dataset.kbg); });
+  $$('.chip[data-inter]').forEach((b) => { b.onclick = () => setInter(b.dataset.inter === 'on'); });
+  $('#inGo').onclick = () => endInterlude(true);
+  $$('.chip[data-intercolor]').forEach((b) => { b.onclick = () => setInterColor(b.dataset.intercolor); });
+  $('#interTry').onclick = () => {
+    if (!state.track) { toast('曲を再生すると試せます'); return; }
+    togglePanel(false);
+    startInterlude(state.track, true);
+  };
   $('#ytKey').value = store.get('lf_ytkey') || '';
   if (BUILTIN_YT_KEY) $('#ytKey').hidden = true;
   $('#ytKey').addEventListener('change', (e) => {
@@ -2200,6 +2473,7 @@
     if (e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'f' || e.key === 'F') toggleFullscreen();
     else if (e.key === 't' || e.key === 'T') setTheme(THEMES[(THEMES.indexOf(theme()) + 1) % THEMES.length]);
+    else if (e.key === 'Enter' && inter.active) endInterlude(true);
     else if (e.key === 'Escape') togglePanel(false);
     else if (e.key === 'e' || e.key === 'E') {
       const order = ['auto', 'spring', 'smooth', 'snappy', 'none'];
@@ -2222,6 +2496,8 @@
     setWeight(root.getAttribute('data-weight') || 'auto');
     setEase(easePref);
     setKbg(kbgPref);
+    setInter(interOn);
+    setInterColor(interColor);
     applyFontSize();
     applyOffset();
     setVolumeUI(50);
