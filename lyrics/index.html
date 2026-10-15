@@ -10,8 +10,9 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <!-- テーマを、画面が出る前に付ける（ちらつかないように） -->
-<script>(function(){try{var d=document.documentElement,t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("lf_theme");if(/^(glow|bold|karaoke|simple)$/.test(t))d.setAttribute("data-theme",t);var k=localStorage.getItem("lf_kcolor");if(/^(blue|red|purple)$/.test(k))d.setAttribute("data-kcolor",k);}catch(e){}})();</script>
-<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=Figtree:wght@500;700;800&display=swap"></script>
+<script>(function(){try{var d=document.documentElement,t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("lf_theme");if(/^(glow|bold|karaoke|simple)$/.test(t))d.setAttribute("data-theme",t);var k=localStorage.getItem("lf_kcolor");if(/^(blue|red|purple)$/.test(k))d.setAttribute("data-kcolor",k);var f=localStorage.getItem("lf_font");if(/^(gothic|rounded|mincho|hand|pop)$/.test(f))d.setAttribute("data-font",f);var w=localStorage.getItem("lf_weight");if(/^(regular|bold|heavy)$/.test(w))d.setAttribute("data-weight",w);}catch(e){}})();</script>
+<!-- 歌詞のフォント。CSS だけ先に読み、文字のファイルは画面で使った字のぶんだけ届く（日本語は字の範囲ごとに分かれている） -->
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800;900&family=Inter:wght@500;600;700;800;900&family=Figtree:wght@500;600;700;800;900&family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Zen+Old+Mincho:wght@500;700;900&family=Klee+One:wght@400;600&family=Dela+Gothic+One&display=swap"></script>
 <style>
   :root {
     --size: 36px;
@@ -25,6 +26,29 @@
   }
   [data-kcolor="red"]    { --kfill: #ff2f5f; }
   [data-kcolor="purple"] { --kfill: #a43cff; }
+
+  /* ================= 歌詞のフォント =================
+     --lf-family 書体 / --lf-weight 太さ / --lf-spacing 字間 / --lf-feat 字詰め（palt = 仮名や約物を詰める）
+     テーマごとのおすすめ → 自分で選んだ書体・太さで上書き（data-font・data-weight） */
+  :root {
+    --f-gothic: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    --lf-family: var(--f-gothic); --lf-weight: 700; --lf-spacing: .01em; --lf-feat: "palt" 1;
+  }
+  /* Apple Music 風: Apple の端末では SF Pro とヒラギノ、それ以外では近い Inter と Noto Sans JP */
+  [data-theme="glow"]    { --lf-family: -apple-system, "SF Pro Display", Inter, "Hiragino Sans", "Noto Sans JP", sans-serif; --lf-weight: 800; --lf-spacing: -.012em; --lf-feat: "palt" 1, "kern" 1; }
+  /* Spotify 風: 丸みのある幾何学的な欧文（Figtree）と、太い日本語 */
+  [data-theme="bold"]    { --lf-family: Figtree, "Noto Sans JP", "Hiragino Sans", sans-serif; --lf-weight: 800; --lf-spacing: -.01em; --lf-feat: "palt" 1, "kern" 1; }
+  /* カラオケ: 極太ゴシックを詰めずに、字間を少し空けて読みやすく */
+  [data-theme="karaoke"] { --lf-family: var(--f-gothic); --lf-weight: 900; --lf-spacing: .06em; --lf-feat: normal; }
+  [data-theme="simple"]  { --lf-family: var(--f-gothic); --lf-weight: 700; --lf-spacing: .02em; --lf-feat: "palt" 1; }
+  [data-font="gothic"]   { --lf-family: var(--f-gothic); }
+  [data-font="rounded"]  { --lf-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", var(--f-gothic); }
+  [data-font="mincho"]   { --lf-family: "Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif; --lf-spacing: .04em; }
+  [data-font="hand"]     { --lf-family: "Klee One", "Hiragino Maru Gothic ProN", var(--f-gothic); --lf-spacing: .03em; }
+  [data-font="pop"]      { --lf-family: "Dela Gothic One", var(--f-gothic); --lf-spacing: .02em; }
+  [data-weight="regular"] { --lf-weight: 500; }
+  [data-weight="bold"]    { --lf-weight: 700; }
+  [data-weight="heavy"]   { --lf-weight: 900; }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; height: 100%; overflow: hidden;
@@ -67,13 +91,18 @@
   #lines.plain { will-change: transform; }
   .line {
     padding: .3em 0;
-    font-size: min(var(--size), 7vw); font-weight: 800; line-height: 1.3;
-    overflow-wrap: anywhere;
+    font-size: min(var(--size), 7vw); line-height: 1.3;
+    font-family: var(--lf-family); font-weight: var(--lf-weight); letter-spacing: var(--lf-spacing);
+    font-feature-settings: var(--lf-feat); font-kerning: normal; font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    /* 日本語は文節で折り返す（対応ブラウザのみ）・行末の約物はぶら下げる・折り返した行の長さをそろえる */
+    word-break: normal; word-break: auto-phrase; line-break: strict; overflow-wrap: break-word;
+    hanging-punctuation: allow-end;
     transition: transform .7s var(--ease);
     will-change: transform;
   }
   .line .txt {
-    display: inline-block; transform-origin: left center;
+    display: inline-block; transform-origin: left center; text-wrap: balance;
     color: rgba(255, 255, 255, .38);
     transition: color .4s, transform .5s var(--ease), filter .5s, opacity .5s, text-shadow .5s;
   }
@@ -157,7 +186,7 @@
             mask-image: linear-gradient(transparent, #000 16%, #000 80%, transparent);
   }
   [data-theme="glow"] #lines { padding: 0 4vw 0 3vw; }
-  [data-theme="glow"] .line { font-weight: 800; letter-spacing: -.01em; padding: .36em 0; transition: transform .95s cubic-bezier(.3, 1.22, .45, 1); }
+  [data-theme="glow"] .line { padding: .36em 0; transition: transform .95s cubic-bezier(.3, 1.22, .45, 1); }
   [data-theme="glow"] .line .txt { color: rgba(255, 255, 255, .36); transform: scale(.97); }
   [data-theme="glow"] .line[data-d="1"] .txt { filter: blur(.6px); }
   [data-theme="glow"] .line[data-d="2"] .txt { filter: blur(1.3px); }
@@ -189,7 +218,7 @@
   [data-theme="bold"] #app { display: grid; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "stage" "player"; }
   [data-theme="bold"] #stage { grid-area: stage; height: auto; margin: 8px 8px 0; border-radius: 8px; background: var(--solid); transition: background-color 1.2s; }
   [data-theme="bold"] #lines { padding: 0 max(32px, 6vw); max-width: 1100px; }
-  [data-theme="bold"] .line { font-weight: 800; letter-spacing: -.02em; line-height: 1.25; padding: .3em 0; font-family: Figtree, "Noto Sans JP", sans-serif; }
+  [data-theme="bold"] .line { line-height: 1.25; padding: .3em 0; }
   [data-theme="bold"] .line .txt { color: #000; transition: color .2s; }
   [data-theme="bold"] .line.past .txt { color: rgba(255, 255, 255, .7); }
   [data-theme="bold"] .line.active .txt { color: #fff; }
@@ -249,8 +278,8 @@
   .krow.r0 { bottom: calc(10% + var(--size) * 2.45); text-align: left; }
   .krow.r1 { bottom: 9%; text-align: right; }
   .kline, #ktitle {
-    font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
-    font-weight: 900; letter-spacing: .06em;
+    font-family: var(--lf-family); font-weight: var(--lf-weight); letter-spacing: var(--lf-spacing);
+    font-feature-settings: var(--lf-feat); font-synthesis: none; text-rendering: optimizeLegibility;
   }
   .kline {
     position: relative; display: inline-block; white-space: nowrap;
@@ -379,6 +408,22 @@
   .chip:hover { background: rgba(255, 255, 255, .18); }
   .chip[aria-pressed="true"] { background: #fff; color: #000; font-weight: 700; }
   .chip .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .fonts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .fchip {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 9px 4px 8px; border-radius: 12px; background: rgba(255, 255, 255, .06);
+    font-size: 11px; color: rgba(255, 255, 255, .7);
+    outline: 2px solid transparent; outline-offset: -2px;
+  }
+  .fchip:hover { background: rgba(255, 255, 255, .1); }
+  .fchip[aria-pressed="true"] { outline-color: #fff; background: rgba(255, 255, 255, .13); color: #fff; }
+  .fchip .fs { font-size: 24px; line-height: 1.25; color: #fff; font-synthesis: none; }
+  #fontPreview {
+    margin-top: 10px; padding: 14px 16px; border-radius: 12px; background: rgba(0, 0, 0, .28);
+    font-size: 24px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: var(--lf-family); font-weight: var(--lf-weight); letter-spacing: var(--lf-spacing);
+    font-feature-settings: var(--lf-feat); font-synthesis: none;
+  }
   #offsetLabel { font-size: 13px; min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
   .hint { font-size: 11px; color: rgba(255, 255, 255, .45); margin: 12px 4px 0; line-height: 1.6; }
 
@@ -508,6 +553,24 @@
     </div>
   </div>
 
+  <h3>フォント</h3>
+  <div class="fonts">
+    <button class="fchip" data-font="auto"><span class="fs" style="font-family:-apple-system,Inter,'Hiragino Sans','Noto Sans JP',sans-serif;font-weight:800">あAa</span>テーマのおすすめ</button>
+    <button class="fchip" data-font="gothic"><span class="fs" style="font-family:'Noto Sans JP',sans-serif;font-weight:900">あAa</span>ゴシック</button>
+    <button class="fchip" data-font="rounded"><span class="fs" style="font-family:'M PLUS Rounded 1c',sans-serif;font-weight:800">あAa</span>丸ゴシック</button>
+    <button class="fchip" data-font="mincho"><span class="fs" style="font-family:'Zen Old Mincho',serif;font-weight:900">あAa</span>明朝</button>
+    <button class="fchip" data-font="hand"><span class="fs" style="font-family:'Klee One',cursive;font-weight:600">あAa</span>手書き風</button>
+    <button class="fchip" data-font="pop"><span class="fs" style="font-family:'Dela Gothic One',sans-serif">あAa</span>ポップ</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <label>太さ</label>
+    <button class="chip" data-weight="auto">おすすめ</button>
+    <button class="chip" data-weight="regular">ふつう</button>
+    <button class="chip" data-weight="bold">太い</button>
+    <button class="chip" data-weight="heavy">極太</button>
+  </div>
+  <div id="fontPreview">歌詞のサンプル Lyrics 123</div>
+
   <h3>表示</h3>
   <div class="row">
     <label>文字の大きさ</label>
@@ -524,7 +587,7 @@
     <button class="chip" id="fs">全画面</button>
     <button class="chip" id="logout">ログアウト</button>
   </div>
-  <p class="hint">キー: T テーマ / F 全画面 / + − 文字の大きさ / [ ] タイミング / スペース 再生・一時停止<br>再生の操作には Spotify Premium が必要です。歌詞は LRCLIB から読み込みます。</p>
+  <p class="hint">テーマのおすすめ: Apple Music 風は SF Pro・ヒラギノ（Apple 以外は Inter・Noto Sans JP）、Spotify 風は Figtree、カラオケは極太ゴシック。手書き風・ポップは、いちばん太いのが用意されている太さまでです。<br>キー: T テーマ / F 全画面 / + − 文字の大きさ / [ ] タイミング / スペース 再生・一時停止<br>再生の操作には Spotify Premium が必要です。歌詞は LRCLIB から読み込みます。</p>
 </div>
 
 <div id="toast" role="status"></div>
@@ -1165,6 +1228,22 @@
     store.set('lf_kcolor', c);
     $$('[data-kcolor]').forEach((b) => { if (b.classList.contains('chip')) b.setAttribute('aria-pressed', String(b.dataset.kcolor === c)); });
   }
+  const FONTS = ['auto', 'gothic', 'rounded', 'mincho', 'hand', 'pop'];
+  const WEIGHTS = ['auto', 'regular', 'bold', 'heavy'];
+  function setFont(f) {
+    if (!FONTS.includes(f)) f = 'auto';
+    if (f === 'auto') root.removeAttribute('data-font'); else root.setAttribute('data-font', f);
+    store.set('lf_font', f);
+    $$('.fchip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.font === f)));
+    relayout();
+  }
+  function setWeight(w) {
+    if (!WEIGHTS.includes(w)) w = 'auto';
+    if (w === 'auto') root.removeAttribute('data-weight'); else root.setAttribute('data-weight', w);
+    store.set('lf_weight', w);
+    $$('.chip[data-weight]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.weight === w)));
+    relayout();
+  }
   function relayout() {
     state.activeIndex = -1;
     state.kShown = [null, null];
@@ -1221,6 +1300,10 @@
   addEventListener('click', () => togglePanel(false));
   $$('.tp').forEach((b) => { b.onclick = () => setTheme(b.dataset.pick); });
   $$('.chip[data-kcolor]').forEach((b) => { b.onclick = () => setKColor(b.dataset.kcolor); });
+  $$('.fchip').forEach((b) => { b.onclick = () => setFont(b.dataset.font); });
+  $$('.chip[data-weight]').forEach((b) => { b.onclick = () => setWeight(b.dataset.weight); });
+  // フォントのファイルが届くと字の幅や高さが変わるので、行の位置とカラオケの文字の大きさを測り直す
+  if (document.fonts) document.fonts.addEventListener('loadingdone', relayout);
   $('#offMinus').onclick = () => changeOffset(-250);
   $('#offPlus').onclick = () => changeOffset(250);
   $('#smaller').onclick = () => changeFont(-4);
@@ -1247,6 +1330,8 @@
   async function main() {
     setTheme(theme());
     setKColor(root.getAttribute('data-kcolor') || 'blue');
+    setFont(root.getAttribute('data-font') || 'auto');
+    setWeight(root.getAttribute('data-weight') || 'auto');
     applyFontSize();
     applyOffset();
     setVolumeUI(50);
