@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#faf8ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11131b" media="(prefers-color-scheme: dark)">
+<!-- 管理画面（開発者だけ・訳さない）。開くのは admin.sk-hub.jp（_workers/admin/ の Worker が sk-hub.jp/admin/ を中継する）。共通部分は /shared/（admin.js・admin.css） -->
+<script>if(/^(www\.)?sk-hub\.jp$/.test(location.hostname))location.replace("https://admin.sk-hub.jp"+location.pathname.replace(/^\/admin(?=\/)/,"")+location.search+location.hash);</script>
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}");if(t.mode==="light"||t.mode==="dark")document.documentElement.setAttribute("data-theme",t.mode);}catch(e){}})();</script>
+<title>記事エディター | SK 管理</title>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700;800&display=swap" data-icons="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"></script>
+<link rel="stylesheet" href="/toolbox/shared/m3.css">
+<link rel="stylesheet" href="/view/view.css">
+<link rel="stylesheet" href="/shared/admin.css">
+<script src="/toolbox/shared/m3.js" defer></script>
+<!-- 本文の書き方と表示はサポートのページと同じ（window.SKArticles） -->
+<script src="/support/articles.js" defer></script>
+<script type="module" src="/articles/articles.js"></script>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+</head>
+<body>
+  <main data-ad-ready hidden>
+    <div class="ad-head">
+      <div class="ad-head__text">
+        <h1 class="ad-head__title">記事エディター</h1>
+        <p class="ad-head__lead">サポートのお知らせと記事を書いて、そのまま公開できます（sk-hub.jp/support/ にすぐ出ます）。もとは /studio/ です。</p>
+      </div>
+      <div class="ad-head__actions">
+        <button type="button" class="m3-btn m3-btn--tonal m3-state" data-studio-backup><span class="msr" aria-hidden="true">download</span>バックアップ（articles.json）</button>
+        <button type="button" class="m3-btn m3-state" data-studio-new><span class="msr" aria-hidden="true">add</span>新しい記事</button>
+      </div>
+    </div>
+
+    <div class="ad-files">
+      <!-- 記事の一覧 -->
+      <aside class="ad-tree">
+        <label class="m3-field"><span class="m3-field__label">記事を探す</span><input class="m3-field__input" type="search" data-studio-search></label>
+        <div data-studio-list></div>
+        <div class="ad-stack" data-studio-import hidden>
+          <p class="ad-hint">まだ記事がありません。今の articles.json の記事を取り込むと、ここで編集できるようになります。</p>
+          <button type="button" class="m3-btn m3-btn--tonal m3-state" data-studio-import-btn>articles.json から取り込む</button>
+        </div>
+      </aside>
+
+      <!-- 編集 -->
+      <form class="ad-form" data-studio-form novalidate>
+        <section class="ad-card">
+          <div class="ad-row">
+            <h2 class="ad-card__title ad-grow"><span class="msr" aria-hidden="true">edit_note</span><span data-studio-mode>新しい記事</span></h2>
+            <label class="ad-switch-row"><span>公開する</span><input type="checkbox" class="tbs-switch" name="published" checked></label>
+          </div>
+          <div class="ad-fields">
+            <label class="m3-field"><span class="m3-field__label">種類</span>
+              <select name="type"><option value="guide">サポート記事</option><option value="news">お知らせ</option></select>
+            </label>
+            <label class="m3-field"><span class="m3-field__label">カテゴリ</span>
+              <input class="m3-field__input" name="category" list="studio-categories" required>
+              <datalist id="studio-categories" data-studio-categories></datalist>
+            </label>
+            <label class="m3-field"><span class="m3-field__label">日付</span><input class="m3-field__input" type="date" name="date" required></label>
+          </div>
+          <label class="ad-check" data-studio-important hidden><input type="checkbox" name="important">重要なお知らせにする（一覧の上に目立たせて出す）</label>
+        </section>
+
+        <section class="ad-card">
+          <!-- 言語ごとのタイトル・要約・本文（日本語が元。ほかは訳。訳がない言語は日本語で出る） -->
+          <div class="ad-tabs" role="tablist" aria-label="言語">
+            <button type="button" class="tbs-chip m3-state" data-studio-lang="ja" aria-pressed="true">日本語</button>
+            <button type="button" class="tbs-chip m3-state" data-studio-lang="en" aria-pressed="false">English</button>
+            <button type="button" class="tbs-chip m3-state" data-studio-lang="zh-CN" aria-pressed="false">简体中文</button>
+            <button type="button" class="tbs-chip m3-state" data-studio-lang="zh-TW" aria-pressed="false">繁體中文</button>
+            <button type="button" class="tbs-chip m3-state" data-studio-lang="ko" aria-pressed="false">한국어</button>
+          </div>
+          <p class="ad-hint" data-studio-lang-hint hidden>訳を空のままにすると、その言語のページには日本語の記事が「まだ日本語でのみ提供しています」と出ます。</p>
+          <label class="m3-field"><span class="m3-field__label">タイトル</span><input class="m3-field__input" name="title" maxlength="120" required placeholder="例: 管理コンソールに端末を追加する"></label>
+          <label class="m3-field"><span class="m3-field__label">要約（一覧に出る 1 行の説明）</span><input class="m3-field__input" name="summary" maxlength="300" placeholder="例: 8 文字のペアリングコードで、子供の端末をつなぎます。"></label>
+          <label class="m3-field"><span class="m3-field__label">本文</span><textarea name="body" rows="14" maxlength="30000" placeholder="1 行が 1 段落になります。下の書き方も見てください。"></textarea></label>
+          <details>
+            <summary class="ad-hint">本文の書き方</summary>
+            <div class="ad-table-wrap"><table class="ad-table">
+              <tr><td><code>ふつうの文</code></td><td>段落（1 行が 1 段落）</td></tr>
+              <tr><td><code>## 見出し</code></td><td>小見出し</td></tr>
+              <tr><td><code>1. 手順</code></td><td>番号つきの手順（続けて書くと 1 つにまとまる）</td></tr>
+              <tr><td><code>- 項目</code></td><td>箇条書き</td></tr>
+              <tr><td><code>&gt; 補足</code></td><td>黄色い補足の枠</td></tr>
+              <tr><td><code>[文字](/support/)</code></td><td>リンク（サイト内は / から、外のサイトは https:// から）</td></tr>
+            </table></div>
+          </details>
+        </section>
+
+        <section class="ad-card">
+          <h2 class="ad-card__title"><span class="msr" aria-hidden="true">preview</span>プレビュー</h2>
+          <div class="ad-preview" data-studio-preview></div>
+        </section>
+
+        <details class="ad-card">
+          <summary class="ad-card__title">詳しい設定</summary>
+          <div class="ad-fields">
+            <label class="m3-field"><span class="m3-field__label">記事 ID（URL になります。英小文字・数字・ハイフン）</span><input class="m3-field__input" name="id" pattern="[a-z0-9][a-z0-9-]*" maxlength="64" placeholder="空なら自動で作ります"></label>
+            <label class="m3-field"><span class="m3-field__label">並び順（同じ日付の中で小さいほど上）</span><input class="m3-field__input" type="number" name="order" step="1"></label>
+          </div>
+        </details>
+
+        <div class="ad-row">
+          <button type="button" class="text-btn m3-state ad-danger" data-studio-delete hidden><span class="msr" aria-hidden="true">delete</span>削除</button>
+          <span class="ad-grow"></span>
+          <a class="text-btn m3-state" href="https://sk-hub.jp/support/" target="_blank" rel="noopener" data-studio-view-link hidden><span class="msr" aria-hidden="true">open_in_new</span>サイトで見る</a>
+          <button type="submit" class="m3-btn m3-state" data-studio-save><span class="vw-spinner" aria-hidden="true"></span><span class="msr" aria-hidden="true">save</span>保存する</button>
+        </div>
+        <p class="ad-note" data-studio-msg role="status" hidden></p>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#faf8ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11131b" media="(prefers-color-scheme: dark)">
+<!-- 管理画面（開発者だけ・訳さない）。開くのは admin.sk-hub.jp（_workers/admin/ の Worker が sk-hub.jp/admin/ を中継する）。共通部分は /shared/（admin.js・admin.css） -->
+<script>if(/^(www\.)?sk-hub\.jp$/.test(location.hostname))location.replace("https://admin.sk-hub.jp"+location.pathname.replace(/^\/admin(?=\/)/,"")+location.search+location.hash);</script>
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}");if(t.mode==="light"||t.mode==="dark")document.documentElement.setAttribute("data-theme",t.mode);}catch(e){}})();</script>
+<title>SK Share | SK 管理</title>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700;800&display=swap" data-icons="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"></script>
+<link rel="stylesheet" href="/toolbox/shared/m3.css">
+<link rel="stylesheet" href="/view/view.css">
+<link rel="stylesheet" href="/shared/admin.css">
+<link rel="stylesheet" href="/share/share.css">
+<script src="/toolbox/shared/m3.js" defer></script>
+<!-- QR コード（QR Drop と同じ qrcodejs） -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script type="module" src="/share/share.js"></script>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+</head>
+<body>
+  <main data-ad-ready hidden>
+    <div class="ad-head">
+      <div class="ad-head__text">
+        <h1 class="ad-head__title">SK Share</h1>
+        <p class="ad-head__lead">パスワードで見られる限定公開のページ（sk-hub.jp/view/）を作る・直す・止めます。もとは /view/editor/ です。</p>
+      </div>
+      <div class="ad-head__actions">
+        <a class="m3-btn m3-btn--tonal m3-state" href="https://sk-hub.jp/view/" target="_blank" rel="noopener"><span class="msr" aria-hidden="true">open_in_new</span>見る人のページ</a>
+      </div>
+    </div>
+    <div class="ve-main" data-ve-main>
+      <!-- 一覧 -->
+      <aside class="ve-side" data-ve-side>
+        <div class="ve-side__head">
+          <h1 class="ve-side__title">ページ</h1>
+          <span class="ve-side__count" data-ve-count></span>
+          <span class="vw-bar__space"></span>
+          <button type="button" class="m3-btn m3-state ve-side__new" data-ve-new><span class="msr" aria-hidden="true">add</span>新しいページ</button>
+        </div>
+        <div class="ve-list" data-ve-list role="list"></div>
+        <p class="ve-empty" data-ve-empty hidden><span class="msr" aria-hidden="true">lock_open</span>まだページがありません。右下の「新しいページ」から作りましょう。</p>
+      </aside>
+
+      <!-- 編集 -->
+      <form class="ve-editor" data-ve-form novalidate hidden>
+        <div class="ve-editor__head">
+          <button type="button" class="icon-btn m3-state" data-ve-back hidden aria-label="一覧に戻る" title="一覧に戻る"><span class="msr" aria-hidden="true">arrow_back</span></button>
+          <h2 class="ve-editor__title" data-ve-mode>新しいページ</h2>
+          <label class="ve-switch-row"><span>公開する</span><input type="checkbox" class="tbs-switch" name="enabled" checked></label>
+        </div>
+
+        <section class="ve-card">
+          <h3 class="ve-card__title"><span class="msr" aria-hidden="true">badge</span>見る人に出す内容</h3>
+          <label class="m3-field"><span class="m3-field__label">タイトル</span><input class="m3-field__input" name="title" maxlength="120" required placeholder="例: 2026 年度 体育祭の記録"></label>
+          <label class="m3-field"><span class="m3-field__label">説明（任意）</span><textarea name="note" maxlength="3000" rows="3" placeholder="例: 保護者の皆様へ。当日の様子を限定公開でお届けします。"></textarea></label>
+        </section>
+
+        <section class="ve-card">
+          <h3 class="ve-card__title"><span class="msr" aria-hidden="true">key</span>パスワードと公開</h3>
+          <div class="ve-password">
+            <label class="m3-field"><span class="m3-field__label">パスワード（8 文字以上）</span><input class="m3-field__input ve-mono" name="password" maxlength="64" autocomplete="off" spellcheck="false" required></label>
+            <button type="button" class="icon-btn m3-state" data-ve-generate aria-label="パスワードを作り直す" title="パスワードを作り直す"><span class="msr" aria-hidden="true">casino</span></button>
+          </div>
+          <p class="ve-hint">大文字・小文字・空白・ハイフンは区別しません。パスワードを変えると、前のパスワードと QR コードでは見られなくなります。</p>
+          <div class="ve-row">
+            <label class="m3-field ve-grow"><span class="m3-field__label">公開の期限（任意・この日の終わりまで）</span><input class="m3-field__input" type="date" name="expires"></label>
+            <button type="button" class="text-btn m3-state" data-ve-clear-expires>期限なし</button>
+          </div>
+          <label class="m3-field"><span class="m3-field__label">管理用のメモ（任意・SK だけに見える）</span><input class="m3-field__input" name="memo" maxlength="500" placeholder="例: ○○高校 3 年の保護者向け。10 月の学年通信で配布"></label>
+        </section>
+
+        <section class="ve-card">
+          <div class="ve-card__titlebar">
+            <h3 class="ve-card__title"><span class="msr" aria-hidden="true">perm_media</span>中身</h3>
+            <span class="ve-hint" data-ve-items-count></span>
+          </div>
+          <div class="ve-items" data-ve-items></div>
+          <div class="ve-add">
+            <button type="button" class="m3-btn m3-btn--tonal m3-state" data-ve-add="youtube"><span class="msr" aria-hidden="true">smart_display</span>YouTube 動画</button>
+            <button type="button" class="m3-btn m3-btn--tonal m3-state" data-ve-add="html"><span class="msr" aria-hidden="true">description</span>HTML 文書</button>
+            <button type="button" class="m3-btn m3-btn--tonal m3-state" data-ve-add="drive"><span class="msr" aria-hidden="true">add_to_drive</span>Google ドライブ</button>
+          </div>
+          <p class="ve-hint">動画は YouTube で「限定公開」にしてから URL を貼ります。文書は Word などで「Web ページ（.html）」として保存したファイルを選びます（1 件 900KB まで。画像を多く入れると大きくなります）。</p>
+          <p class="ve-hint">Google ドライブは、ファイル（PDF など）・ドキュメント・スプレッドシート・スライド・フォルダの共有リンクを貼ります。ドライブの「共有」で「リンクを知っている全員」を「閲覧者」にしておかないと、見る人にはドライブのログイン画面が出ます。</p>
+        </section>
+
+        <section class="ve-card" data-ve-share hidden>
+          <h3 class="ve-card__title"><span class="msr" aria-hidden="true">qr_code_2</span>配る</h3>
+          <div class="ve-share">
+            <div class="ve-qr" data-ve-qr aria-label="QR コード"></div>
+            <div class="ve-share__text">
+              <p class="ve-share__label">URL</p>
+              <p class="ve-share__url ve-mono" data-ve-url></p>
+              <p class="ve-share__label">パスワード</p>
+              <p class="ve-share__pw ve-mono" data-ve-share-pw></p>
+              <div class="ve-share__actions">
+                <button type="button" class="m3-btn m3-btn--tonal m3-state" data-ve-copy="text"><span class="msr" aria-hidden="true">content_copy</span>案内文をコピー</button>
+                <button type="button" class="m3-btn m3-btn--tonal m3-state" data-ve-copy="qr-url"><span class="msr" aria-hidden="true">link</span>QR の URL をコピー</button>
+                <button type="button" class="m3-btn m3-btn--tonal m3-state" data-ve-qr-save><span class="msr" aria-hidden="true">download</span>QR を保存</button>
+              </div>
+            </div>
+          </div>
+          <p class="ve-hint">QR コードにはパスワードが入っています。読み取るとパスワードを入れずにひらけます。</p>
+        </section>
+
+        <div class="ve-actions">
+          <button type="button" class="text-btn m3-state ve-danger" data-ve-delete hidden title="削除" aria-label="削除"><span class="msr" aria-hidden="true">delete</span><span class="ve-label">削除</span></button>
+          <span class="vw-bar__space"></span>
+          <a class="text-btn m3-state" data-ve-open hidden title="見る人の画面" aria-label="見る人の画面" target="_blank" rel="noopener"><span class="msr" aria-hidden="true">visibility</span><span class="ve-label">見る人の画面</span></a>
+          <button type="submit" class="m3-btn m3-state" data-ve-save><span class="vw-spinner" aria-hidden="true"></span><span class="msr" aria-hidden="true">save</span>保存</button>
+        </div>
+      </form>
+
+      <div class="ve-placeholder" data-ve-placeholder>
+        <span class="msr" aria-hidden="true">edit_document</span>
+        <p>左の一覧からページを選ぶか、新しいページを作ります。</p>
+      </div>
+    </div>
+  </main>
+
+  <button type="button" class="ve-fab m3-state" data-ve-new><span class="msr" aria-hidden="true">add</span><span>新しいページ</span></button>
+  <input type="file" accept=".html,.htm,text/html" data-ve-file hidden>
+
+  <!-- 文書のプレビュー（見る人のページと同じ全画面のダイアログ） -->
+  <dialog class="vw-full" data-vw-full>
+    <div class="vw-full__bar">
+      <button type="button" class="icon-btn m3-state" data-vw-full-close aria-label="閉じる" title="閉じる"><span class="msr" aria-hidden="true">close</span></button>
+      <strong class="vw-full__title" data-vw-full-title></strong>
+    </div>
+    <div class="vw-full__body" data-vw-full-body></div>
+  </dialog>
+
+</body>
+</html>

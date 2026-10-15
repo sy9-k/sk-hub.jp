@@ -559,7 +559,7 @@ export async function markNoticesSeen(user) {
 // ---------- 利用の記録（アカウント規約 第三条1項(j)） ----------
 // このブラウザのタイムゾーン（おおまかな地域）とサポートID（frameworks/check.js の skhub_uuid。新しいものから 5 つまで）と、最後に使った日時。
 // 規約の最新の版に同意した人だけ（watchAccount の ready のとき）。変わらなければ 1 日 1 回まで書く。
-// 開発者が管理画面（sy9-k.github.io/admin/accounts/）で、お問い合わせ・不正利用への対応のために確認する（同 第四条4）
+// 開発者が管理画面（admin.sk-hub.jp/accounts/）で、お問い合わせ・不正利用への対応のために確認する（同 第四条4）
 const SEEN_IDS_MAX = 5;
 const SUPPORT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 async function recordSeen(user, account) {
