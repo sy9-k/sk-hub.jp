@@ -397,6 +397,39 @@
   #nartist { margin-top: 4px; font-size: 14px; font-weight: 700; color: var(--nb-gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #ntitle[lang="ko"], #nartist[lang="ko"] { font-family: var(--f-gothic-ko); }
 
+  /* ================= カラオケ: 次の曲（予約の札） =================
+     曲の終わり 25 秒前と、キューに曲が足されたとき（予約が入ったとき）に、右上へすべり込む */
+  #nextUp {
+    position: fixed; z-index: 4; top: calc(max(16px, env(safe-area-inset-top)) + 56px); right: 18px;
+    width: min(340px, calc(100vw - 36px)); padding: 12px 14px 11px; border-radius: 14px;
+    display: none; pointer-events: none; opacity: 0;
+    transform: translateX(calc(100% + 40px));
+    transition: transform var(--lf-dur) var(--lf-ease), opacity .35s;
+    border: 2px solid rgba(255, 255, 255, .88); box-shadow: 0 12px 34px rgba(0, 0, 0, .5);
+    font-family: var(--f-gothic); color: #fff;
+  }
+  [data-theme="karaoke"] #nextUp, [data-theme="noraebang"] #nextUp { display: block; }
+  #nextUp.show { opacity: 1; transform: none; }
+  #nextUp.new.show { animation: nuflash 1s ease 3; }
+  @keyframes nuflash { 50% { box-shadow: 0 0 0 4px rgba(255, 216, 77, .9), 0 12px 34px rgba(0, 0, 0, .5); } }
+  .nu-label { display: inline-block; margin-bottom: 9px; padding: 3px 11px; border-radius: 999px; font-size: 13px; font-weight: 900; letter-spacing: .06em; }
+  .nu-body { display: flex; align-items: center; gap: 12px; }
+  .nu-art { width: 52px; height: 52px; flex: none; border-radius: 6px; object-fit: cover; background: rgba(255, 255, 255, .1); }
+  .nu-art[src=""] { visibility: hidden; }
+  .nu-meta { min-width: 0; }
+  .nu-title { font-size: 17px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nu-artist { margin-top: 2px; font-size: 13px; font-weight: 700; color: rgba(255, 255, 255, .7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nu-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 9px; font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .75); font-variant-numeric: tabular-nums; }
+  .nu-no b { margin-left: 4px; font-size: 15px; letter-spacing: .05em; color: #ffd84d; }
+  #nextUp [lang="ko"] { font-family: var(--f-gothic-ko); }
+  /* 日本風: 紺の札にオレンジの「次の曲」 */
+  [data-theme="karaoke"] #nextUp { background: linear-gradient(135deg, rgba(18, 28, 78, .94), rgba(6, 8, 28, .94)); }
+  [data-theme="karaoke"] .nu-label { background: linear-gradient(#ffd23f, #ff8a00); color: #3a1d00; }
+  /* ノレバン: 曲番号の枠と同じ青紫に、黄色の「다음 곡」 */
+  [data-theme="noraebang"] #nextUp { background: linear-gradient(#2d3290, #14164a); font-family: var(--f-gothic-ko); }
+  [data-theme="noraebang"] .nu-label { background: var(--nb-gold); color: #1a1240; }
+  @media (max-width: 640px) { #nextUp { left: 18px; right: 18px; width: auto; } }
+
   /* ===================================================================
      シンプル: ジャケットをぼかした背景、左上に曲名、下にシークバー
      =================================================================== */
@@ -627,6 +660,16 @@
   </aside>
 
   <main id="stage"><div id="lines"></div><div id="message"></div></main>
+</div>
+
+<!-- カラオケ: 次の曲（予約の札） -->
+<div id="nextUp" role="status" aria-live="polite">
+  <div class="nu-label"></div>
+  <div class="nu-body">
+    <img class="nu-art" src="" alt="">
+    <div class="nu-meta"><div class="nu-title"></div><div class="nu-artist"></div></div>
+  </div>
+  <div class="nu-foot"><span class="nu-no"></span><span class="nu-left"></span></div>
 </div>
 
 <div id="karaoke">
@@ -951,6 +994,7 @@
       const data = await spotify('/me/player?additional_types=track');
       if (seq !== pollSeq) return; // あとから始めた取得がある
       applyPlayer(data);
+      fetchQueue(false);
       delay = state.playing ? POLL_PLAYING_MS : POLL_IDLE_MS;
     } catch (e) {
       if (seq !== pollSeq) return;
@@ -1008,10 +1052,12 @@
     $('#bg').style.backgroundImage = track.art ? `url("${track.art}")` : 'none';
     $('#ktitle .kt-name').textContent = track.name;
     $('#ktitle .kt-artist').textContent = track.artists.join(', ');
-    // ノレバンの曲番号（曲の ID から作る 5 けたの飾りの番号。実際の曲番号ではない）
-    let h = 0;
-    for (const ch of track.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    $('#nnum').textContent = String(10000 + (h % 90000));
+    $('#nnum').textContent = songNo(track.id, 'ko');
+    // 次の曲は、この曲のキューを取り直してから出す
+    state.next = null;
+    state.nextFor = null;
+    $('#nextUp').classList.remove('show');
+    setTimeout(() => fetchQueue(true), 1200);
     $('#ntitle').textContent = track.name;
     $('#nartist').textContent = track.artists.join(', ');
     markLang($('#ntitle'), track.name);
@@ -1397,6 +1443,95 @@
       if (settled(s)) { s.y = s.to; s.v = 0; }
       else stepSpring(s, e, dt);
       children[i].style.transform = `translate3d(0, ${s.y.toFixed(2)}px, 0)`;
+    }
+  }
+
+  // ================= カラオケ: 次の曲（予約の札） =================
+  // 曲の ID から作る飾りの番号（実際のカラオケの番号ではない）。日本風は「1234-56」、韓国風は 5 けた
+  function songNo(id, kind) {
+    let h = 0;
+    for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return kind === 'ko' ? String(10000 + (h % 90000)) : (1000 + (h % 9000)) + '-' + String(h % 100).padStart(2, '0');
+  }
+
+  state.next = null;        // { id, name, artists, art }
+  state.nextFor = null;     // どの曲を再生中に取ったキューか
+  state.nextNewUntil = 0;   // 「予約が入りました」を出しておく時刻
+  let queueAt = -1e9, queueBusy = false, nextFresh = false, nextLeft = '';
+
+  // Spotify のキューの先頭（次に流れる曲）を取る。カラオケのテーマのときだけ、15 秒ごと
+  async function fetchQueue(force) {
+    if (!isKaraoke() || !state.track || queueBusy) return;
+    const now = performance.now();
+    if (!force && now - queueAt < 15000) return;
+    queueBusy = true;
+    queueAt = now;
+    const forTrack = state.track.id;
+    try {
+      const q = await spotify('/me/player/queue');
+      if (!state.track || state.track.id !== forTrack) return;
+      const it = q && q.queue && q.queue[0];
+      const imgs = it && ((it.album && it.album.images) || it.images || (it.show && it.show.images)) || [];
+      const next = it ? {
+        id: it.id || it.uri,
+        name: it.name,
+        artists: it.artists ? it.artists.map((a) => a.name).join(', ') : (it.show ? it.show.name : ''),
+        art: imgs.length ? imgs[imgs.length - 1].url : '',
+      } : null;
+      // 同じ曲を流している間に先頭が変わった = 予約が入った
+      if (next && state.nextFor === forTrack && state.next && state.next.id !== next.id) state.nextNewUntil = performance.now() + 6000;
+      state.next = next;
+      state.nextFor = forTrack;
+      renderNextUp();
+    } catch (e) {
+      console.warn(e);
+    } finally {
+      queueBusy = false;
+    }
+  }
+
+  function renderNextUp() {
+    const n = state.next;
+    if (!n) return;
+    const ko = theme() === 'noraebang';
+    nextFresh = performance.now() < state.nextNewUntil;
+    const el = $('#nextUp');
+    el.classList.toggle('new', nextFresh);
+    const label = el.querySelector('.nu-label');
+    label.textContent = ko ? (nextFresh ? '예약되었습니다' : '다음 곡') : (nextFresh ? '予約が入りました' : '次の曲');
+    label.lang = ko ? 'ko' : 'ja';
+    el.querySelector('.nu-title').textContent = n.name;
+    el.querySelector('.nu-artist').textContent = n.artists;
+    markLang(el.querySelector('.nu-title'), n.name);
+    markLang(el.querySelector('.nu-artist'), n.artists);
+    el.querySelector('.nu-art').src = n.art || '';
+    const no = el.querySelector('.nu-no');
+    no.lang = ko ? 'ko' : 'ja';
+    no.textContent = ko ? '곡번호' : '選曲番号';
+    const b = document.createElement('b');
+    b.textContent = songNo(n.id, ko ? 'ko' : 'ja');
+    no.appendChild(b);
+    nextLeft = '';
+  }
+
+  // 毎フレーム: 出すかどうかと、あと何秒か
+  function updateNextUp(raw) {
+    const el = $('#nextUp');
+    if (!isKaraoke() || !state.track || !state.next || state.nextFor !== state.track.id) { el.classList.remove('show'); return; }
+    const fresh = performance.now() < state.nextNewUntil;
+    if (fresh !== nextFresh) renderNextUp();
+    const left = state.track.duration - raw;
+    el.classList.toggle('show', fresh || (left <= 25000 && left > 300));
+    const ko = theme() === 'noraebang';
+    const sec = Math.ceil(left / 1000);
+    const text = left > 25000
+      ? (ko ? '이 곡이 끝나면 시작해요' : 'この曲のあとに始まります')
+      : (ko ? '다음 곡까지 ' + sec + '초' : '次の曲まで ' + fmt(left + 999));
+    if (text !== nextLeft) {
+      nextLeft = text;
+      const lf = el.querySelector('.nu-left');
+      lf.textContent = text;
+      lf.lang = ko ? 'ko' : 'ja';
     }
   }
 
@@ -1906,6 +2041,7 @@
     $('#remain').textContent = '-' + fmt(state.track.duration - raw);
     if (theme() === 'bold' || theme() === 'simple') $('#remain').textContent = fmt(state.track.duration);
     $('#barFill').style.width = (raw / state.track.duration * 100).toFixed(2) + '%';
+    updateNextUp(raw);
 
     const ly = state.lyrics;
     if (!ly || !ly.lines.length) return;
@@ -1948,6 +2084,7 @@
       updateBackground();
       if (kbgPref === 'mv' && KARAOKE_THEMES.includes(name) && state.track && mv.trackId !== state.track.id) startMV(state.track);
     }
+    if (typeof renderNextUp === 'function') { renderNextUp(); fetchQueue(true); }
   }
   function setKColor(c) {
     root.setAttribute('data-kcolor', c);
