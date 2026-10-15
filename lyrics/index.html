@@ -308,6 +308,17 @@
   #karaoke::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: linear-gradient(transparent, rgba(0, 0, 0, .55)); }
   .krow { position: absolute; left: 4vw; right: 4vw; }
   .krow.r0 { bottom: calc(10% + var(--size) * 2.45); text-align: left; }
+  /* ふりがな（カタカナの読み）: 歌詞の上に小さく。ふりがなを付けるときは、上下の段を少し離す */
+  .kline ruby { ruby-position: over; }
+  .kline rt {
+    font-family: "Noto Sans JP", "Hiragino Sans", sans-serif; font-size: .4em; font-weight: 800;
+    letter-spacing: .02em; line-height: 1.1; padding-bottom: .1em; text-align: center;
+  }
+  /* 小さい字は太いふちでつぶれるので、ふちを細く。ノレバンのグラデーションは読みには付けない */
+  .kline .fill rt { -webkit-text-stroke-width: .09em; }
+  .kline .grad rt { visibility: hidden; }
+  #karaoke.ruby .krow.r0 { bottom: calc(10% + var(--size) * 3.1); }
+  #karaoke.ruby #kcount { bottom: calc(10% + var(--size) * 5.2); }
   .krow.r1 { bottom: 9%; text-align: right; }
   .kline, #ktitle {
     font-family: var(--lf-family); font-weight: var(--lf-weight); letter-spacing: var(--lf-spacing);
@@ -370,8 +381,9 @@
   /* 歌ったところ: 白いふちの上に、ふちのない同じ文字をグラデーションで重ねる
      （ふちとグラデーションを 1 つの要素で描くと、ふちがグラデーションをつぶしてしまう） */
   [data-theme="noraebang"] .kline .fill { color: var(--nb-mid); -webkit-text-stroke: .15em #fff; }
-  [data-theme="noraebang"] .kline .fill::after {
-    content: attr(data-text); position: absolute; inset: 0; padding: 0 .2em;
+  .kline .grad { display: none; }
+  [data-theme="noraebang"] .kline .grad {
+    display: block; position: absolute; inset: 0; padding: 0 .2em;
     -webkit-text-stroke: 0; color: transparent;
     background: linear-gradient(var(--nb-top) 18%, var(--nb-mid) 55%, var(--nb-bot) 90%);
     -webkit-background-clip: text; background-clip: text;
@@ -863,6 +875,11 @@
       <button class="chip" data-intercolor="orange"><span class="dot" style="background:#f7950c"></span>オレンジ</button>
       <button class="chip" data-intercolor="blue"><span class="dot" style="background:#2b2de8"></span>青</button>
       <button class="chip" id="interTry">試しに見る</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label>ふりがな（カタカナの読み）</label>
+      <button class="chip" data-ruby="ko">韓国語</button>
+      <button class="chip" data-ruby="en">英語</button>
     </div>
     <h3>カラオケの背景</h3>
     <div class="row">
@@ -1475,6 +1492,175 @@
   // ハングルがあれば韓国語、仮名があれば日本語。どちらでもなければ付けない（ページの言語のまま）
   const HANGUL = /[\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uAC00-\uD7AF\uD7B0-\uD7FF]/;
   const KANA = /[\u3040-\u30FF\u31F0-\u31FF]/;
+  // ================= ふりがな（韓国語・英語の歌詞に、カタカナの読み） =================
+  const ruby = { ko: store.get('lf_ruby_ko') !== 'off', en: store.get('lf_ruby_en') !== 'off', dict: null, loading: false };
+
+  // ---------- 韓国語 → カタカナ ----------
+  // ハングルの音節を 初声・中声・終声 に分け、連音化・激音化・鼻音化・流音化などを当ててから、カナにする
+  const KO_INI = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+  const KO_FIN = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+  // 中声 → [母音の列（a i u e o）, y がつくか, w がつくか]
+  const KO_MED = [['a'], ['e'], ['a', 'y'], ['e', 'y'], ['o'], ['e'], ['o', 'y'], ['e', 'y'], ['o'], ['a', 'w'], ['e', 'w'], ['e', 'w'], ['o', 'y'],
+    ['u'], ['o', 'w'], ['e', 'w'], ['i', 'w'], ['u', 'y'], ['u'], ['i', 'ui'], ['i']];
+  const KO_DOUBLE = { 'ㄳ': ['ㄱ', 'ㅅ'], 'ㄵ': ['ㄴ', 'ㅈ'], 'ㄶ': ['ㄴ', 'ㅎ'], 'ㄺ': ['ㄹ', 'ㄱ'], 'ㄻ': ['ㄹ', 'ㅁ'], 'ㄼ': ['ㄹ', 'ㅂ'], 'ㄽ': ['ㄹ', 'ㅅ'], 'ㄾ': ['ㄹ', 'ㅌ'], 'ㄿ': ['ㄹ', 'ㅍ'], 'ㅀ': ['ㄹ', 'ㅎ'], 'ㅄ': ['ㅂ', 'ㅅ'] };
+  const KO_REP = { 'ㄳ': 'ㄱ', 'ㄵ': 'ㄴ', 'ㄶ': 'ㄴ', 'ㄺ': 'ㄱ', 'ㄻ': 'ㅁ', 'ㄼ': 'ㄹ', 'ㄽ': 'ㄹ', 'ㄾ': 'ㄹ', 'ㄿ': 'ㅂ', 'ㅀ': 'ㄹ', 'ㅄ': 'ㅂ',
+    'ㄲ': 'ㄱ', 'ㅋ': 'ㄱ', 'ㅅ': 'ㄷ', 'ㅆ': 'ㄷ', 'ㅈ': 'ㄷ', 'ㅊ': 'ㄷ', 'ㅌ': 'ㄷ', 'ㅎ': 'ㄷ', 'ㅍ': 'ㅂ' };
+  const koRep = (f) => KO_REP[f] || f; // 終声の代表音（ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅇ）
+  const KO_ASP = { 'ㄱ': 'ㅋ', 'ㄷ': 'ㅌ', 'ㅂ': 'ㅍ', 'ㅈ': 'ㅊ' };
+  const KO_TENSE = 'ㄲㄸㅃㅆㅉ';
+  const KO_SONOR = 'ㄴㄹㅁㅇ';
+  // 子音の行 → a i u e o
+  const KO_KANA = {
+    '': 'アイウエオ', k: 'カキクケコ', g: 'ガギグゲゴ', s: ['サ', 'シ', 'ス', 'セ', 'ソ'], j: ['ジャ', 'ジ', 'ジュ', 'ジェ', 'ジョ'],
+    ch: ['チャ', 'チ', 'チュ', 'チェ', 'チョ'], t: ['タ', 'ティ', 'トゥ', 'テ', 'ト'], d: ['ダ', 'ディ', 'ドゥ', 'デ', 'ド'],
+    n: 'ナニヌネノ', h: 'ハヒフヘホ', m: 'マミムメモ', r: 'ラリルレロ', p: 'パピプペポ', b: 'バビブベボ',
+  };
+  const KO_COL = { a: 0, i: 1, u: 2, e: 3, o: 4 };
+  const KO_SMALL = { a: 'ャ', u: 'ュ', o: 'ョ' };
+  const KO_SMALL_W = { a: 'ァ', i: 'ィ', e: 'ェ', o: 'ォ' };
+  const KO_FIN_KANA = { 'ㄱ': 'ㇰ', 'ㄴ': 'ン', 'ㄷ': 'ッ', 'ㄹ': 'ㇽ', 'ㅁ': 'ㇺ', 'ㅂ': 'ㇷ゚', 'ㅇ': 'ン' };
+
+  function koSyllable(row, med) {
+    const [v, y] = KO_MED[med];
+    const k = KO_KANA[row];
+    const at = (c) => (Array.isArray(k) ? k[KO_COL[c]] : k[KO_COL[c]]);
+    if (y === 'ui') return row === '' ? 'ウィ' : at('i');
+    if (y === 'y') {
+      if (row === '') return { a: 'ヤ', u: 'ユ', o: 'ヨ', e: 'イェ' }[v];
+      if (v === 'e') return at('e');                         // 계 → ケ
+      if (row === 'j' || row === 'ch') return at(v);         // 쟈 → ジャ
+      if (row === 's') return { a: 'シャ', u: 'シュ', o: 'ショ' }[v];
+      return at('i').slice(0, 1) + KO_SMALL[v];                 // 려 → リョ、겨 → キョ
+    }
+    if (y === 'w') {
+      if (row === '') return { a: 'ワ', i: 'ウィ', e: 'ウェ', o: 'ウォ' }[v];
+      if (row === 'h' && v === 'a') return 'ファ';           // 화 → ファ
+      return at('u').slice(0, 2).replace(/ゥ$/, '') + KO_SMALL_W[v]; // 과 → クァ、뭐 → ムォ
+    }
+    return at(v);
+  }
+
+  function koWord(word) {
+    const syl = [...word].map((ch) => {
+      const c = ch.charCodeAt(0) - 0xAC00;
+      return { i: KO_INI[Math.floor(c / 588)], m: Math.floor((c % 588) / 28), f: KO_FIN[c % 28], gem: false };
+    });
+    // 音の変わり方（前の音節の終声 f と、次の音節の初声 i）
+    for (let k = 0; k + 1 < syl.length; k++) {
+      const a = syl[k], b = syl[k + 1];
+      if (!a.f) continue;
+      if (b.i === 'ㅇ') {                                     // 連音化: 終声が次の音節へ移る
+        if (a.f === 'ㅇ') continue;
+        if (a.f === 'ㅎ') { a.f = ''; continue; }             // 좋아 → 조아
+        const d = KO_DOUBLE[a.f];
+        if (d) { a.f = d[0]; b.i = d[1] === 'ㅎ' ? 'ㅇ' : d[1]; if (d[1] === 'ㅎ') { b.i = a.f; a.f = ''; } }
+        else { b.i = a.f; a.f = ''; }
+        continue;
+      }
+      const d = KO_DOUBLE[a.f];
+      if ((a.f === 'ㅎ' || (d && d[1] === 'ㅎ')) && KO_ASP[b.i]) { b.i = KO_ASP[b.i]; a.f = d ? d[0] : ''; continue; } // 좋다 → 조타
+      if (b.i === 'ㅎ' && ['ㄱ', 'ㄷ', 'ㅂ', 'ㅈ'].includes(koRep(a.f))) { b.i = KO_ASP[koRep(a.f)] || 'ㅊ'; a.f = ''; continue; } // 축하 → 추카
+      const r = koRep(a.f);
+      if (b.i === 'ㄴ' || b.i === 'ㅁ') {                     // 鼻音化: 합니다 → 함니다
+        if (r === 'ㄱ') a.f = 'ㅇ'; else if (r === 'ㄷ') a.f = 'ㄴ'; else if (r === 'ㅂ') a.f = 'ㅁ';
+      }
+      if (koRep(a.f) === 'ㄴ' && b.i === 'ㄹ') a.f = 'ㄹ';         // 流音化: 신라 → 실라
+      else if (koRep(a.f) === 'ㄹ' && b.i === 'ㄴ') b.i = 'ㄹ';
+      else if ((koRep(a.f) === 'ㅁ' || koRep(a.f) === 'ㅇ') && b.i === 'ㄹ') b.i = 'ㄴ';
+    }
+    let out = '';
+    syl.forEach((s, k) => {
+      const prev = syl[k - 1];
+      // ㄱ ㄷ ㅂ ㅈ は、語頭や詰まる音のあとでは濁らず、母音や ㄴ ㄹ ㅁ ㅇ のあとでは濁る
+      const voiced = prev && (!prev.f || KO_SONOR.includes(koRep(prev.f)));
+      // 濃音（ㄲ ㄸ ㅃ ㅆ ㅉ）が母音のあとに来たら「ッ」（오빠 → オッパ）
+      if (KO_TENSE.includes(s.i) && prev && !prev.f) out += 'ッ';
+      const row = {
+        'ㄱ': voiced ? 'g' : 'k', 'ㄲ': 'k', 'ㅋ': 'k', 'ㄴ': 'n', 'ㄷ': voiced ? 'd' : 't', 'ㄸ': 't', 'ㅌ': 't',
+        'ㄹ': 'r', 'ㅁ': 'm', 'ㅂ': voiced ? 'b' : 'p', 'ㅃ': 'p', 'ㅍ': 'p', 'ㅅ': 's', 'ㅆ': 's', 'ㅇ': '',
+        'ㅈ': voiced ? 'j' : 'ch', 'ㅉ': 'ch', 'ㅊ': 'ch', 'ㅎ': 'h',
+      }[s.i];
+      out += koSyllable(row, s.m);
+      if (s.f) out += KO_FIN_KANA[koRep(s.f)] || '';
+    });
+    return out;
+  }
+
+  // ---------- 英語 → カタカナ（CMU の発音辞書から作った lyrics/en-kana.txt） ----------
+  function loadEnDict() {
+    if (ruby.dict || ruby.loading) return;
+    ruby.loading = true;
+    fetch('/lyrics/en-kana.txt').then((r) => (r.ok ? r.text() : '')).then((text) => {
+      const m = new Map();
+      for (const line of text.split('\n')) {
+        if (!line || line[0] === '#') continue;
+        const t = line.indexOf('\t');
+        if (t > 0) m.set(line.slice(0, t), line.slice(t + 1));
+      }
+      ruby.dict = m;
+      relayout(); // 読みが入ったので、出している行を作り直す
+    }).catch(() => {}).finally(() => { ruby.loading = false; });
+  }
+  function enWord(word) {
+    if (!ruby.dict) return '';
+    const w = word.toLowerCase().replace(/[’]/g, "'");
+    return ruby.dict.get(w)
+      || (/in'$/.test(w) && ruby.dict.get(w.slice(0, -1) + 'g'))   // lovin' → loving
+      || ruby.dict.get(w.replace(/'s$/, '')) && ruby.dict.get(w.replace(/'s$/, '')) + 'ズ'
+      || ruby.dict.get(w.replace(/^'|'$/g, '')) || '';
+  }
+
+  // 1 行を、ふりがなつきの要素にする
+  const RUBY_TOKEN = /([\uAC00-\uD7A3]+)|([A-Za-z][A-Za-z'’]*)/g;
+  function rubyNodes(text) {
+    const frag = document.createDocumentFragment();
+    let last = 0, m;
+    RUBY_TOKEN.lastIndex = 0;
+    while ((m = RUBY_TOKEN.exec(text))) {
+      const reading = m[1] ? (ruby.ko ? koWord(m[1]) : '') : (ruby.en ? enWord(m[2]) : '');
+      if (!reading) continue;
+      if (m.index > last) frag.append(text.slice(last, m.index));
+      const r = document.createElement('ruby');
+      const rt = document.createElement('rt');
+      rt.lang = 'ja';
+      rt.textContent = reading;
+      r.append(m[0], rt);
+      frag.append(r);
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) frag.append(text.slice(last));
+    return frag;
+  }
+
+  // カラオケの段に 1 行を出す（下地・塗り・ノレバンのグラデーションの 3 枚に、同じ中身）
+  function setKline(row, text) {
+    const base = row.querySelector('.base'), fill = row.querySelector('.fill');
+    base.textContent = ''; fill.textContent = '';
+    base.append(rubyNodes(text));
+    fill.append(rubyNodes(text));
+    const grad = document.createElement('span');
+    grad.className = 'grad';
+    grad.append(rubyNodes(text));
+    fill.append(grad);
+    markLang(row, text);
+  }
+
+  // この曲に、ふりがなを付ける行があるか（あれば上下の段を離す。英語なら辞書を読み込む）
+  function updateRubyNeed() {
+    const lines = state.karaoke || [];
+    const ko = ruby.ko && lines.some((l) => /[\uAC00-\uD7A3]/.test(l.text));
+    const en = ruby.en && lines.some((l) => /[A-Za-z]{2,}/.test(l.text));
+    if (en) loadEnDict();
+    $('#karaoke').classList.toggle('ruby', ko || (en && !!ruby.dict) || en);
+  }
+  function setRuby(kind, on) {
+    ruby[kind] = on;
+    store.set('lf_ruby_' + kind, on ? 'on' : 'off');
+    $$('.chip[data-ruby]').forEach((b) => b.setAttribute('aria-pressed', String(ruby[b.dataset.ruby])));
+    updateRubyNeed();
+    relayout();
+  }
+
   function markLang(el, text) {
     const l = HANGUL.test(text) ? 'ko' : KANA.test(text) ? 'ja' : '';
     if (l) el.lang = l; else el.removeAttribute('lang');
@@ -1510,6 +1696,7 @@
     }
     el.appendChild(frag);
     state.karaoke = type === 'synced' ? toKaraoke(lines) : [];
+    updateRubyNeed();
     state.kShown = [null, null];
     state.activeIndex = -1;
     springs.length = 0;
@@ -2271,9 +2458,7 @@
       if (!show) { state.kShown[r] = null; continue; }
       if (state.kShown[r] !== n) {
         state.kShown[r] = n;
-        row.querySelector('.base').textContent = k[n].text;
-        row.querySelector('.fill').textContent = k[n].text;
-        row.querySelector('.fill').dataset.text = k[n].text; // ノレバンのグラデーション用
+        setKline(row, k[n].text);
         markLang(row, k[n].text);
         fitKaraoke(row);
         row.classList.remove('enter');
@@ -2460,6 +2645,7 @@
   $$('.chip[data-ease]').forEach((b) => { b.onclick = () => setEase(b.dataset.ease, true); });
   $('#easePreview').onclick = playPreview;
   $$('.chip[data-kbg]').forEach((b) => { b.onclick = () => setKbg(b.dataset.kbg); });
+  $$('.chip[data-ruby]').forEach((b) => { b.onclick = () => setRuby(b.dataset.ruby, !ruby[b.dataset.ruby]); });
   $$('.chip[data-inter]').forEach((b) => { b.onclick = () => setInter(b.dataset.inter === 'on'); });
   $('#inGo').onclick = () => endInterlude(true);
   $$('.chip[data-intercolor]').forEach((b) => { b.onclick = () => setInterColor(b.dataset.intercolor); });
@@ -2524,6 +2710,7 @@
     setWeight(root.getAttribute('data-weight') || 'auto');
     setEase(easePref);
     setKbg(kbgPref);
+    $$('.chip[data-ruby]').forEach((b) => b.setAttribute('aria-pressed', String(ruby[b.dataset.ruby])));
     setInter(interOn);
     setInterColor(interColor);
     applyFontSize();
