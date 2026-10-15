@@ -101,6 +101,20 @@
     100% { transform: translate(-8vmax, 16vmax) rotate(260deg) scale(.92); }
   }
 
+  /* ================= カラオケの背景 =================
+     data-kbg-on = いま出している背景（scene = コードで描く背景 / mv = YouTube の MV。なければジャケット） */
+  #scene { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; display: none; }
+  #mv { position: fixed; inset: 0; z-index: 0; overflow: hidden; display: none; background: #000; }
+  /* 16:9 の動画で画面全体をおおう（はみ出したところは切る） */
+  #mv iframe, #mv #mvPlayer {
+    position: absolute; left: 50%; top: 50%; border: 0; pointer-events: none;
+    width: max(100vw, 177.78vh); height: max(100vh, 56.25vw); transform: translate(-50%, -50%);
+  }
+  #mv::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, .3); }
+  [data-kbg-on="scene"] #scene, [data-kbg-on="mv"] #mv { display: block; animation: bgin .8s ease; }
+  [data-kbg-on="scene"] #bg, [data-kbg-on="mv"] #bg { display: none !important; }
+  @keyframes bgin { from { opacity: 0; } }
+
   /* ================= 全体の並び ================= */
   #app { position: fixed; inset: 0; z-index: 1; }
   #stage { position: relative; overflow: hidden; height: 100%; }
@@ -516,6 +530,13 @@
     position: absolute; left: 20px; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%;
     background: #fff; box-shadow: 0 0 14px rgba(255, 255, 255, .6); will-change: transform;
   }
+  .pinput {
+    width: 100%; flex: 1; min-width: 0; margin-top: 8px; padding: 9px 12px; border-radius: 10px;
+    font: inherit; font-size: 13px; color: #fff; background: rgba(0, 0, 0, .3); border: 1px solid rgba(255, 255, 255, .14);
+  }
+  .row .pinput { margin-top: 0; }
+  #mvopts .row { margin-top: 8px; }
+  .numlabel { font-size: 13px; min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
   #offsetLabel { font-size: 13px; min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
   .hint { font-size: 11px; color: rgba(255, 255, 255, .45); margin: 12px 4px 0; line-height: 1.6; }
 
@@ -563,6 +584,9 @@
 
 <div id="bg"></div>
 <div id="glow"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<!-- カラオケの背景: コードで描く背景（canvas）と、YouTube の MV（音は出さない） -->
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="mv" aria-hidden="true"><div id="mvPlayer"></div></div>
 
 <div id="app">
   <aside id="player">
@@ -650,6 +674,31 @@
       <button class="chip" data-kcolor="red"><span class="dot" style="background:#ff2f5f"></span>赤</button>
       <button class="chip" data-kcolor="purple"><span class="dot" style="background:#a43cff"></span>紫</button>
     </div>
+    <h3>カラオケの背景</h3>
+    <div class="row">
+      <button class="chip" data-kbg="art">ジャケット</button>
+      <button class="chip" data-kbg="city">夜の街</button>
+      <button class="chip" data-kbg="ocean">海</button>
+      <button class="chip" data-kbg="stars">星空</button>
+      <button class="chip" data-kbg="bokeh">光の粒</button>
+      <button class="chip" data-kbg="mv">YouTube の MV</button>
+    </div>
+    <div id="mvopts" hidden>
+      <input class="pinput" id="ytKey" type="password" placeholder="YouTube Data API のキー（MV を自動で探すとき）" autocomplete="off" spellcheck="false">
+      <div class="row">
+        <input class="pinput" id="mvUrl" placeholder="この曲で流す動画の URL（自分で選ぶとき）" autocomplete="off" spellcheck="false">
+        <button class="chip" id="mvUrlSet">使う</button>
+      </div>
+      <div class="row">
+        <label>映像のずれ</label>
+        <button class="chip" id="mvMinus">−0.5s</button>
+        <span id="mvOffsetLabel" class="numlabel">±0.0s</span>
+        <button class="chip" id="mvPlus">+0.5s</button>
+        <button class="chip" id="mvNext">別の動画</button>
+      </div>
+      <p class="hint" id="mvStatus"></p>
+      <p class="hint">動画は音を消して、Spotify の再生位置に合わせて流します。YouTube（youtube-nocookie.com）から読み込むのは、この背景を選んだときだけです。自動で探すと、1 曲ごとに API の検索を 1 回使います（結果は覚えておきます）。</p>
+    </div>
   </div>
 
   <h3>フォント</h3>
@@ -728,6 +777,9 @@
   // Spotify Developer Dashboard で作ったアプリの Client ID（公開してよい値）。
   // 空のときは、使う人が自分の Client ID を入力する画面を出す
   const BUILTIN_CLIENT_ID = '';
+  // YouTube Data API のキー（MV を自動で探すとき。HTTP リファラーで sk-hub.jp に制限したキーなら公開してよい）。
+  // 空のときは、使う人がパネルに自分のキーを入れる（入れなければ、動画の URL を貼る）
+  const BUILTIN_YT_KEY = '';
   const REDIRECT_URI = location.origin + location.pathname;
   // 再生の操作（一時停止・スキップ・シーク・音量）には user-modify-playback-state がいる（Premium のみ）
   const SCOPES = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
@@ -765,6 +817,8 @@
     volHoldUntil: 0,
   };
   const lyricsCache = new Map();
+  // ジャケットから取った色（コードで描く背景に使う）。h = 色相、s = 鮮やかさ、l = 明るさ
+  state.pal = [{ h: 248, s: 1, l: .65 }, { h: 338, s: 1, l: .65 }, { h: 198, s: 1, l: .56 }];
   const theme = () => root.getAttribute('data-theme');
 
   // ================= Spotify 認証 (PKCE) =================
@@ -970,6 +1024,9 @@
     root.removeAttribute('data-mode');
     showMessage('歌詞を検索中…');
     if (track.art) applyColors(track.art);
+    mv.ready = false;
+    updateBackground();
+    if (kbgPref === 'mv' && isKaraoke()) startMV(track);
 
     let lyrics;
     try {
@@ -1103,6 +1160,8 @@
         root.style.setProperty('--c2', '#3a3a44');
         root.style.setProperty('--c3', '#9a9aa8');
         root.style.setProperty('--solid', '#535353');
+        state.pal = [{ h: 240, s: .06, l: .45 }, { h: 240, s: .08, l: .25 }, { h: 240, s: .05, l: .62 }];
+        glowSprites.clear();
         return;
       }
       const pick = (i) => top[Math.min(i, top.length - 1)];
@@ -1112,6 +1171,8 @@
       root.style.setProperty('--c3', hsl(c.h, Math.min(1, c.s * 1.1), .55));
       // Spotify 風: 白い文字も黒い文字も読める明るさにそろえる
       root.style.setProperty('--solid', hsl(a.h, Math.min(.6, Math.max(.35, a.s)), .42));
+      state.pal = [a, b, c].map((x) => ({ h: x.h, s: Math.min(1, x.s * 1.1), l: x.l }));
+      glowSprites.clear();
     };
     img.src = url;
   }
@@ -1339,6 +1400,415 @@
     }
   }
 
+  // ================= カラオケの背景 =================
+  const KBGS = ['art', 'city', 'ocean', 'stars', 'bokeh', 'mv'];
+  let kbgPref = KBGS.includes(store.get('lf_kbg')) ? store.get('lf_kbg') : 'art';
+
+  // いま出す背景を決める（カラオケのテーマのときだけ）
+  function updateBackground() {
+    let on = '';
+    if (isKaraoke()) {
+      if (SCENES[kbgPref]) on = 'scene';
+      else if (kbgPref === 'mv' && mv.ready) on = 'mv';
+    }
+    if (on) root.dataset.kbgOn = on; else delete root.dataset.kbgOn;
+    if (on !== 'mv') { try { mv.player && mv.player.pauseVideo && mv.player.pauseVideo(); } catch {} }
+  }
+  function setKbg(name) {
+    kbgPref = KBGS.includes(name) ? name : 'art';
+    store.set('lf_kbg', kbgPref);
+    $$('.chip[data-kbg]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kbg === kbgPref)));
+    $('#mvopts').hidden = kbgPref !== 'mv';
+    updateBackground();
+    if (kbgPref === 'mv' && isKaraoke() && state.track && mv.trackId !== state.track.id) startMV(state.track);
+  }
+
+  // ---------- コードで描く背景 ----------
+  const sc = { name: '', cv: null, ctx: null, w: 0, h: 0, dpr: 1, d: null, t: 0 };
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  // ジャケットの色 i を、明るさ l・不透明度 a で
+  function pal(i, l, a = 1, sat) {
+    const c = state.pal[i % state.pal.length];
+    return `hsla(${c.h.toFixed(0)}, ${((sat ?? c.s) * 100).toFixed(0)}%, ${(l * 100).toFixed(0)}%, ${a})`;
+  }
+  // ぼんやり光る丸（色ごとに 1 回だけ作って使い回す）
+  const glowSprites = new Map();
+  function glow(color) {
+    let c = glowSprites.get(color);
+    if (!c) {
+      c = document.createElement('canvas');
+      c.width = c.height = 128;
+      const x = c.getContext('2d');
+      const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0, color); g.addColorStop(.35, color.replace(/[\d.]+\)$/, '0.45)')); g.addColorStop(1, color.replace(/[\d.]+\)$/, '0)'));
+      x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+      glowSprites.set(color, c);
+    }
+    return c;
+  }
+  function vgrad(ctx, h, stops) {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    stops.forEach(([o, c]) => g.addColorStop(o, c));
+    return g;
+  }
+
+  const SCENES = {
+    // 夜の街: 3 層のビルが奥ほどゆっくり流れ、窓の明かりがときどき点いたり消えたりする。下を車の光が行き交う
+    city: {
+      init(w, h, k) {
+        const layers = [0, 1, 2].map((li) => {
+          const bs = []; let x = 0;
+          while (x < w * 1.6) {
+            const bw = rnd(36, 110) * (.7 + li * .25) * k;
+            const bh = h * rnd(.14, .42) * (.55 + li * .3);
+            const wins = [];
+            const gx = 10 * k, gy = 13 * k;
+            for (let yy = 8 * k; yy < bh - 10 * k; yy += gy)
+              for (let xx = 6 * k; xx < bw - 8 * k; xx += gx)
+                if (Math.random() < .55) wins.push({ x: xx, y: yy, on: Math.random() < .45, warm: Math.random() < .75 });
+            bs.push({ x, w: bw, h: bh, wins });
+            x += bw + rnd(2, 10) * k;
+          }
+          return { bs, width: x, speed: (3 + li * 7) * k };
+        });
+        const cars = Array.from({ length: 28 }, () => ({ x: rnd(0, w), lane: Math.random() < .5 ? 0 : 1, v: rnd(40, 110) * k, s: rnd(.6, 1.2) }));
+        const stars = Array.from({ length: 70 }, () => ({ x: rnd(0, w), y: rnd(0, h * .45), r: rnd(.4, 1.3) * k, p: rnd(0, 6) }));
+        return { layers, cars, stars };
+      },
+      draw(ctx, d, t, dt, w, h, k) {
+        const ground = h * .84;
+        ctx.fillStyle = vgrad(ctx, h, [[0, pal(0, .05)], [.55, pal(0, .13)], [.84, pal(1, .3)], [1, pal(1, .08)]]);
+        ctx.fillRect(0, 0, w, h);
+        for (const s of d.stars) { ctx.globalAlpha = .25 + .35 * (1 + Math.sin(t * 1.4 + s.p)) / 2; ctx.fillStyle = '#fff'; ctx.fillRect(s.x, s.y, s.r, s.r); }
+        ctx.globalAlpha = 1;
+        d.layers.forEach((L, li) => {
+          const off = (t * L.speed) % L.width;
+          ctx.fillStyle = pal(0, .04 + li * .035, 1, .35);
+          for (const rep of [0, L.width]) {
+            for (const b of L.bs) {
+              const x = b.x - off + rep;
+              if (x > w || x + b.w < 0) continue;
+              ctx.fillRect(x, ground - b.h, b.w, b.h + 2);
+            }
+          }
+          if (li === 0) return; // いちばん奥は窓を描かない
+          for (const rep of [0, L.width]) {
+            for (const b of L.bs) {
+              const x = b.x - off + rep;
+              if (x > w || x + b.w < 0) continue;
+              for (const win of b.wins) {
+                if (Math.random() < .00015) win.on = !win.on; // ときどき点いたり消えたり
+                if (!win.on) continue;
+                ctx.fillStyle = win.warm ? `hsla(42, 100%, ${li === 2 ? 72 : 60}%, ${li === 2 ? .9 : .55})` : pal(2, .72, li === 2 ? .85 : .5);
+                ctx.fillRect(x + win.x, ground - b.h + win.y, 4 * k, 6 * k);
+              }
+            }
+          }
+        });
+        // 道路と車の光
+        ctx.fillStyle = vgrad(ctx, h, [[0, 'rgba(0,0,0,0)'], [.84, 'rgba(0,0,0,.55)'], [1, 'rgba(0,0,0,.9)']]);
+        ctx.fillRect(0, ground, w, h - ground);
+        ctx.globalCompositeOperation = 'lighter';
+        for (const c of d.cars) {
+          c.x += (c.lane ? -1 : 1) * c.v * dt;
+          if (c.x > w + 60 * k) c.x = -60 * k; else if (c.x < -60 * k) c.x = w + 60 * k;
+          const y = ground + (c.lane ? .045 : .095) * h;
+          const sz = (c.lane ? 26 : 38) * k * c.s;
+          ctx.drawImage(glow(c.lane ? 'rgba(255,70,60,1)' : 'rgba(255,240,210,1)'), c.x - sz / 2, y - sz / 2, sz, sz);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      },
+    },
+
+    // 海: 夕焼けの空と水平線の太陽、重なった波、太陽の下できらめく光
+    ocean: {
+      init() {
+        return { sparkles: Array.from({ length: 110 }, () => ({ x: rnd(-1, 1), y: Math.random(), p: rnd(0, 6), len: rnd(6, 22) })) };
+      },
+      draw(ctx, d, t, dt, w, h, k) {
+        const hz = h * .56;
+        ctx.fillStyle = vgrad(ctx, hz, [[0, pal(0, .1)], [.55, pal(0, .3)], [.85, pal(1, .55)], [1, pal(1, .72)]]);
+        ctx.fillRect(0, 0, w, hz);
+        const cx = w * .5, cy = hz - h * .05, r = h * .085;
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.drawImage(glow(pal(1, .7, .9)), cx - r * 6, cy - r * 6, r * 12, r * 12);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'hsla(40, 100%, 92%, .95)';
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = vgrad(ctx, h, [[hz / h, pal(0, .32)], [1, pal(0, .06)]]);
+        ctx.fillRect(0, hz, w, h - hz);
+        // 波: 遠くから近くへ。近いほど大きくゆっくり
+        for (let i = 0; i < 7; i++) {
+          const f = i / 7;
+          const y0 = hz + (h - hz) * Math.pow(f, 1.35) + 2 * k;
+          const amp = (2 + f * 16) * k, len = (60 + f * 260) * k, sp = .6 + (1 - f) * .8;
+          ctx.beginPath(); ctx.moveTo(0, h);
+          for (let x = 0; x <= w + 20; x += 16 * k) {
+            const y = y0 + Math.sin(x / len + t * sp + i) * amp + Math.sin(x / (len * .37) - t * sp * 1.3 + i * 2) * amp * .35;
+            ctx.lineTo(x, y);
+          }
+          ctx.lineTo(w, h); ctx.closePath();
+          ctx.fillStyle = pal(0, .26 - f * .19, .55);
+          ctx.fill();
+        }
+        // 太陽の下のきらめき
+        ctx.globalCompositeOperation = 'lighter';
+        for (const s of d.sparkles) {
+          const yy = hz + s.y * (h - hz);
+          const spread = w * (.04 + s.y * .22);
+          const a = Math.max(0, Math.sin(t * 2.6 + s.p)) * (1 - s.y * .6);
+          ctx.fillStyle = `hsla(40, 100%, 85%, ${a * .8})`;
+          ctx.fillRect(cx + s.x * spread, yy, s.len * k * (.5 + s.y), 1.5 * k);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      },
+    },
+
+    // 星空: ゆっくり回る星、またたき、オーロラ、ときどき流れ星。下に山の影
+    stars: {
+      init(w, h, k) {
+        const R = Math.hypot(w, h);
+        const stars = Array.from({ length: 460 }, () => ({ a: rnd(0, Math.PI * 2), r: Math.sqrt(Math.random()) * R, s: rnd(.5, 1.8) * k, p: rnd(0, 6), hue: Math.random() < .2 ? rnd(180, 240) : 0 }));
+        const ridge = []; let y = h * .86;
+        for (let x = -20; x <= w + 40; x += 30 * k) { y = Math.min(h * .95, Math.max(h * .74, y + rnd(-1, 1) * 22 * k)); ridge.push([x, y]); }
+        return { stars, ridge, shoot: null, next: 3 };
+      },
+      draw(ctx, d, t, dt, w, h, k) {
+        ctx.fillStyle = vgrad(ctx, h, [[0, pal(0, .03)], [.6, pal(0, .1)], [1, pal(2, .2)]]);
+        ctx.fillRect(0, 0, w, h);
+        // オーロラ
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 3; i++) {
+          const base = h * (.24 + i * .07), th = h * (.16 + i * .03);
+          const g = ctx.createLinearGradient(0, base - th * .2, 0, base + th);
+          g.addColorStop(0, pal(i + 1, .6, 0)); g.addColorStop(.3, pal(i + 1, .6, .22)); g.addColorStop(1, pal(i + 1, .5, 0));
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          for (let x = 0; x <= w + 20; x += 20 * k) {
+            const y = base + Math.sin(x * .0035 / k + t * .25 + i * 1.7) * h * .05 + Math.sin(x * .011 / k - t * .4 + i) * h * .012;
+            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          for (let x = w + 20; x >= 0; x -= 20 * k) {
+            const y = base + th + Math.sin(x * .003 / k + t * .2 + i) * h * .04;
+            ctx.lineTo(x, y);
+          }
+          ctx.closePath(); ctx.fill();
+        }
+        // 星（地平線の下の点を中心に、ゆっくり回る）
+        const ox = w * .5, oy = h * 1.05, rot = t * .012;
+        for (const s of d.stars) {
+          const x = ox + Math.cos(s.a + rot) * s.r, y = oy + Math.sin(s.a + rot) * s.r;
+          if (x < 0 || x > w || y < 0 || y > h) continue;
+          const a = .35 + .65 * (1 + Math.sin(t * (1 + s.s) + s.p)) / 2;
+          ctx.fillStyle = s.hue ? `hsla(${s.hue}, 80%, 85%, ${a})` : `rgba(255,255,255,${a})`;
+          ctx.fillRect(x, y, s.s, s.s);
+        }
+        // 流れ星
+        d.next -= dt;
+        if (!d.shoot && d.next <= 0) d.shoot = { x: rnd(w * .1, w * .9), y: rnd(0, h * .3), vx: rnd(-1, 1) * 500 * k, vy: rnd(250, 380) * k, life: 0 };
+        if (d.shoot) {
+          const s = d.shoot; s.life += dt; s.x += s.vx * dt; s.y += s.vy * dt;
+          const tail = .12, g = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * tail, s.y - s.vy * tail);
+          g.addColorStop(0, `rgba(255,255,255,${Math.max(0, 1 - s.life)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.strokeStyle = g; ctx.lineWidth = 2 * k;
+          ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx * tail, s.y - s.vy * tail); ctx.stroke();
+          if (s.life > 1) { d.shoot = null; d.next = rnd(4, 9); }
+        }
+        ctx.globalCompositeOperation = 'source-over';
+        // 山の影
+        ctx.fillStyle = pal(0, .03, 1, .3);
+        ctx.beginPath(); ctx.moveTo(0, h);
+        for (const [x, y] of d.ridge) ctx.lineTo(x, y);
+        ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+      },
+    },
+
+    // 光の粒: ジャケットの色のぼやけた光が、ゆっくり浮かんでいく
+    bokeh: {
+      init(w, h, k) {
+        const dots = Array.from({ length: 46 }, () => ({ x: rnd(0, w), y: rnd(0, h), r: rnd(24, 110) * k, vy: rnd(6, 22) * k, vx: rnd(-6, 6) * k, c: Math.floor(rnd(0, 3)), a: rnd(.18, .55), p: rnd(0, 6) }));
+        const sparks = Array.from({ length: 70 }, () => ({ x: rnd(0, w), y: rnd(0, h), s: rnd(.6, 2) * k, p: rnd(0, 6) }));
+        return { dots, sparks };
+      },
+      draw(ctx, d, t, dt, w, h, k) {
+        ctx.fillStyle = vgrad(ctx, h, [[0, pal(0, .07)], [1, pal(1, .1)]]);
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'lighter';
+        for (const b of d.dots) {
+          b.y -= b.vy * dt; b.x += (b.vx + Math.sin(t * .4 + b.p) * 8 * k) * dt;
+          if (b.y < -b.r) { b.y = h + b.r; b.x = rnd(0, w); }
+          const pulse = .8 + .2 * Math.sin(t * .8 + b.p);
+          ctx.globalAlpha = b.a * pulse;
+          ctx.drawImage(glow(pal(b.c, .6, 1)), b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);
+        }
+        ctx.globalAlpha = 1;
+        for (const s of d.sparks) {
+          const a = Math.max(0, Math.sin(t * 1.8 + s.p));
+          ctx.fillStyle = `rgba(255,255,255,${a * .7})`;
+          ctx.fillRect(s.x, s.y, s.s, s.s);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      },
+    },
+  };
+
+  function drawScene(ts, dt) {
+    if (root.dataset.kbgOn !== 'scene' || !SCENES[kbgPref]) return;
+    if (!sc.cv) { sc.cv = $('#scene'); sc.ctx = sc.cv.getContext('2d'); }
+    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    const w = Math.round(innerWidth * dpr), h = Math.round(innerHeight * dpr);
+    if (sc.cv.width !== w || sc.cv.height !== h || sc.name !== kbgPref) {
+      sc.cv.width = w; sc.cv.height = h; sc.w = w; sc.h = h; sc.dpr = dpr; sc.name = kbgPref;
+      sc.d = SCENES[kbgPref].init(w, h, dpr);
+    }
+    // 視差効果を減らす設定のときは、ゆっくり動かす
+    const sdt = reducedMotion ? dt * .25 : dt;
+    sc.t += sdt;
+    SCENES[kbgPref].draw(sc.ctx, sc.d, sc.t, sdt, w, h, dpr);
+  }
+
+  // ---------- YouTube の MV ----------
+  const mv = { player: null, trackId: null, ids: [], idx: 0, ready: false, offset: 0, loading: false };
+  let mvSyncedAt = 0;
+  const jget = (k) => { try { return JSON.parse(store.get(k) || '{}'); } catch { return {}; } };
+  const jset = (k, o) => store.set(k, JSON.stringify(o));
+  function mvStatus(msg) { $('#mvStatus').textContent = msg || ''; }
+
+  // URL か ID から、YouTube の動画 ID を取り出す
+  function ytId(text) {
+    const m = String(text).trim().match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/|\/live\/)([\w-]{11})/) || String(text).trim().match(/^([\w-]{11})$/);
+    return m ? m[1] : null;
+  }
+
+  let ytApi = null;
+  function loadYT() {
+    if (!ytApi) {
+      ytApi = new Promise((res) => {
+        if (window.YT && window.YT.Player) return res(window.YT);
+        window.onYouTubeIframeAPIReady = () => res(window.YT);
+        const sct = document.createElement('script');
+        sct.src = 'https://www.youtube.com/iframe_api';
+        sct.onerror = () => res(null);
+        document.head.appendChild(sct);
+      });
+    }
+    return ytApi;
+  }
+
+  // その曲の動画の候補（自分で選んだ URL → 前に探した結果 → API で探す）
+  async function mvCandidates(track) {
+    const manual = jget('lf_mvurl')[track.id];
+    if (manual) return [manual];
+    const cache = jget('lf_mvcache');
+    if (cache[track.id]) return cache[track.id];
+    const key = BUILTIN_YT_KEY || store.get('lf_ytkey');
+    if (!key) { mvStatus('YouTube の API キーを入れるか、動画の URL を貼ってください'); return []; }
+    mvStatus('MV を探しています…');
+    const q = track.artists[0] + ' ' + cleanTitle(track.name) + ' MV';
+    const res = await fetch('https://www.googleapis.com/youtube/v3/search?' + new URLSearchParams({
+      part: 'snippet', type: 'video', videoEmbeddable: 'true', maxResults: '8', q, key,
+    })).catch(() => null);
+    if (!res || !res.ok) {
+      const j = res ? await res.json().catch(() => ({})) : {};
+      const reason = (j.error && j.error.errors && j.error.errors[0] && j.error.errors[0].reason) || '';
+      mvStatus(/quota/i.test(reason) ? '今日の検索回数の上限に達しました。動画の URL を貼れば使えます'
+        : res && (res.status === 400 || res.status === 403) ? 'API キーが使えません。キーを確かめてください' : 'MV を探せませんでした');
+      return [];
+    }
+    const items = (await res.json()).items || [];
+    // 公式のチャンネル・MV らしいものを先に。カバー・反応動画・歌詞動画はあとに
+    const artist = track.artists[0].toLowerCase();
+    const score = (it) => {
+      const title = (it.snippet.title || '').toLowerCase(), ch = (it.snippet.channelTitle || '').toLowerCase();
+      let n = 0;
+      if (ch.includes(artist) || artist.includes(ch.replace(/\s*-\s*topic$/, ''))) n += 3;
+      if (/official|mv|m\/v|music video|vevo|公式/.test(title + ' ' + ch)) n += 2;
+      if (/cover|reaction|lyric|歌ってみた|カバー|커버|karaoke|노래방|1 hour|shorts/.test(title)) n -= 4;
+      return n;
+    };
+    const ids = items.filter((it) => it.id && it.id.videoId).sort((a, b) => score(b) - score(a)).map((it) => it.id.videoId);
+    cache[track.id] = ids;
+    const keys = Object.keys(cache);
+    if (keys.length > 300) delete cache[keys[0]]; // 覚えておくのは 300 曲まで
+    jset('lf_mvcache', cache);
+    return ids;
+  }
+
+  async function startMV(track) {
+    mv.trackId = track.id;
+    mv.ready = false;
+    mv.offset = Number(jget('lf_mvoff')[track.id]) || 0;
+    showMvOffset();
+    updateBackground();
+    const ids = await mvCandidates(track);
+    if (mv.trackId !== track.id) return;
+    mv.ids = ids; mv.idx = 0;
+    if (!ids.length) { if (!$('#mvStatus').textContent) mvStatus('この曲の動画が見つかりませんでした'); return; }
+    playCandidate();
+  }
+
+  async function playCandidate() {
+    const id = mv.ids[mv.idx];
+    const YT = await loadYT();
+    if (!YT) { mvStatus('YouTube を読み込めませんでした'); return; }
+    const start = Math.max(0, rawMs() / 1000 + mv.offset);
+    mv.ready = false;
+    mvStatus('動画を読み込んでいます…');
+    if (!mv.player) {
+      mv.player = new YT.Player('mvPlayer', {
+        host: 'https://www.youtube-nocookie.com',
+        videoId: id,
+        playerVars: { autoplay: 1, mute: 1, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, playsinline: 1, rel: 0, start: Math.floor(start) },
+        events: {
+          onReady: (e) => { e.target.mute(); syncMV(true); },
+          onStateChange: (e) => {
+            if (e.data === 1 && !mv.ready) { mv.ready = true; mvStatus('MV を流しています（' + (mv.idx + 1) + ' / ' + mv.ids.length + ' 本目）'); updateBackground(); }
+            if (e.data === 0) { mv.ready = false; updateBackground(); } // 動画が先に終わったら、ジャケットに戻す
+          },
+          onError: () => nextCandidate(true), // 埋め込みできない動画などは、次の候補へ
+        },
+      });
+    } else {
+      mv.player.loadVideoById({ videoId: id, startSeconds: start });
+      mv.player.mute();
+    }
+  }
+  function nextCandidate(auto) {
+    if (!mv.ids.length) return;
+    if (mv.idx + 1 >= mv.ids.length) {
+      if (auto) { mv.ready = false; updateBackground(); mvStatus('流せる動画がありませんでした。URL を貼ってください'); return; }
+      mv.idx = -1;
+    }
+    mv.idx++;
+    playCandidate();
+  }
+
+  // Spotify の再生位置と、再生・一時停止に合わせる（0.8 秒以上ずれたら合わせ直す）
+  function syncMV(force) {
+    const p = mv.player;
+    if (!p || !p.getPlayerState || !state.track || kbgPref !== 'mv' || !isKaraoke() || mv.trackId !== state.track.id) return;
+    const target = rawMs() / 1000 + mv.offset;
+    const st = p.getPlayerState();
+    if (state.playing && document.visibilityState === 'visible') {
+      if (st !== 1 && st !== 3 && st !== 0) p.playVideo();
+    } else if (st === 1) p.pauseVideo();
+    const dur = p.getDuration ? p.getDuration() : 0;
+    if (target < 0 || (dur && target > dur)) return;
+    if (force || Math.abs(p.getCurrentTime() - target) > .8) p.seekTo(target, true);
+  }
+
+  function showMvOffset() {
+    const v = mv.offset;
+    $('#mvOffsetLabel').textContent = (v >= 0 ? '+' : '') + v.toFixed(1) + 's';
+  }
+  function changeMvOffset(d) {
+    if (!state.track) return;
+    mv.offset = Math.round((mv.offset + d) * 10) / 10;
+    const o = jget('lf_mvoff'); o[state.track.id] = mv.offset; jset('lf_mvoff', o);
+    showMvOffset();
+    syncMV(true);
+  }
+
   // パネルの見本: 押すたびに点が左右に動く
   const pv = { y: 0, v: 0, to: 0 };
   let pvRaf = 0;
@@ -1427,6 +1897,8 @@
     requestAnimationFrame(frame);
     const dt = lastTs ? Math.min((ts - lastTs) / 1000, 1 / 20) : 0;
     lastTs = ts;
+    drawScene(ts, dt);
+    if (ts - mvSyncedAt > 400) { mvSyncedAt = ts; syncMV(); }
     if (!state.track) return;
     const raw = Math.max(0, Math.min(rawMs(), state.track.duration));
     const ms = Math.max(0, Math.min(raw + state.offsetMs, state.track.duration));
@@ -1472,6 +1944,10 @@
     brk.innerHTML = name === 'noraebang' ? '<span>♪</span> 간주 중 <span>♪</span>' : '<span>♪</span> 間奏 <span>♪</span>';
     applyEaseCss();
     relayout();
+    if (typeof updateBackground === 'function') {
+      updateBackground();
+      if (kbgPref === 'mv' && KARAOKE_THEMES.includes(name) && state.track && mv.trackId !== state.track.id) startMV(state.track);
+    }
   }
   function setKColor(c) {
     root.setAttribute('data-kcolor', c);
@@ -1553,6 +2029,24 @@
   $$('.fchip').forEach((b) => { b.onclick = () => setFont(b.dataset.font); });
   $$('.chip[data-ease]').forEach((b) => { b.onclick = () => setEase(b.dataset.ease, true); });
   $('#easePreview').onclick = playPreview;
+  $$('.chip[data-kbg]').forEach((b) => { b.onclick = () => setKbg(b.dataset.kbg); });
+  $('#ytKey').value = store.get('lf_ytkey') || '';
+  if (BUILTIN_YT_KEY) $('#ytKey').hidden = true;
+  $('#ytKey').addEventListener('change', (e) => {
+    store.set('lf_ytkey', e.target.value.trim());
+    if (kbgPref === 'mv' && state.track) startMV(state.track);
+  });
+  $('#mvUrlSet').onclick = () => {
+    if (!state.track) return;
+    const id = ytId($('#mvUrl').value);
+    if (!id) { mvStatus('YouTube の動画の URL を貼ってください'); return; }
+    const m = jget('lf_mvurl'); m[state.track.id] = id; jset('lf_mvurl', m);
+    $('#mvUrl').value = '';
+    startMV(state.track);
+  };
+  $('#mvMinus').onclick = () => changeMvOffset(-.5);
+  $('#mvPlus').onclick = () => changeMvOffset(.5);
+  $('#mvNext').onclick = () => nextCandidate(false);
   $$('.chip[data-weight]').forEach((b) => { b.onclick = () => setWeight(b.dataset.weight); });
   // フォントのファイルが届くと字の幅や高さが変わるので、行の位置とカラオケの文字の大きさを測り直す
   if (document.fonts) document.fonts.addEventListener('loadingdone', relayout);
@@ -1590,6 +2084,7 @@
     setFont(root.getAttribute('data-font') || 'auto');
     setWeight(root.getAttribute('data-weight') || 'auto');
     setEase(easePref);
+    setKbg(kbgPref);
     applyFontSize();
     applyOffset();
     setVolumeUI(50);
