@@ -491,6 +491,12 @@
     font-size: clamp(11px, 1.8vmin, 17px); line-height: 1.1; color: #fff; transform: rotate(-4deg);
   }
   .in-key b { font-size: 2.1em; }
+  /* ルームを開いているときは、スマホで読み取る QR も出す */
+  .in-room { flex: none; display: flex; flex-direction: column; align-items: center; gap: .4vmin; font-size: clamp(11px, 1.7vmin, 16px); -webkit-text-stroke: .12em var(--in-edge); paint-order: stroke fill; }
+  .in-room[hidden] { display: none; }
+  #inQr { width: clamp(70px, 13vmin, 130px); aspect-ratio: 1; padding: .6vmin; border-radius: 8px; background: #fff; box-shadow: 0 4px 14px var(--in-shadow); }
+  #inQr img, #inQr canvas { width: 100% !important; height: 100% !important; display: block; }
+  .in-badge { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .in-list { position: relative; list-style: none; margin: 3vh 0 0; padding: 0; counter-reset: in; flex: 1; min-height: 0; }
   .in-list li {
     display: grid; grid-template-columns: auto minmax(0, 1.25fr) auto minmax(0, 1fr) auto; align-items: center; gap: 1.4vw;
@@ -549,6 +555,8 @@
   .nu-meta { min-width: 0; }
   .nu-title { font-size: 17px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .nu-artist { margin-top: 2px; font-size: 13px; font-weight: 700; color: rgba(255, 255, 255, .7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nu-by { margin-top: 3px; font-size: 12px; font-weight: 900; color: #ffd84d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nu-by:empty { display: none; }
   .nu-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 9px; font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .75); font-variant-numeric: tabular-nums; }
   .nu-no b { margin-left: 4px; font-size: 15px; letter-spacing: .05em; color: #ffd84d; }
   #nextUp [lang="ko"] { font-family: var(--f-gothic-ko); }
@@ -599,6 +607,22 @@
   #menuBtn svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
   [data-theme="bold"] #menuBtn { top: 20px; right: 24px; background: rgba(0, 0, 0, .35); }
   body.idle #menuBtn { opacity: 0; }
+  /* 選曲リモコンから来たときの「デンモクに戻る」（いつも出しておく。何もしていないときは少し薄く） */
+  #backRemote {
+    position: fixed; z-index: 40; top: max(16px, env(safe-area-inset-top)); left: max(16px, env(safe-area-inset-left));
+    display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 40px; height: 40px; padding: 0 10px; border-radius: 999px;
+    background: rgba(20, 20, 30, .55); color: #fff; font: 800 14px/1 var(--f-ui, system-ui), sans-serif; text-decoration: none;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .25), 0 4px 14px rgba(0, 0, 0, .3);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); transition: opacity .5s, background .2s;
+  }
+  #backRemote[hidden] { display: none; }
+  #backRemote:hover { background: rgba(40, 40, 60, .75); }
+  /* せまい画面では、曲名とかぶらないよう丸いボタンだけ（広い画面では文字も） */
+  #backRemote span { display: none; }
+  @media (min-width: 700px) { #backRemote { padding: 0 16px 0 10px; } #backRemote span { display: inline; } }
+  #backRemote svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  [data-theme="bold"] #backRemote { top: 20px; left: 24px; }
+  body.idle #backRemote { opacity: .55; }
   body.idle #panel { opacity: 0; pointer-events: none; }
 
   #panel {
@@ -688,7 +712,12 @@
     font-feature-settings: var(--lf-feat); font-synthesis: none;
   }
   .remote { display: flex; gap: 14px; align-items: center; }
-  #remoteQr { flex: none; width: 108px; height: 108px; padding: 6px; border-radius: 10px; background: #fff; }
+  .remote { align-items: flex-start; }
+  #remoteQr { flex: none; width: 132px; height: 132px; padding: 7px; border-radius: 10px; background: #fff; }
+  .rbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+  #roomBtn[aria-pressed="true"] { background: rgba(255, 255, 255, .9); color: #111; }
+  #roomStatus { margin: 8px 0 0; }
+  #roomStatus.on { color: #8dffb9; }
   #remoteQr img, #remoteQr canvas { width: 100% !important; height: 100% !important; display: block; }
   #easePreview { position: relative; height: 34px; margin-top: 10px; border-radius: 12px; background: rgba(0, 0, 0, .28); overflow: hidden; }
   #easePreview::before { content: ""; position: absolute; left: 20px; right: 20px; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: rgba(255, 255, 255, .14); }
@@ -803,6 +832,7 @@
     <div class="in-label">次の<br>演奏曲</div>
     <div class="in-now"><div class="in-title"></div><div class="in-artist"></div></div>
     <div class="in-key">原曲キー<b>±0</b></div>
+    <div class="in-room" hidden><div id="inQr" aria-label="選曲リモコンの QR コード"></div><span>スマホで予約</span></div>
   </div>
   <ol class="in-list"></ol>
   <div class="in-more"></div>
@@ -815,7 +845,7 @@
   <div class="nu-label"></div>
   <div class="nu-body">
     <img class="nu-art" src="" alt="">
-    <div class="nu-meta"><div class="nu-title"></div><div class="nu-artist"></div></div>
+    <div class="nu-meta"><div class="nu-title"></div><div class="nu-artist"></div><div class="nu-by"></div></div>
   </div>
   <div class="nu-foot"><span class="nu-no"></span><span class="nu-left"></span></div>
 </div>
@@ -832,6 +862,8 @@
 <button id="menuBtn" title="テーマと設定 ( T でテーマを切り替え )" aria-expanded="false" aria-controls="panel">
   <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
 </button>
+
+<a id="backRemote" href="/lyrics/remote/" hidden title="デンモクに戻る" aria-label="デンモクに戻る"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span>デンモクに戻る</span></a>
 
 <div id="panel" hidden>
   <h3>テーマ</h3>
@@ -940,8 +972,12 @@
   <div class="remote">
     <div id="remoteQr" aria-label="選曲リモコンの QR コード"></div>
     <div>
-      <p class="hint" style="margin:0 0 8px">スマホで読み取ると、曲を探して予約できるリモコンが開きます（ログインは同じ Spotify のアカウントで）。</p>
-      <a class="chip" href="/lyrics/remote/" target="_blank" rel="noopener" style="text-decoration:none">リモコンを開く</a>
+      <p class="hint" style="margin:0 0 8px">「ルームを開く」と、QR を読み取った人は Spotify のログインなしで曲を探して予約できます（予約や操作は、このパソコンの Spotify で行います）。ルームを開かないときは、リモコンでも同じ Spotify のアカウントでログインします。</p>
+      <div class="rbtns">
+        <button class="chip" id="roomBtn" aria-pressed="false">ルームを開く</button>
+        <a class="chip" id="remoteLink" href="/lyrics/remote/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">リモコンを開く</a>
+      </div>
+      <p class="hint" id="roomStatus" role="status"></p>
     </div>
   </div>
 
@@ -1868,7 +1904,8 @@
         markLang(cell('in-t', it.name), it.name);
         cell('in-arrow');
         markLang(cell('in-a', artists), artists);
-        cell('in-badge', '標準');
+        const by = roomName(it.id);
+        cell('in-badge', by ? by + ' さん' : '標準');
       } else {
         li.className = 'empty';
         cell('in-t', items ? '' : '読み込み中…');
@@ -1962,6 +1999,9 @@
     markLang(el.querySelector('.nu-title'), n.name);
     markLang(el.querySelector('.nu-artist'), n.artists);
     el.querySelector('.nu-art').src = n.art || '';
+    const by = roomName(n.id);
+    el.querySelector('.nu-by').textContent = by ? (ko ? '예약: ' + by + ' 님' : '予約: ' + by + ' さん') : '';
+    markLang(el.querySelector('.nu-by'), by);
     const no = el.querySelector('.nu-no');
     no.lang = ko ? 'ko' : 'ja';
     no.textContent = ko ? '곡번호' : '選曲番号';
@@ -2575,20 +2615,117 @@
     state.kShown = [null, null];
     $$('#karaoke .kline').forEach((r) => { r.style.fontSize = ''; });
   }
-  // 選曲リモコンの QR コード（パネルを開いたときに、はじめて作る）
-  let qrDone = false;
-  function makeRemoteQr() {
-    if (qrDone) return;
-    qrDone = true;
-    const url = location.origin + '/lyrics/remote/';
-    const draw = () => { try { new QRCode($('#remoteQr'), { text: url, width: 96, height: 96, correctLevel: QRCode.CorrectLevel.M }); } catch {} };
-    if (window.QRCode) return draw();
-    const sct = document.createElement('script');
-    sct.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-    sct.onload = draw;
-    sct.onerror = () => { $('#remoteQr').hidden = true; };
-    document.head.appendChild(sct);
+  // 選曲リモコンの QR コード（パネルを開いたときに作る。ルームを開いているときは、ルームの URL）
+  let qrLib = null, qrFor = '';
+  function loadQr() {
+    if (window.QRCode) return Promise.resolve();
+    if (!qrLib) {
+      qrLib = new Promise((ok, ng) => {
+        const sct = document.createElement('script');
+        sct.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        sct.onload = ok;
+        sct.onerror = ng;
+        document.head.appendChild(sct);
+      }).catch((e) => { qrLib = null; throw e; });
+    }
+    return qrLib;
   }
+  async function drawQr(el, text) {
+    try {
+      await loadQr();
+      el.textContent = '';
+      new QRCode(el, { text, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.M });
+      el.hidden = false;
+    } catch { el.hidden = true; }
+  }
+  function remoteUrl() { return room.url || location.origin + '/lyrics/remote/'; }
+  function makeRemoteQr() {
+    if (qrFor === remoteUrl()) return;
+    qrFor = remoteUrl();
+    drawQr($('#remoteQr'), qrFor);
+  }
+  // ================= カラオケのルーム =================
+  // ルームを開くと、スマホのリモコン（QR）は Spotify のログインなしで使える。頼みは Firebase を通って、このパソコンの Spotify で実行する
+  // （中身は room-host.js。ここからは window.LF_HOST で、Spotify の呼び出しやいまの曲を渡す）
+  const room = { mod: null, id: '', url: '', busy: false, inQrFor: '' };
+  const roomName = (id) => (room.mod && room.id && id ? room.mod.nameOf(id) : '');
+
+  async function apiCall(method, path, body, retried) {
+    try {
+      const token = await getToken();
+      const headers = { Authorization: 'Bearer ' + token };
+      if (body) headers['Content-Type'] = 'application/json';
+      const res = await fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+      if (res.status === 401 && !retried) { await refreshToken(); return apiCall(method, path, body, true); }
+      let json = null;
+      if (res.status !== 204) { try { json = await res.json(); } catch {} }
+      const reason = res.ok ? '' : String((json && json.error && (json.error.reason || json.error.message)) || '');
+      if (method !== 'GET') setTimeout(pollNow, 400);
+      return { ok: res.ok, status: res.status, reason, json };
+    } catch (e) {
+      return { ok: false, status: 0, reason: String((e && e.message) || e), json: null };
+    }
+  }
+
+  window.LF_HOST = {
+    call: apiCall,
+    rawMs: () => Math.round(rawMs()),
+    volume: () => Number($('#vol').value) || 0,
+    now: () => {
+      const t = state.track;
+      if (!t) return null;
+      return { id: t.id, uri: 'spotify:track:' + t.id, name: t.name, artists: t.artists.join(', '), album: t.album, art: t.art, big: t.art, dur: t.duration, playing: state.playing, progress: rawMs() };
+    },
+    theme: () => theme(),
+    onReserved(name, track) {
+      toast((name ? name + ' さんが予約: ' : '予約が入りました: ') + track.name);
+      setTimeout(() => fetchQueue(true), 700);
+    },
+  };
+
+  function roomUI(msg) {
+    const on = !!room.id;
+    $('#roomBtn').textContent = on ? 'ルームを閉じる' : 'ルームを開く';
+    $('#roomBtn').setAttribute('aria-pressed', String(on));
+    $('#roomStatus').textContent = msg != null ? msg : on ? 'ルームを開いています。QR を読み取った人は、ログインなしで予約できます（閉じると、この QR は使えなくなります）。' : '';
+    $('#roomStatus').classList.toggle('on', on && msg == null);
+    $('#remoteLink').href = remoteUrl();
+    if (!$('#panel').hidden) makeRemoteQr();
+    $('#inter .in-room').hidden = !on;
+    if (on && room.inQrFor !== room.url) { room.inQrFor = room.url; drawQr($('#inQr'), room.url); }
+  }
+  async function openRoom(prev) {
+    if (room.busy) return;
+    room.busy = true;
+    roomUI('ルームを準備しています…');
+    try {
+      room.mod = room.mod || await import('/lyrics/room-host.js');
+      const r = await room.mod.open(prev);
+      room.id = r.id;
+      room.url = r.url;
+      store.set('lf_room', r.id);
+      roomUI();
+      renderNextUp();
+    } catch (e) {
+      console.warn(e);
+      room.id = room.url = '';
+      roomUI('ルームを開けませんでした' + (e && e.code ? '（' + e.code + '）' : '') + '。少し待ってから、もういちど試してください。');
+    } finally {
+      room.busy = false;
+    }
+  }
+  async function closeRoom() {
+    if (!room.id || room.busy) return;
+    room.busy = true;
+    await room.mod.close();
+    room.id = room.url = '';
+    store.del('lf_room');
+    room.busy = false;
+    roomUI();
+    renderNextUp();
+  }
+  $('#roomBtn').onclick = () => (room.id ? closeRoom() : openRoom());
+
   function togglePanel(open) {
     const panel = $('#panel');
     const show = open === undefined ? panel.hidden : open;
@@ -2702,6 +2839,27 @@
   });
   addEventListener('resize', relayout);
 
+  // ================= 選曲リモコンから来たとき =================
+  // 「デンモクに戻る」をいつも出す（アプリとして入れたリモコンには、ブラウザの戻るボタンがないため）
+  (function backToRemote() {
+    const ss = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch {} } };
+    const params = new URLSearchParams(location.search);
+    const fromUrl = params.get('from') === 'remote';
+    const fromRef = /\/lyrics\/remote\//.test(document.referrer);
+    if (fromUrl) {
+      params.delete('from');
+      history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash);
+    }
+    if (fromUrl || fromRef) ss.set('lf_from_remote', '1');
+    if (ss.get('lf_from_remote') !== '1') return;
+    const a = $('#backRemote');
+    a.hidden = false;
+    a.onclick = (e) => {
+      // 来たページがリモコンなら、戻る（リモコンの画面がそのまま残る）
+      if (fromRef && history.length > 1) { e.preventDefault(); history.back(); }
+    };
+  })();
+
   // ================= 起動 =================
   async function main() {
     setTheme(theme());
@@ -2744,6 +2902,8 @@
     wake();
     requestAnimationFrame(frame);
     poll();
+    // 前に開いていたルームは、開き直したときにつなぎ直す（同じ QR のまま）
+    if (store.get('lf_room')) openRoom(store.get('lf_room'));
   }
   main();
 })();
