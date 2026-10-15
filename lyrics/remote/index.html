@@ -262,7 +262,8 @@
 
   /* ================= 探す ================= */
   .find { display: grid; grid-template-columns: 430px 1fr; gap: 16px; align-items: start; min-height: 100%; }
-  [data-orient="port"] .find { grid-template-columns: 1fr; }
+  [data-orient="port"] .find { grid-template-columns: 1fr; align-content: start; }
+  #q::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
   .find .left { position: sticky; top: 0; }
   [data-orient="port"] .find .left { position: static; }
   .modes { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -389,11 +390,23 @@
   #toast .sub { margin-top: 6px; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #toast .no { margin-top: 6px; font-size: 14px; opacity: .85; font-variant-numeric: tabular-nums; }
 
+  /* ================= ルーム（名前・閉じていたとき） ================= */
+  .room h3 { margin: 0 0 6px; }
+  .room p { margin: 0 0 12px; font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, .78); }
+  #nameIn { width: 100%; padding: 14px 16px; border: 0; border-radius: 12px; font: inherit; font-size: 20px; font-weight: 800; background: #fff; color: #111; }
+  .dact .ok2 { height: 52px; padding: 0 24px; border-radius: 999px; font-weight: 900; font-size: 16px; background: var(--reserve); color: #fff; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .4); }
+  .help .rbtn { margin: 4px 6px 0 0; padding: 9px 14px; border-radius: 999px; background: rgba(255, 255, 255, .12); font-weight: 900; font-size: 14px; }
+  .help .roomline { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .07); font-size: 14px; }
+  .help .roomline[hidden] { display: none; }
+
   /* ================= ログイン ================= */
-  #login { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: #120a24; text-align: center; font-family: "Noto Sans JP", sans-serif; }
-  #login h1 { font-size: 24px; margin: 0 0 8px; }
-  #login p { color: rgba(255, 255, 255, .7); line-height: 1.8; font-size: 14px; }
-  #login a { display: inline-block; margin-top: 10px; padding: 14px 24px; border-radius: 999px; background: #1ed760; color: #000; font-weight: 800; text-decoration: none; }
+  #login, #roomGone { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: #120a24; text-align: center; font-family: "Noto Sans JP", sans-serif; }
+  #login h1, #roomGone h1 { font-size: 24px; margin: 0 0 8px; }
+  #roomGone p, #login p { color: rgba(255, 255, 255, .7); line-height: 1.8; font-size: 14px; }
+  #login a, #roomGone button { display: inline-block; margin-top: 10px; padding: 14px 24px; border-radius: 999px; background: #1ed760; color: #000; font-weight: 800; text-decoration: none; }
+  #roomGone button { margin: 10px 4px 0; border: 0; font: inherit; font-weight: 800; cursor: pointer; }
+  #roomGone #goneLogin { background: rgba(255, 255, 255, .14); color: #fff; }
+  #roomGone button[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -466,7 +479,7 @@
                 <button class="tile t-v" data-go="genre:pop"><svg><use href="#ic-mic"/></svg><span data-l="western">洋楽</span></button>
                 <button class="tile t-n" data-go="queue"><svg><use href="#ic-list"/></svg><span data-l="queue">予約確認</span><span class="sub" data-s="queue"></span></button>
                 <button class="tile t-t" data-go="pad"><svg><use href="#ic-remote"/></svg><span data-l="remote">リモコン</span><span class="sub" data-s="remote"></span></button>
-                <a class="tile t-n" href="/lyrics/" style="text-decoration:none"><svg><use href="#ic-note"/></svg><span data-l="openFlow">歌詞の画面</span><span class="sub" data-s="openFlow"></span></a>
+                <a class="tile t-n" href="/lyrics/?from=remote" style="text-decoration:none"><svg><use href="#ic-note"/></svg><span data-l="openFlow">歌詞の画面</span><span class="sub" data-s="openFlow"></span></a>
               </div>
             </div>
             <div class="home">
@@ -517,11 +530,11 @@
                 <button class="tile t-v" data-go="genre:vocaloid"><svg><use href="#ic-wave"/></svg><span data-l="vocaloid">ボカロ</span></button>
                 <button class="tile t-v" data-go="genre:rock"><svg><use href="#ic-guitar"/></svg><span data-l="rock">ロック</span></button>
                 <button class="tile t-n" data-go="genre:hip-hop"><svg><use href="#ic-mic"/></svg><span data-l="hiphop">ヒップホップ</span></button>
-                <a class="tile t-w" href="/lyrics/" style="text-decoration:none"><svg><use href="#ic-note"/></svg><span data-l="openFlow">歌詞の画面</span><span class="sub" data-s="openFlow"></span></a>
+                <a class="tile t-w" href="/lyrics/?from=remote" style="text-decoration:none"><svg><use href="#ic-note"/></svg><span data-l="openFlow">歌詞の画面</span><span class="sub" data-s="openFlow"></span></a>
               </div>
 
               <div class="left2">
-                <a class="banner" href="/lyrics/" style="color:#fff;text-decoration:none">
+                <a class="banner" href="/lyrics/?from=remote" style="color:#fff;text-decoration:none">
                   <i style="left:16px;top:14px;font-size:22px">✦</i><i style="right:24px;top:52px;font-size:14px;animation-delay:-.8s">✦</i><i style="left:46%;top:30px;font-size:12px;animation-delay:-1.4s">✦</i>
                   <b data-l="bannerTitle">歌詞の画面で<br>ステージ気分！</b>
                   <span data-l="bannerSub">テレビやパソコンで開いて、みんなで歌おう</span>
@@ -643,7 +656,18 @@
       <!-- 使い方 -->
       <div class="overlay" id="help" hidden>
         <div class="sheet help"><h3 data-l="help">使い方</h3><ul id="helpList"></ul>
+          <div class="roomline" id="roomLine" hidden><div id="roomWho"></div><button class="rbtn" id="renameBtn" data-l="rename">名前を変える</button><button class="rbtn" id="leaveBtn" data-l="leave">ルームから出る</button></div>
           <div class="dact"><button class="close" id="helpClose" data-l="close">閉じる</button></div>
+        </div>
+      </div>
+
+      <!-- ルーム: 名前を入れる -->
+      <div class="overlay" id="nameDlg" hidden>
+        <div class="sheet room" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
+          <h3 id="nameTitle" data-l="nameTitle">ルームに入りました</h3>
+          <p data-l="nameNote">予約すると、歌詞の画面に「〇〇さんの予約」と出ます。呼んでほしい名前を入れてください（あとから変えられます）。</p>
+          <input id="nameIn" maxlength="24" autocomplete="nickname" enterkeyhint="done">
+          <div class="dact"><button class="close" id="nameSkip" data-l="nameSkip">名前なしで使う</button><button class="ok2" id="nameOk" data-l="nameOk">はじめる</button></div>
         </div>
       </div>
 
@@ -658,6 +682,14 @@
     <h1>選曲リモコン</h1>
     <p>Spotify にログインすると、曲を探して予約できます。<br>ログインは Lyrics Flow と共通です。</p>
     <a id="loginLink" href="/lyrics/">Lyrics Flow でログイン</a>
+  </div>
+</section>
+<section id="roomGone" hidden>
+  <div>
+    <h1 id="goneTitle">ルームが閉じています</h1>
+    <p id="goneNote">パソコンの Lyrics Flow でルームを開き直してもらい、出てきた QR コードを読み取ってください。</p>
+    <button id="goneRetry" type="button">もう一度つなぐ</button>
+    <button id="goneLogin" type="button" hidden>Spotify でログインして使う</button>
   </div>
 </section>
 
@@ -733,6 +765,14 @@
       lyricsSynced: '♪ カラオケ対応（タイミングつき歌詞）', lyricsPlain: '歌詞あり（タイミングなし）', lyricsNone: '歌詞が見つかりません', lyricsChecking: '歌詞を確かめています…',
       pos: '{n} 曲目', nowTag: '演奏中', mineTag: '予約', range4: '4 週間', range6: '半年', range1: '1 年', noNext: '次の曲はまだありません',
       tips: ['「おまかせ予約」は、よく聴く曲からランダムに 1 曲予約します', '「番号で予約」は、一覧に出た曲の選曲番号で予約できます', '曲の詳しい情報で、カラオケ対応（タイミングつき歌詞）か確かめられます', '歌詞の画面の設定で、韓国語・英語にカタカナのふりがなを付けられます', 'ホーム画面に入れると、アプリのように使えます', '「らくらく」を押すと、文字が大きくなります'],
+      altSearch: 'Spotify の検索が混み合っていたので、歌詞のデータベース（LRCLIB）から探しました。予約するときに Spotify の曲を探します', notOnSpotify: 'Spotify でこの曲が見つかりませんでした', noNoYet: '予約すると番号が付きます',
+      roomOn: 'ルーム', roomOff: 'パソコン応答なし', rename: '名前を変える', leave: 'ルームから出る',
+      nameTitle: 'ルームに入りました', nameNote: '予約すると、歌詞の画面に「〇〇さんの予約」と出ます。呼んでほしい名前を入れてください（あとから変えられます）。',
+      namePh: 'ニックネーム', nameSkip: '名前なしで使う', nameOk: 'はじめる', roomWho: 'ルームに参加中（名前: {n}）', noName: 'なし',
+      roomTimeout: 'パソコンから返事がありません。Lyrics Flow を開いたままにしてもらってください', roomClosed: 'ルームが閉じています。QR コードを読み取り直してください',
+      hostRelogin: 'パソコンの Lyrics Flow で、Spotify にログインし直してもらってください', byWho: '{n} さん',
+      goneTitle: 'ルームが閉じています', goneNote: 'パソコンの Lyrics Flow でルームを開き直してもらい、出てきた QR コードを読み取ってください。', goneRetry: 'もう一度つなぐ', goneLogin: 'Spotify でログインして使う',
+      roomHelp: 'ルームでは、予約や操作はパソコンの Lyrics Flow（親機）の Spotify で行われます。このスマホでのログインはいりません',
       helpList: ['曲名・歌手名で探して「予約」を押すと、Spotify のキュー（次に流れる順）に入ります', '▶「すぐ演奏」は、今の曲をやめてその曲をすぐ流します', '「番号で予約」: 一覧や曲の詳しい情報に出る選曲番号を打つと、その曲を予約できます', '「演奏中止」は次の曲へ進みます。リモコンで一時停止・早戻し・早送り・音量も変えられます', '予約・操作には Spotify Premium が必要です。予約の取り消しは Spotify のアプリでしてください', '上の「日本 / 한국」で、日本のカラオケ風と韓国のノレバン風を切り替えられます'],
     },
     kr: {
@@ -762,6 +802,14 @@
       lyricsSynced: '♪ 노래방 가능 (싱크 가사)', lyricsPlain: '가사 있음 (싱크 없음)', lyricsNone: '가사 없음', lyricsChecking: '가사 확인 중…',
       pos: '{n}번째', nowTag: '연주 중', mineTag: '예약', range4: '4주', range6: '6개월', range1: '1년', noNext: '다음 곡이 아직 없어요',
       tips: ['"랜덤 예약"은 자주 듣는 곡에서 한 곡을 골라 예약해요', '"번호 예약"은 목록에 나온 곡번호로 예약할 수 있어요', '곡 정보에서 노래방 가능(싱크 가사)인지 확인할 수 있어요', '홈 화면에 추가하면 앱처럼 쓸 수 있어요', '"큰 글씨"를 누르면 글자가 커져요'],
+      altSearch: 'Spotify 검색이 혼잡해서 가사 데이터베이스(LRCLIB)에서 찾았어요. 예약할 때 Spotify 곡을 찾아요', notOnSpotify: 'Spotify에서 이 곡을 찾지 못했어요', noNoYet: '예약하면 번호가 붙어요',
+      roomOn: '룸', roomOff: 'PC 응답 없음', rename: '이름 바꾸기', leave: '룸 나가기',
+      nameTitle: '룸에 들어왔어요', nameNote: '예약하면 가사 화면에 "OO 님의 예약"이 나와요. 불러 줄 이름을 입력하세요 (나중에 바꿀 수 있어요).',
+      namePh: '닉네임', nameSkip: '이름 없이 사용', nameOk: '시작', roomWho: '룸 참가 중 (이름: {n})', noName: '없음',
+      roomTimeout: 'PC에서 응답이 없어요. Lyrics Flow를 켜 둔 채로 있어 달라고 해 주세요', roomClosed: '룸이 닫혀 있어요. QR 코드를 다시 읽어 주세요',
+      hostRelogin: 'PC의 Lyrics Flow에서 Spotify에 다시 로그인해 달라고 해 주세요', byWho: '{n} 님',
+      goneTitle: '룸이 닫혀 있어요', goneNote: 'PC의 Lyrics Flow에서 룸을 다시 열고, 나온 QR 코드를 읽어 주세요.', goneRetry: '다시 연결', goneLogin: 'Spotify로 로그인해서 사용',
+      roomHelp: '룸에서는 예약·조작이 PC의 Lyrics Flow(본체) Spotify로 이루어져요. 이 폰에서 로그인할 필요는 없어요',
       helpList: ['제목·가수로 검색하고 "예약"을 누르면 Spotify 대기열에 들어가요', '"바로 시작"은 지금 곡을 멈추고 그 곡을 바로 틀어요', '"번호 예약": 목록이나 곡 정보에 나오는 곡번호를 입력해서 예약해요', '"취소"는 다음 곡으로 넘어가요. 리모컨에서 일시정지·되감기·빨리감기·볼륨도 바꿀 수 있어요', '예약·조작에는 Spotify Premium이 필요해요', '위의 "日本 / 한국"으로 일본 노래방 스타일과 한국 노래방 스타일을 바꿀 수 있어요'],
     },
   };
@@ -781,7 +829,10 @@
     if (cur) cur.render && cur.render();
     setCrumb(); renderNow(); renderHomeHints(); renderTip(); setConn(connected);
     const hl = $('#helpList'); hl.textContent = '';
-    t('helpList').forEach((x) => { const li = document.createElement('li'); li.textContent = x; hl.appendChild(li); });
+    (inRoom() ? [t('roomHelp'), ...t('helpList')] : t('helpList')).forEach((x) => { const li = document.createElement('li'); li.textContent = x; hl.appendChild(li); });
+    $('#nameIn').placeholder = t('namePh');
+    $('#roomLine').hidden = !inRoom();
+    $('#roomWho').textContent = t('roomWho', { n: myName() || t('noName') });
   }
   function setUi(u) { ui = u === 'kr' ? 'kr' : 'jp'; store.set('lf_remote_ui', ui); applyUi(); }
 
@@ -814,10 +865,12 @@
     if (res.status === 204) return null;
     if (!res.ok) {
       // 403・429・5xx は一時的なことがあるので、少し待って 1 回だけやり直す
-      if (!opts.retry && (res.status === 403 || res.status === 429 || res.status >= 500)) {
-        const wait = res.status === 429 ? Math.min(5000, (Number(res.headers.get('Retry-After')) || 1) * 1000) : 700;
+      // 403・429・5xx は一時的なことがあるので、少し待って 2 回までやり直す（429 は言われた秒数だけ待つ）
+      const tries = opts.tries || 0;
+      if (tries < 2 && (res.status === 403 || res.status === 429 || res.status >= 500)) {
+        const wait = res.status === 429 ? Math.min(6000, (Number(res.headers.get('Retry-After')) || 1) * 1000) : 700 * (tries + 1);
         await new Promise((r) => setTimeout(r, wait));
-        return api(path, { ...opts, retry: true }, retried);
+        return api(path, { ...opts, tries: tries + 1 }, retried);
       }
       let msg = '';
       try { const j = await res.json(); msg = (j.error && (j.error.message || j.error.reason)) || ''; } catch {}
@@ -829,6 +882,8 @@
   }
   // 読み込めなかった理由（403 のときは、よくある原因を添える）
   function whyFailed(e) {
+    if (e && e.room) return roomWhy(e.room);
+    if (inRoom() && e && (e.status === 401 || e.status === 403)) return t('hostRelogin') + '（' + e.status + '）';
     const m = e && e.msg ? '（' + e.status + ' ' + e.msg + '）' : e && e.status ? '（' + e.status + '）' : '';
     if (e && e.status === 403) {
       if (/registered|developer dashboard/i.test(e.msg || '')) return t('err403user') + m;
@@ -840,11 +895,132 @@
     return t('none') + m;
   }
   function opError(r) {
+    if (r.room) return roomWhy(r.room);
+    if (inRoom() && (r.status === 401 || r.status === 403) && !/premium/i.test(r.reason)) return t('hostRelogin');
     if (/premium/i.test(r.reason)) return ui === 'kr' ? 'Spotify Premium이 필요해요' : '予約・操作には Spotify Premium が必要です';
     if (r.status === 404 || /no_active_device/i.test(r.reason)) return ui === 'kr' ? 'Spotify에서 먼저 재생해 주세요' : 'Spotify で何か再生してから操作してください';
     if (r.status === 401 || r.status === 403) return t('relogin');
     return '(' + r.status + ')';
   }
+
+  // ================= ルーム（パソコンの Lyrics Flow を通して、ログインなしで使う） =================
+  // QR の「?room=…」で入る。頼み（探す・予約・操作）は Firestore に書き、パソコンが自分の Spotify で実行して結果を書き返す
+  const ROOM_RE = /^[a-z0-9]{24}$/;
+  const urlRoom = new URLSearchParams(location.search).get('room');
+  if (urlRoom && ROOM_RE.test(urlRoom)) { store.set('lf_remote_room', urlRoom); history.replaceState(null, '', location.pathname + location.hash); }
+  let roomId = ROOM_RE.test(store.get('lf_remote_room') || '') ? store.get('lf_remote_room') : '';
+  const inRoom = () => !!roomId;
+  const myName = () => (store.get('lf_remote_name') || '').slice(0, 24);
+  let rc = null, roomState = null, roomAt = 0, roomUnsub = null;
+
+  function roomErr(code) {
+    const e = new Error(String(code || 'error'));
+    const m = /^Spotify (\d+)(?::\s*(.*))?$/.exec(e.message);
+    if (m) { e.status = Number(m[1]); e.msg = m[2] || ''; } else e.room = e.message;
+    return e;
+  }
+  // 頼みを書いて、パソコンが結果を書くのを待つ
+  async function ask(kind, fields = {}, wait = 15000) {
+    if (!rc) throw roomErr('closed');
+    const { addDoc, collection, serverTimestamp, onSnapshot } = rc.fs;
+    let ref;
+    try {
+      ref = await addDoc(collection(rc.db, 'karaokeRooms', roomId, 'requests'), { by: rc.uid, name: myName(), kind, ...fields, status: 'new', createdAt: serverTimestamp() });
+    } catch (e) { throw roomErr(e && e.code === 'permission-denied' ? 'closed' : (e && (e.code || e.message))); }
+    return new Promise((ok, ng) => {
+      let un = null, done = false;
+      const end = (f, v) => { if (done) return; done = true; clearTimeout(timer); if (un) un(); f(v); };
+      const timer = setTimeout(() => end(ng, roomErr('timeout')), wait);
+      un = onSnapshot(ref, (snap) => {
+        const d = snap.data();
+        if (!d || d.status === 'new') return;
+        if (d.status === 'done') end(ok, d.result || null); else end(ng, roomErr(d.error));
+      }, (e) => end(ng, roomErr(e && e.code)));
+      if (done) un();
+    });
+  }
+  // 予約・操作の結果を、Spotify を直接呼んだときと同じ形（ok / status / reason）に
+  async function roomDo(kind, fields) {
+    try { await ask(kind, fields); return { ok: true, status: 200, reason: '' }; }
+    catch (e) { return e.room ? { ok: false, status: 0, reason: '', room: e.room } : { ok: false, status: e.status, reason: e.msg || '' }; }
+  }
+  function roomWhy(code) {
+    if (code === 'timeout' || code === 'expired') return t('roomTimeout');
+    if (code === 'closed' || code === 'permission-denied') return t('roomClosed');
+    return t('cantOp') + '（' + code + '）';
+  }
+  const packTrack = (tr) => ({ id: String(tr.id || '').slice(0, 64), uri: tr.uri, name: (tr.name || '').slice(0, 300), artists: (tr.artists || '').slice(0, 300), art: (tr.art || '').slice(0, 500), big: (tr.big || '').slice(0, 500), album: (tr.album || '').slice(0, 300), dur: Number(tr.dur) || 0 });
+
+  // ルームの様子（パソコンが書く state）を、Spotify の /me/player と同じ形にして使う
+  function applyRoom() {
+    const n = roomState && roomState.now;
+    const fresh = Date.now() - roomAt < 75e3;
+    setConn(fresh);
+    if (!n || !n.id) { player = null; renderNow(); return; }
+    player = {
+      is_playing: !!n.playing && fresh,
+      progress_ms: (n.progress || 0) + (n.playing && n.at ? Math.max(0, Date.now() - n.at) : 0),
+      item: { id: n.id, name: n.name, by: n.by || '', artists: String(n.artists || '').split(', ').map((name) => ({ name })), duration_ms: n.dur || 0, album: { images: [{ url: n.big || n.art || '' }, { url: n.art || n.big || '', width: 300 }] } },
+    };
+    polledAt = performance.now();
+    renderNow();
+  }
+  async function joinRoom() {
+    $('#roomGone').hidden = true;
+    try {
+      rc = rc || await import('/lyrics/room-firebase.js').then((m) => m.connect());
+      const { doc, getDoc, onSnapshot } = rc.fs;
+      const ref = doc(rc.db, 'karaokeRooms', roomId);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw roomErr('closed');
+      if (roomUnsub) roomUnsub();
+      roomUnsub = onSnapshot(ref, (s) => {
+        const d = s.data();
+        if (!d || !d.open) { roomGone(); return; }
+        roomState = d.state || {};
+        roomAt = d.updatedAt && d.updatedAt.toMillis ? Math.max(d.updatedAt.toMillis(), Date.now() - 1000) : Date.now();
+        applyRoom();
+        if (tvTab === 'next') loadTvNext();
+      }, () => roomGone());
+      return true;
+    } catch (e) {
+      console.warn(e);
+      roomGone(e && (e.code === 'permission-denied' || e.room === 'closed') ? 'closed' : 'net');
+      return false;
+    }
+  }
+  function roomGone(why = 'closed') {
+    if (roomUnsub) { roomUnsub(); roomUnsub = null; }
+    $('#goneTitle').textContent = why === 'net' ? t('roomTimeout') : t('goneTitle');
+    $('#goneNote').textContent = t('goneNote');
+    $('#goneRetry').textContent = t('goneRetry');
+    $('#goneLogin').textContent = t('goneLogin');
+    $('#goneLogin').hidden = !store.get('lf_refresh');
+    $('#roomGone').hidden = false;
+  }
+  function leaveRoom() {
+    store.del('lf_remote_room');
+    location.replace(location.pathname);
+  }
+  function askName(first) {
+    $('#nameTitle').textContent = first ? t('nameTitle') : t('rename');
+    $('#nameIn').value = myName();
+    $('#nameDlg').hidden = false;
+    setTimeout(() => $('#nameIn').focus(), 50);
+  }
+  function setName(n) {
+    store.set('lf_remote_name', String(n || '').trim().slice(0, 24));
+    store.set('lf_remote_named', '1');
+    $('#nameDlg').hidden = true;
+    applyUi();
+  }
+  $('#nameOk').onclick = () => setName($('#nameIn').value);
+  $('#nameSkip').onclick = () => setName('');
+  $('#nameIn').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) setName($('#nameIn').value); });
+  $('#renameBtn').onclick = () => { $('#help').hidden = true; askName(false); };
+  $('#leaveBtn').onclick = leaveRoom;
+  $('#goneRetry').onclick = () => joinRoom();
+  $('#goneLogin').onclick = leaveRoom;
 
   // ================= 小道具 =================
   const HANGUL = /[ᄀ-ᇿ㄰-㆏가-힯]/;
@@ -906,10 +1082,69 @@
   const mine = new Set(jget('lf_remote_mine', []));
   function remember(id) { mine.add(id); store.set('lf_remote_mine', JSON.stringify([...mine].slice(-200))); }
 
+  // ================= 曲を探す（Spotify → だめなときは歌詞のデータベース） =================
+  // 探した結果は 5 分のあいだ使い回す（同じ言葉で何度も Spotify に聞かない）
+  const searchCache = new Map();
+  async function spotifySearch(q, md, off) {
+    const key = (inRoom() ? 'r' : 's') + '|' + md + '|' + off + '|' + q;
+    const hit = searchCache.get(key);
+    if (hit && Date.now() - hit.at < 300e3) return hit.v;
+    let v;
+    if (inRoom()) {
+      const items = (await ask('search', { mode: md + ':' + off, q: q.slice(0, 200) })) || [];
+      v = { items, total: off + items.length, more: items.length >= 20 };
+    } else {
+      const data = await api('/search?' + new URLSearchParams({ type: 'track', limit: '20', offset: String(off), market: 'from_token', q: md === 'artist' ? 'artist:"' + q + '"' : q }));
+      const items = ((data && data.tracks && data.tracks.items) || []).filter(Boolean).map(trackOf);
+      v = { items, total: data && data.tracks ? data.tracks.total : items.length, more: !!(data && data.tracks && data.tracks.next) && items.length > 0 };
+    }
+    searchCache.set(key, { at: Date.now(), v });
+    if (searchCache.size > 60) searchCache.delete(searchCache.keys().next().value);
+    return v;
+  }
+  // Spotify で探せないときの代わり: LRCLIB（Lyrics Flow が歌詞に使っているデータベース）。曲名・歌手名・長さだけ使う
+  async function lyricsSearch(q, md) {
+    const res = await fetch('https://lrclib.net/api/search?' + new URLSearchParams(md === 'artist' ? { artist_name: q } : { q }));
+    if (!res.ok) throw new Error('lrclib ' + res.status);
+    const list = await res.json();
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).filter((x) => x && x.trackName && !x.instrumental)
+      .filter((x) => { const k = (x.trackName + '\n' + x.artistName).toLowerCase(); return !seen.has(k) && seen.add(k); })
+      .slice(0, 30)
+      .map((x) => ({ id: 'lr' + x.id, uri: '', lr: true, synced: !!x.syncedLyrics, name: x.trackName, artists: x.artistName || '', album: x.albumName || '', art: '', big: '', dur: Math.round((x.duration || 0) * 1000) }));
+  }
+  // 歌詞のデータベースで見つけた曲を、予約する前に Spotify の曲にする（長さが近いものを選ぶ）
+  async function resolveTrack(tr) {
+    if (!tr.lr) return tr;
+    const name = tr.name.replace(/\s*[(\[（【][^)\]）】]*[)\]）】]\s*/g, ' ').trim() || tr.name;
+    const artist = (tr.artists.split(/\s*[,、&]\s*|\s+feat\.?\s+/i)[0] || '').trim();
+    let list;
+    if (inRoom()) list = (await ask('search', { mode: 'resolve', q: (name + '\n' + artist).slice(0, 200) })) || [];
+    else {
+      const find = async (q) => { const d = await api('/search?' + new URLSearchParams({ type: 'track', limit: '5', market: 'from_token', q })); return ((d && d.tracks && d.tracks.items) || []).filter(Boolean).map(trackOf); };
+      list = await find('track:"' + name + '"' + (artist ? ' artist:"' + artist + '"' : ''));
+      if (!list.length) list = await find(name + ' ' + artist);
+    }
+    if (!list.length) return null;
+    return (tr.dur && list.find((x) => Math.abs((x.dur || 0) - tr.dur) < 5000)) || list[0];
+  }
+  async function readyTrack(tr, btn) {
+    if (!tr.lr) return tr;
+    if (btn) btn.disabled = true;
+    let found = null, err = null;
+    try { found = await resolveTrack(tr); } catch (e) { err = e; }
+    if (btn) btn.disabled = false;
+    if (!found) { toast(t('cantReserve'), err ? whyFailed(err) : t('notOnSpotify'), '', true); return null; }
+    learn([found]);
+    return found;
+  }
+
   // ================= 予約・すぐ演奏・おまかせ =================
   async function reserve(tr, btn, label) {
+    tr = await readyTrack(tr, btn);
+    if (!tr) return false;
     if (btn) btn.disabled = true;
-    const r = await api('/me/player/queue?uri=' + encodeURIComponent(tr.uri), { method: 'POST' });
+    const r = inRoom() ? await roomDo('reserve', { track: packTrack(tr) }) : await api('/me/player/queue?uri=' + encodeURIComponent(tr.uri), { method: 'POST' });
     if (btn) btn.disabled = false;
     if (!r.ok) { toast(t('cantReserve'), opError(r), '', true); return false; }
     remember(tr.id);
@@ -921,15 +1156,21 @@
     return true;
   }
   async function playNow(tr) {
-    const r = await api('/me/player/play', { method: 'PUT', body: { uris: [tr.uri] } });
+    tr = await readyTrack(tr);
+    if (!tr) return;
+    const r = inRoom() ? await roomDo('playNow', { track: packTrack(tr) }) : await api('/me/player/play', { method: 'PUT', body: { uris: [tr.uri] } });
     if (!r.ok) { toast(t('cantOp'), opError(r), '', true); return; }
     toast(t('played'), tr.name, t('songNo') + ' ' + songNo(tr.id));
     setTimeout(refreshNow, 600);
   }
   async function omakase() {
     let pool = [];
-    try { const d = await api('/me/top/tracks?limit=50&time_range=short_term'); pool = ((d && d.items) || []).map(trackOf); } catch {}
-    if (!pool.length) { try { const d = await api('/me/player/recently-played?limit=50'); pool = ((d && d.items) || []).map((x) => trackOf(x.track)); } catch {} }
+    if (inRoom()) {
+      try { pool = (await ask('search', { mode: 'top', q: 'short_term' })) || []; } catch (e) { if (e.room) { toast(t('cantReserve'), roomWhy(e.room), '', true); return; } }
+      if (!pool.length) { try { pool = (await ask('search', { mode: 'recent', q: '' })) || []; } catch {} }
+    }
+    else try { const d = await api('/me/top/tracks?limit=50&time_range=short_term'); pool = ((d && d.items) || []).map(trackOf); } catch {}
+    if (!pool.length && !inRoom()) { try { const d = await api('/me/player/recently-played?limit=50'); pool = ((d && d.items) || []).map((x) => trackOf(x.track)); } catch {} }
     const fresh = pool.filter((x) => !mine.has(x.id));
     const list = fresh.length ? fresh : pool;
     if (!list.length) { toast(t('noOmakase'), t('noOmakaseSub'), '', true); return; }
@@ -942,7 +1183,7 @@
   function rows(box, tracks, opts = {}) {
     if (!opts.append) box.textContent = '';
     if (!tracks.length && !opts.append) { const d = document.createElement('div'); d.className = 'empty'; d.textContent = opts.empty || t('none'); box.appendChild(d); return; }
-    learn(tracks);
+    learn(tracks.filter((x) => !x.lr));
     tracks.forEach((tr, i) => {
       const row = document.createElement('div');
       row.className = 'row' + (tr.current ? ' cur' : '');
@@ -952,10 +1193,10 @@
       const mid = document.createElement('div'); mid.style.minWidth = '0';
       const tt = document.createElement('div'); tt.className = 't';
       if (tr.current) { const g = document.createElement('span'); g.className = 'tag'; g.textContent = t('nowTag'); tt.appendChild(g); }
-      else if (opts.queue) { const g = document.createElement('span'); g.className = 'tag'; g.style.cssText = 'background:rgba(255,255,255,.2);color:#fff'; g.textContent = (mine.has(tr.id) ? t('mineTag') + ' ・ ' : '') + t('pos', { n: tr.pos }); tt.appendChild(g); }
+      else if (opts.queue) { const g = document.createElement('span'); g.className = 'tag'; g.style.cssText = 'background:rgba(255,255,255,.2);color:#fff'; g.textContent = (tr.by ? t('byWho', { n: tr.by }) + ' ・ ' : mine.has(tr.id) ? t('mineTag') + ' ・ ' : '') + t('pos', { n: tr.pos }); tt.appendChild(g); }
       tt.appendChild(document.createTextNode(tr.name)); markLang(tt, tr.name);
       const an = document.createElement('div'); an.className = 'a narrow'; an.textContent = tr.artists; markLang(an, tr.artists);
-      const no = document.createElement('span'); no.className = 'no'; no.textContent = t('songNo') + ' ' + songNo(tr.id) + (tr.dur ? ' ・ ' + fmt(tr.dur) : '');
+      const no = document.createElement('span'); no.className = 'no'; no.textContent = (tr.lr ? (tr.synced ? t('lyricsSynced') : t('lyricsPlain')) : t('songNo') + ' ' + songNo(tr.id)) + (tr.dur ? ' ・ ' + fmt(tr.dur) : '');
       mid.append(tt, an, no);
       const aw = document.createElement('div'); aw.className = 'a wide'; aw.textContent = tr.artists; markLang(aw, tr.artists);
       row.append(ic, mid, aw);
@@ -1007,8 +1248,12 @@
   async function loadTvNext() {
     const box = $('#tvNextList');
     try {
-      const d = await api('/me/player/queue');
-      const q = ((d && d.queue) || []).filter((x) => x && x.type === 'track').slice(0, 4).map(trackOf);
+      let q;
+      if (inRoom()) q = ((roomState && roomState.queue) || []).slice(0, 4);
+      else {
+        const d = await api('/me/player/queue');
+        q = ((d && d.queue) || []).filter((x) => x && x.type === 'track').slice(0, 4).map(trackOf);
+      }
       box.textContent = '';
       if (!q.length) { box.textContent = t('noNext'); return; }
       learn(q);
@@ -1017,7 +1262,7 @@
         const img = document.createElement('img'); img.src = tr.art || ''; img.alt = '';
         const m = document.createElement('div'); m.style.minWidth = '0';
         const b = document.createElement('b'); b.textContent = tr.name; markLang(b, tr.name);
-        const s = document.createElement('span'); s.textContent = tr.artists + ' ・ ' + t('songNo') + ' ' + songNo(tr.id); markLang(s, tr.artists);
+        const s = document.createElement('span'); s.textContent = tr.artists + ' ・ ' + t('songNo') + ' ' + songNo(tr.id) + (tr.by ? ' ・ ' + t('byWho', { n: tr.by }) : ''); markLang(s, tr.artists);
         m.append(b, s); r.append(img, m); box.appendChild(r);
       });
     } catch { box.textContent = t('noNext'); }
@@ -1033,7 +1278,7 @@
   }
 
   // ---------- 探す ----------
-  let mode = 'song', seq = 0, nextUrl = null, typing = 0;
+  let mode = 'song', seq = 0, typing = 0;
   VIEWS.song = { el: 'v-find', render() { mode = 'song'; findSetup(); } };
   VIEWS.artist = { el: 'v-find', render() { mode = 'artist'; findSetup(); } };
   function findSetup() {
@@ -1042,28 +1287,39 @@
     renderHints();
     runSearch();
   }
+  let searchOff = 0;
   async function runSearch(more) {
     const q = $('#q').value.trim();
     const my = ++seq;
     const box = $('#findList');
     setCrumb();
     if (!q) { $('#findTitle').textContent = mode === 'artist' ? t('findArtist') : t('findSong'); $('#findInfo').textContent = ''; rows(box, [], { empty: mode === 'artist' ? t('emptyArtist') : t('emptySong') }); return; }
-    if (!more) { loadingIn(box); nextUrl = null; }
+    if (!more) { loadingIn(box); searchOff = 0; }
     try {
-      const path = more && nextUrl ? nextUrl.replace(API, '') : '/search?' + new URLSearchParams({ type: 'track', limit: '20', market: 'from_token', q: mode === 'artist' ? 'artist:"' + q + '"' : q });
-      const data = await api(path);
+      let v, alt = null;
+      try { v = await spotifySearch(q, mode, searchOff); }
+      catch (e) {
+        // Spotify に断られた・混んでいる・パソコンから返事がない → 歌詞のデータベースで探す
+        if (more || (e && e.room === 'closed')) throw e;
+        let items = [];
+        try { items = await lyricsSearch(q, mode); } catch {}
+        if (!items.length) throw e;
+        v = { items, total: items.length, more: false };
+        alt = e;
+      }
       if (my !== seq) return;
-      const items = ((data && data.tracks && data.tracks.items) || []).filter(Boolean).map(trackOf);
-      nextUrl = data && data.tracks && data.tracks.next;
       $('#findTitle').textContent = t('results', { q });
-      $('#findInfo').textContent = t('hits', { n: data && data.tracks ? data.tracks.total : 0 });
+      $('#findInfo').textContent = t('hits', { n: v.total });
       box.querySelector('.more')?.remove();
-      rows(box, items, { append: !!more });
-      if (nextUrl && items.length) { const m = document.createElement('button'); m.className = 'more'; m.textContent = t('more'); m.onclick = () => { m.remove(); runSearch(true); }; box.appendChild(m); }
+      rows(box, v.items, { append: !!more });
+      if (alt) { const n = document.createElement('p'); n.className = 'hint'; n.textContent = t('altSearch'); box.prepend(n); }
+      searchOff += v.items.length;
+      if (v.more) { const m = document.createElement('button'); m.className = 'more'; m.textContent = t('more'); m.onclick = () => { m.remove(); runSearch(true); }; box.appendChild(m); }
     } catch (e) { if (my === seq) rows(box, [], { empty: whyFailed(e) }); }
   }
-  function saveHint() { const q = $('#q').value.trim(); if (!q) return; const h = [q, ...jget('lf_remote_hist', []).filter((x) => x !== q)].slice(0, 8); store.set('lf_remote_hist', JSON.stringify(h)); renderHints(); }
-  $('#q').addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => runSearch(), 550); });
+  // 覚えるだけ（ここで「最近探した言葉」を書き直すと一覧がずれて、打ったあとの最初のタップが外れるため。次に開いたときに出る）
+  function saveHint() { const q = $('#q').value.trim(); if (!q) return; const h = [q, ...jget('lf_remote_hist', []).filter((x) => x !== q)].slice(0, 8); store.set('lf_remote_hist', JSON.stringify(h)); }
+  $('#q').addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => runSearch(), 650); });
   $('#q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(typing); runSearch(); saveHint(); $('#q').blur(); } });
   $('#q').addEventListener('change', saveHint);
   $('#qclear').onclick = () => { $('#q').value = ''; runSearch(); };
@@ -1148,6 +1404,30 @@
         box.prepend(n);
         return;
       }
+      if (inRoom()) {
+        // ルーム: パソコンの Spotify の一覧（よく聴く曲・りれきは、パソコンのアカウントのもの）
+        const y = new Date().getFullYear();
+        $('#listTitle').textContent = kind === 'recent' ? t('recentTitle') : kind === 'top' ? t('topTitle') : kind === 'new' ? t('newTitle', { y }) : kind === 'queue' ? t('queueTitle') : t('genreTitle', { g: (arg || '').toUpperCase() });
+        const list = (await ask('search', { mode: kind, q: kind === 'top' ? topRange : kind === 'genre' ? arg : '' })) || [];
+        if (cur && cur.kind !== kind) return;
+        if (kind === 'queue') {
+          $('#listInfo').textContent = t('hits', { n: list.filter((x) => !x.current).length });
+          rows(box, list, { queue: true, empty: t('queueEmpty') });
+          const n = document.createElement('p'); n.className = 'hint'; n.textContent = t('queueNote'); box.appendChild(n);
+          return;
+        }
+        rows(box, list);
+        if (kind === 'top') {
+          const bar = document.createElement('div'); bar.className = 'modes'; bar.style.margin = '0 0 8px';
+          [['short_term', t('range4')], ['medium_term', t('range6')], ['long_term', t('range1')]].forEach(([k, label]) => {
+            const b = document.createElement('button'); b.textContent = label; b.setAttribute('aria-pressed', String(k === topRange));
+            b.onclick = () => { topRange = k; listView('top'); };
+            bar.appendChild(b);
+          });
+          box.prepend(bar);
+        }
+        return;
+      }
       if (kind === 'recent') {
         $('#listTitle').textContent = t('recentTitle');
         const d = await api('/me/player/recently-played?limit=50');
@@ -1220,7 +1500,7 @@
     $('#dArt').src = tr.big || tr.art || '';
     $('#dTitle').textContent = tr.name; markLang($('#dTitle'), tr.name);
     $('#dArtist').textContent = tr.artists; markLang($('#dArtist'), tr.artists);
-    $('#dNo').textContent = t('songNo') + ' ' + songNo(tr.id);
+    $('#dNo').textContent = tr.lr ? t('noNoYet') : t('songNo') + ' ' + songNo(tr.id);
     const chips = $('#dChips'); chips.textContent = '';
     const chip = (text, cls) => { const s = document.createElement('span'); s.textContent = text; if (cls) s.className = cls; markLang(s, text); chips.appendChild(s); return s; };
     if (tr.album) chip(tr.album);
@@ -1251,7 +1531,7 @@
 
   // ================= 演奏中と操作 =================
   let player = null, connected = false, polledAt = 0;
-  function setConn(on) { connected = on; $('#conn').classList.toggle('on', on); $('#conn span').textContent = on ? t('online') : t('offline'); }
+  function setConn(on) { connected = on; $('#conn').classList.toggle('on', on); $('#conn span').textContent = inRoom() ? (on ? t('roomOn') : t('roomOff')) : on ? t('online') : t('offline'); }
   function renderNow() {
     const it = player && player.item;
     const lb = !it ? t('idle') : player.is_playing ? t('playing') : t('paused');
@@ -1263,7 +1543,7 @@
     $('#hTitle').textContent = title; markLang($('#hTitle'), title);
     $('#mTitle').textContent = it ? lb + ' ・ ' + title : title; markLang($('#mTitle'), title);
     $('#hArtist').textContent = ar; markLang($('#hArtist'), ar);
-    $('#hNo').textContent = it ? t('songNo') + ' ' + songNo(it.id) : '';
+    $('#hNo').textContent = it ? t('songNo') + ' ' + songNo(it.id) + (it.by ? ' ・ ' + t('byWho', { n: it.by }) : '') : '';
     const big = it ? bigImg(it.album && it.album.images) : '', small = it ? smallImg(it.album && it.album.images) : '';
     if ($('#hArt').getAttribute('src') !== big) $('#hArt').src = big;
     if ($('#pArt').getAttribute('src') !== big) $('#pArt').src = big;
@@ -1281,6 +1561,7 @@
   }
   setInterval(tickBar, 500);
   async function refreshNow() {
+    if (inRoom()) { applyRoom(); if (tvTab === 'next') loadTvNext(); return; }
     try { player = await api('/me/player?additional_types=track'); polledAt = performance.now(); setConn(true); }
     catch { setConn(false); }
     renderNow();
@@ -1293,11 +1574,17 @@
   }
   const seekBy = (d) => { if (!player || !player.item) return; op('PUT', '/me/player/seek?position_ms=' + Math.max(0, (player.progress_ms || 0) + (player.is_playing ? performance.now() - polledAt : 0) + d)); };
   const vol = (d) => { const v = player && player.device && player.device.volume_percent; if (v == null) { toast(t('cantOp'), '', '', true); return; } op('PUT', '/me/player/volume?volume_percent=' + Math.max(0, Math.min(100, v + d))); };
+  // ルーム: 操作の名前だけ送る（位置や音量はパソコンが計算する）
+  async function roomOp(name) {
+    const r = await roomDo('op', { op: name });
+    if (!r.ok) toast(t('cantOp'), opError(r), '', true);
+  }
   const OPS = {
-    rew: () => seekBy(-10000), ff: () => seekBy(10000), restart: () => op('PUT', '/me/player/seek?position_ms=0'),
-    pause: () => op('PUT', player && player.is_playing ? '/me/player/pause' : '/me/player/play'),
-    skip: () => op('POST', '/me/player/next'), prev: () => op('POST', '/me/player/previous'),
-    volUp: () => vol(10), volDown: () => vol(-10), queue: () => go('queue'),
+    rew: () => (inRoom() ? roomOp('rew') : seekBy(-10000)), ff: () => (inRoom() ? roomOp('ff') : seekBy(10000)),
+    restart: () => (inRoom() ? roomOp('restart') : op('PUT', '/me/player/seek?position_ms=0')),
+    pause: () => (inRoom() ? roomOp(player && player.is_playing ? 'pause' : 'play') : op('PUT', player && player.is_playing ? '/me/player/pause' : '/me/player/play')),
+    skip: () => (inRoom() ? roomOp('skip') : op('POST', '/me/player/next')), prev: () => (inRoom() ? roomOp('prev') : op('POST', '/me/player/previous')),
+    volUp: () => (inRoom() ? roomOp('volUp') : vol(10)), volDown: () => (inRoom() ? roomOp('volDown') : vol(-10)), queue: () => go('queue'),
   };
   $$('[data-op]').forEach((b) => { b.onclick = () => { if (navigator.vibrate) navigator.vibrate(10); OPS[b.dataset.op](); }; });
   $('#dockBack').onclick = back;
@@ -1332,10 +1619,25 @@
   $$('[data-ui-pick]').forEach((b) => { b.onclick = () => setUi(b.dataset.uiPick); });
   addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    if (!$('#nameDlg').hidden) return;
     if (!$('#detail').hidden) closeDetail(); else if (!$('#help').hidden) $('#help').hidden = true; else back();
   });
 
-  function main() {
+  async function main() {
+    if (inRoom()) {
+      stage.hidden = false;
+      clock();
+      setEasy(store.get('lf_remote_easy') === 'on');
+      setKana(store.get('lf_remote_kana') === 'on');
+      applyUi();
+      const h = location.hash.slice(1);
+      go(h && VIEWS[h.split(':')[0]] ? h : 'home', false);
+      setConn(false);
+      if (!(await joinRoom())) return;
+      if (!store.get('lf_remote_named')) askName(true);
+      setInterval(() => { if (document.visibilityState === 'visible') applyRoom(); }, 5000);
+      return;
+    }
     if (!store.get('lf_refresh')) {
       $('#login').hidden = false;
       $('#loginLink').onclick = () => store.set('lf_after_login', '/lyrics/remote/');
