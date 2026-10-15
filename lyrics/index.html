@@ -675,6 +675,9 @@
     font-family: var(--lf-family); font-weight: var(--lf-weight); letter-spacing: var(--lf-spacing);
     font-feature-settings: var(--lf-feat); font-synthesis: none;
   }
+  .remote { display: flex; gap: 14px; align-items: center; }
+  #remoteQr { flex: none; width: 108px; height: 108px; padding: 6px; border-radius: 10px; background: #fff; }
+  #remoteQr img, #remoteQr canvas { width: 100% !important; height: 100% !important; display: block; }
   #easePreview { position: relative; height: 34px; margin-top: 10px; border-radius: 12px; background: rgba(0, 0, 0, .28); overflow: hidden; }
   #easePreview::before { content: ""; position: absolute; left: 20px; right: 20px; top: 50%; height: 2px; margin-top: -1px; border-radius: 1px; background: rgba(255, 255, 255, .14); }
   #easePreview i {
@@ -916,6 +919,15 @@
   </div>
   <div id="easePreview" title="押すと動きを試せます"><i></i></div>
 
+  <h3>選曲リモコン（デンモク）</h3>
+  <div class="remote">
+    <div id="remoteQr" aria-label="選曲リモコンの QR コード"></div>
+    <div>
+      <p class="hint" style="margin:0 0 8px">スマホで読み取ると、曲を探して予約できるリモコンが開きます（ログインは同じ Spotify のアカウントで）。</p>
+      <a class="chip" href="/lyrics/remote/" target="_blank" rel="noopener" style="text-decoration:none">リモコンを開く</a>
+    </div>
+  </div>
+
   <h3>表示</h3>
   <div class="row">
     <label>文字の大きさ</label>
@@ -969,7 +981,8 @@
   const BUILTIN_YT_KEY = '';
   const REDIRECT_URI = location.origin + location.pathname;
   // 再生の操作（一時停止・スキップ・シーク・音量）には user-modify-playback-state がいる（Premium のみ）
-  const SCOPES = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
+  // 選曲リモコン（/lyrics/remote/）の「履歴」「よく聴く曲」には user-read-recently-played・user-top-read がいる
+  const SCOPES = 'user-read-currently-playing user-read-playback-state user-modify-playback-state user-read-recently-played user-top-read';
   const API = 'https://api.spotify.com/v1';
   const POLL_PLAYING_MS = 2000;
   const POLL_IDLE_MS = 5000;
@@ -2377,9 +2390,24 @@
     state.kShown = [null, null];
     $$('#karaoke .kline').forEach((r) => { r.style.fontSize = ''; });
   }
+  // 選曲リモコンの QR コード（パネルを開いたときに、はじめて作る）
+  let qrDone = false;
+  function makeRemoteQr() {
+    if (qrDone) return;
+    qrDone = true;
+    const url = location.origin + '/lyrics/remote/';
+    const draw = () => { try { new QRCode($('#remoteQr'), { text: url, width: 96, height: 96, correctLevel: QRCode.CorrectLevel.M }); } catch {} };
+    if (window.QRCode) return draw();
+    const sct = document.createElement('script');
+    sct.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    sct.onload = draw;
+    sct.onerror = () => { $('#remoteQr').hidden = true; };
+    document.head.appendChild(sct);
+  }
   function togglePanel(open) {
     const panel = $('#panel');
     const show = open === undefined ? panel.hidden : open;
+    if (show) makeRemoteQr();
     panel.hidden = !show;
     $('#menuBtn').setAttribute('aria-expanded', String(show));
   }
@@ -2517,6 +2545,12 @@
     if (!store.get('lf_refresh')) {
       $('#setup').hidden = false;
       return;
+    }
+    // 選曲リモコンからログインしに来たときは、ログインが済んだら戻る
+    const after = store.get('lf_after_login');
+    if (after) {
+      store.del('lf_after_login');
+      if (/^\/lyrics\/[\w/-]*$/.test(after)) { location.replace(after); return; }
     }
     showMessage('接続中…');
     keepAwake();
