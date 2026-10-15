@@ -1,0 +1,24 @@
+{
+  "id": "/lyrics/remote/",
+  "name": "選曲リモコン（Lyrics Flow）",
+  "short_name": "選曲リモコン",
+  "description": "Lyrics Flow のカラオケで使う選曲リモコン。Spotify の曲を探して予約できる。日本のカラオケ風と、韓国のノレバン風の画面。",
+  "lang": "ja",
+  "start_url": "/lyrics/remote/",
+  "scope": "/lyrics/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#120a24",
+  "theme_color": "#120a24",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "曲名で探す", "url": "/lyrics/remote/#song", "icons": [{ "src": "/lyrics/remote/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "番号で予約", "url": "/lyrics/remote/#pad", "icons": [{ "src": "/lyrics/remote/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "予約確認", "url": "/lyrics/remote/#queue", "icons": [{ "src": "/lyrics/remote/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ],
+  "categories": ["music", "entertainment"]
+}

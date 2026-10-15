@@ -1,278 +1,550 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-ui="jp">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>選曲リモコン | Lyrics Flow</title>
-<meta name="description" content="Lyrics Flow のカラオケで使う選曲リモコン。Spotify の曲を探して、予約（キューに追加）できる。">
-<meta name="theme-color" content="#0c1230">
+<meta name="description" content="Lyrics Flow のカラオケで使う選曲リモコン。Spotify の曲を探して、予約（キューに追加）できる。日本のカラオケ風と、韓国のノレバン風の画面。">
+<meta name="theme-color" content="#120a24">
 <link rel="canonical" href="https://sk-hub.jp/lyrics/remote/">
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
-<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@700;800&display=swap"></script>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="選曲リモコン">
+<!-- 画面の種類（日本風 / 韓国風）を、画面が出る前に付ける -->
+<script>(function(){try{var u=localStorage.getItem("lf_remote_ui");if(u==="kr"){document.documentElement.setAttribute("data-ui","kr");document.documentElement.lang="ko";}}catch(e){}})();</script>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=Noto+Sans+KR:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@700;800&display=swap"></script>
 <style>
-  :root {
-    --bg: #0c1230;
-    --panel: rgba(255, 255, 255, .06);
-    --line: rgba(255, 255, 255, .1);
-    --fg: #fff;
-    --dim: rgba(255, 255, 255, .62);
-    --accent: #ff9a1f;   /* 予約ボタン */
-    --accent2: #ff5f8f;
-    --blue: #4f7bff;
-    --ok: #2fd27a;
-    --round: "M PLUS Rounded 1c", "Noto Sans JP", "Noto Sans KR", sans-serif;
-  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; min-height: 100%; }
-  body {
-    background: radial-gradient(120% 60% at 50% -10%, #23307a 0%, var(--bg) 60%) fixed, var(--bg);
-    color: var(--fg);
-    font-family: "Noto Sans JP", "Hiragino Sans", "Noto Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom));
-  }
+  html, body { margin: 0; height: 100%; }
+  body { overflow: hidden; color: #fff; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
   button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  input { user-select: text; -webkit-user-select: text; }
   [hidden] { display: none !important; }
+  svg { display: block; }
   [lang="ko"] { font-family: "Noto Sans KR", "Apple SD Gothic Neo", sans-serif; }
 
-  /* ================= 上: タイトルとタブ ================= */
-  .top {
-    position: sticky; top: 0; z-index: 5;
-    padding: max(10px, env(safe-area-inset-top)) 14px 0;
-    background: linear-gradient(rgba(12, 18, 48, .97), rgba(12, 18, 48, .9));
-    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-    border-bottom: 1px solid var(--line);
+  /* =====================================================================
+     色・形（日本風 = 既定 / 韓国風 = data-ui="kr"）
+     ===================================================================== */
+  :root {
+    --font: "M PLUS Rounded 1c", "Noto Sans JP", "Noto Sans KR", sans-serif;
+    --bg: radial-gradient(120% 80% at 80% 0%, #4a1a6e 0%, #1c0d36 45%, #0d0820 100%);
+    --bar: linear-gradient(#2a1650, #1a0d34);
+    --field: #fff; --field-fg: #1a1030;
+    --tile-r: linear-gradient(#ff5a5f, #d81f2c 55%, #b0121e);
+    --tile-o: linear-gradient(#ffb43a, #f58a0c 55%, #d96a00);
+    --tile-b: linear-gradient(#5d9bff, #2c66e8 55%, #1a46b8);
+    --tile-g: linear-gradient(#3fd6c0, #13a892 55%, #0b7e6e);
+    --tile-v: linear-gradient(#b980ff, #8a4ae8 55%, #6428c0);
+    --tile-radius: 12px;
+    --tile-edge: 0 0 0 2px rgba(255, 255, 255, .7), 0 4px 0 rgba(0, 0, 0, .35), 0 8px 18px rgba(0, 0, 0, .35);
+    --row: linear-gradient(90deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .04));
+    --row-edge: rgba(255, 255, 255, .14);
+    --accent: #ffd23f;
+    --reserve: radial-gradient(circle at 40% 30%, #ff8a8a 0%, #e8222f 45%, #a10f19 100%);
+    --back: linear-gradient(#5fe08a, #1fae55);
+    --pad-bg: radial-gradient(120% 90% at 50% 0%, #a3162a 0%, #5a0a18 55%, #2a0610 100%);
+    --key: linear-gradient(#ffffff, #e4e4ee);
+    --key-fg: #222;
   }
-  .brand { display: flex; align-items: center; gap: 10px; height: 40px; }
-  .brand .logo {
-    width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
-    background: linear-gradient(135deg, var(--accent), var(--accent2)); font-weight: 900; font-size: 18px;
-    box-shadow: 0 4px 14px rgba(255, 120, 60, .35);
+  [data-ui="kr"] {
+    --font: "Noto Sans KR", "Noto Sans JP", sans-serif;
+    --bg: radial-gradient(120% 80% at 20% 0%, #10204e 0%, #090b22 55%, #05060f 100%);
+    --bar: linear-gradient(#0e1438, #090c24);
+    --field: rgba(255, 255, 255, .08); --field-fg: #fff;
+    --tile-r: linear-gradient(160deg, rgba(255, 63, 164, .28), rgba(255, 63, 164, .08));
+    --tile-o: linear-gradient(160deg, rgba(255, 225, 77, .26), rgba(255, 225, 77, .06));
+    --tile-b: linear-gradient(160deg, rgba(45, 226, 255, .26), rgba(45, 226, 255, .06));
+    --tile-g: linear-gradient(160deg, rgba(80, 255, 160, .24), rgba(80, 255, 160, .06));
+    --tile-v: linear-gradient(160deg, rgba(139, 92, 255, .32), rgba(139, 92, 255, .08));
+    --tile-radius: 18px;
+    --tile-edge: inset 0 0 0 1.5px rgba(255, 255, 255, .16);
+    --row: rgba(255, 255, 255, .05);
+    --row-edge: rgba(45, 226, 255, .18);
+    --accent: #2de2ff;
+    --reserve: radial-gradient(circle at 40% 30%, #fff4a8 0%, #ffd400 45%, #d18a00 100%);
+    --back: linear-gradient(#2a3366, #1a2050);
+    --pad-bg: radial-gradient(120% 90% at 50% 0%, #1a1f4a 0%, #0b0d24 60%, #05060f 100%);
+    --key: radial-gradient(circle at 50% 35%, #2a3170, #151a42);
+    --key-fg: #e6f7ff;
   }
-  .brand b { font-family: var(--round); font-size: 18px; letter-spacing: .04em; }
-  .brand small { color: var(--dim); font-size: 12px; }
-  .brand .sp { flex: 1; }
-  .iconbtn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--panel); font-size: 16px; }
-  .iconbtn[aria-pressed="false"] { opacity: .45; }
-  .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin: 8px -14px 0; padding: 0 14px; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab {
-    flex: none; padding: 10px 14px 12px; font-size: 14px; font-weight: 700; color: var(--dim);
-    border-bottom: 3px solid transparent; white-space: nowrap;
-  }
-  .tab[aria-selected="true"] { color: #fff; border-bottom-color: var(--accent); }
-  .tab .count { display: inline-block; min-width: 20px; margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: var(--accent2); color: #fff; font-size: 11px; text-align: center; }
+  body { font-family: var(--font); background: var(--bg); }
 
-  /* ================= 並び（広い画面では、左に検索と 50 音、右に一覧） ================= */
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 14px; }
-  @media (min-width: 960px) {
-    .wrap.split { display: grid; grid-template-columns: 420px 1fr; gap: 22px; align-items: start; }
-    .wrap.split #searchArea { position: sticky; top: 112px; }
+  /* ================= 画面の枠 ================= */
+  .shell { height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
+  .bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: max(8px, env(safe-area-inset-top)) 10px 8px; background: var(--bar);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
   }
+  .topbtn {
+    flex: none; height: 38px; padding: 0 12px; border-radius: 10px; font-weight: 800; font-size: 14px;
+    background: linear-gradient(#ffe46a, #f2b400); color: #3a2400; box-shadow: 0 2px 0 #9a6a00;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .crumb {
+    flex: 1; min-width: 0; height: 38px; padding: 0 12px; border-radius: 8px; display: flex; align-items: center;
+    background: var(--field); color: var(--field-fg); font-weight: 800; font-size: 16px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .uiswitch { flex: none; display: flex; border-radius: 10px; overflow: hidden; border: 1.5px solid rgba(255, 255, 255, .3); font-size: 12px; font-weight: 800; }
+  .uiswitch button { padding: 0 10px; height: 35px; color: rgba(255, 255, 255, .6); }
+  .uiswitch button[aria-pressed="true"] { background: #fff; color: #1a1030; }
+  [data-ui="kr"] .topbtn { background: linear-gradient(135deg, #ff3fa4, #8b5cff); color: #fff; box-shadow: 0 0 14px rgba(255, 63, 164, .45); }
+  [data-ui="kr"] .crumb { border: 1.5px solid rgba(45, 226, 255, .4); box-shadow: 0 0 14px rgba(45, 226, 255, .15); }
 
-  /* ================= 検索 ================= */
-  .searchbar { display: flex; gap: 8px; }
-  .searchbar .field { flex: 1; position: relative; }
-  #q {
-    width: 100%; height: 50px; padding: 0 44px 0 16px; border-radius: 14px;
-    font: inherit; font-size: 17px; color: #fff; background: rgba(255, 255, 255, .09); border: 2px solid transparent; outline: none;
-  }
-  #q:focus { border-color: var(--blue); background: rgba(255, 255, 255, .12); }
-  #q::placeholder { color: rgba(255, 255, 255, .4); }
-  #clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; color: var(--dim); font-size: 18px; }
-  #kanaToggle {
-    flex: none; height: 50px; padding: 0 14px; border-radius: 14px; font-weight: 800; font-size: 14px;
-    background: var(--panel); border: 2px solid var(--line);
-  }
-  #kanaToggle[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); }
+  #views { position: relative; overflow: hidden; }
+  .view { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 20px; animation: vin .28s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes vin { from { opacity: 0; transform: translateX(12px); } }
 
-  /* 50 音キーボード */
-  #kana { margin-top: 10px; padding: 10px; border-radius: 16px; background: rgba(0, 0, 0, .25); border: 1px solid var(--line); }
-  .kgrid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; direction: rtl; } /* あ行を右に（デンモクと同じ向き） */
-  .kgrid button, .krow button {
-    height: 44px; border-radius: 9px; background: rgba(255, 255, 255, .1); font-family: var(--round); font-weight: 800; font-size: 18px;
-    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .25); direction: ltr;
+  .foot {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; align-items: center;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: var(--bar); border-top: 1px solid rgba(255, 255, 255, .08);
   }
-  .kgrid button:active, .krow button:active { transform: translateY(1px); background: rgba(255, 255, 255, .22); }
+  .backbtn {
+    height: 40px; padding: 0 14px 0 8px; border-radius: 999px; background: var(--back); font-weight: 800; font-size: 14px;
+    display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 0 rgba(0, 0, 0, .35);
+  }
+  .backbtn i { width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 255, 255, .9); color: #1a8a45; display: grid; place-items: center; font-style: normal; font-weight: 900; }
+  [data-ui="kr"] .backbtn i { color: #1a2050; }
+  .mini { display: flex; align-items: center; gap: 8px; min-width: 0; text-align: left; }
+  .mini img { width: 38px; height: 38px; border-radius: 6px; object-fit: cover; background: rgba(255, 255, 255, .1); flex: none; }
+  .mini .lb { font-size: 10px; font-weight: 800; color: var(--accent); }
+  .mini .tt { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .footbtn { height: 40px; padding: 0 12px; border-radius: 10px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .12); }
+  .footbtn.stop { background: linear-gradient(#ff5a5f, #c4141f); box-shadow: 0 2px 0 #7a0a12; }
+  [data-ui="kr"] .footbtn.stop { background: linear-gradient(#ff4a6a, #b0103a); }
+
+  /* ================= TOP ================= */
+  .home { display: grid; gap: 12px; grid-template-columns: 1fr; max-width: 1100px; margin: 0 auto; }
+  @media (min-width: 820px) { .home { grid-template-columns: minmax(280px, 38%) 1fr; } }
+  .nowcard {
+    border-radius: 14px; padding: 12px; background: rgba(0, 0, 0, .35); border: 1.5px solid rgba(255, 255, 255, .14);
+    display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center;
+  }
+  @media (min-width: 820px) { .nowcard { grid-template-columns: 1fr; align-content: start; } .nowcard img { width: 100%; height: auto; aspect-ratio: 1; } }
+  .nowcard img { width: 96px; height: 96px; border-radius: 10px; object-fit: cover; background: rgba(255, 255, 255, .08); box-shadow: 0 6px 18px rgba(0, 0, 0, .4); }
+  .nowcard .lb { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; background: var(--accent); color: #2a1a00; }
+  [data-ui="kr"] .nowcard .lb { color: #04202a; }
+  .nowcard .tt { margin-top: 6px; font-size: 18px; font-weight: 900; line-height: 1.3; }
+  .nowcard .aa { font-size: 13px; color: rgba(255, 255, 255, .7); margin-top: 2px; }
+  .nowcard .bar2 { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .15); margin-top: 10px; overflow: hidden; }
+  .nowcard .bar2 i { display: block; height: 100%; width: 0; background: var(--accent); }
+  .install { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .install button { padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, .12); font-size: 12px; font-weight: 800; }
+  .install p { margin: 0; font-size: 11px; color: rgba(255, 255, 255, .6); line-height: 1.6; }
+
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-content: start; }
+  @media (min-width: 560px) { .tiles { grid-template-columns: repeat(4, 1fr); } }
+  .tile {
+    position: relative; overflow: hidden; min-height: 86px; padding: 10px 8px; border-radius: var(--tile-radius);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
+    font-weight: 900; font-size: 16px; line-height: 1.2; box-shadow: var(--tile-edge);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, .3);
+  }
+  .tile.big { grid-column: span 1; min-height: 112px; font-size: 20px; }
+  .tile::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 48%; background: linear-gradient(rgba(255, 255, 255, .32), rgba(255, 255, 255, .06)); pointer-events: none; }
+  .tile:active { transform: translateY(2px); filter: brightness(1.08); }
+  .tile svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .tile .sub { font-size: 10px; font-weight: 700; opacity: .75; text-shadow: none; }
+  .t-r { background: var(--tile-r); } .t-o { background: var(--tile-o); } .t-b { background: var(--tile-b); } .t-g { background: var(--tile-g); } .t-v { background: var(--tile-v); }
+  [data-ui="kr"] .tile::before { display: none; }
+  [data-ui="kr"] .tile { text-shadow: 0 0 12px currentColor; }
+  [data-ui="kr"] .t-r { color: #ff7cc4; box-shadow: inset 0 0 0 1.5px rgba(255, 63, 164, .7), 0 0 18px rgba(255, 63, 164, .25); }
+  [data-ui="kr"] .t-o { color: #ffe97a; box-shadow: inset 0 0 0 1.5px rgba(255, 225, 77, .65), 0 0 18px rgba(255, 225, 77, .2); }
+  [data-ui="kr"] .t-b { color: #7aefff; box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .65), 0 0 18px rgba(45, 226, 255, .22); }
+  [data-ui="kr"] .t-g { color: #8dffc2; box-shadow: inset 0 0 0 1.5px rgba(80, 255, 160, .6), 0 0 18px rgba(80, 255, 160, .2); }
+  [data-ui="kr"] .t-v { color: #c4abff; box-shadow: inset 0 0 0 1.5px rgba(139, 92, 255, .7), 0 0 18px rgba(139, 92, 255, .25); }
+  [data-ui="kr"] .tile .sub { color: rgba(255, 255, 255, .7); }
+  .sub:empty { display: none; }
+
+  /* ================= 探す ================= */
+  .find { max-width: 1100px; margin: 0 auto; }
+  @media (min-width: 900px) { .find { display: grid; grid-template-columns: 400px 1fr; gap: 16px; align-items: start; } .find .left { position: sticky; top: 0; } }
+  .modes { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .modes button { padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .1); }
+  .modes button[aria-pressed="true"] { background: var(--tile-r); box-shadow: 0 0 0 2px rgba(255, 255, 255, .6); }
+  [data-ui="kr"] .modes button[aria-pressed="true"] { background: transparent; box-shadow: inset 0 0 0 1.5px #ff3fa4, 0 0 12px rgba(255, 63, 164, .4); color: #ff9bd2; }
+  .sbox { display: flex; gap: 6px; }
+  .sbox .f { flex: 1; position: relative; }
+  #q { width: 100%; height: 48px; padding: 0 40px 0 14px; border-radius: 10px; border: 0; font: inherit; font-size: 17px; font-weight: 700; color: var(--field-fg); background: var(--field); outline: none; }
+  [data-ui="kr"] #q { border: 1.5px solid rgba(45, 226, 255, .45); }
+  #qclear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; color: #888; font-size: 18px; }
+  #kanaBtn { height: 48px; padding: 0 12px; border-radius: 10px; font-weight: 800; font-size: 13px; background: rgba(255, 255, 255, .12); }
+  #kanaBtn[aria-pressed="true"] { background: var(--tile-b); }
+  [data-ui="kr"] #kanaBtn { display: none; }
+  #kana { margin-top: 8px; padding: 8px; border-radius: 12px; background: rgba(0, 0, 0, .3); }
+  .kgrid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; direction: rtl; }
+  .kgrid button, .krow button { height: 42px; border-radius: 8px; background: var(--key); color: var(--key-fg); font-weight: 800; font-size: 17px; direction: ltr; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
   .kgrid .blank { visibility: hidden; }
-  .krow { display: grid; grid-template-columns: repeat(4, 1fr) 1.5fr 1.5fr 1.5fr; gap: 5px; margin-top: 5px; }
-  .krow .fn { font-size: 13px; background: rgba(255, 255, 255, .06); }
-  .krow .del { background: rgba(255, 95, 143, .25); }
-  @media (max-width: 420px) { .kgrid button, .krow button { height: 40px; font-size: 16px; } }
+  .krow { display: grid; grid-template-columns: repeat(4, 1fr) 1.4fr 1.4fr 1.4fr; gap: 4px; margin-top: 4px; }
+  .krow .fn { font-size: 12px; }
+  .krow .del { background: linear-gradient(#ffd0d4, #f2a3aa); }
+  .hint { margin: 8px 2px; font-size: 12px; color: rgba(255, 255, 255, .55); line-height: 1.6; }
 
-  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-  .chips button { padding: 7px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; color: var(--dim); }
+  /* ================= 一覧 ================= */
+  .lhead { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 2px 8px; }
+  .lhead b { font-size: 15px; }
+  .lhead span { font-size: 12px; color: rgba(255, 255, 255, .6); }
+  .tabs2 { display: flex; gap: 4px; margin-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
+  .tabs2 button { flex: none; padding: 8px 12px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .7); }
+  .tabs2 button[aria-pressed="true"] { background: var(--tile-v); color: #fff; }
+  .row {
+    display: grid; grid-template-columns: 26px minmax(0, 1.3fr) minmax(0, 1fr) auto; align-items: center; gap: 10px;
+    min-height: 54px; padding: 6px 8px 6px 10px; margin-bottom: 4px; border-radius: 8px; background: var(--row);
+    border: 1px solid var(--row-edge); text-align: left; width: 100%;
+    animation: rin .25s ease both;
+  }
+  @keyframes rin { from { opacity: 0; transform: translateY(4px); } }
+  .row .ic { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; background: rgba(255, 255, 255, .12); font-size: 14px; }
+  .row .t { font-weight: 800; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .a { font-size: 13px; color: rgba(255, 255, 255, .78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 5px; align-items: center; }
+  .row .a::before { content: ""; flex: none; width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(#b980ff, #7a3ae0); }
+  [data-ui="kr"] .row .a::before { background: linear-gradient(#2de2ff, #1a8ad8); }
+  .row .no { display: block; font-size: 11px; color: rgba(255, 255, 255, .5); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .row.cur { border-color: var(--accent); }
+  .row .tag { display: inline-block; margin-right: 5px; padding: 1px 6px; border-radius: 5px; font-size: 10px; background: var(--accent); color: #1a1000; vertical-align: 2px; }
+  .rsv { width: 46px; height: 46px; border-radius: 50%; background: var(--reserve); font-weight: 900; font-size: 13px; box-shadow: 0 3px 0 rgba(0, 0, 0, .4), inset 0 2px 0 rgba(255, 255, 255, .35); text-shadow: 0 1px 0 rgba(0, 0, 0, .3); }
+  [data-ui="kr"] .rsv { color: #3a2400; text-shadow: none; }
+  .rsv.done { background: radial-gradient(circle at 40% 30%, #9cffc4, #20c46a 50%, #0d7a3e); color: #fff; }
+  @media (max-width: 560px) {
+    .row { grid-template-columns: 26px minmax(0, 1fr) auto; }
+    .row .a.wide { display: none; }
+    .row .a.narrow { display: flex; }
+  }
+  .row .a.narrow { display: none; }
+  .empty { padding: 36px 10px; text-align: center; color: rgba(255, 255, 255, .6); font-size: 14px; line-height: 1.8; }
+  .more { width: 100%; margin-top: 6px; padding: 12px; border-radius: 10px; background: rgba(255, 255, 255, .08); font-weight: 800; color: rgba(255, 255, 255, .75); }
 
-  /* ================= 曲の一覧 ================= */
-  .listhead { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 2px 10px; }
-  .listhead h2 { margin: 0; font-size: 15px; font-weight: 800; }
-  .listhead span { font-size: 12px; color: var(--dim); }
-  .item {
-    display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 12px;
-    padding: 10px; border-radius: 14px; background: var(--panel); margin-bottom: 8px;
-    animation: rise .3s cubic-bezier(.2, .8, .2, 1) both;
+  /* ================= リモコン（番号で予約・操作） ================= */
+  #v-pad { background: var(--pad-bg); }
+  .pad { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; }
+  @media (min-width: 760px) { .pad { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .padbox { padding: 12px; border-radius: 16px; background: rgba(0, 0, 0, .3); border: 1.5px solid rgba(255, 255, 255, .15); }
+  .disp {
+    display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 14px; border-radius: 10px; margin-bottom: 10px;
+    background: #0a0a14; border: 2px solid rgba(255, 255, 255, .25); font-variant-numeric: tabular-nums;
   }
-  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
-  .item img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; background: rgba(255, 255, 255, .08); }
-  .item .t { font-weight: 800; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item .a { margin-top: 3px; font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item .no { margin-top: 4px; font-size: 11px; color: rgba(255, 255, 255, .45); font-variant-numeric: tabular-nums; letter-spacing: .03em; }
-  .item .acts { display: flex; gap: 6px; }
-  .rsv {
-    min-width: 72px; height: 44px; padding: 0 14px; border-radius: 12px;
-    font-family: var(--round); font-weight: 800; font-size: 16px; color: #3a1700;
-    background: linear-gradient(#ffc04a, var(--accent)); box-shadow: 0 3px 0 #b85d00, 0 6px 14px rgba(255, 140, 30, .25);
+  .disp small { font-size: 11px; color: rgba(255, 255, 255, .6); font-weight: 800; }
+  .disp b { flex: 1; text-align: right; font-size: 34px; letter-spacing: .08em; color: var(--accent); font-family: ui-monospace, "SF Mono", Menlo, monospace; text-shadow: 0 0 10px currentColor; }
+  .disp .found { font-size: 12px; color: rgba(255, 255, 255, .8); max-width: 45%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .keys button { height: 58px; border-radius: 999px; background: var(--key); color: var(--key-fg); font-size: 26px; font-weight: 900; box-shadow: 0 3px 0 rgba(0, 0, 0, .45), inset 0 -3px 0 rgba(0, 0, 0, .08); font-family: ui-rounded, var(--font); }
+  [data-ui="kr"] .keys button { border-radius: 50%; width: 64px; height: 64px; justify-self: center; box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .55), 0 0 12px rgba(45, 226, 255, .25); }
+  .keys .clr { font-size: 14px; background: linear-gradient(#5fe0c8, #1aa890); color: #fff; }
+  .keys .ok { font-size: 18px; background: var(--reserve); color: #fff; }
+  [data-ui="kr"] .keys .clr { background: radial-gradient(circle at 50% 35%, #ff6a8a, #a8103a); color: #fff; }
+  [data-ui="kr"] .keys .ok { color: #3a2400; }
+  .ctls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .ctls button {
+    min-height: 58px; padding: 6px 4px; border-radius: 10px; font-size: 13px; font-weight: 900; line-height: 1.2;
+    background: var(--tile-b); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .4);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   }
-  .rsv:active { transform: translateY(2px); box-shadow: 0 1px 0 #b85d00; }
-  .rsv.done { background: linear-gradient(#5be39a, var(--ok)); color: #053a1c; box-shadow: 0 3px 0 #13844a; }
-  .now-btn { width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 255, 255, .1); font-size: 15px; }
-  .tag { display: inline-block; margin-right: 6px; padding: 1px 7px; border-radius: 6px; font-size: 11px; font-weight: 800; vertical-align: 1px; }
-  .tag.playing { background: var(--accent2); }
-  .tag.mine { background: var(--blue); }
-  .item.current { background: linear-gradient(90deg, rgba(255, 95, 143, .22), rgba(255, 255, 255, .05)); }
-  .empty { padding: 40px 10px; text-align: center; color: var(--dim); line-height: 1.8; font-size: 14px; }
-  .note { margin: 10px 2px; font-size: 12px; color: rgba(255, 255, 255, .45); line-height: 1.7; }
-  .more { display: block; width: 100%; margin: 6px 0 0; padding: 12px; border-radius: 12px; background: var(--panel); color: var(--dim); font-weight: 700; }
+  .ctls button .sub { font-size: 9px; opacity: .75; }
+  .ctls .o { background: var(--tile-o); }
+  .ctls .r { background: var(--tile-r); }
+  .ctls .g { background: var(--tile-g); }
+  .ctls .wide { grid-column: span 3; min-height: 50px; }
+  [data-ui="kr"] .ctls button { background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1.5px rgba(45, 226, 255, .55); color: #9af2ff; }
+  [data-ui="kr"] .ctls .o { box-shadow: inset 0 0 0 1.5px rgba(255, 225, 77, .7); color: #ffe97a; }
+  [data-ui="kr"] .ctls .r { box-shadow: inset 0 0 0 1.5px rgba(255, 74, 106, .8), 0 0 14px rgba(255, 74, 106, .3); color: #ff9aae; }
+  [data-ui="kr"] .ctls .g { box-shadow: inset 0 0 0 1.5px rgba(80, 255, 160, .7); color: #a8ffd0; }
+  .ptitle { margin: 0 0 8px; font-size: 13px; font-weight: 800; color: rgba(255, 255, 255, .7); }
 
-  /* ================= 下: 演奏中と操作 ================= */
-  .now {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-    background: rgba(8, 12, 34, .96); border-top: 1px solid var(--line);
-    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  /* ================= 曲の詳しい情報 ================= */
+  #detail { position: fixed; inset: 0; z-index: 20; display: grid; place-items: end center; background: rgba(0, 0, 0, .55); animation: fade .2s; }
+  @keyframes fade { from { opacity: 0; } }
+  .sheet {
+    width: min(640px, 100%); max-height: 92%; overflow-y: auto; padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0; background: linear-gradient(#2a1650, #160b2e); border: 1.5px solid rgba(255, 255, 255, .18); border-bottom: 0;
+    animation: up .3s cubic-bezier(.2, .9, .2, 1);
   }
-  .now .in { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
-  .now img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: rgba(255, 255, 255, .08); }
-  .now .lbl { font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: .08em; }
-  .now .t { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .now .a { font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ctl { display: flex; gap: 6px; }
-  .ctl button { min-width: 46px; height: 46px; padding: 0 10px; border-radius: 12px; background: rgba(255, 255, 255, .1); font-size: 12px; font-weight: 800; line-height: 1.15; }
-  .ctl .stop { background: rgba(255, 95, 143, .3); }
-  .ctl .vol { min-width: 38px; }
-  @media (max-width: 520px) {
-    .now .in { grid-template-columns: 40px minmax(0, 1fr); }
-    .now img { width: 40px; height: 40px; }
-    .ctl { grid-column: 1 / -1; justify-content: space-between; }
-    .ctl button { flex: 1; }
-    body { padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
-  }
+  @media (min-width: 700px) { #detail { place-items: center; } .sheet { border-radius: 18px; border-bottom: 1.5px solid rgba(255, 255, 255, .18); } }
+  [data-ui="kr"] .sheet { background: linear-gradient(#111842, #080a1e); border-color: rgba(45, 226, 255, .35); }
+  @keyframes up { from { transform: translateY(40px); opacity: 0; } }
+  .dtop { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 14px; align-items: center; }
+  .dtop img { width: 110px; height: 110px; border-radius: 10px; object-fit: cover; background: rgba(255, 255, 255, .08); }
+  .dl { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; align-items: center; margin: 4px 0; }
+  .dl i { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font-style: normal; font-size: 13px; background: linear-gradient(#b980ff, #7a3ae0); }
+  [data-ui="kr"] .dl i { background: linear-gradient(#2de2ff, #1a8ad8); }
+  .dl span { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dl.big span { font-size: 20px; }
+  .dl .num { font-variant-numeric: tabular-nums; letter-spacing: .06em; color: var(--accent); }
+  .chips2 { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .chips2 span { padding: 5px 9px; border-radius: 7px; font-size: 12px; font-weight: 800; background: rgba(255, 255, 255, .1); }
+  .chips2 .ok { background: rgba(47, 210, 122, .25); color: #9fffc8; }
+  .chips2 .no { background: rgba(255, 255, 255, .06); color: rgba(255, 255, 255, .5); }
+  .dact { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 8px; }
+  .dact .now2 { height: 52px; padding: 0 16px; border-radius: 12px; font-weight: 900; background: var(--tile-o); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .5), 0 3px 0 rgba(0, 0, 0, .4); }
+  [data-ui="kr"] .dact .now2 { background: transparent; box-shadow: inset 0 0 0 1.5px #ffe14d; color: #ffe97a; }
+  .dact .close { margin-right: auto; height: 44px; padding: 0 14px; border-radius: 999px; background: rgba(255, 255, 255, .1); font-weight: 800; }
+  .dact .rsv { width: 78px; height: 78px; font-size: 18px; }
 
   /* ================= 予約しました ================= */
   #toast {
-    position: fixed; z-index: 20; left: 50%; top: 40%; transform: translate(-50%, -50%) scale(.9);
+    position: fixed; z-index: 30; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.9);
     width: min(360px, calc(100vw - 40px)); padding: 18px 20px; border-radius: 18px; text-align: center;
     background: linear-gradient(160deg, #ffb935, #ff7a1a); color: #3a1700; box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
-    opacity: 0; pointer-events: none; transition: opacity .25s, transform .35s cubic-bezier(.3, 1.4, .5, 1);
-    font-family: var(--round); font-weight: 800;
+    opacity: 0; pointer-events: none; transition: opacity .25s, transform .35s cubic-bezier(.3, 1.4, .5, 1); font-weight: 900;
   }
+  [data-ui="kr"] #toast { background: linear-gradient(160deg, #2de2ff, #8b5cff); color: #fff; }
   #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   #toast.err { background: linear-gradient(160deg, #ff7a9a, #e0335f); color: #fff; }
   #toast .big { font-size: 22px; }
   #toast .sub { margin-top: 6px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #toast .no { margin-top: 6px; font-size: 13px; opacity: .8; font-variant-numeric: tabular-nums; }
+  #toast .no { margin-top: 6px; font-size: 13px; opacity: .85; font-variant-numeric: tabular-nums; }
 
   /* ================= ログイン ================= */
-  #login { max-width: 460px; margin: 60px auto; padding: 24px; text-align: center; }
-  #login h1 { font-family: var(--round); font-size: 24px; }
-  #login p { color: var(--dim); line-height: 1.8; font-size: 14px; }
-  #login a.btn { display: inline-block; margin-top: 10px; padding: 14px 24px; border-radius: 999px; background: #1ed760; color: #000; font-weight: 800; text-decoration: none; }
+  #login { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: var(--bg); text-align: center; }
+  #login h1 { font-size: 24px; margin: 0 0 8px; }
+  #login p { color: rgba(255, 255, 255, .7); line-height: 1.8; font-size: 14px; }
+  #login a { display: inline-block; margin-top: 10px; padding: 14px 24px; border-radius: 999px; background: #1ed760; color: #000; font-weight: 800; text-decoration: none; }
 </style>
 </head>
 <body>
 
-<header class="top" id="top">
-  <div class="brand">
-    <span class="logo" aria-hidden="true">♪</span>
-    <div><b>選曲リモコン</b><br><small>Lyrics Flow</small></div>
-    <span class="sp"></span>
-    <button class="iconbtn" id="sound" aria-pressed="true" title="予約の音">🔔</button>
-    <a class="iconbtn" href="/lyrics/" title="Lyrics Flow を開く" style="color:inherit;text-decoration:none">♫</a>
-  </div>
-  <nav class="tabs" role="tablist">
-    <button class="tab" role="tab" data-tab="song" aria-selected="true">曲名で探す</button>
-    <button class="tab" role="tab" data-tab="artist">歌手名で探す</button>
-    <button class="tab" role="tab" data-tab="recent">履歴</button>
-    <button class="tab" role="tab" data-tab="top">よく聴く曲</button>
-    <button class="tab" role="tab" data-tab="queue">予約一覧<span class="count" id="qcount" hidden></span></button>
-  </nav>
-</header>
+<!-- アイコン -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="ic-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+  <symbol id="ic-keys" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
+  <symbol id="ic-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="ic-remote" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="3"/><circle cx="12" cy="7" r="1.6"/><path d="M10 12h4M10 15h4M10 18h4"/></symbol>
+  <symbol id="ic-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+  <symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></symbol>
+</svg>
 
-<section id="login" hidden>
-  <h1>選曲リモコン</h1>
-  <p>Spotify にログインすると、曲を探して予約できます。<br>ログインは Lyrics Flow と共通です。</p>
-  <a class="btn" id="loginLink" href="/lyrics/">Lyrics Flow でログイン</a>
-</section>
-
-<div class="wrap split" id="app" hidden>
-  <section id="searchArea">
-    <div class="searchbar">
-      <div class="field">
-        <input id="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="曲名を入力">
-        <button id="clear" aria-label="消す">×</button>
-      </div>
-      <button id="kanaToggle" aria-pressed="false" title="50 音キーボード">50音</button>
+<div class="shell" id="shell" hidden>
+  <header class="bar">
+    <button class="topbtn" id="goTop" data-l="top">TOP</button>
+    <div class="crumb" id="crumb">TOP</div>
+    <div class="uiswitch" role="group" aria-label="画面の種類">
+      <button data-ui-pick="jp" title="日本のカラオケ風">日本</button>
+      <button data-ui-pick="kr" title="韓国のノレバン風" lang="ko">한국</button>
     </div>
-    <div id="kana" hidden>
-      <div class="kgrid" id="kgrid"></div>
-      <div class="krow">
-        <button data-fn="dakuten">゛</button>
-        <button data-fn="handaku">゜</button>
-        <button data-fn="small">小</button>
-        <button data-k="ー">ー</button>
-        <button class="fn" data-k=" ">空白</button>
-        <button class="fn del" data-fn="back">1 字消す</button>
-        <button class="fn del" data-fn="clear">全部消す</button>
-      </div>
-    </div>
-    <div class="chips" id="hints"></div>
-  </section>
+  </header>
 
-  <section>
-    <div class="listhead"><h2 id="listTitle">さがした曲</h2><span id="listInfo"></span></div>
-    <div id="list"></div>
-  </section>
+  <main id="views">
+    <!-- TOP -->
+    <section class="view" id="v-home">
+      <div class="home">
+        <div class="nowcard">
+          <img id="hArt" src="" alt="">
+          <div style="min-width:0">
+            <span class="lb" id="hLb" data-l="playing">演奏中</span>
+            <div class="tt" id="hTitle">—</div>
+            <div class="aa" id="hArtist"></div>
+            <div class="bar2"><i id="hBar"></i></div>
+            <div class="install" id="installBox" hidden>
+              <button id="installBtn" data-l="install">アプリとして入れる</button>
+              <p id="iosHint" hidden data-l="iosHint">iPhone・iPad は、共有ボタン →「ホーム画面に追加」で入れられます</p>
+            </div>
+          </div>
+        </div>
+        <div class="tiles">
+          <button class="tile big t-r" data-go="artist"><svg><use href="#ic-person"/></svg><span data-l="artist">歌手名</span><span class="sub" data-s="artist"></span></button>
+          <button class="tile big t-r" data-go="song"><svg><use href="#ic-note"/></svg><span data-l="song">曲名</span><span class="sub" data-s="song"></span></button>
+          <button class="tile big t-r" data-go="pad"><svg><use href="#ic-keys"/></svg><span data-l="number">番号で予約</span><span class="sub" data-s="number"></span></button>
+          <button class="tile t-o" data-go="recent"><svg><use href="#ic-clock"/></svg><span data-l="recent">りれき</span><span class="sub" data-s="recent"></span></button>
+          <button class="tile t-o" data-go="top"><svg><use href="#ic-star"/></svg><span data-l="topTracks">よく聴く曲</span><span class="sub" data-s="topTracks"></span></button>
+          <button class="tile t-v" data-go="genre:j-pop"><svg><use href="#ic-spark"/></svg><span data-l="jpop">J-POP</span><span class="sub" data-s="jpop"></span></button>
+          <button class="tile t-v" data-go="genre:k-pop"><svg><use href="#ic-spark"/></svg><span data-l="kpop">K-POP</span><span class="sub" data-s="kpop"></span></button>
+          <button class="tile t-v" data-go="genre:pop"><svg><use href="#ic-globe"/></svg><span data-l="western">洋楽</span><span class="sub" data-s="western"></span></button>
+          <button class="tile t-b" data-go="queue"><svg><use href="#ic-list"/></svg><span data-l="queue">予約確認</span><span class="sub" data-s="queue"></span></button>
+          <button class="tile t-g" data-go="pad"><svg><use href="#ic-remote"/></svg><span data-l="remote">リモコン</span><span class="sub" data-s="remote"></span></button>
+          <a class="tile t-b" href="/lyrics/" style="color:inherit;text-decoration:none"><svg><use href="#ic-note"/></svg><span data-l="openFlow">歌詞の画面</span><span class="sub" data-s="openFlow"></span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 探す -->
+    <section class="view" id="v-find" hidden>
+      <div class="find">
+        <div class="left">
+          <div class="modes">
+            <button data-mode="song" data-l="song">曲名</button>
+            <button data-mode="artist" data-l="artist">歌手名</button>
+          </div>
+          <div class="sbox">
+            <div class="f">
+              <input id="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false">
+              <button id="qclear" aria-label="消す">×</button>
+            </div>
+            <button id="kanaBtn" aria-pressed="false">50音</button>
+          </div>
+          <div id="kana" hidden>
+            <div class="kgrid" id="kgrid"></div>
+            <div class="krow">
+              <button data-fn="dakuten">゛</button><button data-fn="handaku">゜</button><button data-fn="small">小</button><button data-k="ー">ー</button>
+              <button class="fn" data-k=" ">空白</button><button class="fn del" data-fn="back">1 字消す</button><button class="fn del" data-fn="clear">全部消す</button>
+            </div>
+          </div>
+          <p class="hint" id="findHint"></p>
+        </div>
+        <div>
+          <div class="lhead"><b id="findTitle"></b><span id="findInfo"></span></div>
+          <div id="findList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 一覧（りれき・よく聴く曲・ジャンル・予約確認） -->
+    <section class="view" id="v-list" hidden>
+      <div style="max-width:1100px;margin:0 auto">
+        <div class="tabs2" id="listTabs"></div>
+        <div class="lhead"><b id="listTitle"></b><span id="listInfo"></span></div>
+        <div id="listBody"></div>
+      </div>
+    </section>
+
+    <!-- リモコン -->
+    <section class="view" id="v-pad" hidden>
+      <div class="pad">
+        <div class="padbox">
+          <p class="ptitle" data-l="padTitle">選曲番号で予約</p>
+          <div class="disp"><small data-l="songNo">選曲番号</small><span class="found" id="padFound"></span><b id="padNum">----</b></div>
+          <div class="keys" id="keys">
+            <button>1</button><button>2</button><button>3</button>
+            <button>4</button><button>5</button><button>6</button>
+            <button>7</button><button>8</button><button>9</button>
+            <button class="clr" data-l="clear">入力クリア</button><button>0</button><button class="ok" data-l="reserve">予約</button>
+          </div>
+          <p class="hint" data-l="padHint">探した曲・りれきに出た曲の番号で予約できます</p>
+        </div>
+        <div class="padbox">
+          <p class="ptitle" data-l="ctlTitle">演奏の操作</p>
+          <div class="ctls">
+            <button class="o" data-op="rew"><span data-l="rew">早戻し</span><span class="sub">-10s</span></button>
+            <button class="o" data-op="pause"><span data-l="pause" id="pauseLbl">一時停止</span></button>
+            <button class="o" data-op="ff"><span data-l="ff">早送り</span><span class="sub">+10s</span></button>
+            <button data-op="volDown"><span data-l="volDown">音量 −</span></button>
+            <button class="g" data-op="restart"><span data-l="restart">スタートやり直し</span></button>
+            <button data-op="volUp"><span data-l="volUp">音量 ＋</span></button>
+            <button data-op="queue"><span data-l="queue">予約確認</span></button>
+            <button data-op="prev"><span data-l="prev">前の曲</span></button>
+            <button class="r" data-op="skip"><span data-l="stop">演奏中止</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <button class="backbtn" id="goBack"><i>‹</i><span data-l="back">もどる</span></button>
+    <button class="mini" id="miniNow"><img id="mArt" src="" alt=""><div style="min-width:0"><div class="lb" id="mLb" data-l="playing">演奏中</div><div class="tt" id="mTitle">—</div></div></button>
+    <button class="footbtn" data-go="pad" data-l="remote">リモコン</button>
+    <button class="footbtn stop" id="footStop" data-l="stop">演奏中止</button>
+  </footer>
 </div>
 
-<footer class="now" id="now" hidden>
-  <div class="in">
-    <img id="nowArt" src="" alt="">
-    <div style="min-width:0">
-      <div class="lbl" id="nowLbl">演奏中</div>
-      <div class="t" id="nowTitle">—</div>
-      <div class="a" id="nowArtist"></div>
+<div id="detail" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="dtop">
+      <img id="dArt" src="" alt="">
+      <div style="min-width:0">
+        <div class="dl big"><i>♪</i><span id="dTitle"></span></div>
+        <div class="dl"><i>👤</i><span id="dArtist"></span></div>
+        <div class="dl"><i>#</i><span class="num" id="dNo"></span></div>
+      </div>
     </div>
-    <div class="ctl">
-      <button id="restart" title="頭から">頭<br>から</button>
-      <button id="pause" title="一時停止 / 再開">一時<br>停止</button>
-      <button class="stop" id="skip" title="演奏中止（次の曲へ）">演奏<br>中止</button>
-      <button class="vol" id="volDown" title="音量を下げる">音<br>−</button>
-      <button class="vol" id="volUp" title="音量を上げる">音<br>＋</button>
+    <div class="chips2" id="dChips"></div>
+    <div class="dact">
+      <button class="close" id="dClose" data-l="close">閉じる</button>
+      <button class="now2" id="dNow" data-l="playNow">すぐ演奏</button>
+      <button class="rsv" id="dRsv" data-l="reserve">予約</button>
     </div>
   </div>
-</footer>
+</div>
 
 <div id="toast" role="status" aria-live="polite"><div class="big"></div><div class="sub"></div><div class="no"></div></div>
+
+<section id="login" hidden>
+  <div>
+    <h1>選曲リモコン</h1>
+    <p>Spotify にログインすると、曲を探して予約できます。<br>ログインは Lyrics Flow と共通です。</p>
+    <a id="loginLink" href="/lyrics/">Lyrics Flow でログイン</a>
+  </div>
+</section>
 
 <script>
 (() => {
   'use strict';
-  // ログイン（トークン）は Lyrics Flow（/lyrics/）と同じものを使う（同じサイトなので localStorage を共有）
   const API = 'https://api.spotify.com/v1';
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => document.querySelectorAll(s);
+  const root = document.documentElement;
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-    del(k) { try { localStorage.removeItem(k); } catch {} },
   };
+  const jget = (k, d) => { try { return JSON.parse(store.get(k) || '') ?? d; } catch { return d; } };
 
-  // ================= Spotify =================
+  // ================= 言葉（日本風 / 韓国風） =================
+  // 韓国風は韓国語で出し、ボタンには小さく日本語を添える（sub）
+  const L = {
+    jp: {
+      top: 'TOP', back: 'もどる', artist: '歌手名', song: '曲名', number: '番号で予約', recent: 'りれき', topTracks: 'よく聴く曲',
+      jpop: 'J-POP', kpop: 'K-POP', western: '洋楽', queue: '予約確認', remote: 'リモコン', openFlow: '歌詞の画面',
+      playing: '演奏中', paused: '一時停止中', idle: '演奏していません', idleTitle: 'Spotify で再生すると、ここに出ます',
+      reserve: '予約', playNow: 'すぐ演奏', close: '閉じる', stop: '演奏中止', pause: '一時停止', resume: '再生', rew: '早戻し', ff: '早送り',
+      restart: 'スタートやり直し', volUp: '音量 ＋', volDown: '音量 −', prev: '前の曲', clear: '入力クリア', songNo: '選曲番号',
+      padTitle: '選曲番号で予約', ctlTitle: '演奏の操作', padHint: '探した曲・りれきに出た曲の番号で予約できます（曲の詳しい情報や一覧に出ています）',
+      install: 'アプリとして入れる', iosHint: 'iPhone・iPad は、共有ボタン →「ホーム画面に追加」で入れられます',
+      searchSong: 'タッチして曲名を入力', searchArtist: 'タッチして歌手名を入力', findSong: '曲名で探す', findArtist: '歌手名で探す',
+      findHint: '「50音」で、デンモクのようなキーボードになります。最近探した言葉:', results: '「{q}」の検索結果', hits: '{n} 件',
+      emptySong: '曲名を入れると、Spotify から探します', emptyArtist: '歌手名を入れると、その歌手の曲が出ます', none: '曲が見つかりませんでした',
+      loading: '読み込み中…', more: 'もっと見る', recentTitle: 'りれき（最近聴いた曲）', topTitle: 'よく聴く曲', genreTitle: '{g} の曲',
+      queueTitle: '予約確認', queueNote: 'Spotify のキュー（次に流れる順）です。プレイリストの続きも並びます。予約の取り消しは Spotify のアプリでしてください。',
+      queueEmpty: '予約はありません', reserved: '予約しました', played: '演奏します', cantReserve: '予約できませんでした', cantOp: '操作できませんでした',
+      noNumber: 'その番号の曲が見つかりません', noNumberSub: '探した曲・りれきの番号を入れてください', relogin: 'もう一度ログインしてください（Lyrics Flow でログアウト → ログイン）',
+      lyricsSynced: '♪ カラオケ対応（タイミングつき歌詞）', lyricsPlain: '歌詞あり（タイミングなし）', lyricsNone: '歌詞が見つかりません', lyricsChecking: '歌詞を確かめています…',
+      pos: '{n} 曲目', nowTag: '演奏中', mineTag: '予約', range4: '4 週間', range6: '半年', range1: '1 年',
+    },
+    kr: {
+      top: '홈', back: '뒤로', artist: '가수', song: '제목', number: '번호 예약', recent: '최근 곡', topTracks: '자주 듣는 곡',
+      jpop: 'J-POP', kpop: 'K-POP', western: '팝송', queue: '예약 목록', remote: '리모컨', openFlow: '가사 화면',
+      playing: '연주 중', paused: '일시정지', idle: '연주 중이 아님', idleTitle: 'Spotify에서 재생하면 여기에 나와요',
+      reserve: '예약', playNow: '바로 시작', close: '닫기', stop: '취소', pause: '일시정지', resume: '재생', rew: '되감기', ff: '빨리감기',
+      restart: '처음부터', volUp: '볼륨 ＋', volDown: '볼륨 −', prev: '이전 곡', clear: '지우기', songNo: '곡번호',
+      padTitle: '곡번호로 예약', ctlTitle: '반주 조작', padHint: '검색한 곡·최근 곡의 번호로 예약할 수 있어요',
+      install: '앱으로 설치', iosHint: 'iPhone·iPad는 공유 버튼 → "홈 화면에 추가"',
+      searchSong: '제목을 입력하세요', searchArtist: '가수 이름을 입력하세요', findSong: '제목 검색', findArtist: '가수 검색',
+      findHint: '최근 검색어:', results: '"{q}" 검색 결과', hits: '{n}곡',
+      emptySong: '제목을 입력하면 Spotify에서 찾아요', emptyArtist: '가수 이름을 입력하면 그 가수의 곡이 나와요', none: '곡을 찾지 못했어요',
+      loading: '불러오는 중…', more: '더 보기', recentTitle: '최근 곡', topTitle: '자주 듣는 곡', genreTitle: '{g}',
+      queueTitle: '예약 목록', queueNote: 'Spotify의 대기열(다음에 나오는 순서)이에요. 예약 취소는 Spotify 앱에서 해 주세요.',
+      queueEmpty: '예약된 곡이 없어요', reserved: '예약되었습니다', played: '바로 시작합니다', cantReserve: '예약하지 못했어요', cantOp: '조작하지 못했어요',
+      noNumber: '그 번호의 곡이 없어요', noNumberSub: '검색한 곡·최근 곡의 번호를 입력하세요', relogin: '다시 로그인해 주세요 (Lyrics Flow에서 로그아웃 → 로그인)',
+      lyricsSynced: '♪ 노래방 가능 (싱크 가사)', lyricsPlain: '가사 있음 (싱크 없음)', lyricsNone: '가사 없음', lyricsChecking: '가사 확인 중…',
+      pos: '{n}번째', nowTag: '연주 중', mineTag: '예약', range4: '4주', range6: '6개월', range1: '1년',
+    },
+  };
+  // 韓国風のボタンに添える日本語
+  const SUB = { artist: '歌手名', song: '曲名', number: '番号で予約', recent: 'りれき', topTracks: 'よく聴く曲', jpop: '', kpop: '', western: '洋楽', queue: '予約確認', remote: 'リモコン', openFlow: '歌詞の画面' };
+  let ui = root.dataset.ui === 'kr' ? 'kr' : 'jp';
+  const t = (k, v) => { let s = (L[ui][k] ?? L.jp[k] ?? k); if (v) s = s.replace(/\{(\w+)\}/g, (m, x) => v[x] ?? m); return s; };
+  function applyUi() {
+    root.dataset.ui = ui;
+    root.lang = ui === 'kr' ? 'ko' : 'ja';
+    $$('[data-l]').forEach((el) => { el.textContent = t(el.dataset.l); });
+    $$('[data-s]').forEach((el) => { el.textContent = ui === 'kr' ? SUB[el.dataset.s] || '' : ''; });
+    $$('[data-ui-pick]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.uiPick === ui)));
+    if (cur) cur.render && cur.render();
+    setCrumb();
+    renderNow();
+  }
+  function setUi(u) { ui = u === 'kr' ? 'kr' : 'jp'; store.set('lf_remote_ui', ui); applyUi(); }
+
+  // ================= Spotify（ログインは Lyrics Flow と共通） =================
   async function tokenRequest(body) {
-    const res = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(body),
-    });
+    const res = await fetch('https://accounts.spotify.com/api/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(body) });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error_description || json.error || 'token error ' + res.status);
     store.set('lf_access', json.access_token);
@@ -282,19 +554,11 @@
     return json.access_token;
   }
   let refreshing = null;
-  function refreshToken() {
-    if (!refreshing) {
-      refreshing = tokenRequest({ grant_type: 'refresh_token', refresh_token: store.get('lf_refresh'), client_id: store.get('lf_client_id') })
-        .finally(() => { refreshing = null; });
-    }
-    return refreshing;
-  }
+  const refreshToken = () => (refreshing ||= tokenRequest({ grant_type: 'refresh_token', refresh_token: store.get('lf_refresh'), client_id: store.get('lf_client_id') }).finally(() => { refreshing = null; }));
   async function getToken() {
-    // ほかのタブ（Lyrics Flow）が先に新しくしていることもあるので、毎回 localStorage から読む
     if (Date.now() > (Number(store.get('lf_expires')) || 0) - 60_000) return refreshToken();
     return store.get('lf_access');
   }
-  // GET は JSON を返す。PUT・POST は { ok, status, reason } を返す
   async function api(path, opts = {}, retried = false) {
     const token = await getToken();
     const res = await fetch(API + path, { method: opts.method || 'GET', headers: { Authorization: 'Bearer ' + token, ...(opts.body ? { 'Content-Type': 'application/json' } : {}) }, body: opts.body ? JSON.stringify(opts.body) : undefined });
@@ -309,45 +573,57 @@
     return res.json();
   }
   function opError(r) {
-    if (/premium/i.test(r.reason)) return '予約・操作には Spotify Premium が必要です';
-    if (r.status === 404 || /no_active_device|NO_ACTIVE/i.test(r.reason)) return 'Spotify で何か再生してから操作してください';
-    if (r.status === 401 || r.status === 403) return 'もう一度ログインしてください（Lyrics Flow でログアウト → ログイン）';
-    if (r.status === 429) return '少し時間をおいてから試してください';
-    return '操作できませんでした（' + r.status + '）';
+    if (/premium/i.test(r.reason)) return ui === 'kr' ? 'Spotify Premium이 필요해요' : '予約・操作には Spotify Premium が必要です';
+    if (r.status === 404 || /no_active_device/i.test(r.reason)) return ui === 'kr' ? 'Spotify에서 먼저 재생해 주세요' : 'Spotify で何か再生してから操作してください';
+    if (r.status === 401 || r.status === 403) return t('relogin');
+    return '(' + r.status + ')';
   }
 
   // ================= 小道具 =================
   const HANGUL = /[ᄀ-ᇿ㄰-㆏가-힯]/;
   function markLang(el, text) { if (HANGUL.test(text)) el.lang = 'ko'; else el.removeAttribute('lang'); }
-  // Lyrics Flow と同じ「選曲番号」（曲の ID から作る飾りの番号）
-  function songNo(id) {
+  // Lyrics Flow と同じ飾りの番号（日本風は「1234-56」、韓国風は 5 けた）
+  function songNo(id, kind) {
     let h = 0;
     for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    return (1000 + (h % 9000)) + '-' + String(h % 100).padStart(2, '0');
+    return (kind || ui) === 'kr' ? String(10000 + (h % 90000)) : (1000 + (h % 9000)) + '-' + String(h % 100).padStart(2, '0');
   }
   const fmt = (ms) => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   const smallImg = (imgs) => (imgs && imgs.length ? (imgs.find((i) => i.width && i.width <= 300) || imgs[imgs.length - 1]).url : '');
+  const bigImg = (imgs) => (imgs && imgs.length ? imgs[0].url : '');
+  function trackOf(x) {
+    return { id: x.id, uri: x.uri, name: x.name, artists: (x.artists || []).map((a) => a.name).join(', '), album: x.album ? x.album.name : '',
+      art: smallImg(x.album && x.album.images), big: bigImg(x.album && x.album.images), dur: x.duration_ms };
+  }
 
-  // 予約の音（「ピンポン」）
+  // 番号で予約できるよう、出てきた曲の番号を覚えておく（600 曲まで）
+  const nos = jget('lf_remote_nos', {});
+  function learn(tracks) {
+    for (const tr of tracks) {
+      const v = { id: tr.id, uri: tr.uri, name: tr.name, artists: tr.artists, art: tr.art, big: tr.big, album: tr.album, dur: tr.dur };
+      nos[songNo(tr.id, 'jp').replace('-', '')] = v;
+      nos[songNo(tr.id, 'kr')] = v;
+    }
+    const keys = Object.keys(nos);
+    for (let i = 0; i < keys.length - 1200; i++) delete nos[keys[i]];
+    store.set('lf_remote_nos', JSON.stringify(nos));
+  }
+
+  // 予約の音
   let ac = null;
-  let soundOn = store.get('lf_remote_sound') !== 'off';
   function chime() {
-    if (!soundOn) return;
     try {
       ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-      const t = ac.currentTime;
-      [[1046.5, 0], [1318.5, .14]].forEach(([f, d]) => {
+      const t0 = ac.currentTime;
+      const notes = ui === 'kr' ? [[880, 0], [1174.7, .1], [1568, .2]] : [[1046.5, 0], [1318.5, .14]];
+      notes.forEach(([f, d]) => {
         const o = ac.createOscillator(), g = ac.createGain();
-        o.type = 'sine'; o.frequency.value = f;
-        g.gain.setValueAtTime(0, t + d);
-        g.gain.linearRampToValueAtTime(.2, t + d + .01);
-        g.gain.exponentialRampToValueAtTime(.001, t + d + .6);
-        o.connect(g).connect(ac.destination);
-        o.start(t + d); o.stop(t + d + .65);
+        o.type = ui === 'kr' ? 'triangle' : 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, t0 + d); g.gain.linearRampToValueAtTime(.2, t0 + d + .01); g.gain.exponentialRampToValueAtTime(.001, t0 + d + .5);
+        o.connect(g).connect(ac.destination); o.start(t0 + d); o.stop(t0 + d + .55);
       });
     } catch {}
   }
-
   let toastTimer = 0;
   function toast(big, sub, no, err) {
     const el = $('#toast');
@@ -360,292 +636,348 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), err ? 2600 : 1800);
   }
 
-  // このリモコンで予約した曲（予約一覧で「予約」の印を付ける）
-  const mine = new Set(JSON.parse(sessionStorage.getItem('lf_remote_mine') || '[]'));
-  function remember(id) { mine.add(id); try { sessionStorage.setItem('lf_remote_mine', JSON.stringify([...mine])); } catch {} }
+  const mine = new Set(jget('lf_remote_mine', []));
+  function remember(id) { mine.add(id); store.set('lf_remote_mine', JSON.stringify([...mine].slice(-200))); }
 
-  // ================= 予約・今すぐ演奏 =================
-  async function reserve(track, btn) {
-    btn.disabled = true;
-    const r = await api('/me/player/queue?uri=' + encodeURIComponent(track.uri), { method: 'POST' });
-    btn.disabled = false;
-    if (!r.ok) { toast('予約できませんでした', opError(r), '', true); return; }
-    remember(track.id);
-    btn.classList.add('done');
-    btn.textContent = '予約済';
+  // ================= 予約・すぐ演奏 =================
+  async function reserve(tr, btn) {
+    if (btn) btn.disabled = true;
+    const r = await api('/me/player/queue?uri=' + encodeURIComponent(tr.uri), { method: 'POST' });
+    if (btn) btn.disabled = false;
+    if (!r.ok) { toast(t('cantReserve'), opError(r), '', true); return false; }
+    remember(tr.id);
+    if (btn) { btn.classList.add('done'); btn.textContent = '✓'; }
     chime();
     if (navigator.vibrate) navigator.vibrate(30);
-    toast('予約しました', track.name, '選曲番号 ' + songNo(track.id));
+    toast(t('reserved'), tr.name, t('songNo') + ' ' + songNo(tr.id));
     setTimeout(refreshNow, 600);
+    return true;
   }
-  async function playNow(track) {
-    const r = await api('/me/player/play', { method: 'PUT', body: { uris: [track.uri] } });
-    if (!r.ok) { toast('演奏できませんでした', opError(r), '', true); return; }
-    toast('演奏します', track.name, '選曲番号 ' + songNo(track.id));
+  async function playNow(tr) {
+    const r = await api('/me/player/play', { method: 'PUT', body: { uris: [tr.uri] } });
+    if (!r.ok) { toast(t('cantOp'), opError(r), '', true); return; }
+    toast(t('played'), tr.name, t('songNo') + ' ' + songNo(tr.id));
     setTimeout(refreshNow, 600);
   }
 
-  // ================= 一覧を描く =================
-  function trackOf(t) {
-    return {
-      id: t.id, uri: t.uri, name: t.name,
-      artists: (t.artists || []).map((a) => a.name).join(', '),
-      art: smallImg(t.album && t.album.images), dur: t.duration_ms,
-    };
-  }
-  function renderList(tracks, opts = {}) {
-    const list = $('#list');
-    if (!opts.append) list.textContent = '';
+  // ================= 一覧の行 =================
+  function rows(box, tracks, opts = {}) {
+    if (!opts.append) box.textContent = '';
     if (!tracks.length && !opts.append) {
-      const d = document.createElement('div');
-      d.className = 'empty';
-      d.textContent = opts.empty || '曲が見つかりませんでした';
-      list.appendChild(d);
-      return;
+      const d = document.createElement('div'); d.className = 'empty'; d.textContent = opts.empty || t('none'); box.appendChild(d); return;
     }
-    tracks.forEach((t, i) => {
+    learn(tracks);
+    tracks.forEach((tr, i) => {
       const row = document.createElement('div');
-      row.className = 'item' + (t.current ? ' current' : '');
-      row.style.animationDelay = Math.min(i, 12) * 25 + 'ms';
-      const img = document.createElement('img'); img.src = t.art || ''; img.alt = ''; img.loading = 'lazy';
-      const meta = document.createElement('div'); meta.style.minWidth = '0';
+      row.className = 'row' + (tr.current ? ' cur' : '');
+      row.style.animationDelay = Math.min(i, 14) * 18 + 'ms';
+      row.setAttribute('role', 'button'); row.tabIndex = 0;
+      const ic = document.createElement('div'); ic.className = 'ic'; ic.textContent = '♪';
+      const mid = document.createElement('div'); mid.style.minWidth = '0';
       const tt = document.createElement('div'); tt.className = 't';
-      if (t.current) { const g = document.createElement('span'); g.className = 'tag playing'; g.textContent = '演奏中'; tt.appendChild(g); }
-      else if (mine.has(t.id) && opts.queue) { const g = document.createElement('span'); g.className = 'tag mine'; g.textContent = '予約'; tt.appendChild(g); }
-      if (opts.queue && !t.current) { const n = document.createElement('span'); n.className = 'tag'; n.style.background = 'rgba(255,255,255,.14)'; n.textContent = (t.pos) + ' 曲目'; tt.appendChild(n); }
-      tt.appendChild(document.createTextNode(t.name)); markLang(tt, t.name);
-      const aa = document.createElement('div'); aa.className = 'a'; aa.textContent = t.artists + (t.dur ? ' ・ ' + fmt(t.dur) : ''); markLang(aa, t.artists);
-      const no = document.createElement('div'); no.className = 'no'; no.textContent = '選曲番号 ' + songNo(t.id);
-      meta.append(tt, aa, no);
-      const acts = document.createElement('div'); acts.className = 'acts';
-      if (!opts.queue) {
-        const now = document.createElement('button'); now.className = 'now-btn'; now.textContent = '▶'; now.title = '今すぐ演奏（割り込み）';
-        now.onclick = () => playNow(t);
-        const rsv = document.createElement('button'); rsv.className = 'rsv'; rsv.textContent = '予約';
-        rsv.onclick = () => reserve(t, rsv);
-        acts.append(now, rsv);
+      if (tr.current) { const g = document.createElement('span'); g.className = 'tag'; g.textContent = t('nowTag'); tt.appendChild(g); }
+      else if (opts.queue) {
+        const g = document.createElement('span'); g.className = 'tag'; g.style.background = 'rgba(255,255,255,.2)'; g.style.color = '#fff';
+        g.textContent = (mine.has(tr.id) ? t('mineTag') + ' ・ ' : '') + t('pos', { n: tr.pos }); tt.appendChild(g);
       }
-      row.append(img, meta, acts);
-      list.appendChild(row);
+      tt.appendChild(document.createTextNode(tr.name)); markLang(tt, tr.name);
+      const an = document.createElement('div'); an.className = 'a narrow'; an.textContent = tr.artists; markLang(an, tr.artists);
+      const no = document.createElement('span'); no.className = 'no'; no.textContent = t('songNo') + ' ' + songNo(tr.id) + (tr.dur ? ' ・ ' + fmt(tr.dur) : '');
+      mid.append(tt, an, no);
+      const aw = document.createElement('div'); aw.className = 'a wide'; aw.textContent = tr.artists; markLang(aw, tr.artists);
+      row.append(ic, mid, aw);
+      if (!opts.queue) {
+        const b = document.createElement('button'); b.className = 'rsv'; b.textContent = t('reserve');
+        b.onclick = (e) => { e.stopPropagation(); reserve(tr, b); };
+        row.append(b);
+      } else row.append(document.createElement('span'));
+      row.onclick = () => openDetail(tr);
+      box.appendChild(row);
     });
   }
-  function setHead(title, info) { $('#listTitle').textContent = title; $('#listInfo').textContent = info || ''; }
-  function loading() { const l = $('#list'); l.textContent = ''; const d = document.createElement('div'); d.className = 'empty'; d.textContent = '読み込み中…'; l.appendChild(d); }
+  function loadingIn(box) { box.textContent = ''; const d = document.createElement('div'); d.className = 'empty'; d.textContent = t('loading'); box.appendChild(d); }
 
-  // ================= タブ =================
-  let tab = 'song';
-  let searchSeq = 0, nextUrl = null;
-  function setTab(name) {
-    tab = name;
-    $$('.tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
-    const searching = name === 'song' || name === 'artist';
-    $('#searchArea').hidden = !searching;
-    $('#app').classList.toggle('split', searching);
-    $('#q').placeholder = name === 'artist' ? '歌手名を入力' : '曲名を入力';
-    if (searching) { runSearch(); renderHints(); }
-    else if (name === 'recent') loadRecent();
-    else if (name === 'top') loadTop();
-    else if (name === 'queue') loadQueue();
+  // ================= 画面の行き来 =================
+  const stack = [];
+  let cur = null;
+  const VIEWS = {};
+  function go(name, push = true) {
+    const [kind, arg] = name.split(':');
+    const v = VIEWS[kind];
+    if (!v) return;
+    if (push && cur) stack.push(cur.name);
+    $$('.view').forEach((s) => { s.hidden = s.id !== v.el; });
+    cur = { name, kind, arg, render: () => v.render(arg) };
+    v.render(arg);
+    setCrumb();
+    if (location.hash !== '#' + kind && kind !== 'home') history.replaceState(null, '', '#' + (arg ? kind + ':' + arg : kind));
+    if (kind === 'home') history.replaceState(null, '', location.pathname);
   }
-  $$('.tab').forEach((b) => { b.onclick = () => setTab(b.dataset.tab); });
+  function back() { const p = stack.pop(); go(p || 'home', false); }
+  function setCrumb() {
+    if (!cur) return;
+    const names = { home: t('top'), song: t('song'), artist: t('artist'), pad: t('remote'), recent: t('recent'), top: t('topTracks'), queue: t('queue'), genre: t('genreTitle', { g: (cur.arg || '').toUpperCase() }) };
+    const q = $('#q').value.trim();
+    $('#crumb').textContent = cur.kind === 'home' ? t('top') : t('top') + ' ＞ ' + names[cur.kind] + ((cur.kind === 'song' || cur.kind === 'artist') && q ? ' ＞ ' + q : '');
+  }
+
+  // ---------- TOP ----------
+  VIEWS.home = { el: 'v-home', render() { renderNow(); } };
 
   // ---------- 探す ----------
+  let mode = 'song', seq = 0, nextUrl = null, typing = 0;
+  VIEWS.song = { el: 'v-find', render() { mode = 'song'; findSetup(); } };
+  VIEWS.artist = { el: 'v-find', render() { mode = 'artist'; findSetup(); } };
+  function findSetup() {
+    $$('[data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+    $('#q').placeholder = mode === 'artist' ? t('searchArtist') : t('searchSong');
+    renderHints();
+    runSearch();
+  }
   async function runSearch(more) {
     const q = $('#q').value.trim();
-    const seq = ++searchSeq;
-    if (!q) {
-      setHead(tab === 'artist' ? '歌手名で探す' : '曲名で探す', '');
-      renderList([], { empty: tab === 'artist' ? '歌手名を入れると、その歌手の曲が出ます' : '曲名を入れると、Spotify から探します' });
-      return;
-    }
-    if (!more) { loading(); nextUrl = null; }
+    const my = ++seq;
+    const box = $('#findList');
+    setCrumb();
+    if (!q) { $('#findTitle').textContent = mode === 'artist' ? t('findArtist') : t('findSong'); $('#findInfo').textContent = ''; rows(box, [], { empty: mode === 'artist' ? t('emptyArtist') : t('emptySong') }); return; }
+    if (!more) { loadingIn(box); nextUrl = null; }
     try {
-      const params = new URLSearchParams({ type: 'track', limit: '20', market: 'from_token', q: tab === 'artist' ? 'artist:"' + q + '"' : q });
-      const path = more && nextUrl ? nextUrl.replace(API, '') : '/search?' + params;
+      const path = more && nextUrl ? nextUrl.replace(API, '') : '/search?' + new URLSearchParams({ type: 'track', limit: '20', market: 'from_token', q: mode === 'artist' ? 'artist:"' + q + '"' : q });
       const data = await api(path);
-      if (seq !== searchSeq) return;
+      if (my !== seq) return;
       const items = ((data && data.tracks && data.tracks.items) || []).filter(Boolean).map(trackOf);
       nextUrl = data && data.tracks && data.tracks.next;
-      setHead('「' + q + '」の曲', (data && data.tracks ? data.tracks.total : 0) + ' 曲');
-      $('.more') && $('.more').remove();
-      renderList(items, { append: !!more });
-      if (nextUrl && items.length) {
-        const m = document.createElement('button'); m.className = 'more'; m.textContent = 'もっと見る';
-        m.onclick = () => { m.remove(); runSearch(true); };
-        $('#list').appendChild(m);
-      }
-    } catch (e) {
-      if (seq === searchSeq) renderList([], { empty: '探せませんでした（' + (e.status || '通信') + '）' });
-    }
+      $('#findTitle').textContent = t('results', { q });
+      $('#findInfo').textContent = t('hits', { n: data && data.tracks ? data.tracks.total : 0 });
+      box.querySelector('.more')?.remove();
+      rows(box, items, { append: !!more });
+      if (nextUrl && items.length) { const m = document.createElement('button'); m.className = 'more'; m.textContent = t('more'); m.onclick = () => { m.remove(); runSearch(true); }; box.appendChild(m); }
+    } catch (e) { if (my === seq) rows(box, [], { empty: t('none') + ' (' + (e.status || '—') + ')' }); }
   }
-  let typing = 0;
   $('#q').addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => runSearch(), 350); });
   $('#q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(typing); runSearch(); $('#q').blur(); } });
-  $('#clear').onclick = () => { $('#q').value = ''; runSearch(); };
-
-  // 最近探した言葉
-  function hints() { try { return JSON.parse(store.get('lf_remote_hist') || '[]'); } catch { return []; } }
-  function pushHint(q) { const h = [q, ...hints().filter((x) => x !== q)].slice(0, 8); store.set('lf_remote_hist', JSON.stringify(h)); }
+  $('#q').addEventListener('change', () => { const q = $('#q').value.trim(); if (q) { const h = [q, ...jget('lf_remote_hist', []).filter((x) => x !== q)].slice(0, 8); store.set('lf_remote_hist', JSON.stringify(h)); renderHints(); } });
+  $('#qclear').onclick = () => { $('#q').value = ''; runSearch(); };
+  $$('[data-mode]').forEach((b) => { b.onclick = () => go(b.dataset.mode, false); });
   function renderHints() {
-    const box = $('#hints'); box.textContent = '';
-    hints().forEach((q) => { const b = document.createElement('button'); b.textContent = q; markLang(b, q); b.onclick = () => { $('#q').value = q; runSearch(); }; box.appendChild(b); });
+    const p = $('#findHint'); p.textContent = '';
+    const h = jget('lf_remote_hist', []);
+    if (!h.length) { if (ui === 'jp') p.textContent = '「50音」で、デンモクのようなキーボードになります。'; return; }
+    p.append(t('findHint') + ' ');
+    h.forEach((q) => { const a = document.createElement('button'); a.textContent = q; a.style.cssText = 'margin:2px 4px 2px 0;padding:4px 8px;border-radius:7px;background:rgba(255,255,255,.12);font-size:12px'; markLang(a, q); a.onclick = () => { $('#q').value = q; runSearch(); }; p.append(a); });
   }
-  $('#q').addEventListener('change', () => { const q = $('#q').value.trim(); if (q) { pushHint(q); renderHints(); } });
 
-  // ---------- 50 音キーボード ----------
-  const ROWS = ['あかさたなはまやらわ', 'いきしちにひみ り ', 'うくすつぬふむゆるを', 'えけせてねへめ れ ', 'おこそとのほもよろん'];
-  const grid = $('#kgrid');
-  // 列ごと（あ行・か行…）に縦に並べるため、行と列を入れ替えて置く
+  // 50 音（日本風だけ）
+  const KROWS = ['あかさたなはまやらわ', 'いきしちにひみ り ', 'うくすつぬふむゆるを', 'えけせてねへめ れ ', 'おこそとのほもよろん'];
   for (let r = 0; r < 5; r++) for (let c = 0; c < 10; c++) {
-    const ch = ROWS[r][c] || ' ';
-    const b = document.createElement('button');
+    const ch = KROWS[r][c] || ' ', b = document.createElement('button');
     if (ch === ' ') b.className = 'blank'; else { b.textContent = ch; b.dataset.k = ch; }
     b.style.gridRow = String(r + 1); b.style.gridColumn = String(c + 1);
-    grid.appendChild(b);
+    $('#kgrid').appendChild(b);
   }
   const DAKU = { か: 'が', き: 'ぎ', く: 'ぐ', け: 'げ', こ: 'ご', さ: 'ざ', し: 'じ', す: 'ず', せ: 'ぜ', そ: 'ぞ', た: 'だ', ち: 'ぢ', つ: 'づ', て: 'で', と: 'ど', は: 'ば', ひ: 'び', ふ: 'ぶ', へ: 'べ', ほ: 'ぼ', う: 'ゔ' };
   const HANDAKU = { は: 'ぱ', ひ: 'ぴ', ふ: 'ぷ', へ: 'ぺ', ほ: 'ぽ' };
   const SMALL = { あ: 'ぁ', い: 'ぃ', う: 'ぅ', え: 'ぇ', お: 'ぉ', つ: 'っ', や: 'ゃ', ゆ: 'ゅ', よ: 'ょ', わ: 'ゎ' };
-  // 最後の 1 字を、゛゜小 で変える（もう一度押すと元に戻る）
   function toggleLast(map) {
     const inp = $('#q'), v = inp.value, last = v.slice(-1);
     const inv = Object.fromEntries(Object.entries(map).map(([a, b]) => [b, a]));
     const to = map[last] || inv[last];
-    if (to) { inp.value = v.slice(0, -1) + to; kanaChanged(); }
+    if (to) { inp.value = v.slice(0, -1) + to; kanaTyped(); }
   }
-  function kanaChanged() { clearTimeout(typing); typing = setTimeout(() => runSearch(), 450); }
+  function kanaTyped() { clearTimeout(typing); typing = setTimeout(() => runSearch(), 450); }
   $('#kana').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
     const inp = $('#q');
-    if (b.dataset.k) { inp.value += b.dataset.k; kanaChanged(); }
+    if (b.dataset.k) { inp.value += b.dataset.k; kanaTyped(); }
     else if (b.dataset.fn === 'dakuten') toggleLast(DAKU);
     else if (b.dataset.fn === 'handaku') toggleLast(HANDAKU);
     else if (b.dataset.fn === 'small') toggleLast(SMALL);
-    else if (b.dataset.fn === 'back') { inp.value = inp.value.slice(0, -1); kanaChanged(); }
-    else if (b.dataset.fn === 'clear') { inp.value = ''; kanaChanged(); }
+    else if (b.dataset.fn === 'back') { inp.value = inp.value.slice(0, -1); kanaTyped(); }
+    else if (b.dataset.fn === 'clear') { inp.value = ''; kanaTyped(); }
     if (navigator.vibrate) navigator.vibrate(8);
   });
   function setKana(on) {
     $('#kana').hidden = !on;
-    $('#kanaToggle').setAttribute('aria-pressed', String(on));
-    $('#q').inputMode = on ? 'none' : 'search'; // 50 音のときは、端末のキーボードを出さない
+    $('#kanaBtn').setAttribute('aria-pressed', String(on));
+    $('#q').inputMode = on ? 'none' : 'search';
     store.set('lf_remote_kana', on ? 'on' : 'off');
   }
-  $('#kanaToggle').onclick = () => setKana($('#kana').hidden);
+  $('#kanaBtn').onclick = () => setKana($('#kana').hidden);
 
-  // ---------- 履歴・よく聴く曲 ----------
-  async function loadRecent() {
-    setHead('履歴', '最近聴いた曲'); loading();
-    try {
-      const data = await api('/me/player/recently-played?limit=50');
-      const seen = new Set();
-      const items = ((data && data.items) || []).map((x) => x.track).filter((t) => t && !seen.has(t.id) && seen.add(t.id)).map(trackOf);
-      if (tab === 'recent') renderList(items, { empty: '最近聴いた曲はありません' });
-    } catch (e) {
-      if (tab === 'recent') renderList([], { empty: e.status === 403 || e.status === 401 ? '履歴を見るには、もう一度ログインしてください（Lyrics Flow でログアウト → ログイン）' : '読み込めませんでした' });
-    }
-  }
+  // ---------- 一覧 ----------
   let topRange = 'short_term';
-  async function loadTop() {
-    setHead('よく聴く曲', { short_term: 'この 4 週間', medium_term: 'この半年', long_term: 'この 1 年' }[topRange]); loading();
+  VIEWS.recent = { el: 'v-list', render: () => listView('recent') };
+  VIEWS.top = { el: 'v-list', render: () => listView('top') };
+  VIEWS.genre = { el: 'v-list', render: (g) => listView('genre', g) };
+  VIEWS.queue = { el: 'v-list', render: () => listView('queue') };
+  async function listView(kind, arg) {
+    const tabs = $('#listTabs'), box = $('#listBody');
+    tabs.textContent = '';
+    [['recent', t('recent')], ['top', t('topTracks')], ['genre:j-pop', 'J-POP'], ['genre:k-pop', 'K-POP'], ['genre:pop', t('western')], ['queue', t('queue')]].forEach(([k, label]) => {
+      const b = document.createElement('button'); b.textContent = label;
+      b.setAttribute('aria-pressed', String(k === (arg ? kind + ':' + arg : kind)));
+      b.onclick = () => go(k, false);
+      tabs.appendChild(b);
+    });
+    $('#listInfo').textContent = '';
+    loadingIn(box);
     try {
-      const data = await api('/me/top/tracks?limit=50&time_range=' + topRange);
-      if (tab !== 'top') return;
-      renderList(((data && data.items) || []).map(trackOf), { empty: 'まだありません' });
-      const box = document.createElement('div'); box.className = 'chips'; box.style.marginBottom = '10px';
-      [['short_term', '4 週間'], ['medium_term', '半年'], ['long_term', '1 年']].forEach(([k, label]) => {
-        const b = document.createElement('button'); b.textContent = label;
-        if (k === topRange) { b.style.color = '#fff'; b.style.borderColor = 'var(--accent)'; }
-        b.onclick = () => { topRange = k; loadTop(); };
-        box.appendChild(b);
-      });
-      $('#list').prepend(box);
+      if (kind === 'recent') {
+        $('#listTitle').textContent = t('recentTitle');
+        const d = await api('/me/player/recently-played?limit=50');
+        const seen = new Set();
+        rows(box, ((d && d.items) || []).map((x) => x.track).filter((x) => x && !seen.has(x.id) && seen.add(x.id)).map(trackOf));
+      } else if (kind === 'top') {
+        $('#listTitle').textContent = t('topTitle');
+        const d = await api('/me/top/tracks?limit=50&time_range=' + topRange);
+        rows(box, ((d && d.items) || []).map(trackOf));
+        const bar = document.createElement('div'); bar.className = 'modes'; bar.style.margin = '0 0 8px';
+        [['short_term', t('range4')], ['medium_term', t('range6')], ['long_term', t('range1')]].forEach(([k, label]) => {
+          const b = document.createElement('button'); b.textContent = label; b.setAttribute('aria-pressed', String(k === topRange));
+          b.onclick = () => { topRange = k; listView('top'); };
+          bar.appendChild(b);
+        });
+        box.prepend(bar);
+      } else if (kind === 'genre') {
+        $('#listTitle').textContent = t('genreTitle', { g: arg.toUpperCase() });
+        const d = await api('/search?' + new URLSearchParams({ type: 'track', limit: '40', market: 'from_token', q: 'genre:"' + arg + '"' }));
+        rows(box, ((d && d.tracks && d.tracks.items) || []).filter(Boolean).map(trackOf));
+      } else if (kind === 'queue') {
+        $('#listTitle').textContent = t('queueTitle');
+        const d = await api('/me/player/queue');
+        const list = [];
+        if (d && d.currently_playing && d.currently_playing.type === 'track') list.push({ ...trackOf(d.currently_playing), current: true });
+        ((d && d.queue) || []).filter((x) => x && x.type === 'track').forEach((x, i) => list.push({ ...trackOf(x), pos: i + 1 }));
+        $('#listInfo').textContent = t('hits', { n: Math.max(0, list.length - 1) });
+        rows(box, list, { queue: true, empty: t('queueEmpty') });
+        const n = document.createElement('p'); n.className = 'hint'; n.textContent = t('queueNote'); box.appendChild(n);
+      }
     } catch (e) {
-      if (tab === 'top') renderList([], { empty: e.status === 403 || e.status === 401 ? 'よく聴く曲を見るには、もう一度ログインしてください（Lyrics Flow でログアウト → ログイン）' : '読み込めませんでした' });
+      rows(box, [], { empty: e.status === 401 || e.status === 403 ? t('relogin') : t('none') });
     }
   }
 
-  // ---------- 予約一覧（Spotify のキュー） ----------
-  async function loadQueue(quiet) {
-    if (!quiet) { setHead('予約一覧', ''); loading(); }
+  // ---------- リモコン ----------
+  let digits = '';
+  VIEWS.pad = { el: 'v-pad', render() { showDigits(); renderNow(); } };
+  const padLen = () => (ui === 'kr' ? 5 : 6);
+  function showDigits() {
+    const n = padLen();
+    const d = (digits + '-'.repeat(n)).slice(0, n);
+    $('#padNum').textContent = ui === 'kr' ? d : d.slice(0, 4) + '-' + d.slice(4);
+    const hit = digits.length === n ? nos[digits] : null;
+    $('#padFound').textContent = hit ? hit.name + ' / ' + hit.artists : '';
+    markLang($('#padFound'), hit ? hit.name : '');
+  }
+  $('#keys').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (navigator.vibrate) navigator.vibrate(8);
+    if (b.classList.contains('clr')) digits = '';
+    else if (b.classList.contains('ok')) {
+      const hit = digits.length === padLen() ? nos[digits] : null;
+      if (!hit) { toast(t('noNumber'), t('noNumberSub'), '', true); return; }
+      reserve(hit).then((ok) => { if (ok) { digits = ''; showDigits(); } });
+      return;
+    } else if (digits.length < padLen()) digits += b.textContent.trim();
+    showDigits();
+  });
+
+  // ---------- 曲の詳しい情報 ----------
+  let dTrack = null;
+  async function openDetail(tr) {
+    dTrack = tr;
+    $('#dArt').src = tr.big || tr.art || '';
+    $('#dTitle').textContent = tr.name; markLang($('#dTitle'), tr.name);
+    $('#dArtist').textContent = tr.artists; markLang($('#dArtist'), tr.artists);
+    $('#dNo').textContent = t('songNo') + ' ' + songNo(tr.id);
+    const chips = $('#dChips'); chips.textContent = '';
+    const chip = (text, cls) => { const s = document.createElement('span'); s.textContent = text; if (cls) s.className = cls; markLang(s, text); chips.appendChild(s); return s; };
+    if (tr.album) chip(tr.album);
+    if (tr.dur) chip(fmt(tr.dur));
+    const lc = chip(t('lyricsChecking'), 'no');
+    const r = $('#dRsv'); r.classList.remove('done'); r.textContent = t('reserve');
+    $('#detail').hidden = false;
+    // カラオケで歌えるか（LRCLIB にタイミングつきの歌詞があるか）
     try {
-      const data = await api('/me/player/queue');
-      const cur = data && data.currently_playing;
-      const q = ((data && data.queue) || []).filter((t) => t && t.type === 'track');
-      updateCount(q);
-      if (tab !== 'queue') return;
-      const rows = [];
-      if (cur && cur.type === 'track') rows.push({ ...trackOf(cur), current: true });
-      q.forEach((t, i) => rows.push({ ...trackOf(t), pos: i + 1 }));
-      setHead('予約一覧', q.length + ' 曲');
-      renderList(rows, { queue: true, empty: '予約はありません。曲を探して「予約」を押してください' });
-      const n = document.createElement('p'); n.className = 'note';
-      n.textContent = 'Spotify のキュー（次に流れる順）です。プレイリストやアルバムの続きも並びます。予約の取り消しは Spotify のアプリでしてください。';
-      $('#list').appendChild(n);
-    } catch (e) {
-      if (tab === 'queue' && !quiet) renderList([], { empty: '読み込めませんでした' });
-    }
+      const q = new URLSearchParams({ track_name: tr.name, artist_name: tr.artists.split(', ')[0], album_name: tr.album || '', duration: String(Math.round((tr.dur || 0) / 1000)) });
+      const res = await fetch('https://lrclib.net/api/get?' + q);
+      const j = res.ok ? await res.json() : null;
+      if (dTrack !== tr) return;
+      if (j && j.syncedLyrics) { lc.textContent = t('lyricsSynced'); lc.className = 'ok'; }
+      else if (j && j.plainLyrics) { lc.textContent = t('lyricsPlain'); lc.className = ''; }
+      else { lc.textContent = t('lyricsNone'); lc.className = 'no'; }
+    } catch { if (dTrack === tr) { lc.textContent = t('lyricsNone'); } }
   }
-  function updateCount(q) {
-    const n = q.filter((t) => mine.has(t.id)).length;
-    const c = $('#qcount');
-    c.hidden = !n; c.textContent = n;
-  }
+  function closeDetail() { $('#detail').hidden = true; dTrack = null; }
+  $('#dClose').onclick = closeDetail;
+  $('#detail').addEventListener('click', (e) => { if (e.target.id === 'detail') closeDetail(); });
+  $('#dRsv').onclick = () => dTrack && reserve(dTrack, $('#dRsv'));
+  $('#dNow').onclick = () => { if (dTrack) { playNow(dTrack); closeDetail(); } };
 
   // ================= 演奏中と操作 =================
   let player = null;
+  function renderNow() {
+    const it = player && player.item;
+    const lb = !it ? t('idle') : player.is_playing ? t('playing') : t('paused');
+    const title = it ? it.name : t('idleTitle');
+    const ar = it && it.artists ? it.artists.map((a) => a.name).join(', ') : '';
+    const img = it ? smallImg(it.album && it.album.images) : '';
+    $('#hLb').textContent = lb; $('#mLb').textContent = lb;
+    $('#hTitle').textContent = title; $('#mTitle').textContent = title;
+    markLang($('#hTitle'), title); markLang($('#mTitle'), title);
+    $('#hArtist').textContent = ar; markLang($('#hArtist'), ar);
+    if ($('#hArt').getAttribute('src') !== (it ? bigImg(it.album && it.album.images) : '')) $('#hArt').src = it ? bigImg(it.album && it.album.images) : '';
+    if ($('#mArt').getAttribute('src') !== img) $('#mArt').src = img;
+    $('#hBar').style.width = it && it.duration_ms ? (player.progress_ms / it.duration_ms * 100).toFixed(1) + '%' : '0';
+    $('#pauseLbl').textContent = player && player.is_playing ? t('pause') : t('resume');
+  }
   async function refreshNow() {
-    try {
-      player = await api('/me/player?additional_types=track');
-      const it = player && player.item;
-      $('#now').hidden = false;
-      $('#nowLbl').textContent = !it ? '演奏していません' : player.is_playing ? '演奏中' : '一時停止中';
-      $('#nowTitle').textContent = it ? it.name : 'Spotify で再生すると、ここに出ます';
-      markLang($('#nowTitle'), it ? it.name : '');
-      const ar = it && it.artists ? it.artists.map((a) => a.name).join(', ') : '';
-      $('#nowArtist').textContent = ar; markLang($('#nowArtist'), ar);
-      $('#nowArt').src = it ? smallImg(it.album && it.album.images) : '';
-      $('#pause').innerHTML = player && player.is_playing ? '一時<br>停止' : '再生';
-      if (tab === 'queue') loadQueue(true);
-      else api('/me/player/queue').then((d) => updateCount(((d && d.queue) || []).filter(Boolean))).catch(() => {});
-    } catch (e) { /* つながらないときは、次の取得を待つ */ }
+    try { player = await api('/me/player?additional_types=track'); } catch { /* 次を待つ */ }
+    renderNow();
   }
   async function op(method, path, body) {
     const r = await api(path, { method, body });
-    if (!r.ok) toast('操作できませんでした', opError(r), '', true);
+    if (!r.ok) toast(t('cantOp'), opError(r), '', true);
     setTimeout(refreshNow, 500);
-    return r.ok;
   }
-  $('#restart').onclick = () => op('PUT', '/me/player/seek?position_ms=0');
-  $('#pause').onclick = () => op('PUT', player && player.is_playing ? '/me/player/pause' : '/me/player/play');
-  $('#skip').onclick = () => op('POST', '/me/player/next');
-  const vol = (d) => {
-    const v = player && player.device && player.device.volume_percent;
-    if (v == null) { toast('音量を変えられません', 'この端末は Spotify から音量を変えられません', '', true); return; }
-    op('PUT', '/me/player/volume?volume_percent=' + Math.max(0, Math.min(100, v + d)));
+  const seekBy = (d) => { if (!player || !player.item) return; op('PUT', '/me/player/seek?position_ms=' + Math.max(0, (player.progress_ms || 0) + d)); };
+  const vol = (d) => { const v = player && player.device && player.device.volume_percent; if (v == null) { toast(t('cantOp'), '', '', true); return; } op('PUT', '/me/player/volume?volume_percent=' + Math.max(0, Math.min(100, v + d))); };
+  const OPS = {
+    rew: () => seekBy(-10000), ff: () => seekBy(10000), restart: () => op('PUT', '/me/player/seek?position_ms=0'),
+    pause: () => op('PUT', player && player.is_playing ? '/me/player/pause' : '/me/player/play'),
+    skip: () => op('POST', '/me/player/next'), prev: () => op('POST', '/me/player/previous'),
+    volUp: () => vol(10), volDown: () => vol(-10), queue: () => go('queue'),
   };
-  $('#volDown').onclick = () => vol(-10);
-  $('#volUp').onclick = () => vol(10);
-  $('#sound').onclick = () => {
-    soundOn = !soundOn;
-    store.set('lf_remote_sound', soundOn ? 'on' : 'off');
-    $('#sound').setAttribute('aria-pressed', String(soundOn));
-    if (soundOn) chime();
-  };
+  $$('[data-op]').forEach((b) => { b.onclick = () => { if (navigator.vibrate) navigator.vibrate(10); OPS[b.dataset.op](); }; });
+  $('#footStop').onclick = OPS.skip;
+  $('#miniNow').onclick = () => go('pad');
+
+  // ================= アプリとして入れる（PWA） =================
+  let installEvt = null;
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; if (!standalone) { $('#installBox').hidden = false; $('#installBtn').hidden = false; } });
+  $('#installBtn').onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; $('#installBox').hidden = true; };
+  if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) { $('#installBox').hidden = false; $('#installBtn').hidden = true; $('#iosHint').hidden = false; }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
   // ================= 起動 =================
+  $$('[data-go]').forEach((b) => { b.onclick = () => go(b.dataset.go); });
+  $('#goTop').onclick = () => { stack.length = 0; go('home', false); };
+  $('#goBack').onclick = back;
+  $$('[data-ui-pick]').forEach((b) => { b.onclick = () => setUi(b.dataset.uiPick); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (!$('#detail').hidden) closeDetail(); else back(); } });
+
   function main() {
     if (!store.get('lf_refresh')) {
-      // ログインは Lyrics Flow で。終わったらここへ戻る
       $('#login').hidden = false;
       $('#loginLink').onclick = () => store.set('lf_after_login', '/lyrics/remote/');
-      $$('.tabs').forEach((t) => { t.hidden = true; });
       return;
     }
-    $('#app').hidden = false;
-    $('#sound').setAttribute('aria-pressed', String(soundOn));
+    $('#shell').hidden = false;
+    applyUi();
     setKana(store.get('lf_remote_kana') === 'on');
-    setTab('song');
+    const h = location.hash.slice(1);
+    go(h && VIEWS[h.split(':')[0]] ? h : 'home', false);
     refreshNow();
     setInterval(() => { if (document.visibilityState === 'visible') refreshNow(); }, 5000);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshNow(); });
