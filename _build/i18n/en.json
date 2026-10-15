@@ -3231,11 +3231,11 @@
   "LINE をつなぎます…": "Connecting LINE…",
   "変更できませんでした": "Couldn't change it",
   "時間をおいてもう一度お試しください。": "Please try again later.",
-  "Lyrics Flow の画面。曲名とジャケットの下に歌詞が並び、いま歌っている行だけが白く大きく表示されている": "The Lyrics Flow screen. Lyrics are listed below the song title and cover art, with only the line being sung shown large in white.",
+  "Lyrics Flow の画面。左にジャケットと再生ボタン、右に歌詞が並び、いま歌っている行だけが白く光っている": "The Lyrics Flow screen. Cover art and playback buttons on the left, lyrics on the right, with only the line being sung glowing white.",
   "Lyrics Flow を開く": "Open Lyrics Flow",
   "Spotify で再生中の曲の歌詞を、再生に合わせてひたすら流し続けるツールです。全画面にして、使っていないモニターやタブレットに表示しておく使い方を想定しています。": "A tool that keeps scrolling the lyrics of whatever is playing on Spotify, in time with the music. It's meant to be shown full screen on a spare monitor or tablet.",
   "再生位置に合わせて、いま歌っている行を中央に表示": "Shows the line being sung in the center, synced to playback",
-  "文字の大きさと、歌詞のタイミングを調整できる": "Adjustable text size and lyric timing",
+  "見た目は Apple Music 風・Spotify 風・カラオケ・シンプルから選べる": "Choose a look: Apple Music style, Spotify style, Karaoke, or Simple",
   "曲が変わると、次の曲の歌詞に自動で切り替わる": "Switches to the next song's lyrics automatically",
   "歌詞は LRCLIB から読み込むため、見つからない曲もある": "Lyrics come from LRCLIB, so some songs may not be found"
 }
