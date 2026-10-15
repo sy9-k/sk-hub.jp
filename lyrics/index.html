@@ -1264,7 +1264,7 @@
     $('#bg').style.backgroundImage = track.art ? `url("${track.art}")` : 'none';
     $('#ktitle .kt-name').textContent = track.name;
     $('#ktitle .kt-artist').textContent = track.artists.join(', ');
-    $('#nnum').textContent = songNo(track.id, 'ko');
+    $('#nnum').textContent = songNo(roomNid(track.id) || track.id, 'ko');
     // 次の曲は、この曲のキューを取り直してから出す
     state.next = null;
     state.nextFor = null;
@@ -2006,7 +2006,7 @@
     no.lang = ko ? 'ko' : 'ja';
     no.textContent = ko ? '곡번호' : '選曲番号';
     const b = document.createElement('b');
-    b.textContent = songNo(n.id, ko ? 'ko' : 'ja');
+    b.textContent = songNo(roomNid(n.id) || n.id, ko ? 'ko' : 'ja');
     no.appendChild(b);
     nextLeft = '';
   }
@@ -2649,6 +2649,8 @@
   // （中身は room-host.js。ここからは window.LF_HOST で、Spotify の呼び出しやいまの曲を渡す）
   const room = { mod: null, id: '', url: '', busy: false, inQrFor: '' };
   const roomName = (id) => (room.mod && room.id && id ? room.mod.nameOf(id) : '');
+  // スマホがカタログで選んだ曲は、スマホと同じ選曲番号にする
+  const roomNid = (id) => (room.mod && room.id && id ? room.mod.nidOf(id) : '');
 
   async function apiCall(method, path, body, retried) {
     try {
