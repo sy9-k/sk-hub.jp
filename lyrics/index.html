@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-theme="glow">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -9,93 +9,243 @@
 <link rel="canonical" href="https://sk-hub.jp/lyrics/">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<!-- テーマを、画面が出る前に付ける（ちらつかないように） -->
+<script>(function(){try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("lf_theme");if(/^(glow|bold|karaoke|simple)$/.test(t))document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@800&display=swap"></script>
 <style>
   :root {
     --bg: #0b0b0f;
     --fg: #ffffff;
-    --dim: rgba(255, 255, 255, .38);
-    --past: rgba(255, 255, 255, .18);
-    --accent: #1ed760;
     --size: 36px;
+    --c1: #5b4bff;  /* ジャケットから取った色（取れなければこのまま） */
+    --c2: #ff4f8b;
+    --c3: #1fb5ff;
+    --solid: #4a3a8c;
+    --anchor: 50%;   /* いまの行を置く高さ */
+    --ease: cubic-bezier(.2, .75, .2, 1);
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; height: 100%; overflow: hidden;
     background: var(--bg); color: var(--fg);
-    font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+    font-family: "Noto Sans JP", system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
   }
+  body { transition: background-color 1.2s; }
   body.idle { cursor: none; }
 
+  /* ================= 背景 ================= */
   #bg {
     position: fixed; inset: -10%; z-index: 0;
     background-size: cover; background-position: center;
     filter: blur(70px) brightness(.4) saturate(1.4);
-    transition: opacity .8s;
+  }
+  #glow { position: fixed; inset: 0; z-index: 0; overflow: hidden; display: none; background: #000; }
+  #glow .blob {
+    position: absolute; width: 85vmax; height: 85vmax; border-radius: 50%;
+    filter: blur(90px); opacity: .8;
+    transition: background-color 1.5s;
+    animation: drift 26s ease-in-out infinite alternate;
+  }
+  #glow .b1 { background: var(--c1); left: -25vmax; top: -30vmax; }
+  #glow .b2 { background: var(--c2); right: -30vmax; top: 5vmax; animation-duration: 32s; animation-direction: alternate-reverse; }
+  #glow .b3 { background: var(--c3); left: 5vmax; bottom: -45vmax; animation-duration: 38s; }
+  #glow::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, .28); }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+    50%  { transform: translate(14vmax, 8vmax) rotate(140deg) scale(1.18); }
+    100% { transform: translate(-8vmax, 16vmax) rotate(260deg) scale(.92); }
   }
 
-  /* ---------- 歌詞ステージ ---------- */
+  /* ================= 歌詞（一覧で流すテーマ） ================= */
   #stage {
     position: fixed; inset: 0; z-index: 1; overflow: hidden;
-    -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent);
-            mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent);
+    /* 上はヘッダーの下で消える・下はフッターの手前で消える */
+    -webkit-mask-image: linear-gradient(transparent 90px, #000 calc(90px + 12%), #000 82%, transparent calc(100% - 40px));
+            mask-image: linear-gradient(transparent 90px, #000 calc(90px + 12%), #000 82%, transparent calc(100% - 40px));
   }
-  #lines {
-    position: absolute; left: 0; right: 0; top: 50%;
-    padding: 0 7vw;
+  #lines { position: absolute; left: 0; right: 0; top: var(--anchor); padding: 0 7vw; }
+  #lines.plain { will-change: transform; }
+  .line {
+    padding: .3em 0;
+    font-size: var(--size); font-weight: 800; line-height: 1.32;
+    overflow-wrap: anywhere;
+    transition: transform .7s var(--ease);
     will-change: transform;
   }
-  #lines.synced { transition: transform .7s cubic-bezier(.2, .75, .2, 1); }
-  .line {
-    font-size: var(--size); font-weight: 800; line-height: 1.35;
-    padding: .28em 0; color: var(--dim);
-    transform-origin: left center;
-    transition: color .35s, transform .35s, filter .35s;
-    filter: blur(.4px);
-    overflow-wrap: anywhere;
+  .line .txt {
+    display: inline-block; transform-origin: left center;
+    color: rgba(255, 255, 255, .38);
+    transition: color .4s, transform .5s var(--ease), filter .5s, opacity .5s, text-shadow .5s;
   }
-  .line.past   { color: var(--past); }
-  .line.active { color: var(--fg); transform: scale(1.05); filter: none; }
-  .line.note   { letter-spacing: .3em; }
-  #lines.plain .line { color: var(--fg); filter: none; }
+  .line.past .txt { color: rgba(255, 255, 255, .2); }
+  .line.active .txt { color: var(--fg); }
+  .line.note .txt { letter-spacing: .3em; }
+  #lines.plain .line .txt { color: var(--fg); }
+
+  /* --- シンプル --- */
+  [data-theme="simple"] .line .txt { filter: blur(.4px); }
+  [data-theme="simple"] .line.active .txt { transform: scale(1.05); filter: none; }
+
+  /* --- グロー（Apple Music 風）: 色が動く背景・離れた行ほどぼかす・ばねのように少しずつ遅れて動く --- */
+  [data-theme="glow"] #glow { display: block; }
+  [data-theme="glow"] #bg { display: none; }
+  [data-theme="glow"] { --anchor: 36%; }
+  [data-theme="glow"] .line { font-weight: 900; letter-spacing: -.01em; transition: transform .95s cubic-bezier(.3, 1.22, .45, 1); }
+  [data-theme="glow"] .line .txt { color: rgba(255, 255, 255, .42); transform: scale(.96); }
+  [data-theme="glow"] .line[data-d="1"] .txt { filter: blur(.8px); }
+  [data-theme="glow"] .line[data-d="2"] .txt { filter: blur(1.6px); }
+  [data-theme="glow"] .line[data-d="3"] .txt { filter: blur(2.4px); opacity: .85; }
+  [data-theme="glow"] .line[data-d="4"] .txt { filter: blur(3.2px); opacity: .7; }
+  [data-theme="glow"] .line.past .txt { color: rgba(255, 255, 255, .32); }
+  [data-theme="glow"] .line.active .txt {
+    color: #fff; transform: scale(1); filter: none; opacity: 1;
+    text-shadow: 0 0 28px rgba(255, 255, 255, .45);
+  }
+  [data-theme="glow"] header { background: none; }
+
+  /* --- ボールド（Spotify 風）: ジャケットの色をベタ塗り・歌った行は白、これからの行は黒 --- */
+  [data-theme="bold"] body { background: var(--solid); }
+  [data-theme="bold"] #bg { display: none; }
+  [data-theme="bold"] { --anchor: 32%; }
+  [data-theme="bold"] .line { font-weight: 900; letter-spacing: -.015em; line-height: 1.25; padding: .32em 0; }
+  [data-theme="bold"] .line .txt { color: rgba(0, 0, 0, .78); transition: color .25s; }
+  [data-theme="bold"] .line.past .txt { color: rgba(255, 255, 255, .62); }
+  [data-theme="bold"] .line.active .txt { color: #fff; }
+  [data-theme="bold"] #lines.plain .line .txt { color: #fff; }
+  [data-theme="bold"] header { background: linear-gradient(var(--solid) 40%, transparent); }
+  [data-theme="bold"] footer { background: linear-gradient(transparent, var(--solid) 60%); }
+
+  /* ================= カラオケ ================= */
+  #karaoke { position: fixed; inset: 0; z-index: 1; display: none; pointer-events: none; }
+  [data-theme="karaoke"][data-mode="synced"] #karaoke { display: block; }
+  [data-theme="karaoke"][data-mode="synced"] #stage { display: none; }
+  [data-theme="karaoke"] #bg { filter: blur(40px) brightness(.35) saturate(1.5); }
+  .krow { position: absolute; left: 5vw; right: 5vw; }
+  .krow.r0 { bottom: calc(14% + var(--size) * 2.4); text-align: left; }
+  .krow.r1 { bottom: 12%; text-align: right; }
+  .kline {
+    position: relative; display: inline-block; white-space: nowrap;
+    font-family: "M PLUS Rounded 1c", "Noto Sans JP", system-ui, sans-serif;
+    font-weight: 800; font-size: calc(var(--size) * 1.45); line-height: 1.3;
+    letter-spacing: .04em;
+  }
+  .kline.enter { animation: kin .35s var(--ease); }
+  @keyframes kin { from { opacity: 0; transform: translateY(.3em); } to { opacity: 1; transform: none; } }
+  .kline .base, .kline .fill { display: block; padding: 0 .12em; }
+  .kline .base {
+    color: #fff;
+    text-shadow:
+      3px 0 0 #102a6b, -3px 0 0 #102a6b, 0 3px 0 #102a6b, 0 -3px 0 #102a6b,
+      2px 2px 0 #102a6b, -2px 2px 0 #102a6b, 2px -2px 0 #102a6b, -2px -2px 0 #102a6b,
+      0 6px 14px rgba(0, 0, 0, .5);
+  }
+  .kline .fill {
+    position: absolute; inset: 0;
+    color: #2f8dff;
+    text-shadow:
+      3px 0 0 #fff, -3px 0 0 #fff, 0 3px 0 #fff, 0 -3px 0 #fff,
+      2px 2px 0 #fff, -2px 2px 0 #fff, 2px -2px 0 #fff, -2px -2px 0 #fff;
+    clip-path: inset(-30% calc(100% - var(--p, 0) * 100%) -30% -30%);
+  }
+  #ktitle {
+    position: absolute; left: 0; right: 0; top: 30%; text-align: center; padding: 0 6vw;
+    transition: opacity .6s; opacity: 0;
+  }
+  #ktitle.show { opacity: 1; }
+  #ktitle .kt-name {
+    font-family: "M PLUS Rounded 1c", "Noto Sans JP", sans-serif; font-weight: 800;
+    font-size: calc(var(--size) * 1.7); line-height: 1.2;
+    text-shadow: 0 0 0 transparent, 3px 3px 0 #102a6b, -3px 3px 0 #102a6b, 3px -3px 0 #102a6b, -3px -3px 0 #102a6b;
+  }
+  #ktitle .kt-artist { margin-top: .6em; font-size: calc(var(--size) * .7); font-weight: 700; color: #ffd84d; }
+  #ktitle .kt-bar { width: 40%; height: 3px; margin: .8em auto; background: linear-gradient(90deg, transparent, #ffd84d, transparent); }
 
   #message {
     position: fixed; inset: 0; z-index: 2;
     display: flex; align-items: center; justify-content: center; text-align: center;
-    padding: 24px; font-size: 20px; color: var(--dim); pointer-events: none;
+    padding: 24px; font-size: 20px; color: rgba(255, 255, 255, .5); pointer-events: none;
   }
 
-  /* ---------- ヘッダー / コントロール ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    #glow .blob { animation: none; }
+    .line, .line .txt { transition-duration: .01s !important; }
+  }
+
+  /* ================= ヘッダー / フッター ================= */
   header {
     position: fixed; top: 0; left: 0; right: 0; z-index: 3;
     display: flex; align-items: center; gap: 14px; padding: 16px 20px;
-    background: linear-gradient(rgba(0,0,0,.55), transparent);
+    background: linear-gradient(rgba(0, 0, 0, .55), transparent);
     transition: opacity .5s;
   }
   body.idle header, body.idle footer { opacity: 0; }
-  #art { width: 52px; height: 52px; border-radius: 6px; object-fit: cover; background: #222; flex: none; }
+  body.idle #themePanel { opacity: 0; pointer-events: none; }
+  #art { width: 52px; height: 52px; border-radius: 6px; object-fit: cover; background: #222; flex: none; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
   #art[src=""] { visibility: hidden; }
   #meta { min-width: 0; flex: 1; }
   #title  { font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #artist { font-size: 14px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #artist { font-size: 14px; color: rgba(255, 255, 255, .6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   button {
     font: inherit; font-size: 13px; color: var(--fg); cursor: pointer;
-    background: rgba(255,255,255,.12); border: 0; border-radius: 999px; padding: 7px 12px;
+    background: rgba(255, 255, 255, .14); border: 0; border-radius: 999px; padding: 7px 12px;
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   }
-  button:hover { background: rgba(255,255,255,.22); }
-  button.primary { background: var(--accent); color: #000; font-weight: 700; padding: 12px 22px; font-size: 15px; }
-  #offsetLabel { font-size: 12px; color: var(--dim); align-self: center; min-width: 64px; text-align: center; }
+  button:hover { background: rgba(255, 255, 255, .24); }
+  button.primary { background: #1ed760; color: #000; font-weight: 700; padding: 12px 22px; font-size: 15px; }
+  #themeBtn { font-weight: 700; }
+  #offsetLabel { font-size: 12px; color: rgba(255, 255, 255, .6); align-self: center; min-width: 64px; text-align: center; }
 
   footer {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 3;
     padding: 12px 20px 16px; transition: opacity .5s;
-    display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--dim);
+    display: flex; align-items: center; gap: 10px; font-size: 12px; color: rgba(255, 255, 255, .6);
   }
-  #bar { flex: 1; height: 4px; background: rgba(255,255,255,.15); border-radius: 2px; overflow: hidden; }
+  #bar { flex: 1; height: 4px; background: rgba(255, 255, 255, .18); border-radius: 2px; overflow: hidden; }
   #barFill { height: 100%; width: 0; background: var(--fg); }
   #source { white-space: nowrap; }
 
-  /* ---------- セットアップ画面 ---------- */
+  /* ================= テーマの選択 ================= */
+  #themePanel {
+    position: fixed; top: 78px; right: 20px; z-index: 4;
+    width: min(420px, calc(100vw - 32px));
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px;
+    background: rgba(20, 20, 26, .72); border: 1px solid rgba(255, 255, 255, .1); border-radius: 18px;
+    -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+    transition: opacity .3s;
+  }
+  #themePanel[hidden] { display: none; }
+  .tp {
+    display: flex; flex-direction: column; align-items: stretch; gap: 8px; text-align: left;
+    padding: 8px; border-radius: 12px; background: rgba(255, 255, 255, .06);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    outline: 2px solid transparent; outline-offset: -2px;
+  }
+  .tp[aria-pressed="true"] { outline-color: #fff; background: rgba(255, 255, 255, .12); }
+  .tp b { font-size: 14px; padding: 0 2px; }
+  .tp small { font-size: 11px; color: rgba(255, 255, 255, .55); padding: 0 2px 2px; }
+  .sw {
+    height: 74px; border-radius: 8px; overflow: hidden; position: relative;
+    display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 0 10px;
+    font-weight: 900; font-size: 12px; line-height: 1.1;
+  }
+  .sw i { font-style: normal; display: block; white-space: nowrap; }
+  .sw-glow { background: radial-gradient(circle at 20% 20%, #ff4f8b, transparent 60%), radial-gradient(circle at 80% 40%, #5b4bff, transparent 60%), radial-gradient(circle at 40% 100%, #1fb5ff, #111 70%); }
+  .sw-glow i { color: rgba(255,255,255,.4); filter: blur(.8px); }
+  .sw-glow i.on { color: #fff; filter: none; text-shadow: 0 0 10px rgba(255,255,255,.6); }
+  .sw-bold { background: #b8452f; }
+  .sw-bold i { color: rgba(0,0,0,.8); }
+  .sw-bold i.on { color: #fff; }
+  .sw-karaoke { background: linear-gradient(#1a1440, #0d2a4a); justify-content: flex-end; padding-bottom: 10px; font-family: "M PLUS Rounded 1c", sans-serif; }
+  .sw-karaoke i { color: #fff; text-shadow: 1px 0 #102a6b, -1px 0 #102a6b, 0 1px #102a6b, 0 -1px #102a6b; }
+  .sw-karaoke i.on { background: linear-gradient(90deg, #2f8dff 55%, #fff 55%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; }
+  .sw-karaoke i.r { text-align: right; }
+  .sw-simple { background: #0b0b0f; }
+  .sw-simple i { color: rgba(255,255,255,.35); }
+  .sw-simple i.on { color: #fff; }
+
+  /* ================= セットアップ画面 ================= */
   #setup {
     position: fixed; inset: 0; z-index: 10; overflow: auto;
     display: flex; align-items: center; justify-content: center; padding: 16px;
@@ -113,13 +263,27 @@
   }
   .card label { font-size: 13px; color: #999; }
   .err { color: #ff6b6b; font-size: 14px; min-height: 1.4em; }
+
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; }
+    .controls { width: 100%; justify-content: flex-start; }
+    #themePanel { top: auto; bottom: 56px; right: 16px; }
+  }
 </style>
 </head>
 <body>
 
 <div id="bg"></div>
+<div id="glow"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
 
 <div id="stage"><div id="lines"></div></div>
+
+<div id="karaoke">
+  <div id="ktitle"><div class="kt-name"></div><div class="kt-bar"></div><div class="kt-artist"></div></div>
+  <div class="krow r0"><div class="kline"><span class="base"></span><span class="fill"></span></div></div>
+  <div class="krow r1"><div class="kline"><span class="base"></span><span class="fill"></span></div></div>
+</div>
+
 <div id="message"></div>
 
 <header>
@@ -129,6 +293,7 @@
     <div id="artist"></div>
   </div>
   <div class="controls">
+    <button id="themeBtn" title="見た目を選ぶ ( T )" aria-expanded="false">テーマ</button>
     <button id="offMinus" title="歌詞を早める ( [ )">−0.25s</button>
     <span id="offsetLabel">±0.00s</span>
     <button id="offPlus" title="歌詞を遅らせる ( ] )">+0.25s</button>
@@ -138,6 +303,25 @@
     <button id="logout">ログアウト</button>
   </div>
 </header>
+
+<div id="themePanel" hidden>
+  <button class="tp" data-pick="glow">
+    <span class="sw sw-glow"><i>ゆらめく光の中で</i><i class="on">いまの行が輝く</i><i>次の行はぼやけて</i></span>
+    <b>グロー</b><small>Apple Music 風・色が動く背景</small>
+  </button>
+  <button class="tp" data-pick="bold">
+    <span class="sw sw-bold"><i class="on">歌った行は白く</i><i>これからの行は黒</i><i>ジャケットの色で</i></span>
+    <b>ボールド</b><small>Spotify 風・ベタ塗りの背景</small>
+  </button>
+  <button class="tp" data-pick="karaoke">
+    <span class="sw sw-karaoke"><i class="on">左から色が変わる</i><i class="r">次の行はこちら</i></span>
+    <b>カラオケ</b><small>2 行表示・左から色が変わる</small>
+  </button>
+  <button class="tp" data-pick="simple">
+    <span class="sw sw-simple"><i>すっきりした</i><i class="on">シンプルな見た目</i><i>黒い背景</i></span>
+    <b>シンプル</b><small>ジャケットをぼかした背景</small>
+  </button>
+</div>
 
 <footer>
   <span id="time">0:00</span>
@@ -152,7 +336,7 @@
     <p>Spotifyで再生中の曲の歌詞を、再生に合わせてひたすら流し続けます。</p>
     <div id="ownApp">
     <ol>
-      <li><a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener" style="color:var(--accent)">Spotify Developer Dashboard</a> でアプリを作成</li>
+      <li><a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener" style="color:#1ed760">Spotify Developer Dashboard</a> でアプリを作成</li>
       <li>Redirect URI に次を登録：<br><code id="redirectShow"></code></li>
       <li>「Web API」にチェックして保存し、Client ID をここに貼り付け</li>
     </ol>
@@ -177,8 +361,10 @@
   const SCOPES = 'user-read-currently-playing user-read-playback-state';
   const POLL_PLAYING_MS = 2000;
   const POLL_IDLE_MS = 5000;
+  const THEMES = ['glow', 'bold', 'karaoke', 'simple'];
 
   const $ = (s) => document.querySelector(s);
+  const root = document.documentElement;
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch {} },
@@ -192,11 +378,14 @@
     syncedAt: 0,          // progressMs を取得した performance.now()
     playing: false,
     lyrics: null,         // { type: 'synced'|'plain'|'instrumental'|'none', lines: [{t, text}] }
+    karaoke: [],          // カラオケ用: 文字のある行だけ { t, end, text }
     activeIndex: -1,
+    kShown: [null, null], // カラオケの上下の行に出している行の番号
     offsetMs: Number(store.get('lf_offset')) || 0,
     fontSize: Number(store.get('lf_size')) || 36,
   };
   const lyricsCache = new Map();
+  const theme = () => root.getAttribute('data-theme');
 
   // ================= Spotify 認証 (PKCE) =================
   const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -336,15 +525,20 @@
   async function onTrackChange(track) {
     state.track = track;
     state.lyrics = null;
+    state.karaoke = [];
     state.activeIndex = -1;
     $('#title').textContent = track.name;
     $('#artist').textContent = track.artists.join(', ');
     $('#art').src = track.art;
     $('#bg').style.backgroundImage = track.art ? `url("${track.art}")` : 'none';
+    $('#ktitle .kt-name').textContent = track.name;
+    $('#ktitle .kt-artist').textContent = track.artists.join(', ');
     $('#dur').textContent = fmt(track.duration);
     $('#lines').innerHTML = '';
     $('#source').textContent = '';
+    root.removeAttribute('data-mode');
     showMessage('歌詞を検索中…');
+    if (track.art) applyColors(track.art);
 
     let lyrics;
     try {
@@ -356,6 +550,61 @@
     if (!state.track || state.track.id !== track.id) return; // 取得中に曲が変わった
     state.lyrics = lyrics;
     renderLyrics();
+  }
+
+  // ================= ジャケットの色 =================
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+    if (max === min) return [0, 0, l];
+    const d = max - min;
+    const s = l > .5 ? d / (2 - max - min) : d / (max + min);
+    const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [h * 60, s, l];
+  }
+  const hsl = (h, s, l) => `hsl(${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%)`;
+
+  function applyColors(url) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      let data;
+      try {
+        const c = document.createElement('canvas');
+        c.width = c.height = 32;
+        const x = c.getContext('2d', { willReadFrequently: true });
+        x.drawImage(img, 0, 0, 32, 32);
+        data = x.getImageData(0, 0, 32, 32).data;
+      } catch { return; } // 画像の読み込みが許されないときは、いまの色のまま
+      // 色相を 12 に分けて、鮮やかさで重みを付けて数える
+      const buckets = Array.from({ length: 12 }, () => ({ w: 0, h: 0, s: 0, l: 0 }));
+      let gray = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        const [h, s, l] = rgbToHsl(data[i], data[i + 1], data[i + 2]);
+        const w = s * (1 - Math.abs(l - .5) * 1.7);
+        if (w <= .05) { gray++; continue; }
+        const b = buckets[Math.floor(h / 30) % 12];
+        b.w += w; b.h += h * w; b.s += s * w; b.l += l * w;
+      }
+      const top = buckets.filter((b) => b.w > 0).sort((a, b) => b.w - a.w)
+        .map((b) => ({ h: b.h / b.w, s: b.s / b.w, l: b.l / b.w }));
+      if (!top.length || gray > 900) {
+        // ほぼ白黒のジャケット
+        root.style.setProperty('--c1', '#6b6b78');
+        root.style.setProperty('--c2', '#3a3a44');
+        root.style.setProperty('--c3', '#9a9aa8');
+        root.style.setProperty('--solid', '#3d3d45');
+        return;
+      }
+      const pick = (i) => top[Math.min(i, top.length - 1)];
+      const a = pick(0), b = pick(1), c = pick(2);
+      root.style.setProperty('--c1', hsl(a.h, Math.min(1, a.s * 1.1), .5));
+      root.style.setProperty('--c2', hsl(b.h, Math.min(1, b.s * 1.1), .45));
+      root.style.setProperty('--c3', hsl(c.h, Math.min(1, c.s * 1.1), .55));
+      // ボールド: 白い文字も黒い文字も読める明るさにそろえる
+      root.style.setProperty('--solid', hsl(a.h, Math.min(.6, Math.max(.35, a.s)), .42));
+    };
+    img.src = url;
   }
 
   // ================= 歌詞取得 (LRCLIB) =================
@@ -429,6 +678,19 @@
     return out.sort((a, b) => a.t - b.t);
   }
 
+  // カラオケ用: 文字のある行だけにして、それぞれの行が終わる時刻（次の行の時刻）を付ける
+  function toKaraoke(lines) {
+    const out = [];
+    lines.forEach((l, i) => {
+      if (!l.text) return;
+      const next = lines[i + 1] ? lines[i + 1].t : l.t + 6000;
+      // 行のあとに長い間奏があるときは、文字数から歌い終わりを見積もる
+      const est = Math.max(1800, [...l.text].length * 320);
+      out.push({ t: l.t, end: l.t + Math.min(next - l.t, est) * .96, text: l.text });
+    });
+    return out;
+  }
+
   // ================= 描画 =================
   function showMessage(msg) {
     $('#message').textContent = msg || '';
@@ -437,9 +699,10 @@
   function renderLyrics() {
     const el = $('#lines');
     const { type, lines } = state.lyrics;
-    el.className = type === 'synced' ? 'synced' : type === 'plain' ? 'plain' : '';
-    el.style.transform = 'translateY(0)';
+    el.className = type === 'plain' ? 'plain' : '';
+    el.style.transform = '';
     el.innerHTML = '';
+    if (type === 'synced' || type === 'plain') root.setAttribute('data-mode', type);
     $('#source').textContent = {
       synced: '同期歌詞 · LRCLIB', plain: '非同期歌詞 · LRCLIB', instrumental: '', none: '',
     }[type];
@@ -451,12 +714,17 @@
     const frag = document.createDocumentFragment();
     for (const l of lines) {
       const d = document.createElement('div');
+      const s = document.createElement('span');
       d.className = 'line';
-      if (!l.text) { d.textContent = '♪'; d.classList.add('note'); }
-      else d.textContent = l.text;
+      s.className = 'txt';
+      if (!l.text) { s.textContent = '♪'; d.classList.add('note'); }
+      else s.textContent = l.text;
+      d.appendChild(s);
       frag.appendChild(d);
     }
     el.appendChild(frag);
+    state.karaoke = type === 'synced' ? toKaraoke(lines) : [];
+    state.kShown = [null, null];
     state.activeIndex = -1;
   }
 
@@ -474,6 +742,69 @@
     return ans;
   }
 
+  // 一覧で流すテーマ: 行ごとに動かす（グローは、いまの行より下の行ほど少し遅れて動く）
+  function layoutLines(idx) {
+    const children = $('#lines').children;
+    if (!children.length) return;
+    const target = children[Math.max(idx, 0)];
+    const y = target.offsetTop + target.offsetHeight / 2;
+    const stagger = theme() === 'glow';
+    for (let i = 0; i < children.length; i++) {
+      const c = children[i];
+      c.classList.toggle('active', i === idx);
+      c.classList.toggle('past', i < idx);
+      c.dataset.d = String(Math.min(Math.abs(i - Math.max(idx, 0)), 4));
+      c.style.transitionDelay = stagger ? Math.max(0, Math.min(i - idx + 1, 8)) * 45 + 'ms' : '0ms';
+      c.style.transform = `translateY(${-y}px)`;
+    }
+  }
+
+  // カラオケ: 上の段と下の段に交互に行を出し、歌っている行を左から塗っていく
+  function renderKaraoke(ms) {
+    const k = state.karaoke;
+    const rows = document.querySelectorAll('#karaoke .kline');
+    const title = $('#ktitle');
+    if (!k.length) { title.classList.remove('show'); return; }
+
+    let d = Math.max(0, findIndex(k, ms));
+    // 歌い終わってから次の行まで間があるときは、次の行を先に出しておく
+    if (ms >= k[d].t && ms > k[d].end + 800 && d + 1 < k.length) d++;
+    const before = ms < k[0].t - 3000;
+    title.classList.toggle('show', ms < k[0].t - 1500);
+
+    for (const r of [0, 1]) {
+      // 段 r には、d と d+1 のうち番号の偶奇が合う方を出す
+      const n = (d % 2 === r) ? d : d + 1;
+      const row = rows[r];
+      const show = !before && n < k.length;
+      row.style.visibility = show ? 'visible' : 'hidden';
+      if (!show) { state.kShown[r] = null; continue; }
+      if (state.kShown[r] !== n) {
+        state.kShown[r] = n;
+        row.querySelector('.base').textContent = k[n].text;
+        row.querySelector('.fill').textContent = k[n].text;
+        fitKaraoke(row);
+        row.classList.remove('enter');
+        void row.offsetWidth;
+        row.classList.add('enter');
+      }
+      const line = k[n];
+      const p = Math.max(0, Math.min(1, (ms - line.t) / (line.end - line.t)));
+      row.style.setProperty('--p', p.toFixed(4));
+    }
+  }
+
+  // 画面の幅に入りきらない行は、文字を小さくする
+  function fitKaraoke(row) {
+    row.style.fontSize = '';
+    const max = innerWidth * .9;
+    const w = row.scrollWidth;
+    if (w > max) {
+      const size = parseFloat(getComputedStyle(row).fontSize);
+      row.style.fontSize = (size * max / w) + 'px';
+    }
+  }
+
   function frame() {
     requestAnimationFrame(frame);
     if (!state.track) return;
@@ -483,25 +814,17 @@
 
     const ly = state.lyrics;
     if (!ly || !ly.lines.length) return;
-    const el = $('#lines');
-    const children = el.children;
 
     if (ly.type === 'synced') {
+      if (theme() === 'karaoke') { renderKaraoke(ms); return; }
       const idx = findIndex(ly.lines, ms);
       if (idx === state.activeIndex) return;
       state.activeIndex = idx;
-      for (let i = 0; i < children.length; i++) {
-        children[i].classList.toggle('active', i === idx);
-        children[i].classList.toggle('past', i < idx);
-      }
-      const target = children[Math.max(idx, 0)];
-      const y = target.offsetTop + target.offsetHeight / 2;
-      el.style.transform = `translateY(${-y}px)`;
+      layoutLines(idx);
     } else {
       // 非同期歌詞: 曲の長さに合わせて一定速度でひたすら流す
-      const frac = ms / state.track.duration;
-      const y = frac * el.scrollHeight;
-      el.style.transform = `translateY(${-y}px)`;
+      const el = $('#lines');
+      el.style.transform = `translateY(${-(ms / state.track.duration) * el.scrollHeight}px)`;
     }
   }
 
@@ -510,11 +833,32 @@
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   }
 
+  // ================= テーマ =================
+  function setTheme(name) {
+    if (!THEMES.includes(name)) name = 'glow';
+    root.setAttribute('data-theme', name);
+    store.set('lf_theme', name);
+    document.querySelectorAll('.tp').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === name)));
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = name === 'bold' ? getComputedStyle(root).getPropertyValue('--solid').trim() || '#0b0b0f' : '#0b0b0f';
+    // 並べ直す
+    state.activeIndex = -1;
+    state.kShown = [null, null];
+    document.querySelectorAll('#karaoke .kline').forEach((r) => { r.style.fontSize = ''; });
+  }
+  function toggleThemePanel(open) {
+    const panel = $('#themePanel');
+    const show = open === undefined ? panel.hidden : open;
+    panel.hidden = !show;
+    $('#themeBtn').setAttribute('aria-expanded', String(show));
+  }
+
   // ================= 操作系 =================
   function applyFontSize() {
-    document.documentElement.style.setProperty('--size', state.fontSize + 'px');
+    root.style.setProperty('--size', state.fontSize + 'px');
     store.set('lf_size', String(state.fontSize));
     state.activeIndex = -1; // 位置を再計算
+    state.kShown = [null, null];
   }
   function changeFont(d) { state.fontSize = Math.max(16, Math.min(96, state.fontSize + d)); applyFontSize(); }
 
@@ -541,10 +885,16 @@
   function wake() {
     document.body.classList.remove('idle');
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => document.body.classList.add('idle'), 3000);
+    idleTimer = setTimeout(() => {
+      if (!$('#themePanel').hidden) toggleThemePanel(false);
+      document.body.classList.add('idle');
+    }, 3000);
   }
   ['mousemove', 'touchstart', 'keydown'].forEach((ev) => addEventListener(ev, wake, { passive: true }));
 
+  $('#themeBtn').onclick = (e) => { e.stopPropagation(); toggleThemePanel(); };
+  document.querySelectorAll('.tp').forEach((b) => { b.onclick = (e) => { e.stopPropagation(); setTheme(b.dataset.pick); }; });
+  addEventListener('click', (e) => { if (!$('#themePanel').hidden && !e.target.closest('#themePanel')) toggleThemePanel(false); });
   $('#offMinus').onclick = () => changeOffset(-250);
   $('#offPlus').onclick = () => changeOffset(250);
   $('#smaller').onclick = () => changeFont(-4);
@@ -557,15 +907,18 @@
   addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+    else if (e.key === 't' || e.key === 'T') setTheme(THEMES[(THEMES.indexOf(theme()) + 1) % THEMES.length]);
+    else if (e.key === 'Escape') toggleThemePanel(false);
     else if (e.key === '+' || e.key === '=') changeFont(4);
     else if (e.key === '-') changeFont(-4);
     else if (e.key === '[') changeOffset(-250);
     else if (e.key === ']') changeOffset(250);
   });
-  addEventListener('resize', () => { state.activeIndex = -1; });
+  addEventListener('resize', () => { state.activeIndex = -1; state.kShown = [null, null]; });
 
   // ================= 起動 =================
   async function main() {
+    setTheme(theme());
     applyFontSize();
     applyOffset();
     $('#redirectShow').textContent = REDIRECT_URI;
