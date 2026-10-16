@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sk-timetable-v14';
+const CACHE_NAME = 'sk-timetable-v15';
 const ASSETS = [
   '/toolbox/timetable/',
   '/toolbox/timetable/index.html',
@@ -16,6 +16,7 @@ const ASSETS = [
   '/toolbox/shared/remind.js',
   '/toolbox/shared/search.js',
   '/toolbox/shared/line.js',
+  '/toolbox/shared/kakao.js',
   '/toolbox/shared/sync.js',
   '/toolbox/shared/sync-merge.js',
   '/toolbox/shared/sync-core.js',

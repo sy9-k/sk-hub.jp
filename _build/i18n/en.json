@@ -3247,5 +3247,22 @@
   "アナログ時計": "Analog Clock",
   "デジタル時計": "Digital Clock",
   "文字カウンター": "Character Counter",
-  "WebP変換": "WebP Converter"
+  "WebP変換": "WebP Converter",
+  "Kakao でログインして使う": "Sign in with Kakao to use",
+  "Kakao でログイン・オンライン同期・チャンネル": "Sign in with Kakao, online sync, channel",
+  "KakaoTalk で使う SK's Toolbox": "SK's Toolbox in KakaoTalk",
+  "KakaoTalk で送りました": "Sent with KakaoTalk",
+  "KakaoTalk で送る": "Send with KakaoTalk",
+  "SK Hub のカカオトークチャンネルを追加すると、SK のサービスのお知らせを KakaoTalk で見られます。チャットで質問や相談もできます。": "Add the SK Hub KakaoTalk Channel to see news about SK's services in KakaoTalk. You can also ask questions in the chat.",
+  "SK Hub のチャンネルのチャットを開きます": "Opens the SK Hub channel chat",
+  "この内容を送ってください": "Please send this text",
+  "カカオトークチャンネル": "KakaoTalk Channel",
+  "チャットで相談": "Ask in chat",
+  "チャンネルを追加": "Add channel",
+  "ルーレットの結果や時間割、Countdown を、KakaoTalk の友だちやチャットにカードで送れます。": "Send roulette results, timetables and Countdown as cards to your KakaoTalk friends and chats.",
+  "今日の時間割を KakaoTalk で送る": "Send today's timetable with KakaoTalk",
+  "明日の時間割を KakaoTalk で送る": "Send tomorrow's timetable with KakaoTalk",
+  "招待コードで参加するには、SK Hub Systems アカウントにログインします。Kakao でログインできます。": "To join with an invite code, sign in to your SK Hub Systems Account. You can sign in with Kakao.",
+  "時計・Todo・時間割・Countdown・ルーレットが、KakaoTalk の中ですぐ使えます。結果や時間割を友だちにカードで送れます。": "Clock, Todo, Timetable, Countdown and Roulette, right inside KakaoTalk. Send results and timetables to friends as cards.",
+  "送る内容をコピーしました。KakaoTalk のトークに貼り付けて送ってください。": "Copied. Paste it into a KakaoTalk chat to send it."
 }

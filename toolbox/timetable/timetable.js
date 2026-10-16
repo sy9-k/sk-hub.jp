@@ -515,7 +515,7 @@
     if (n.created) body.appendChild(el("p", "nt-when", t("{date} に書いた連絡", { date: new Date(n.created).toLocaleString(locale, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) })));
     var actions = cur.readonly || !admin ? [{ label: t("閉じる"), primary: true, value: null }] : [{ label: t("削除"), danger: true, value: "delete" }, { label: t("編集"), value: "edit" }, { label: t("閉じる"), primary: true, value: null }];
     if (n.kind === "submit" || n.kind === "bring") actions.unshift({ label: t("Todo に追加"), value: "todo" });
-    if (window.SKLine) actions.unshift({ label: t("LINE で送る"), value: "line" });
+    if (window.SKMsg) actions.unshift({ label: SKMsg.sendLabel(), value: "line" });
     window.M3.dialog({ title: n.title, body: body, actions: actions }).then(function (v) {
       render();
       if (v === "edit") editNotice(n);
@@ -1274,13 +1274,14 @@
   }
 
   // ================================================================
-  // LINE で送る（/toolbox/shared/line.js。LINE の中では友だち・グループを選んでカードで、外では LINE の共有のリンクで）
+  // LINE・KakaoTalk で送る（window.SKMsg。/toolbox/shared/line.js・kakao.js。LINE の中では友だち・グループを選んでカードで、
+  // KakaoTalk の中では Kakao のカードで、どちらでもないときは LINE の共有のリンクで）
   // ================================================================
   var TT_URL = "https://sk-hub.jp/toolbox/timetable/";
-  function lineDone(r) { if (r === "sent") say(t("LINE で送りました")); }
+  function lineDone(r) { if (r === "sent") say(SKMsg.sentLabel()); }
   // 今日（0）・明日（1）の時間割（特別な日程・休みも）
   function shareDay(offset) {
-    if (!window.SKLine) return;
+    if (!window.SKMsg) return;
     var cur = current(), tb = cur.table, d = new Date();
     d.setDate(d.getDate() + offset);
     var plan = dayPlan(tb, d), when = (offset === 0 ? t("今日") : t("明日")) + " " + dateText(ymd(d));
@@ -1293,23 +1294,23 @@
       lines.push(t("{n} 限", { n: s.label }) + " " + s.cell.subject);
     });
     var kicker = cur.title + (plan.special ? " · " + plan.special.name : "");
-    SKLine.share(SKLine.card({
+    SKMsg.share(SKMsg.card({
       alt: t("{when} の時間割", { when: when }), kicker: kicker, title: t("{when} の時間割", { when: when }), sub: sub, rows: rows, color: "#0891b2", url: TT_URL, button: t("時間割を開く")
     }), t("{when} の時間割", { when: when }) + "（" + kicker + "）\n" + (sub || lines.join("\n")) + "\n" + TT_URL).then(lineDone);
   }
   // クラスへの連絡
   function shareNotice(n, classTitle) {
-    if (!window.SKLine) return;
+    if (!window.SKMsg) return;
     var kind = NT_KINDS[n.kind][1];
-    SKLine.share(SKLine.card({
+    SKMsg.share(SKMsg.card({
       alt: n.title, kicker: (classTitle ? classTitle + " · " : "") + kind + (n.date ? " · " + dateText(n.date) : ""), title: n.title, sub: n.body || "", color: n.important ? "#dc2626" : "#0891b2", url: TT_URL, button: t("時間割を開く")
     }), "【" + kind + "】" + n.title + (n.body ? "\n" + n.body : "") + "\n" + TT_URL).then(lineDone);
   }
   // 招待コード（押すとそのまま参加の画面へ）
   function shareInvite(x) {
-    if (!window.SKLine) return;
+    if (!window.SKMsg) return;
     var tb = data.table, title = (tb.share && tb.share.title) || tb.name, until = new Date(x.expiresAt).toLocaleDateString(locale);
-    SKLine.share(SKLine.card({
+    SKMsg.share(SKMsg.card({
       alt: t("「{title}」の時間割に参加", { title: title }), kicker: t("時間割の招待"), title: title,
       sub: t("押すと参加できます。招待コード {code}（{date} まで）", { code: formatCode(x.code), date: until }), color: "#0891b2", url: joinUrl(x.code), button: t("参加する")
     }), t("「{title}」の時間割に参加してください", { title: title }) + "\n" + joinUrl(x.code)).then(lineDone);
@@ -1334,8 +1335,10 @@
       return;
     }
     if (!hint()) {
-      window.M3.dialog({ title: t("ログインしてください"), icon: "login", body: el("p", "tbs-dialog__text", t("招待コードで参加するには、SK Hub Systems アカウント（Google・GitHub）でログインします。ログインしたあと、もう一度招待のリンクを開いてください。")),
-        actions: [{ label: t("キャンセル"), value: null }, { label: t("ログイン"), primary: true, value: "login" }] })
+      // KakaoTalk の中では Kakao でログインする（/account/ が Kakao だけを出す。/toolbox/shared/kakao.js）
+      var kakao = window.SKKakao && SKKakao.inKakao;
+      window.M3.dialog({ title: t("ログインしてください"), icon: "login", body: el("p", "tbs-dialog__text", kakao ? t("招待コードで参加するには、SK Hub Systems アカウントにログインします。Kakao でログインできます。") : t("招待コードで参加するには、SK Hub Systems アカウント（Google・GitHub）でログインします。ログインしたあと、もう一度招待のリンクを開いてください。")),
+        actions: [{ label: t("キャンセル"), value: null }, { label: kakao ? t("Kakao でログイン") : t("ログイン"), primary: true, value: "login" }] })
         .then(function (v) { if (v === "login") location.href = loginUrl(location.pathname + "?join=" + encodeURIComponent(code)); });
       return;
     }
@@ -1619,7 +1622,7 @@
       pic.innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
     }).catch(function () { pic.textContent = ""; pic.hidden = true; });
     var qrActions = [{ label: t("リンクをコピー"), value: "copy" }, { label: t("閉じる"), primary: true, value: null }];
-    if (window.SKLine) qrActions.unshift({ label: t("LINE で送る"), value: "line" });
+    if (window.SKMsg) qrActions.unshift({ label: SKMsg.sendLabel(), value: "line" });
     window.M3.dialog({ title: t("招待コード"), icon: "qr_code_2", body: body, actions: qrActions }).then(function (v) {
       if (v === "copy") copyText(url, t("参加のリンクをコピーしました"));
       if (v === "line") shareInvite(x);
@@ -1631,8 +1634,14 @@
   // ================================================================
   var menu = $("menu"), menuBtn = $("btn-menu");
   function setMenu(open) {
-    // 「LINE で送る」は /toolbox/shared/line.js があるとき
-    if (open) Array.prototype.forEach.call(menu.querySelectorAll("[data-line-only]"), function (b) { b.hidden = !window.SKLine; });
+    // 「LINE で送る」は /toolbox/shared/line.js があるとき。KakaoTalk の中では「KakaoTalk で送る」（/toolbox/shared/kakao.js）
+    if (open) Array.prototype.forEach.call(menu.querySelectorAll("[data-line-only]"), function (b) {
+      b.hidden = !window.SKMsg;
+      if (window.SKKakao && SKKakao.inKakao && !b.dataset.kakao) {
+        b.dataset.kakao = "1";
+        b.lastElementChild.textContent = b.dataset.menu === "line-today" ? t("今日の時間割を KakaoTalk で送る") : t("明日の時間割を KakaoTalk で送る");
+      }
+    });
     menu.hidden = !open; menuBtn.setAttribute("aria-expanded", String(open)); if (open) menu.querySelector("button:not([hidden])").focus();
   }
   menuBtn.addEventListener("click", function () { setMenu(menu.hidden); });

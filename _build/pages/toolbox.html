@@ -24,6 +24,16 @@
         <button type="button" class="line-btn" id="line-recommend"><span>友だちにすすめる</span></button>
       </section>
 
+      <!-- KakaoTalk の中だけ（/toolbox/shared/kakao.js）: 友だちにすすめる・カカオトークチャンネル -->
+      <section class="tbh-kakao" aria-label="KakaoTalk">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#fee500"/><path fill="#191919" d="M12 5.5c-4 0-7.2 2.5-7.2 5.6 0 2 1.3 3.7 3.3 4.7l-.7 2.6c-.1.3.2.5.5.4l3-2c.4 0 .7.1 1.1.1 4 0 7.2-2.5 7.2-5.8S16 5.5 12 5.5z"/></svg>
+        <p><b>KakaoTalk で使う SK's Toolbox</b><span>ルーレットの結果や時間割、Countdown を、KakaoTalk の友だちやチャットにカードで送れます。</span></p>
+        <span class="tbh-kakao__actions">
+          <button type="button" class="kakao-btn" id="kakao-recommend"><span>友だちにすすめる</span></button>
+          <button type="button" class="kakao-btn kakao-btn--line" id="kakao-channel" hidden><span>チャンネルを追加</span></button>
+        </span>
+      </section>
+
       <!-- アプリ一覧（スマホのホーム画面のように、アプリを大きなアイコンで並べる） -->
       <nav class="tbh-apps" id="apps" role="tabpanel" aria-labelledby="view-apps" hidden>
         <a class="tbh-app m3-state" href="/toolbox/clock/"><img src="/toolbox/clock/icon.svg" alt="" width="64" height="64"><span class="tbh-app__name">Clock</span><span class="tbh-app__desc">時計・アラーム・タイマー</span><span class="tbh-app__badge" data-badge="clock" hidden data-i18n-skip></span></a>
@@ -151,8 +161,8 @@
         <p class="tbh-note"><a href="/toolbox/settings/">Toolbox の設定</a> · <a href="/products/">SK のプロダクト</a> · <a href="/policies/">利用規約・プライバシーポリシー</a></p>
       </footer>
     </div>
-    <!-- SaeTab 連携。LINE の中（?line= で開いたとき）では出さない -->
-    <script>if (!document.documentElement.classList.contains("in-line")) document.write('<script src="./saetab-bridge/saetab-bridge.js"><\/script>');</script>
+    <!-- SaeTab 連携。LINE・KakaoTalk の中では出さない -->
+    <script>if (!/\bin-(line|kakao)\b/.test(document.documentElement.className)) document.write('<script src="./saetab-bridge/saetab-bridge.js"><\/script>');</script>
     <!-- リマインダー（Todo）の共通: データの形・完了・時刻の通知 -->
     <script src="/toolbox/shared/m3.js"></script>
     <script src="/toolbox/shared/remind.js"></script>
@@ -161,5 +171,7 @@
     <script src="/toolbox/shared/search.js"></script>
     <!-- LINE の中で開いたとき（LINE ミニアプリ） -->
     <script src="/toolbox/shared/line.js"></script>
+    <!-- KakaoTalk の中で開いたとき（KakaoTalk in SK's Toolbox）と「KakaoTalk で送る」 -->
+    <script src="/toolbox/shared/kakao.js"></script>
     <!-- アクセスチェック・アクセス解析は、ページの最後でサイトと同じように読み込むので、ここでは読み込まない -->
     <script src="/toolbox/shared/pwa.js" data-no-check></script>

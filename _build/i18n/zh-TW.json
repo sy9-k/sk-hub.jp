@@ -3027,5 +3027,22 @@
   "アナログ時計": "類比時鐘",
   "デジタル時計": "數位時鐘",
   "文字カウンター": "字數計算",
-  "WebP変換": "WebP 轉換"
+  "WebP変換": "WebP 轉換",
+  "Kakao でログインして使う": "使用 Kakao 登入後使用",
+  "Kakao でログイン・オンライン同期・チャンネル": "Kakao 登入 · 線上同步 · 頻道",
+  "KakaoTalk で使う SK's Toolbox": "在 KakaoTalk 中使用 SK's Toolbox",
+  "KakaoTalk で送りました": "已透過 KakaoTalk 傳送",
+  "KakaoTalk で送る": "透過 KakaoTalk 傳送",
+  "SK Hub のカカオトークチャンネルを追加すると、SK のサービスのお知らせを KakaoTalk で見られます。チャットで質問や相談もできます。": "加入 SK Hub 的 KakaoTalk 頻道後，可以在 KakaoTalk 中查看 SK 服務的通知，也可以在聊天中提問或諮詢。",
+  "SK Hub のチャンネルのチャットを開きます": "開啟 SK Hub 頻道的聊天",
+  "この内容を送ってください": "請傳送以下內容",
+  "カカオトークチャンネル": "KakaoTalk 頻道",
+  "チャットで相談": "在聊天中諮詢",
+  "チャンネルを追加": "加入頻道",
+  "ルーレットの結果や時間割、Countdown を、KakaoTalk の友だちやチャットにカードで送れます。": "可以把輪盤結果、課表和 Countdown 以卡片傳送給 KakaoTalk 的好友和聊天。",
+  "今日の時間割を KakaoTalk で送る": "透過 KakaoTalk 傳送今天的課表",
+  "明日の時間割を KakaoTalk で送る": "透過 KakaoTalk 傳送明天的課表",
+  "招待コードで参加するには、SK Hub Systems アカウントにログインします。Kakao でログインできます。": "要使用邀請碼加入，請登入 SK Hub Systems 帳戶。可以使用 Kakao 登入。",
+  "時計・Todo・時間割・Countdown・ルーレットが、KakaoTalk の中ですぐ使えます。結果や時間割を友だちにカードで送れます。": "時鐘、Todo、課表、Countdown、輪盤，在 KakaoTalk 中即可使用。可以把結果和課表以卡片傳送給好友。",
+  "送る内容をコピーしました。KakaoTalk のトークに貼り付けて送ってください。": "已複製要傳送的內容。請貼到 KakaoTalk 的聊天中傳送。"
 }

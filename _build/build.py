@@ -107,7 +107,7 @@ RUNTIME_SOURCES = [
     "dictionary/script.js", "dictionary/account.js", "assets/hub/sync-loader.js", "assets/analytics.js", "assets/nf-secret.js", "assets/terminal.js",
     "nagi/app.js", "nagi/account.js", "brand/brand.js", "assets/hub/account-button.js",
     "toolbox/clock/clock.js", "toolbox/calc/calc.js", "toolbox/memo/memo.js", "toolbox/todo/todo.js", "toolbox/countdown/countdown.js", "toolbox/clock/clock-tools.js", "toolbox/shared/settings.js", "toolbox/shared/m3.js", "toolbox/shared/remind.js", "toolbox/home.js",
-    "toolbox/shared/sync.js", "toolbox/shared/titlebar.js", "toolbox/shared/tbcenter.js", "toolbox/shared/pwa.js", "toolbox/shared/search.js", "toolbox/shared/line.js",
+    "toolbox/shared/sync.js", "toolbox/shared/titlebar.js", "toolbox/shared/tbcenter.js", "toolbox/shared/pwa.js", "toolbox/shared/search.js", "toolbox/shared/line.js", "toolbox/shared/kakao.js",
     "toolbox/timetable/timetable.js", "toolbox/roulette/roulette.js", "toolbox/lang/lang.js",
     "move/move.js", "moved/moved.js",
     "view/view.js",
