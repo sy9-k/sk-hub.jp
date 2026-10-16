@@ -29,7 +29,7 @@
 .tb em { font-style: normal; color: var(--tb-accent-text); }
 
 /* ---------- Hero ---------- */
-.tb-hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; padding: 64px 0 80px; }
+.tb-hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 64px; align-items: center; padding: 72px 0 56px; }
 .tb-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .tb-wordmark { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; letter-spacing: -.01em; }
 .tb-wordmark img { width: 40px; height: 40px; border-radius: 12px; }
@@ -58,7 +58,8 @@
 .tb-label { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--tb-faint); }
 .tb-h2 { margin-top: 10px; font-size: clamp(26px, 3.6vw, 38px); line-height: 1.25; font-weight: 800; letter-spacing: -.02em; }
 .tb-sub { margin-top: 14px; font-size: 16px; line-height: 1.85; color: var(--tb-muted); max-width: 640px; }
-.tb-section { padding: 72px 0; }
+.tb-drawers, .tb-places, .tb-feat-grid, .tb-privacy-grid { margin-top: 36px; }
+.tb-section { padding: 56px 0; }
 
 /* ---------- 引き出しの一覧（ミニアプリ） ---------- */
 .tb-drawers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 34px; }
@@ -85,7 +86,7 @@
 .tb-points svg { width: 22px; height: 22px; color: var(--tb-accent); margin-top: 3px; }
 
 /* ---------- プライバシー ---------- */
-.tb-privacy { background: var(--tb-surface); border-top: 1px solid var(--tb-line); border-bottom: 1px solid var(--tb-line); }
+.tb-privacy { background: var(--tb-surface); border-top: 1px solid var(--tb-line); border-bottom: 1px solid var(--tb-line); padding: 56px 0; }
 .tb-privacy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 34px; }
 .tb-privacy-card { padding: 26px; border-radius: 22px; background: var(--tb-ink); }
 .tb-privacy-card svg { width: 30px; height: 30px; color: var(--tb-accent); }
@@ -93,7 +94,7 @@
 .tb-privacy-card p { margin-top: 8px; font-size: 14px; line-height: 1.8; color: var(--tb-muted); }
 
 /* ---------- 最後 ---------- */
-.tb-final { text-align: center; padding: 88px 0 96px; }
+.tb-final { text-align: center; padding: 96px 0 104px; }
 .tb-final img { width: 72px; height: 72px; border-radius: 22px; box-shadow: 0 16px 36px rgba(14, 30, 70, .18); }
 .tb-final h2 { margin-top: 22px; font-size: clamp(26px, 3.6vw, 36px); font-weight: 800; letter-spacing: -.02em; }
 .tb-final p { margin-top: 12px; color: var(--tb-muted); font-size: 16px; }
@@ -107,9 +108,11 @@
 }
 @media (max-width: 640px) {
   .tb .wrap { padding: 0 16px; }
-  .tb-hero { padding: 40px 0 56px; }
+  .tb-hero { padding: 40px 0 40px; gap: 40px; }
   .tb-drawers { grid-template-columns: 1fr; }
-  .tb-section { padding: 52px 0; }
+  .tb-section { padding: 40px 0; }
+  .tb-final { padding: 72px 0 80px; }
+  .tb-drawers, .tb-places, .tb-feat-grid, .tb-privacy-grid { margin-top: 28px; }
   .tb-box-grid { gap: 10px; }
   .tb-box-grid img { width: 52px; height: 52px; }
   .tb h1 { font-size: 34px; }
