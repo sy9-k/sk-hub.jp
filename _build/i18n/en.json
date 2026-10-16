@@ -3237,5 +3237,15 @@
   "再生位置に合わせて、いま歌っている行を中央に表示": "Shows the line being sung in the center, synced to playback",
   "見た目は Apple Music 風・Spotify 風・カラオケ（日本風・韓国のノレバン風）・シンプルから選べる": "Choose a look: Apple Music style, Spotify style, Karaoke (Japanese style or Korean noraebang style), or Simple",
   "曲が変わると、次の曲の歌詞に自動で切り替わる": "Switches to the next song's lyrics automatically",
-  "歌詞は LRCLIB から読み込むため、見つからない曲もある": "Lyrics come from LRCLIB, so some songs may not be found"
+  "歌詞は LRCLIB から読み込むため、見つからない曲もある": "Lyrics come from LRCLIB, so some songs may not be found",
+  "SaeTab を開く": "Open SaeTab",
+  "Search3958 は Sentaro さんのサイトです。SK's Toolbox を SaeTab の新しいタブに設定できるほか、Y-FILTER. の「Newtab」でも Search3958 の Newtab を表示しています。": "Search3958 is Sentaro's site. You can set SK's Toolbox as the new tab in SaeTab, and Y-FILTER.'s “Newtab” also shows Search3958's Newtab.",
+  "Sentaro さんのプロダクト": "Products by Sentaro",
+  "ブラウザで新しいタブを開くたびに表示される新しいタブ画面。SK's Toolbox のホームからボタン 1 つで、SaeTab の新しいタブに設定できます。": "The new-tab page shown each time you open a new tab in your browser. From the SK's Toolbox home, one button sets it as your SaeTab new tab.",
+  "新しいタブ画面": "New-tab page",
+  "新しいタブ画面（Search3958 提供）": "New-tab page (provided by Search3958)",
+  "アナログ時計": "Analog Clock",
+  "デジタル時計": "Digital Clock",
+  "文字カウンター": "Character Counter",
+  "WebP変換": "WebP Converter"
 }
