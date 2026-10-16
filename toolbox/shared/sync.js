@@ -484,6 +484,9 @@
               toast(t("ログインできませんでした。時間をおいてもう一度お試しください。"));
             }).then(function () { lineGo.disabled = false; });
           });
+        } else if (!h && document.documentElement.classList.contains("in-kakao")) {
+          // KakaoTalk の中: Kakao でログイン（/account/ が Kakao だけを出す）
+          link("m3-btn tsy-kakao-login", t("Kakao でログインして使う"), connectUrl());
         } else if (!h) {
           link("m3-btn", t("ログインして使う"), connectUrl());
         } else if (!connected(h)) {

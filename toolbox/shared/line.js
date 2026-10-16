@@ -14,6 +14,7 @@
 //       signIn()          … LINE の中で SK Hub Systems アカウントにログイン（/toolbox/shared/line-account.js）。Promise<"ready" | "redirect" | "cancel">
 //                            この LINE につながったアカウントがなければ、新しく作るか・持っているアカウントにつなぐ方法を選んでもらう
 //       account()         … /toolbox/shared/line-account.js（status()・setNotify(on)。公式 LINE の友だちか・お知らせを LINE で受け取るか）
+//       sendLabel() / sentLabel() … 「LINE で送る」「LINE で送りました」（KakaoTalk の中では /toolbox/shared/kakao.js の SKKakao を window.SKMsg で使う）
 //       bot               … 公式 LINE「SK Hub」{ id, url（友だちに追加する URL）}
 //       addFriend()       … 公式 LINE を友だちに追加する画面を開く
 //   ・LINE の名前・アイコンは画面に出すだけで、どこにも保存・送信しない。カードは、利用者が選んだ相手に、利用者の操作で送る
@@ -59,6 +60,9 @@
     ] };
     return { type: "flex", altText: String(o.alt || o.title || "SK's Toolbox").slice(0, 400), contents: bubble };
   };
+
+  api.sendLabel = function () { return t("LINE で送る"); };
+  api.sentLabel = function () { return t("LINE で送りました"); };
 
   // ---- 「LINE で送る」のボタン（.line-btn。見た目は /toolbox/shared/m3.css）----
   var GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.2c-5 0-9 3.3-9 7.4 0 3.7 3.2 6.7 7.6 7.3.3.1.7.2.8.5.1.2.1.6 0 .8l-.1.8c0 .2-.2.9.8.5 1-.4 5.4-3.2 7.4-5.4 1.4-1.5 2-3 2-4.5 0-4.1-4-7.4-9-7.4z"/></svg>';

@@ -737,14 +737,14 @@
     return id;
   }
 
-  // タスクを LINE の友だち・グループにカードで送る（/toolbox/shared/line.js。宿題や持ち物の共有に）
+  // タスクを LINE・KakaoTalk の友だち・グループにカードで送る（window.SKMsg。/toolbox/shared/line.js・kakao.js。宿題や持ち物の共有に）
   function shareTask(x) {
     var list = listById(x.list), when = x.due ? dueText(x) : "";
     var url = "https://sk-hub.jp/toolbox/todo/";
-    SKLine.share(SKLine.card({
+    SKMsg.share(SKMsg.card({
       alt: x.text, kicker: "Todo" + (list ? " · " + list.name : ""), title: x.text,
       sub: [when ? t("期限 {due}", { due: when }) : "", x.notes || ""].filter(Boolean).join("\n"), color: list ? list.color : "#16a34a", url: url, button: t("Todo を開く")
-    }), x.text + (when ? "（" + t("期限 {due}", { due: when }) + "）" : "") + (x.notes ? "\n" + x.notes : "")).then(function (r) { if (r === "sent") say(t("LINE で送りました")); });
+    }), x.text + (when ? "（" + t("期限 {due}", { due: when }) + "）" : "") + (x.notes ? "\n" + x.notes : "")).then(function (r) { if (r === "sent") say(SKMsg.sentLabel()); });
   }
   function openDetail(x) {
     var body = el("div", "detail__body");
@@ -954,7 +954,7 @@
       title: t("詳細"), body: body, cancelValue: "close",
       // スマホ（指で操作）では、開いたときにキーボードを出さない（タイトルを押すと出る）
       autofocus: !(window.matchMedia && matchMedia("(pointer: coarse)").matches),
-      actions: (window.SKLine ? [{ label: t("LINE で送る"), value: "line" }] : []).concat([{ label: t("削除"), danger: true, value: "delete" }, { label: t("完了"), primary: true, value: "close" }]),
+      actions: (window.SKMsg ? [{ label: SKMsg.sendLabel(), value: "line" }] : []).concat([{ label: t("削除"), danger: true, value: "delete" }, { label: t("完了"), primary: true, value: "close" }]),
       onReady: function (close, box) {
         box.classList.add("detail");
         box.parentElement.classList.add("detail-scrim");

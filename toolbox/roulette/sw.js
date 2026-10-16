@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sk-roulette-v12';
+const CACHE_NAME = 'sk-roulette-v13';
 const ASSETS = [
   '/toolbox/roulette/',
   '/toolbox/roulette/index.html',
@@ -15,6 +15,7 @@ const ASSETS = [
   '/toolbox/shared/remind.js',
   '/toolbox/shared/search.js',
   '/toolbox/shared/line.js',
+  '/toolbox/shared/kakao.js',
   '/toolbox/shared/sync.js',
   '/toolbox/shared/sync-merge.js',
   '/toolbox/shared/sync-core.js',

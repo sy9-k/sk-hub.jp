@@ -166,7 +166,9 @@ const LOGIN_FLAGS = { github: GITHUB_LOGIN, microsoft: MICROSOFT_LOGIN, line: LI
 const passkeySupported = () => typeof window !== "undefined" && !!window.PublicKeyCredential && !!navigator.credentials;
 // LINE の中のブラウザ（ミニアプリ・トークで開いたリンク）では、LINE だけ（Google などのログインの画面は LINE の中では開けない）
 export const inLineApp = () => typeof navigator !== "undefined" && /\bLine\/\d/.test(navigator.userAgent);
-export const availableLogins = () => Object.keys(LOGIN_PROVIDERS).filter((k) => LOGIN_FLAGS[k] !== false && (k !== "passkey" || passkeySupported()) && (!inLineApp() || k === "line"));
+// KakaoTalk の中のブラウザ（トークで開いたリンク・KakaoTalk in SK's Toolbox）では、Kakao だけ（Google のログインの画面は開けず、パスキーも使えないことが多い）
+export const inKakaoApp = () => typeof navigator !== "undefined" && /KAKAOTALK/i.test(navigator.userAgent);
+export const availableLogins = () => Object.keys(LOGIN_PROVIDERS).filter((k) => LOGIN_FLAGS[k] !== false && (k !== "passkey" || passkeySupported()) && (!inLineApp() || k === "line") && (!inKakaoApp() || k === "kakao"));
 const isExternal = (key) => !!LOGIN_PROVIDERS[key]?.external;
 function provider(key = "google") {
   if (key === "github") {

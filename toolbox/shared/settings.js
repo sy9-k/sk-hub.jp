@@ -41,6 +41,16 @@
     } catch (e) { return /[?&]line=/.test(location.search); }
   })();
   if (IN_LINE) root.classList.add("in-line");
+  // KakaoTalk のトークで開いているか（KakaoTalk in SK's Toolbox。/toolbox/shared/kakao.js も同じ判定）。<html class="in-kakao">
+  var IN_KAKAO = !IN_LINE && (function () {
+    try {
+      if (/[?&]kakao=1\b/.test(location.search)) sessionStorage.setItem("sk_kakao", "1");
+      return /KAKAOTALK/i.test(navigator.userAgent) || sessionStorage.getItem("sk_kakao") === "1";
+    } catch (e) { return /KAKAOTALK/i.test(navigator.userAgent); }
+  })();
+  if (IN_KAKAO) root.classList.add("in-kakao");
+  // LINE・KakaoTalk の中のブラウザ（アプリとして入れられない・端末の通知やアイコンの数字が使えない）
+  var IN_APP = IN_LINE || IN_KAKAO;
 
   // 画面の切りかえのアニメーションは /toolbox/shared/m3.css のもの（タイトルバーを動かさないフェードスルー）。
   // frameworks/check.js がサイト共通の切りかえを後から入れて上書きしないよう、check.js が見る印を付けておく
@@ -530,6 +540,10 @@
         lineBtn.addEventListener("click", function () { lineSignIn(lineBtn); });
         actions.appendChild(lineBtn);
         btn("text-btn", t("詳しく"), lp("/sk-hub-systems/account/"));
+      } else if (IN_KAKAO) {
+        // KakaoTalk の中: Kakao でログイン（/account/ が Kakao だけを出す。Google のログインの画面は KakaoTalk の中では使えない）
+        btn("m3-btn tbs-kakao-login", t("Kakao でログイン"), lp("/account/") + "?next=" + encodeURIComponent(here));
+        btn("text-btn", t("詳しく"), lp("/sk-hub-systems/account/"));
       } else {
         btn("m3-btn", t("ログイン"), lp("/account/") + "?next=" + encodeURIComponent(here));
         btn("text-btn", t("詳しく"), lp("/sk-hub-systems/account/"));
@@ -619,6 +633,31 @@
     });
     // line.js は設定の画面より後に読み込まれるので、少し待ってから読む
     setTimeout(load, 0);
+    return sec;
+  }
+
+  // ---- KakaoTalk の中: カカオトークチャンネル（SK Hub）。追加・チャットで相談（/toolbox/shared/kakao.js の channel。ID がないときは出さない）----
+  //   LINE と違って、チャンネルから一人ひとりにお知らせを送るには Kakao のビジネスの審査（알림톡）がいるので、お知らせの設定はない
+  function kakaoSection() {
+    var ch = window.SKKakao && SKKakao.channel;
+    var sec = section(t("カカオトークチャンネル"));
+    sec.hidden = !ch;
+    if (!ch) return sec;
+    sec.appendChild(el("p", "tbs-text", t("SK Hub のカカオトークチャンネルを追加すると、SK のサービスのお知らせを KakaoTalk で見られます。チャットで質問や相談もできます。")));
+    var add = el("a", "tbs-item tbs-item--link m3-state");
+    add.href = ch.url + "/friend";
+    add.appendChild(icon("person_add"));
+    add.appendChild(label(t("チャンネルを追加"), "SK Hub"));
+    add.appendChild(icon("open_in_new"));
+    add.addEventListener("click", function (e) { e.preventDefault(); SKKakao.addChannel(); });
+    sec.appendChild(add);
+    var chat = el("a", "tbs-item tbs-item--link m3-state");
+    chat.href = ch.chat;
+    chat.appendChild(icon("chat"));
+    chat.appendChild(label(t("チャットで相談"), t("SK Hub のチャンネルのチャットを開きます")));
+    chat.appendChild(icon("open_in_new"));
+    chat.addEventListener("click", function (e) { e.preventDefault(); SKKakao.chat(); });
+    sec.appendChild(chat);
     return sec;
   }
 
@@ -886,11 +925,11 @@
     var links = section(t("リンク"));
     links.appendChild(linkRow("/toolbox/", "apps", t("SK's Toolbox のアプリ一覧"), ""));
     // アプリとして入れる方法（/toolbox/install/。アプリとして開いているときは出さない）
-    if (!installed && !IN_LINE) links.appendChild(linkRow("/toolbox/install/", "install_mobile", t("アプリとして入れる方法"), t("ホーム画面・Dock から開けて、オフラインでも使えます")));
+    if (!installed && !IN_APP) links.appendChild(linkRow("/toolbox/install/", "install_mobile", t("アプリとして入れる方法"), t("ホーム画面・Dock から開けて、オフラインでも使えます")));
     general.appendChild(links);
 
     // ---- アカウントと同期（LINE の中では、LINE でログインする。公式 LINE の設定も出す）----
-    var acc = page("account", "account_circle", t("アカウントと同期"), null, IN_LINE ? t("LINE でログイン・オンライン同期・公式 LINE") : t("SK Hub Systems アカウント・オンライン同期"), "#0ea5a4");
+    var acc = page("account", "account_circle", t("アカウントと同期"), null, IN_LINE ? t("LINE でログイン・オンライン同期・公式 LINE") : IN_KAKAO ? t("Kakao でログイン・オンライン同期・チャンネル") : t("SK Hub Systems アカウント・オンライン同期"), "#0ea5a4");
     acc.appendChild(accountSection());
     // オンライン同期（任意。中身は /toolbox/shared/sync.js）
     var syncSec = section(t("オンライン同期"));
@@ -900,6 +939,11 @@
     if (window.SKToolboxSync) SKToolboxSync.mount(syncBox);
     acc.appendChild(syncSec);
     if (IN_LINE) acc.appendChild(lineSection());
+    // kakao.js は設定の画面より後に読み込まれることがあるので、そのときは読み込みが終わってから
+    if (IN_KAKAO) {
+      if (window.SKKakao) acc.appendChild(kakaoSection());
+      else window.addEventListener("load", function () { acc.appendChild(kakaoSection()); roundCards(acc); });
+    }
 
     // ---- 見た目 ----
     var look = page("look", "palette", t("見た目"), null, t("テーマ・テーマカラー・動き"), "#8b5cf6");
@@ -941,12 +985,12 @@
     look.appendChild(motionSec);
 
     // ---- 操作 ----
-    var usePage = page("use", "touch_app", t("操作"), null, navigator.windowControlsOverlay && !IN_LINE ? t("振動・アイコンの数字・タイトルバー") : t("振動・アイコンの数字"), "#f08c00");
+    var usePage = page("use", "touch_app", t("操作"), null, navigator.windowControlsOverlay && !IN_APP ? t("振動・アイコンの数字・タイトルバー") : t("振動・アイコンの数字"), "#f08c00");
     var use = section(t("タッチとアイコン"));
     use.appendChild(switchRow(t("押したときに振動する"), t("Calc のキーと、Todo のチェック。対応している端末（Android など）だけです"),
       function () { return settings.haptics; }, function (on) { set({ haptics: on }); vibrate(); }));
     // アプリのアイコンの数字（Badging API。対応しているブラウザで、アプリとして入れたとき）
-    if (navigator.setAppBadge && !IN_LINE) {
+    if (navigator.setAppBadge && !IN_APP) {
       use.appendChild(switchRow(t("アイコンに数字を出す"), t("アプリとして入れたとき、Dock やホーム画面のアイコンに、期限切れと今日の Todo の数を出します"),
         function () { return settings.badge; }, function (on) {
           set({ badge: on });
@@ -956,10 +1000,10 @@
     }
     usePage.appendChild(use);
     // タイトルバー（パソコンの Chrome・Edge でアプリとして入れ、タイトルバーを Toolbox のものにしたとき）
-    if (navigator.windowControlsOverlay && !IN_LINE) usePage.appendChild(titlebarSection());
+    if (navigator.windowControlsOverlay && !IN_APP) usePage.appendChild(titlebarSection());
 
     // ---- 通知（LINE の中では出さない）----
-    if (!IN_LINE && "Notification" in window) {
+    if (!IN_APP && "Notification" in window) {
       var notifyPage = page("notify", "notifications", t("通知"), null, t("許可・Todo・Clock"), "#ef4444");
       var perm = section(t("このブラウザ"));
       var permRow = el("div", "tbs-item");
@@ -994,7 +1038,7 @@
     var dataNote = el("p", "tbs-text");
     data.appendChild(dataNote);
     // データを消されにくくする（storage.persist。アプリとして入れると、たいてい自動でオンになる）
-    if (navigator.storage && navigator.storage.persisted && !IN_LINE) {
+    if (navigator.storage && navigator.storage.persisted && !IN_APP) {
       var keep = el("div", "tbs-item tbs-item--keep");
       keep.appendChild(icon("verified_user"));
       var keepLabel = label(t("データの保護"), t("確認中…"));
@@ -1072,7 +1116,7 @@
 
     // ---- このアプリについて ----
     var about = page("about", "info", t("このアプリについて"), null, t("更新・バージョン・規約"), "#64748b");
-    about.appendChild(aboutHead("/toolbox/icon.svg", IN_LINE ? "LINE in SK's Toolbox" : "SK's Toolbox", t("毎日ちょっと使う、小さなアプリを集めた SK の道具箱です。")));
+    about.appendChild(aboutHead("/toolbox/icon.svg", IN_LINE ? "LINE in SK's Toolbox" : IN_KAKAO ? "KakaoTalk in SK's Toolbox" : "SK's Toolbox", t("毎日ちょっと使う、小さなアプリを集めた SK の道具箱です。")));
     var aboutSec = section("");
     // 更新の確認（Nagi・MALU と同じ。この画面の Service Worker に新しい版がないか確かめる。見つけたらボタンが「再読み込み」に変わる）
     var upd = el("div", "tbs-item tbs-item--update");
@@ -1143,7 +1187,7 @@
       var opts = section(t("設定"));
       var any = true;
       if (a.app === "clock") {
-        if (!IN_LINE && "Notification" in window) opts.appendChild(appSwitch("clock", "notify", t("アラームとタイマーを通知する"), t("Clock を開いていないときも、鳴った時刻に知らせます")));
+        if (!IN_APP && "Notification" in window) opts.appendChild(appSwitch("clock", "notify", t("アラームとタイマーを通知する"), t("Clock を開いていないときも、鳴った時刻に知らせます")));
         opts.appendChild(el("p", "tbs-text", t("時刻の表示（24 時間表示・秒・日付・文字の大きさ）とテーマは、Clock の画面の設定ボタンから変えられます。")));
       } else if (a.app === "calc") {
         opts.appendChild(appSwitch("calc", "history", t("計算の履歴を残す"), t("オフにすると、新しい計算を履歴に入れません")));
@@ -1153,7 +1197,7 @@
           [[7, "event", t("{n} 日", { n: 7 })], [30, "date_range", t("{n} 日", { n: 30 })], [90, "calendar_month", t("{n} 日", { n: 90 })]],
           function () { return settings.apps.memo.trashDays; }, function (v) { setApp("memo", { trashDays: v }); }));
       } else if (a.app === "todo") {
-        if (!IN_LINE && "Notification" in window) opts.appendChild(appSwitch("todo", "notify", t("リマインダーを通知する"), t("期限の日時になったタスクを知らせます")));
+        if (!IN_APP && "Notification" in window) opts.appendChild(appSwitch("todo", "notify", t("リマインダーを通知する"), t("期限の日時になったタスクを知らせます")));
         opts.appendChild(el("p", "tbs-text", t("完了済みの表示と並べ替えは、リストごとに Todo の画面で選べます。")));
       } else if (a.app === "roulette") {
         opts.appendChild(el("p", "tbs-text", t("効果音は、Roulette の画面のスピーカーのボタンで切りかえられます。")));
@@ -1295,7 +1339,8 @@
     openSettings: openSettings,
     renderSettings: renderSettings,
     forceUpdate: forceUpdate,
-    inLine: IN_LINE
+    inLine: IN_LINE,
+    inKakao: IN_KAKAO
   };
 
   // オンライン同期（任意）。見本（?embed）では読み込まない（LINE の中でも、LINE でログインすれば使える）

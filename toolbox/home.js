@@ -468,4 +468,12 @@
   // LINE の中: 友だちにすすめる（/toolbox/shared/line.js）
   var rec = $("line-recommend");
   if (rec) rec.addEventListener("click", function () { if (window.SKLine) SKLine.recommend(); });
+  // KakaoTalk の中: 友だちにすすめる・カカオトークチャンネルを追加（/toolbox/shared/kakao.js。チャンネルは ID を入れたときだけ）
+  var kRec = $("kakao-recommend"), kCh = $("kakao-channel");
+  if (kRec) kRec.addEventListener("click", function () { if (window.SKKakao) SKKakao.recommend(); });
+  if (kCh) {
+    kCh.addEventListener("click", function () { if (window.SKKakao) SKKakao.addChannel(); });
+    // kakao.js はこのスクリプトより後に読み込まれる
+    window.addEventListener("load", function () { kCh.hidden = !(window.SKKakao && SKKakao.channel); });
+  }
 })();

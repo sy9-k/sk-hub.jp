@@ -702,6 +702,29 @@ html.in-line .tbh-line { display: flex; align-items: center; gap: 14px; margin: 
 @media (max-width: 600px) { html.in-line .tbh-line { flex-wrap: wrap; } html.in-line .tbh-line .line-btn { width: 100%; } }
 html.in-line body.tb-home-page .site-header, html.in-line body.tb-home-page .hd-backdrop, html.in-line body.tb-home-page .hd-menu { display: none !important; }
 html.in-line body.tb-home-page { padding-top: max(8px, env(safe-area-inset-top)) !important; }
+/* ---- KakaoTalk の中（KakaoTalk のトークで開いたとき。/toolbox/shared/settings.js・kakao.js が <html class="in-kakao">）---- */
+/* KakaoTalk の中のブラウザでは、アプリとして入れられず、端末の通知も届かない。ホームのサイトのヘッダーも出さない（上に KakaoTalk のバーがある） */
+html.in-kakao [data-install], html.in-kakao .tbh-tip--install, html.in-kakao [data-menu="notify"], html.in-kakao .tt-notify-on { display: none !important; }
+html.in-kakao body.tb-home-page .site-header, html.in-kakao body.tb-home-page .hd-backdrop, html.in-kakao body.tb-home-page .hd-menu { display: none !important; }
+html.in-kakao body.tb-home-page { padding-top: max(8px, env(safe-area-inset-top)) !important; }
+/* Kakao でログイン（設定の「アカウントと同期」・同期の案内）。色は Kakao のログインボタンの決まり（黄色に黒の文字） */
+.tbs-kakao-login, .tsy-kakao-login { background: #fee500 !important; color: rgba(0, 0, 0, .85) !important; }
+.tbh-kakao { display: none; }
+html.in-kakao .tbh-kakao { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; padding: 16px 18px; border-radius: 24px; background: color-mix(in srgb, #fee500 22%, var(--md-surface-container-low, #f3f3fa)); }
+.tbh-kakao > svg { flex: none; width: 40px; height: 40px; }
+.tbh-kakao p { flex: 1; min-width: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; line-height: 1.6; color: var(--md-on-surface-variant, #44474e); }
+.tbh-kakao p b { font-size: 15px; color: var(--md-on-surface, #191c20); }
+.tbh-kakao__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 600px) { html.in-kakao .tbh-kakao { flex-wrap: wrap; } html.in-kakao .tbh-kakao__actions, html.in-kakao .tbh-kakao .kakao-btn { flex: 1 1 100%; } }
+/* 「KakaoTalk で送る」のボタン */
+/* ホーム（.tbh button は文字の色を受けつぐ）でも同じ色になるように .tbh .kakao-btn も */
+.kakao-btn, .tbh .kakao-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 18px 0 14px; border: 0; border-radius: 999px; background: #fee500; color: rgba(0, 0, 0, .85); font: 600 14px/1 var(--md-font, system-ui, sans-serif); cursor: pointer; }
+.kakao-btn:hover { background: #f5dc00; }
+.kakao-btn svg { width: 20px; height: 20px; flex: none; }
+.kakao-btn--line, .tbh .kakao-btn--line { background: transparent; color: var(--md-on-surface, #191c20); box-shadow: inset 0 0 0 1px var(--md-outline, #74777f); padding: 0 18px; }
+.kakao-btn--line:hover { background: color-mix(in srgb, #fee500 18%, transparent); }
+.kakao-btn[hidden] { display: none; }
+
 /* 「LINE で送る」のボタン（どの画面でも同じ見た目） */
 .line-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 18px 0 14px; border: 0; border-radius: 999px; background: #06c755; color: #fff; font: 600 14px/1 var(--md-font, system-ui, sans-serif); cursor: pointer; }
 .line-btn:hover { background: #05b34c; }
