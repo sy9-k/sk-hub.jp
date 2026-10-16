@@ -212,14 +212,35 @@
     return true;
   };
 
+  // SaeTab の拡張機能ページで「追加」を押すと ?saetab=connect 付きで開かれる。
+  // そのときは、ボタンを押したときと同じ確認をすぐ出す（共有の許可はここで本人が押す）
+  const CONNECT_PARAM = "saetab";
+  const openFromSaetab = () => {
+    const params = new URLSearchParams(location.search);
+    if (params.get(CONNECT_PARAM) !== "connect") return;
+    params.delete(CONNECT_PARAM);
+    const query = params.toString();
+    history.replaceState(null, "", location.pathname + (query ? "?" + query : "") + location.hash);
+    const button = document.getElementById(BUTTON_ID);
+    if (button) button.scrollIntoView({ block: "center" });
+    if (isBridgeEnabled()) {
+      log("SaeTab から開かれましたが、すでに連携しています。");
+      return;
+    }
+    log("SaeTab から開かれたので、確認を出します。");
+    // ボタンが出るアニメーションのあと（M3 のダイアログも読み込み済みになってから）
+    window.setTimeout(handleButtonClick, INSERT_DELAY + 400);
+  };
+
   const start = () => {
-    if (insertButton()) return;
+    if (insertButton()) { openFromSaetab(); return; }
     log("挿入先を待機しています。");
     observer = new MutationObserver(() => {
       if (insertButton()) {
         observer.disconnect();
         observer = null;
         log("挿入先を検出しました。");
+        openFromSaetab();
       }
     });
     observer.observe(document.documentElement, {
