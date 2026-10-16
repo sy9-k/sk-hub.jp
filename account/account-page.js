@@ -3,7 +3,7 @@
 // サービスのページから ?next=/y-filter/ のように来たときは、使えるようになったら戻す。
 import {
   LOGIN_PROVIDERS, PROFILE_COLORS, PROFILE_NAME_MAX, SERVICES, SYNC_AT_KEY, agreeLatestTerms, availableLogins, confirmIdentity,
-  connectService, disconnectService, externalLoginsOf, externalResult, isConnected, db, deleteLogin, linkLogin, loadExternalLogins, loginsOf, markNoticesSeen,
+  connectService, disconnectService, externalLoginsOf, externalResult, isConnected, db, deleteLogin, linkLogin, loadExternalLogins, loadOf8, checkOf8, loginsOf, markNoticesSeen,
   profileOf, register, rememberAccount,
   safeNext, saveLanguage, saveProfile, signIn, signInAndLinkPending, signOutAccount, syncSettings, unlinkLogin, watchAccount
 } from "/assets/hub/account.js";
@@ -45,6 +45,16 @@ const errText = (err) => {
   if (code === "sk/too-many") return t("パスキーは 10 個まで登録できます。使っていないものを外してください。");
   if (code === "sk/mismatch") return t("このアカウントに登録されているパスキーで確認してください。");
   if (code === "sk/passkey-failed" || code === "sk/failed") return t("パスキーを確かめられませんでした。もう一度お試しください。");
+  if (code === "sk/of8-not-ready") return t("0F8 の準備がまだです。少し待ってから、もう一度お試しください。");
+  if (code === "sk/of8-failed") return t("0F8 のログインを確かめられませんでした。もう一度お試しください。");
+  if (code === "sk/of8-invalid") return t("0F8 のログインを確かめられませんでした。もう一度ログインしてください。");
+  if (code === "sk/of8-upstream") return t("0F8 に接続できませんでした。時間をおいて、もう一度お試しください。");
+  if (code === "sk/of8-too-many") return t("試す回数が多すぎます。少し時間をおいてから、もう一度お試しください。");
+  if (code === "sk/of8-in-use") return t("その 0F8 のアカウントは、ほかの SK Hub Systems アカウントにつながっています。");
+  if (code === "sk/of8-already-linked") return t("このアカウントには、別の 0F8 のアカウントがつながっています。先に 0F8 を外してください。");
+  if (code === "sk/of8-mismatch") return t("このアカウントにつながっている 0F8 のアカウントで、もう一度ログインしてください。");
+  if (code === "sk/of8-unknown-account") return t("0F8 のアカウントを確かめられませんでした。");
+  if (code === "sk/timeout") return t("ログインのウィンドウがタイムアウトしました。もう一度お試しください。");
   if (code === "TypeError" || err instanceof TypeError) return t("通信できませんでした。インターネットの接続を確認してください。");
   return t("うまくいきませんでした（{code}）", { code: code || err?.message || err });
 };
@@ -266,6 +276,7 @@ function renderView(state) {
   loadExternalLogins(user).then(() => {
     if (current.user !== user) return;
     renderLogins(user);
+    checkOf8Link(user);
     linkFromLine(user);
     $("[data-acct-email-tile]").textContent = user.email || t("なし（{name} でログイン）", { name: loginsOf(user).map((k) => LOGIN_PROVIDERS[k].name).join("・") || "-" });
   });
@@ -280,6 +291,27 @@ function renderView(state) {
 
 // ---------- ログインの方法（サインインとセキュリティ） ----------
 // つないでいる方法を並べ、つなぐ・外す。最後の 1 つは外せない
+// 0F8 の連携が、まだ有効か確かめる（ページを開いたとき・30 分ごと）。切れていたら、つなぎ直してもらう（「つなぐ」を押す）
+let of8Timer = null;
+function checkOf8Link(user) {
+  if (!externalLoginsOf(user).some((l) => l.provider === "of8")) return;
+  const run = async () => {
+    if (current.user !== user) return;
+    try {
+      const r = await checkOf8(user);
+      if (r.valid || current.user !== user) return;
+      await loadExternalLogins(user);
+      renderLogins(user);
+      message(t("0F8 の連携が切れました。「サインインとセキュリティ」の 0F8 の「つなぐ」から、もう一度つないでください。"));
+    } catch (err) {
+      // 通信できなかったときは、次の確認で
+    }
+  };
+  clearInterval(of8Timer);
+  of8Timer = setInterval(run, 30 * 60 * 1000);
+  run();
+}
+
 function renderLogins(user) {
   const box = $("[data-acct-logins]");
   if (!box) return;
@@ -881,6 +913,8 @@ async function renderConsole(user) {
 // ログインのボタン（data-acct-signin="google" | "github" | "microsoft"）。使える方法（/assets/hub/account.js の availableLogins）だけ出す
 const logins = availableLogins();
 root.querySelectorAll("[data-acct-signin]").forEach((btn) => { btn.hidden = !logins.includes(btn.dataset.acctSignin || "google"); });
+// 0F8 のポップアップは、ボタンを押した瞬間に開く必要があるので、SDK は先に読んでおく（このページだけ）
+if (logins.includes("of8")) loadOf8().catch(() => {});
 // ---------- ログインと新規登録 ----------
 // 画面は分けるが、どちらから入っても同じ流れ（はじめての人は「アカウントを作成」、前からある人はそのまま使える）。
 // 新規登録ではパスキー（アカウントを作ったあとに登録するもの）と準備中のボタンを出さない。?signup で新規登録から開く
@@ -1084,10 +1118,11 @@ dialog.addEventListener("close", async () => {
   try {
     // 途中で止まらないように、データを消す前に本人を確認する（つないでいるログインの方法で）
     // LINE・Kakao だけの人は、LINE・Kakao の画面に移動して、このページに戻ってくる（showReturned がもう一度この確認を出す）
-    await confirmIdentity(user, location.origin + location.pathname);
-    await deleteServiceData(user.uid);
-    await deleteDoc(doc(db, "accounts", user.uid));
-    await deleteLogin(user);
+    // 0F8 でもう一度ログインした場合は、そのユーザー（新しいログイン）を使う
+    const confirmed = (await confirmIdentity(user, location.origin + location.pathname))?.user || user;
+    await deleteServiceData(confirmed.uid);
+    await deleteDoc(doc(db, "accounts", confirmed.uid));
+    await deleteLogin(confirmed);
     showView("signed-out");
     message(t("アカウントを削除しました。ご利用ありがとうございました。"));
   } catch (err) {

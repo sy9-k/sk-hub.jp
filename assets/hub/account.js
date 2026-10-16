@@ -1,5 +1,5 @@
-// SK Hub Systems アカウント（ログインは Google・GitHub・Microsoft・LINE・Kakao・パスキー。GitHub は GITHUB_LOGIN、Microsoft は MICROSOFT_LOGIN、
-// LINE は LINE_LOGIN、Kakao は KAKAO_LOGIN、パスキーは PASSKEY_LOGIN が true のときだけ出す）
+// SK Hub Systems アカウント（ログインは Google・GitHub・Microsoft・LINE・Kakao・パスキー・0F8。GitHub は GITHUB_LOGIN、Microsoft は MICROSOFT_LOGIN、
+// LINE は LINE_LOGIN、Kakao は KAKAO_LOGIN、パスキーは PASSKEY_LOGIN、0F8 は OF8_LOGIN が true のときだけ出す）
 // sk-hub.jp のページ（管理コンソール・これからのサービス）で共通に使うモジュール。
 //   ・ログイン状態は同じサイトの中で共有される（Firebase Authentication がブラウザに保存する）
 //   ・アカウントの登録 = accounts/{UID} に規約への同意を記録すること。Google の名前・メールアドレスは Firebase Authentication にだけある
@@ -140,6 +140,9 @@ export const LINE_LOGIN = true;
 export const KAKAO_LOGIN = true;
 // パスキーも api.sk-hub.jp で確かめる（公開鍵だけを保存）。ほかの方法でログインしたあと「つなぐ」で登録し、次からパスキーだけで入れる
 export const PASSKEY_LOGIN = true;
+// 0F8（Search3958 の 0F8 アカウント）でもログインできる。0F8 の画面はポップアップで開き（SDK は /frameworks/client-service.js）、
+// 0F8 のアクセストークンは api.sk-hub.jp が 0F8 に問い合わせて確かめ、暗号化して保存する（sk-api の src/of8.js）
+export const OF8_LOGIN = true;
 // 手元（http://localhost）で開いたページも本番の Worker を使う（api.sk-hub.jp は localhost から戻ることを許している）。
 // 手元の Worker（sk-api で npm run dev）を試すときだけ、localStorage の skhub_api に "http://localhost:8788" を入れる
 export const API_ORIGIN = (() => {
@@ -155,9 +158,10 @@ export const LOGIN_PROVIDERS = {
   microsoft: { id: "microsoft.com", name: "Microsoft", security: "https://account.microsoft.com/security" },
   line: { id: "line", name: "LINE", security: "https://account.line.me/", external: true },
   kakao: { id: "kakao", name: "Kakao", security: "https://accounts.kakao.com/weblogin/account/info", external: true },
-  passkey: { id: "passkey", name: "パスキー", security: "", external: true, passkey: true }
+  passkey: { id: "passkey", name: "パスキー", security: "", external: true, passkey: true },
+  of8: { id: "of8", name: "0F8", security: "", external: true, of8: true }
 };
-const LOGIN_FLAGS = { github: GITHUB_LOGIN, microsoft: MICROSOFT_LOGIN, line: LINE_LOGIN, kakao: KAKAO_LOGIN, passkey: PASSKEY_LOGIN };
+const LOGIN_FLAGS = { github: GITHUB_LOGIN, microsoft: MICROSOFT_LOGIN, line: LINE_LOGIN, kakao: KAKAO_LOGIN, passkey: PASSKEY_LOGIN, of8: OF8_LOGIN };
 // パスキーは、ブラウザが対応しているときだけ
 const passkeySupported = () => typeof window !== "undefined" && !!window.PublicKeyCredential && !!navigator.credentials;
 // LINE の中のブラウザ（ミニアプリ・トークで開いたリンク）では、LINE だけ（Google などのログインの画面は LINE の中では開けない）
@@ -258,6 +262,82 @@ export async function signInWithLiff(accessToken, create = false) {
 // 公式 LINE（SK Hub）: 友だちか・お知らせを LINE で受け取るか（{ linked, friend, notify, bot: { id, url } }）
 export const lineStatus = (user) => api("/line/status", { user });
 export const setLineNotify = (user, on) => api("/line/notify", { method: "POST", user, body: { on: !!on } });
+
+// ---------- 0F8（Search3958 の 0F8 アカウント） ----------
+// ログイン・連携の画面は 0F8 のポップアップ（SDK: /frameworks/client-service.js。アカウントのページだけで読み込む）。
+// SDK がくれたアクセストークンと signature を api.sk-hub.jp に送り、api.sk-hub.jp が 0F8 に問い合わせて本人を確かめる。
+// データ鍵（dataAccessKey）は api.sk-hub.jp に送らない（SDK が、この端末の localStorage に保存する）。
+const OF8_SDK_URL = "https://search3958.github.io/frameworks/client-service.js";
+let of8Loading = null;
+// SDK を読み込む。ポップアップはボタンを押した瞬間に開く必要があるので、アカウントのページを開いたときに先に読んでおく
+export function loadOf8() {
+  if (!OF8_LOGIN) return Promise.reject(new Error("0f8-off"));
+  if (window.OF8Account) return Promise.resolve(window.OF8Account);
+  if (!of8Loading) {
+    of8Loading = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = OF8_SDK_URL;
+      s.onload = () => (window.OF8Account ? resolve(window.OF8Account) : reject(new Error("0f8-sdk")));
+      s.onerror = () => { of8Loading = null; s.remove(); reject(new Error("0f8-sdk")); };
+      document.head.append(s);
+    });
+  }
+  return of8Loading;
+}
+// 0F8 の画面をポップアップで開き、アクセストークンと signature をもらう。ボタンのクリックの中で、すぐ呼ぶこと（ポップアップが止められないように）
+function of8Popup() {
+  const sdk = window.OF8Account;
+  if (!sdk) { const e = new Error("0f8-not-ready"); e.code = "sk/of8-not-ready"; return Promise.reject(e); }
+  return sdk.login().then(
+    (res) => ({ token: res.accessToken, signature: res.signature }),
+    (err) => {
+      const msg = String(err?.message || "");
+      const e = new Error(msg || "0f8");
+      e.code = /blocked/i.test(msg) ? "auth/popup-blocked" : /閉じられました/.test(msg) ? "auth/popup-closed-by-user" : /タイムアウト/.test(msg) ? "sk/timeout" : "sk/of8-failed";
+      throw e;
+    }
+  );
+}
+// 0F8 でログインする（はじめての人は、api.sk-hub.jp が新しく作る。アカウントを作るのは、規約に同意したあと）
+export async function signInWithOf8() {
+  const creds = await of8Popup();
+  const res = await api("/auth/0f8/signin", { method: "POST", body: creds });
+  const { user } = await signInWithCustomToken(auth, res.token);
+  if (!user.displayName && res.name) await updateProfile(user, { displayName: res.name }).catch(() => {});
+  return { user, isNew: !!res.isNew };
+}
+// いまのアカウントに 0F8 をつなぐ（つなぎ直しも同じ。ほかの 0F8 のアカウントがつながっていれば、先に外してもらう）
+export async function linkOf8(user) {
+  const creds = await of8Popup();
+  await api("/auth/0f8/link", { method: "POST", user, body: creds });
+  await loadExternalLogins(user);
+}
+// 本人の確認（アカウントの削除の前）: 0F8 でもう一度ログインして、同じアカウントか確かめる（ログインし直したユーザーを返す）
+async function reauthOf8(user) {
+  const creds = await of8Popup();
+  const res = await api("/auth/0f8/signin", { method: "POST", body: { ...creds, expectUid: user.uid } });
+  return signInWithCustomToken(auth, res.token);
+}
+// 保存している 0F8 のトークンが、まだ有効か確かめる（ページを開いたとき・定期的に、ブラウザから呼ぶ）
+//   戻り値: { valid: true } か { valid: false, reason: "not-linked" | "expired" | "revoked" }（false なら、つなぎ直してもらう）
+export async function checkOf8(user) {
+  const r = await api("/auth/0f8/check", { method: "POST", user });
+  if (r.valid && r.rotated) setOf8Cookies(r.rotated);
+  return r;
+}
+// ローテーションされた値で、SDK の Cookie を書き直す（SDK と同じ属性）
+function setOf8Cookies({ token, signature }) {
+  const c = window.OF8Account?.constants;
+  if (!c) return;
+  const attrs = "Max-Age=259200; Path=/; Secure; SameSite=Strict";
+  document.cookie = `${encodeURIComponent(c.cookieToken)}=${encodeURIComponent(token)}; ${attrs}`;
+  document.cookie = `${encodeURIComponent(c.cookieSignature)}=${encodeURIComponent(signature)}; ${attrs}`;
+}
+// この端末の 0F8 の情報（Cookie・データ鍵）を消す。0F8 側の失効は、api.sk-hub.jp（/logins/of8）が済ませている
+export async function of8LocalLogout() {
+  const sdk = window.OF8Account;
+  if (sdk) await sdk.logout().catch(() => {});
+}
 
 // ---------- パスキー（WebAuthn） ----------
 // api.sk-hub.jp がくれたオプション（JSON。バイト列は base64url）を、ブラウザの形にする／ブラウザの結果を JSON にする
@@ -360,6 +440,7 @@ export function currentUser() {
 }
 
 export async function signIn(key = "google") {
+  if (key === "of8") return signInWithOf8();
   if (key === "passkey") return signInWithCustomToken(auth, await passkeyToken());
   if (isExternal(key)) return goExternal(key, "signin");
   try {
@@ -390,6 +471,7 @@ export async function signInAndLinkPending(existingKey) {
 //   LINE・Kakao をつなぐときは、LINE・Kakao の画面に移動する（戻ってきたら externalResult が { mode: "link" }）
 //   パスキーは、この端末で作って登録する（ページは移動しない）
 export function linkLogin(user, key) {
+  if (key === "of8") return linkOf8(user);
   if (key === "passkey") return registerPasskey(user);
   if (isExternal(key)) return goExternal(key, "link", location.href, user);
   return linkWithPopup(user, provider(key));
@@ -399,6 +481,8 @@ export async function unlinkLogin(user, key) {
   if (isExternal(key)) {
     await api(`/logins/${key}`, { method: "DELETE", user });
     externalLogins.list = externalLogins.list.filter((l) => l.provider !== key);
+    // 0F8 は、この端末の Cookie とデータ鍵も消す
+    if (key === "of8") await of8LocalLogout();
     return;
   }
   return unlink(user, LOGIN_PROVIDERS[key].id);
@@ -426,6 +510,8 @@ export async function confirmIdentity(user, returnTo = location.href) {
   if (!logins.length) { const e = new Error("signed-out"); e.code = "sk/signed-out"; throw e; }
   // パスキーがあれば、ページを移動せずにその場で確かめる（同じアカウントでログインし直す）
   if (logins.includes("passkey")) return signInWithCustomToken(auth, await passkeyToken(user.uid));
+  // 0F8 だけ（LINE・Kakao はない）: 0F8 でもう一度ログインして確かめる（ページは移動しない）
+  if (logins.includes("of8") && !logins.some((k) => k === "line" || k === "kakao")) return reauthOf8(user);
   return goExternal(logins[0], "reauth", returnTo, user);
 }
 export const confirmWithGoogle = confirmIdentity; // 前の名前（互換）
@@ -446,6 +532,8 @@ export async function deleteLogin(user) {
     if (loginsOf(user).some(isExternal)) await unlinkAll;
     else await unlinkAll.catch(() => {});
   }
+  // 0F8 のつながりとトークンは、api.sk-hub.jp が消して 0F8 側でも失効させた。この端末の Cookie とデータ鍵も消す
+  await of8LocalLogout();
   await deleteUser(user);
   clearHint();
   try { localStorage.removeItem(SYNC_BASE_KEY); localStorage.removeItem(TOOLBOX_SYNC_KEY); } catch (e) { /* 同上 */ }
