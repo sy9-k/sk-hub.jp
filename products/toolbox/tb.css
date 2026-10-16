@@ -115,3 +115,32 @@
   .tb h1 { font-size: 34px; }
   .tb .nb { white-space: normal; }
 }
+
+/* ---------- 対応している場所・機能（追加分） ---------- */
+.tb-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.tb-pills span { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; background: var(--tb-surface); border: 1px solid var(--tb-line); color: var(--tb-muted); }
+.tb-pills .tb-pill-soon { border-style: dashed; color: var(--tb-faint); }
+.tb-places { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 34px; }
+.tb-place { display: flex; flex-direction: column; padding: 26px; background: var(--tb-surface); border: 1px solid var(--tb-line); border-radius: 22px; color: inherit; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+a.tb-place:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(14, 30, 70, .10); }
+.tb-place--soon { border-style: dashed; background: transparent; }
+.tb-place-ico { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; background: var(--tb-accent-soft); color: var(--tb-accent-text); }
+.tb-place-ico svg { width: 24px; height: 24px; }
+.tb-place-ico--line { background: #06c755; color: #fff; }
+.tb-place-ico--kakao { background: #fee500; color: #3c1e1e; }
+.tb-place-status { align-self: flex-start; margin-top: 16px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--tb-accent-soft); color: var(--tb-accent-text); }
+.tb-place--soon .tb-place-status { background: transparent; border: 1px dashed var(--tb-line-strong); color: var(--tb-faint); }
+.tb-place h3 { margin-top: 12px; font-size: 18px; font-weight: 800; }
+.tb-place p { margin-top: 8px; font-size: 14px; line-height: 1.8; color: var(--tb-muted); }
+.tb-place-list { margin-top: 14px; padding-left: 18px; font-size: 13px; line-height: 1.8; color: var(--tb-muted); }
+.tb-feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 34px; }
+.tb-feat { padding: 24px; background: var(--tb-surface); border: 1px solid var(--tb-line); border-radius: 22px; }
+.tb-feat svg { width: 26px; height: 26px; color: var(--tb-accent); }
+.tb-feat h3 { margin-top: 14px; font-size: 17px; font-weight: 800; }
+.tb-feat p { margin-top: 8px; font-size: 14px; line-height: 1.8; color: var(--tb-muted); }
+@media (max-width: 900px) {
+  .tb-places, .tb-feat-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .tb-places, .tb-feat-grid { grid-template-columns: 1fr; }
+}
