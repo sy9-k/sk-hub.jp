@@ -608,6 +608,7 @@ img.yf-tile.yf-tile {
 .credit--small { padding: 20px 22px; }
 .credit--small h3 { font-size: 15.5px; }
 .credit--small p { font-size: 13.5px; margin-top: 4px; }
+.partner-list { margin-top: 10px; padding-left: 1.2em; color: var(--muted); font-size: 14px; line-height: 1.7; display: grid; gap: 6px; }
 .font-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .font-item { display: flex; align-items: center; gap: 16px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
 .font-sample { font-size: 30px; font-weight: 700; line-height: 1; width: 64px; text-align: center; color: var(--link); }
