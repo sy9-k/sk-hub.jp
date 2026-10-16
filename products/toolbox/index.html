@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <script src="/assets/coming-soon.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 多言語: /lang/ で選んだ言語で表示する（URL は変わらない）。ページの最後の translatePage() で訳す -->
+  <script src="/assets/i18n.js"></script>
+  <!-- 表示（ライト・ダーク・テーマカラー）。ちらつかないよう、CSS より先に <html> に付ける（選ぶのはヘッダーのアカウントのメニューの「表示」。assets/site.js で切り替え） -->
+  <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}"),d=document.documentElement;if(t.mode==="light"||t.mode==="dark")d.setAttribute("data-theme",t.mode);if(/^[a-z]{2,12}$/.test(t.accent||"")&&t.accent!=="blue")d.setAttribute("data-accent",t.accent);}catch(e){}})();</script>
+  <title>SK's Toolbox | SK</title>
+  <meta name="description" content="毎日ちょっと使う、小さなアプリを集めた SK の道具箱。時計・電卓・メモ・Todo・カウントダウン・時間割・ルーレット。データはこの端末の中だけに保存され、ホーム画面に追加すればオフラインでも使えます。">
+  <meta name="theme-color" content="#ffffff" data-theme-color>
+  <link rel="canonical" href="https://sk-hub.jp/products/toolbox/">
+  <!-- SNS で共有したときの表示（各ページのタイトル・説明・URL は build で入れ替える） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SK">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:title" content="SK's Toolbox | SK">
+  <meta property="og:description" content="毎日ちょっと使う、小さなアプリを集めた SK の道具箱。時計・電卓・メモ・Todo・カウントダウン・時間割・ルーレット。">
+  <meta property="og:url" content="https://sk-hub.jp/products/toolbox/">
+  <meta property="og:image" content="https://sk-hub.jp/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/toolbox/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="/toolbox/icon-192.png">
+  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"></script>
+  <link rel="stylesheet" href="/assets/header.css">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/products/toolbox/tb.css">
+</head>
+<body>
+  <a class="skip" href="#main">本文へ移動</a>
+  <header class="site-header">
+    <a class="hd-logo" href="/" aria-label="ホーム">
+      <span class="hd-logo-image" aria-hidden="true"><img src="/assets/logo.svg" alt="" width="26" height="26"></span>
+      <span class="hd-logo-back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+    <a class="hd-item" href="/about/">私について</a>
+    <a class="hd-item" href="/products/" data-menu="products">プロダクト</a>
+    <a class="hd-item" href="https://support.sk-hub.jp/" data-menu="support" data-no-navigation="true">サポートと情報</a>
+    <a class="hd-item hd-account" href="/account/" data-menu="account" data-account-link>アカウント</a>
+    <a class="hd-item hd-lang" href="/lang/" data-lang-link><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg></a>
+    <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
+  </header>
+  <div class="hd-menu" id="hd-menu"><div class="hd-menu-inner"><div class="hd-menu-content"></div></div></div>
+  <div class="hd-backdrop" id="hd-backdrop"></div>
+
+  <main id="main">
+    <div class="tb">
+      <div class="wrap">
+        <section class="tb-hero">
+          <div>
+            <div class="tb-top">
+              <div class="tb-wordmark"><img src="/toolbox/icon-192.png" alt="" width="40" height="40"><span>SK's Toolbox</span></div>
+              <span class="tb-tag">公開中</span>
+            </div>
+            <div class="tb-eyebrow">Daily tools</div>
+            <h1><span class="nb">毎日ちょっと使う道具を、</span><br><span class="nb"><em>ひとつの箱</em></span><span class="nb">にまとめました。</span></h1>
+            <p class="tb-lead">時計・電卓・メモ・リマインダー・カウントダウン・時間割・ルーレット。使いたいものを、使いたいときにすぐ開けます。データはこの端末の中だけに保存されます。</p>
+            <div class="tb-cta">
+              <a class="tb-btn tb-btn-accent" href="/toolbox/">Toolbox を開く<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+              <a class="tb-btn tb-btn-line" href="https://support.sk-hub.jp/">使い方・サポート</a>
+            </div>
+            <div class="tb-pills"><span>ブラウザ</span><span>LINE ミニアプリ</span><span class="tb-pill-soon">KakaoTalk（準備中）</span></div>
+          </div>
+          <div class="tb-box" aria-hidden="true">
+            <div class="tb-box-head">道具箱の中身<span>7 つのアプリ</span></div>
+            <div class="tb-box-grid">
+              <a href="/toolbox/clock/" tabindex="-1"><img src="/toolbox/clock/icon-192.png" alt="">Clock</a>
+              <a href="/toolbox/calc/" tabindex="-1"><img src="/toolbox/calc/icon-192.png" alt="">Calc</a>
+              <a href="/toolbox/memo/" tabindex="-1"><img src="/toolbox/memo/icon-192.png" alt="">Memo</a>
+              <a href="/toolbox/todo/" tabindex="-1"><img src="/toolbox/todo/icon-192.png" alt="">Todo</a>
+              <a href="/toolbox/countdown/" tabindex="-1"><img src="/toolbox/countdown/icon-192.png" alt="">Countdown</a>
+              <a href="/toolbox/timetable/" tabindex="-1"><img src="/toolbox/timetable/icon-192.png" alt="">Timetable</a>
+              <a href="/toolbox/roulette/" tabindex="-1"><img src="/toolbox/roulette/icon-192.png" alt="">Roulette</a>
+            </div>
+            <div class="tb-box-foot"><img src="/toolbox/icon-192.png" alt="">ホーム画面に追加すると、オフラインでも使えます。</div>
+          </div>
+        </section>
+
+        <section class="tb-section" id="apps">
+          <div class="tb-label">Apps</div>
+          <h2 class="tb-h2"><span class="nb">引き出しを開けると、</span><span class="nb"><em>道具</em>が出てくる。</span></h2>
+          <p class="tb-sub">それぞれ単独のアプリとしても開けます。よく使うものは、ホーム画面に追加しておくと便利です。</p>
+          <div class="tb-drawers">
+            <a class="tb-drawer" href="/toolbox/clock/" style="--c:#002a93"><img src="/toolbox/clock/icon-192.png" alt=""><div><h3>Clock</h3><p>時計・アラーム・タイマー。時間帯に合わせて空の色が移り変わる時計です。</p><small>Clock を開く →</small></div></a>
+            <a class="tb-drawer" href="/toolbox/calc/" style="--c:#0a5bd1"><img src="/toolbox/calc/icon-192.png" alt=""><div><h3>Calc</h3><p>電卓・関数電卓。普段の計算から、関数の計算まで。</p><small>Calc を開く →</small></div></a>
+            <a class="tb-drawer" href="/toolbox/memo/" style="--c:#002a93"><img src="/toolbox/memo/icon-192.png" alt=""><div><h3>Memo</h3><p>画像も入るメモ帳。思いついたことを、すぐに書き留められます。</p><small>Memo を開く →</small></div></a>
+            <a class="tb-drawer" href="/toolbox/todo/" style="--c:#0a5bd1"><img src="/toolbox/todo/icon-192.png" alt=""><div><h3>Todo</h3><p>やることとリマインダー。期限に合わせて知らせます。</p><small>Todo を開く →</small></div></a>
+            <a class="tb-drawer" href="/toolbox/countdown/" style="--c:#002a93"><img src="/toolbox/countdown/icon-192.png" alt=""><div><h3>Countdown</h3><p>大切な日まで、あと何日かを数えます。</p><small>Countdown を開く →</small></div></a>
+            <a class="tb-drawer" href="/toolbox/timetable/" style="--c:#0a5bd1"><img src="/toolbox/timetable/icon-192.png" alt=""><div><h3>Timetable</h3><p>時間割をつくれます。クラスへの連絡にも使えます。</p><small>Timetable を開く →</small></div></a>
+            <a class="tb-drawer" href="/toolbox/roulette/" style="--c:#002a93"><img src="/toolbox/roulette/icon-192.png" alt=""><div><h3>Roulette</h3><p>回して決めるルーレット。ちょっとした選択に。</p><small>Roulette を開く →</small></div></a>
+          </div>
+        </section>
+
+        <section class="tb-section">
+          <div class="tb-split">
+            <div class="tb-split-text">
+              <div class="tb-label">Home screen</div>
+              <h2 class="tb-h2"><span class="nb">ホーム画面から、</span><br><span class="nb"><em>すぐ開く</em>。</span></h2>
+              <p class="tb-sub">ホーム画面に追加すると、アプリのように開けます。一度開いたあとは、オフラインでも使えます。</p>
+              <ul class="tb-points">
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg><span><b>アプリのように起動</b>。ブラウザのタブを探さなくても開けます。</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg><span><b>7 つのアプリをひとまとめ</b>。ホームから選ぶだけで切り替えられます。</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg><span><b>見た目はお好みで</b>。設定の「表示」からライト・ダークを選べます。</span></li>
+              </ul>
+            </div>
+            <div class="tb-phone" aria-hidden="true">
+              <div class="tb-screen">
+                <div class="tb-screen-time">10:24</div>
+                <div class="tb-screen-grid">
+                  <img src="/toolbox/clock/icon-192.png" alt=""><img src="/toolbox/calc/icon-192.png" alt=""><img src="/toolbox/memo/icon-192.png" alt="">
+                  <img src="/toolbox/todo/icon-192.png" alt=""><img src="/toolbox/countdown/icon-192.png" alt=""><img src="/toolbox/timetable/icon-192.png" alt="">
+                </div>
+                <div class="tb-screen-dock">
+                  <img src="/toolbox/roulette/icon-192.png" alt=""><img src="/toolbox/icon-192.png" alt="">
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tb-section tb-where">
+          <div class="tb-label">Where</div>
+          <h2 class="tb-h2"><span class="nb">ふだんの場所で、</span><span class="nb"><em>そのまま</em>使える。</span></h2>
+          <p class="tb-sub">ブラウザで開くのはもちろん、よく使う LINE の中からも、将来は KakaoTalk の中からも使えるようにします。</p>
+          <div class="tb-places">
+            <a class="tb-place" href="/toolbox/">
+              <span class="tb-place-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg></span>
+              <span class="tb-place-status">使える</span>
+              <h3>ブラウザ・ホーム画面</h3>
+              <p>パソコンでもスマホでも、ブラウザからすぐに開けます。ホーム画面に追加すれば、アプリのように使えます。</p>
+            </a>
+            <div class="tb-place">
+              <span class="tb-place-ico tb-place-ico--line"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3C6.8 3 2.6 6.3 2.6 10.4c0 3.6 3.2 6.6 7.5 7.2.3.1.7.2.8.5.1.3 0 .7 0 1l-.1.6c0 .2-.2.8.7.4.9-.4 4.8-2.8 6.5-4.8 1.2-1.3 1.8-2.7 1.8-4.3C19.9 6.3 15.7 3 12 3z"/></svg></span>
+              <span class="tb-place-status">使える</span>
+              <h3>LINE in SK's Toolbox</h3>
+              <p>LINE のミニアプリとして開けます。LINE の友だちやグループに、Toolbox をすすめるカードを送ることもできます。</p>
+              <ul class="tb-place-list">
+                <li>SK Hub Systems アカウントでログインして同期（任意）</li>
+                <li>公式 LINE「SK Hub」からお知らせを受け取る（任意）</li>
+              </ul>
+            </div>
+            <div class="tb-place tb-place--soon">
+              <span class="tb-place-ico tb-place-ico--kakao"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4C6.9 4 3 7.1 3 11c0 2.5 1.7 4.7 4.2 6l-.9 3.3c-.1.4.3.7.6.5l3.9-2.6c.4 0 .9.1 1.2.1 5.1 0 9-3.1 9-7.3S17.1 4 12 4z"/></svg></span>
+              <span class="tb-place-status">準備中</span>
+              <h3>KakaoTalk in SK's Toolbox</h3>
+              <p>将来リリース予定です。KakaoTalk の中からも、同じ Toolbox を開けるようにします。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="tb-section tb-feats">
+          <div class="tb-label">Features</div>
+          <h2 class="tb-h2"><span class="nb">小さな道具に、</span><span class="nb"><em>必要な機能</em>を。</span></h2>
+          <div class="tb-feat-grid">
+            <div class="tb-feat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <h3>全体検索</h3>
+              <p>Ctrl + K（Mac は ⌘ + K）で、メモ・タスク・予定をまとめて探せます。</p>
+            </div>
+            <div class="tb-feat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><path d="M16 13v6M13 16h6"/></svg>
+              <h3>ホームを自分好みに</h3>
+              <p>「ホームを編集」で、タイルの順番や表示を変えられます。</p>
+            </div>
+            <div class="tb-feat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              <h3>オフラインでも使える</h3>
+              <p>ホーム画面に追加すると、オフラインでも開いて使えます。</p>
+            </div>
+            <div class="tb-feat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+              <h3>端末に保存、同期は任意</h3>
+              <p>データはこの端末のブラウザに保存されます。オンラインの同期は任意で、端末の中で暗号化してから送ります。</p>
+            </div>
+            <div class="tb-feat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+              <h3>時間割をクラスで共有</h3>
+              <p>Timetable は、招待コードを使ってクラスの人と時間割を共有できます。</p>
+            </div>
+            <div class="tb-feat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+              <h3>見た目を選べる</h3>
+              <p>ライトとダークのほか、アクセントの色も設定から選べます。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="tb-section tb-privacy">
+          <div class="tb-label">Privacy</div>
+          <h2 class="tb-h2"><span class="nb">データは、</span><span class="nb"><em>この端末</em>の中だけ。</span></h2>
+          <div class="tb-privacy-grid">
+            <div class="tb-privacy-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              <h3>この端末に保存</h3>
+              <p>メモ・予定・時間割などのデータは、この端末の中だけに保存されます。</p>
+            </div>
+            <div class="tb-privacy-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+              <h3>閲覧履歴は集めない</h3>
+              <p>開発者は、使い方の記録や中身のデータを集めません。広告にも使いません。</p>
+            </div>
+            <div class="tb-privacy-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>
+              <h3>設定は必要なときだけ同期</h3>
+              <p>SK Hub Systems アカウントでログインしたときだけ、設定の同期を行います。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="tb-final">
+          <img src="/toolbox/icon-192.png" alt="" width="72" height="72">
+          <h2>今日の道具を、ひとつの箱から。</h2>
+          <p>SK's Toolbox は、ブラウザからすぐに開けます。</p>
+          <div class="tb-cta">
+            <a class="tb-btn tb-btn-accent" href="/toolbox/">Toolbox を開く<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="tb-btn tb-btn-line" href="https://support.sk-hub.jp/contact/">お問い合わせ</a>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="cols">
+        <div>
+          <a class="logo" href="/" aria-label="SK ホーム"><img src="/assets/logo.svg" alt="" width="36" height="36">SK</a>
+          <p class="about">毎日のネットを、もう少し安心で便利に。Y-FILTER. と MALU を開発しています。</p>
+        </div>
+        <div>
+          <h2>プロダクト</h2>
+          <ul><li><a href="/products/y-filter/">Y-FILTER.</a></li><li><a href="/products/malu/">MALU</a></li><li><a href="/products/nagi/">Nagi</a></li><li><a href="/sk-hub-systems/">SK Hub Systems</a></li><li><a href="/toolbox/">SK's Toolbox</a></li><li><a href="/products/">すべてのプロダクト</a></li></ul>
+        </div>
+        <div>
+          <h2>サポートと情報</h2>
+          <ul><li><a href="https://support.sk-hub.jp/">サポート記事</a></li><li><a href="https://support.sk-hub.jp/?type=news">お知らせ</a></li><li><a href="https://support.sk-hub.jp/contact/">お問い合わせ</a></li></ul>
+        </div>
+      </div>
+      <div class="wordmark" aria-hidden="true">SK</div>
+      <div class="legal"><span>© 2026 SK</span><span>サーバー基盤: SK Hub Systems</span></div>
+    </div>
+  </footer>
+
+  <!-- ページを選んだ言語に訳す（ほかのスクリプトが動く前に。assets/i18n.js） -->
+  <script>window.SKI18N && SKI18N.translatePage();</script>
+  <script src="/support/articles.js" defer></script>
+  <script src="/assets/site.js" defer></script>
+  <!-- メンテナンス・障害のお知らせの帯（config/maintenance。変えるのは管理画面（admin.sk-hub.jp）） -->
+  <script src="/assets/maintenance.js" defer></script>
+  <!-- SK Hub Systems アカウントの設定の同期（ログイン中だけ） -->
+  <script src="/assets/hub/sync-loader.js" defer></script>
+  <script src="/frameworks/check.js" defer></script>
+  <!-- アクセス解析（Google アナリティクス。許可した人だけ） -->
+  <script src="/assets/analytics.js" defer></script>
+</body>
+</html>
