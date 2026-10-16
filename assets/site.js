@@ -97,9 +97,12 @@
       title: t("プロダクト"),
       items: [
         [t("すべてのプロダクト"), lp("/products/")],
-        ["SK's Brand", lp("/brand/")],
+        ["Y-FILTER.", lp("/products/y-filter/")],
+        ["MALU", lp("/products/malu/")],
+        ["Nagi", lp("/products/nagi/")],
         ["SK Hub Systems", lp("/sk-hub-systems/")],
-        ["SK's Toolbox", lp("/toolbox/")]
+        ["SK's Toolbox", lp("/toolbox/")],
+        ["SK's Lab", lp("/lab/")]
       ]
     },
     // groups があると、見出しつきの列に分けて出す（スマホでは縦に並ぶ）
@@ -121,7 +124,9 @@
             [t("アップデート"), lp("/updates/")],
             [t("利用規約とプライバシーポリシー"), lp("/policies/")],
             ["SK's Brand", lp("/brand/")],
-            ["Link & Credit", lp("/credits/")]
+            ["Link & Credit", lp("/credits/")],
+            [t("私について"), lp("/about/")],
+            [t("私のGitHub"), "https://github.com/sy9-k"]
           ]
         }
       ]
