@@ -47,9 +47,14 @@ NO_FOOTER = {"toolbox.html"}
 # 訳さないページ（開発者だけが使う）
 NOT_TRANSLATED = {"privacy.html"}  # お問い合わせの受信箱・記事エディターは、管理画面（admin.sk-hub.jp）に移った
 
+# ログイン画面（account.html）の CSP。インラインのスクリプトを変えたら、sha256 も変える
+ACCOUNT_CSP = r'''  <!-- このページで動いてよいスクリプト・通信先を決める（ログイン情報を扱うため）。インラインのスクリプトを変えたら、sha256 も変える（この meta を更新するとき、インラインのスクリプトを変えたら hash も計算し直す）。
+       0F8 のログインの画面は search3958.github.io（SDK）から読み、ポップアップで開く。api.sk-hub.jp・Firebase・Google の通信先を含む -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-XiQENkzISdPIsi3vIzMd2VxQfoiyw1NPG0eGLvih6bk=' 'sha256-1UE1g57CofSEd1k3LTcAKE/A34fPMr2WMaGuvPBoNj4=' https://www.gstatic.com https://apis.google.com https://www.googletagmanager.com https://search3958.github.io; connect-src 'self' https://api.sk-hub.jp https://sentaro-0f8-accounts.takesen2278.workers.dev https://sk-hub.online https://support.sk-hub.jp https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; frame-src 'self' https://y-filter-systems.firebaseapp.com https://accounts.google.com https://apis.google.com; form-action 'self'; base-uri 'self'; object-src 'none'">
+'''
 # ページごとに追加する <head> の中身と <body> のクラス
 EXTRA = {
-    "account.html": ('  <script type="module" src="/account/account-page.js"></script>\n', None),
+    "account.html": (ACCOUNT_CSP + '  <script type="module" src="/account/account-page.js"></script>\n', None),
     # 言語の画面。どこから開いたか（戻り先の next・LINE の中・アプリとして開いているか）を、画面が出る前に <html> に付ける
     #   data-lang-from="toolbox|malu|nagi|lab" … 戻り先のアプリ（?from= で指定もできる）
     #     Toolbox のときは、Toolbox の言語の画面（/toolbox/lang/。マテリアルデザイン）に移る
