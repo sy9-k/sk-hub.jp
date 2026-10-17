@@ -28,6 +28,9 @@
   <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"></script>
   <link rel="stylesheet" href="/assets/header.css">
   <link rel="stylesheet" href="/assets/site.css">
+  <!-- このページで動いてよいスクリプト・通信先を決める（ログイン情報を扱うため）。インラインのスクリプトを変えたら、sha256 も変える（この meta を更新するとき、インラインのスクリプトを変えたら hash も計算し直す）。
+       0F8 のログインの画面は search3958.github.io（SDK）から読み、ポップアップで開く。api.sk-hub.jp・Firebase・Google の通信先を含む -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-XiQENkzISdPIsi3vIzMd2VxQfoiyw1NPG0eGLvih6bk=' 'sha256-1UE1g57CofSEd1k3LTcAKE/A34fPMr2WMaGuvPBoNj4=' https://www.gstatic.com https://apis.google.com https://www.googletagmanager.com https://search3958.github.io; connect-src 'self' https://api.sk-hub.jp https://sentaro-0f8-accounts.takesen2278.workers.dev https://sk-hub.online https://support.sk-hub.jp https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; frame-src 'self' https://y-filter-systems.firebaseapp.com https://accounts.google.com https://apis.google.com; form-action 'self'; base-uri 'self'; object-src 'none'">
   <script type="module" src="/account/account-page.js"></script>
 </head>
 <body>
@@ -101,11 +104,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M2 21v-1a6 6 0 0 1 9.5-4.9"/><circle cx="18" cy="13" r="2.5"/><path d="M18 15.5V21m0-2h2m-2-1.5h1.5"/></svg>
             パスキーでログイン
           </button>
-          <!-- これから追加する予定（押せない。0F8（Search3958）との連携が決まったら、api.sk-hub.jp の Worker に乗せる） -->
-          <button class="acct-google acct-soon acct-0f8" type="button" data-acct-for="login" disabled aria-disabled="true">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5.5" fill="#111827"/><text x="12" y="15.6" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9.5" font-weight="800" fill="#fff">0F8</text></svg>
-            0F8 でログイン
-            <span class="acct-soon-tag">準備中</span>
+          <!-- 0F8（Search3958 の 0F8 アカウント）。/assets/hub/account.js の OF8_LOGIN が true のときだけ出す。ログインも新規登録も、このボタンから -->
+          <button class="acct-google acct-0f8" type="button" data-acct-signin="of8" hidden>
+            <img height="24px" width="24px" src="https://search3958.github.io/project/logos/3958logo_main.svg">
+            <span data-acct-for="login">0F8 でログイン</span><span data-acct-for="signup">0F8 で登録</span>
           </button>
           </div>
           <!-- 同じメールアドレスで、別の方法のアカウントがあるとき -->
