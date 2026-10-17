@@ -9,7 +9,7 @@
   <!-- 表示（ライト・ダーク・テーマカラー）。ちらつかないよう、CSS より先に <html> に付ける（選ぶのはヘッダーのアカウントのメニューの「表示」。assets/site.js） -->
   <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}"),d=document.documentElement;if(t.mode==="light"||t.mode==="dark")d.setAttribute("data-theme",t.mode);if(/^[a-z]{2,12}$/.test(t.accent||"")&&t.accent!=="blue")d.setAttribute("data-accent",t.accent);}catch(e){}})();</script>
   <title>SK Material | SK</title>
-  <meta name="description" content="SK's Toolbox で使っている部品と配色のきまり「SK Material」。Google の Material Design 3 をもとに、SK のテーマカラーと文字に合わせて調整したもの。M3 のままのところ・SK で決めたところ・出どころとライセンス。">
+  <meta name="description" content="MALU・Nagi・SK's Toolbox で使っている部品と配色のきまり「SK Material」。Google の Material Design 3 をもとに、SK の色と文字に合わせて調整したもの。M3 のままのところ・SK で決めたところ・プロダクトごとの配色・出どころとライセンス。">
   <meta name="theme-color" content="#ffffff" data-theme-color>
   <link rel="canonical" href="https://sk-hub.jp/brand/material/">
   <!-- SNS で共有したときの表示（各ページのタイトル・説明・URL は build で入れ替える） -->
@@ -17,7 +17,7 @@
   <meta property="og:site_name" content="SK">
   <meta property="og:locale" content="ja_JP">
   <meta property="og:title" content="SK Material | SK">
-  <meta property="og:description" content="SK's Toolbox で使っている部品と配色のきまり「SK Material」。Google の Material Design 3 をもとに、SK のテーマカラーと文字に合わせて調整したもの。M3 のままのところ・SK で決めたところ・出どころとライセンス。">
+  <meta property="og:description" content="MALU・Nagi・SK's Toolbox で使っている部品と配色のきまり「SK Material」。Google の Material Design 3 をもとに、SK の色と文字に合わせて調整したもの。M3 のままのところ・SK で決めたところ・プロダクトごとの配色・出どころとライセンス。">
   <meta property="og:url" content="https://sk-hub.jp/brand/material/">
   <meta property="og:image" content="https://sk-hub.jp/assets/og.png">
   <meta property="og:image:width" content="1200">
@@ -30,7 +30,7 @@
   <link rel="stylesheet" href="/assets/site.css">
   <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700&family=Roboto:wght@400;500&family=Space+Grotesk:wght@700&display=swap" data-icons="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"></script>
   <link rel="stylesheet" href="/brand/material/material.css">
-  <script>(function(){var d=document.documentElement;d.classList.add("mt-js");setTimeout(function(){if(!window.__mtReady)d.classList.remove("mt-js");},3000);})();</script>
+  <script>(function(){var d=document.documentElement;d.classList.add("mt-js");try{if(localStorage.getItem("sk_material_style")==="sk")d.setAttribute("data-mt-style","sk");}catch(e){}setTimeout(function(){if(!window.__mtReady)d.classList.remove("mt-js");},3000);})();</script>
   <script src="/brand/material/material.js" defer></script>
 </head>
 <body class="mt-page">
@@ -51,33 +51,43 @@
   <div class="hd-backdrop" id="hd-backdrop"></div>
 
   <main id="main">
-    <!-- SK Material: SK's Toolbox の部品と配色（Google の Material Design 3 がもと）。見た目は /brand/material/material.css、動きは /brand/material/material.js -->
+    <!-- SK Material: MALU・Nagi・SK's Toolbox の部品と配色（Google の Material Design 3 がもと）。
+         このページの中身も SK Material の部品で作る（ヘッダーとフッターはサイト共通）。見た目は /brand/material/material.css、動きは /brand/material/material.js -->
 
     <!-- 表紙 -->
     <section class="mt-hero" id="top">
-      <div class="mt-hero-glow" aria-hidden="true"></div>
       <div class="wrap mt-hero-inner">
         <div class="mt-hero-text">
-          <a class="mt-crumb" href="/brand/">SK's Brand</a>
-          <span class="eyebrow">Design system for SK's Toolbox</span>
+          <div class="mt-hero-top">
+            <a class="mt-crumb m3-state" href="/brand/"><span class="msr" aria-hidden="true">arrow_back</span>SK's Brand</a>
+            <div class="mt-style md-seg" role="radiogroup" aria-label="ページの見た目" data-mt-style-switch>
+              <button type="button" class="m3-state" role="radio" aria-checked="false" data-mt-style-set="sk"><span class="msr" aria-hidden="true">check</span>SK Style</button>
+              <button type="button" class="m3-state" role="radio" aria-checked="true" data-mt-style-set="material"><span class="msr" aria-hidden="true">check</span>SK Material</button>
+            </div>
+          </div>
+          <p class="mt-overline">Design system for MALU, Nagi &amp; SK's Toolbox</p>
           <h1 class="mt-title"><span class="mt-title-line"><span>SK</span></span> <span class="mt-title-line"><span class="mt-title-accent">Material</span></span></h1>
-          <p class="mt-lead">SK's Toolbox の部品と配色のきまり。Google の Material Design 3 を土台に、SK のテーマカラーと文字をのせています。</p>
+          <p class="mt-lead">MALU・Nagi・SK's Toolbox の部品と配色のきまり。Google の Material Design 3 を土台に、SK の色と文字をのせています。</p>
+          <div class="mt-hero-actions">
+            <a class="md-btn m3-state" href="#origin"><span class="msr" aria-hidden="true">compare</span>M3 とのちがいを見る</a>
+            <a class="md-btn md-btn--tonal m3-state" href="#color"><span class="msr" aria-hidden="true">palette</span>配色を見る</a>
+          </div>
 
           <!-- いちばん大事なお知らせ: オリジナルではないこと -->
-          <aside class="mt-origin" aria-labelledby="mt-origin-title">
-            <span class="mt-origin-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg></span>
+          <aside class="mt-origin md-card md-card--outlined" aria-labelledby="mt-origin-title">
+            <span class="mt-origin-ico" aria-hidden="true"><span class="msr">info</span></span>
             <div>
               <h2 id="mt-origin-title">SK のオリジナルのデザインではありません</h2>
               <p>SK Material は、Google が公開している Material Design 3（M3）のガイドラインにそって作ったものです。部品の形・大きさ・動き・色の役割は、ほぼ M3 のままです。SK が決めたのは、元にする色・文字・設定のそろえ方などの一部だけです。</p>
               <p>Material Design は Google のデザインシステムです。SK は Google と関係はなく、このページは Google が認めたものではありません。</p>
-              <p class="mt-origin-links"><a href="https://m3.material.io/" target="_blank" rel="noopener">Material Design 3 の公式サイト（m3.material.io）</a><a href="#origin">どこが SK のものか</a></p>
+              <a class="md-btn md-btn--text m3-state" href="https://m3.material.io/" target="_blank" rel="noopener">Material Design 3 の公式サイト<span class="msr" aria-hidden="true">open_in_new</span></a>
             </div>
           </aside>
         </div>
 
-        <!-- 7 色の配色で移り変わる、Toolbox 風のアプリの見本（比べる見本はこれを写して作る） -->
+        <!-- いろいろな配色で移り変わる、アプリの見本（比べる見本はこれを写して作る） -->
         <figure class="mt-hero-stage">
-          <div class="mt-phone" data-mt-hero aria-hidden="true">
+          <div class="mt-phone" aria-hidden="true">
             <div class="mt-app-screen" data-mt-screen>
               <div class="mt-app-bar">
                 <span class="msr">menu</span>
@@ -108,28 +118,31 @@
           </div>
           <figcaption class="mt-hero-caption">
             <span class="mt-hero-dot" data-mt-hero-dot></span>
-            <span data-mt-hero-name>SK's Blue</span>
-            <button type="button" class="mt-hero-pause" data-mt-hero-pause aria-pressed="false">止める</button>
+            <span data-mt-hero-name>SK's Toolbox · SK's Blue</span>
+            <button type="button" class="mt-hero-pause m3-state" data-mt-hero-pause aria-pressed="false"><span class="msr" aria-hidden="true">pause</span><span data-mt-hero-pause-label>止める</span></button>
           </figcaption>
         </figure>
       </div>
     </section>
 
-    <!-- ページの中の目次 -->
-    <nav class="mt-nav" aria-label="このページの目次" data-mt-nav>
+    <!-- ページの中の目次（M3 のタブ） -->
+    <nav class="mt-tabs" aria-label="このページの目次" data-mt-nav>
       <div class="wrap">
-        <a class="mt-nav-title" href="#top">SK Material</a>
-        <div class="mt-nav-links">
-          <a href="#origin"><b>01</b>M3 と SK</a>
-          <a href="#color"><b>02</b>配色</a>
-          <a href="#shape"><b>03</b>形</a>
-          <a href="#parts"><b>04</b>部品</a>
-          <a href="#motion"><b>05</b>動き</a>
-          <a href="#apps"><b>06</b>使っているところ</a>
-          <a href="#credits"><b>07</b>出どころ</a>
+        <div class="mt-tabs-row">
+          <a href="#origin"><span class="msr" aria-hidden="true">compare</span>M3 と SK</a>
+          <a href="#color"><span class="msr" aria-hidden="true">palette</span>配色</a>
+          <a href="#shape"><span class="msr" aria-hidden="true">rounded_corner</span>形</a>
+          <a href="#parts"><span class="msr" aria-hidden="true">widgets</span>部品</a>
+          <a href="#motion"><span class="msr" aria-hidden="true">animation</span>動き</a>
+          <a href="#apps"><span class="msr" aria-hidden="true">apps</span>使っているところ</a>
+          <a href="#credits"><span class="msr" aria-hidden="true">license</span>出どころ</a>
+        </div>
+        <div class="mt-style mt-style--bar md-seg" role="radiogroup" aria-label="ページの見た目" data-mt-style-switch>
+          <button type="button" class="m3-state" role="radio" aria-checked="false" data-mt-style-set="sk"><span class="msr" aria-hidden="true">check</span>SK Style</button>
+          <button type="button" class="m3-state" role="radio" aria-checked="true" data-mt-style-set="material"><span class="msr" aria-hidden="true">check</span>SK Material</button>
         </div>
       </div>
-      <span class="mt-nav-progress" data-mt-progress></span>
+      <span class="mt-tabs-progress" data-mt-progress></span>
     </nav>
 
     <!-- 01 M3 と SK -->
@@ -138,14 +151,14 @@
         <header class="mt-chapter-head" data-reveal>
           <span class="mt-chapter-num" aria-hidden="true">01</span>
           <div>
-            <span class="eyebrow">M3 &amp; SK</span>
+            <p class="mt-overline">M3 &amp; SK</p>
             <h2>M3 のままのところと、SK で決めたところ</h2>
             <p>どこまでが Google の Material Design 3 で、どこからが SK のものか。見本と一覧で分けておきます。</p>
           </div>
         </header>
 
         <!-- つまみを動かして、M3 の初期値と SK Material を比べる -->
-        <div class="mt-compare" data-reveal data-mt-compare>
+        <div class="mt-compare md-card md-card--filled" data-reveal data-mt-compare>
           <div class="mt-compare-stage" data-mt-compare-stage>
             <div class="mt-compare-side is-m3" data-mt-compare-m3></div>
             <div class="mt-compare-side is-sk" data-mt-compare-sk></div>
@@ -155,35 +168,37 @@
           </div>
           <label class="mt-compare-range"><span>比べる位置</span><input type="range" min="0" max="100" value="50" data-mt-compare-range></label>
           <ul class="mt-compare-notes">
-            <li><b>同じところ</b>部品の形・大きさ・並べ方・色の役割</li>
-            <li><b>ちがうところ</b>元の色（M3 の初期値の紫 → SK's Blue など）と文字（Roboto → M PLUS 1）</li>
+            <li><span class="msr" aria-hidden="true">check_circle</span><span><b>同じところ</b>部品の形・大きさ・並べ方・色の役割</span></li>
+            <li><span class="msr" aria-hidden="true">swap_horiz</span><span><b>ちがうところ</b>元の色（M3 の初期値の紫 → SK's Blue など）と文字（Roboto → M PLUS 1）</span></li>
           </ul>
         </div>
 
         <div class="mt-diff" data-reveal>
-          <div class="mt-diff-col is-m3">
+          <div class="md-card md-card--outlined mt-diff-col">
             <h3><span class="mt-tag">Material Design 3</span>M3 のまま</h3>
-            <ul>
-              <li><strong>部品の形と大きさ</strong>ボタン（高さ 40px・丸い両端）、ダイアログ（角の丸み 28px）、スイッチ、チップ、文字を入れる欄など</li>
-              <li><strong>色の役割</strong>primary・surface・on-surface などの名前と、どこにどの色を使うか</li>
-              <li><strong>押したときの重ね色と波紋</strong>マウスを乗せたとき 8%、押したとき 10%</li>
-              <li><strong>動きのカーブ</strong>すっと止まる emphasized decelerate など</li>
-              <li><strong>アイコン</strong>Material Symbols（Rounded）</li>
-              <li><strong>配色の計算</strong>1 つの色から配色を作るしくみ（material-color-utilities）</li>
+            <ul class="md-list">
+              <li><span class="msr" aria-hidden="true">widgets</span><span><strong>部品の形と大きさ</strong>ボタン（高さ 40px・丸い両端）、ダイアログ（角の丸み 28px）、スイッチ、チップ、文字を入れる欄など</span></li>
+              <li><span class="msr" aria-hidden="true">palette</span><span><strong>色の役割</strong>primary・surface・on-surface などの名前と、どこにどの色を使うか</span></li>
+              <li><span class="msr" aria-hidden="true">contrast</span><span><strong>トーンで配色を作る考え方</strong>1 つの色から明るさの段階（トーン）を作り、役割ごとに決まった段階を使う</span></li>
+              <li><span class="msr" aria-hidden="true">touch_app</span><span><strong>押したときの重ね色と波紋</strong>マウスを乗せたとき 8%、押したとき 10%</span></li>
+              <li><span class="msr" aria-hidden="true">animation</span><span><strong>動きのカーブ</strong>すっと止まる emphasized decelerate など</span></li>
+              <li><span class="msr" aria-hidden="true">interests</span><span><strong>アイコン</strong>Material Symbols（Rounded）</span></li>
             </ul>
           </div>
-          <div class="mt-diff-col is-sk">
+          <div class="md-card md-card--filled mt-diff-col is-sk">
             <h3><span class="mt-tag">SK</span>SK で決めたところ</h3>
-            <ul>
-              <li><strong>元にする色</strong>SK's Brand のテーマカラー 7 色（SK's Blue など）から配色を作る</li>
-              <li><strong>文字</strong>Calc・Memo・Todo などは M PLUS 1</li>
-              <li><strong>設定をそろえる</strong>ライト・ダーク・テーマカラー・動きを減らすを、Toolbox のアプリ全部で同じにする。サイトの「表示」ともつながる</li>
-              <li><strong>選んだときの弾み</strong>選んだものが軽く弾む動き（M3 にはないカーブ）</li>
-              <li><strong>Toolbox だけの部品</strong>パソコンのタイトルバー、アプリをまたぐ検索（⌘K）、オンライン同期の画面</li>
-              <li><strong>ことば</strong>SK's Brand の「ことば」のきまり（です・ます、むずかしいことばを使わない）</li>
+            <ul class="md-list">
+              <li><span class="msr" aria-hidden="true">colorize</span><span><strong>元にする色</strong>Toolbox は SK's Brand のテーマカラー 7 色、MALU は辞書ごとの色、Nagi は凪の青緑</span></li>
+              <li><span class="msr" aria-hidden="true">calculate</span><span><strong>MALU の配色の計算</strong>辞書を切り替えるたびに、M3 のトーンをまねた SK の小さな計算で配色を作り直す</span></li>
+              <li><span class="msr" aria-hidden="true">match_case</span><span><strong>文字</strong>MALU・Nagi・Toolbox の Calc・Memo・Todo などは M PLUS 1</span></li>
+              <li><span class="msr" aria-hidden="true">tune</span><span><strong>設定をそろえる</strong>ライト・ダーク・テーマカラー・動きを減らすを、Toolbox のアプリ全部で同じにする。サイトの「表示」ともつながる</span></li>
+              <li><span class="msr" aria-hidden="true">bubble_chart</span><span><strong>選んだときの弾み</strong>選んだものが軽く弾む動き（M3 にはないカーブ）</span></li>
+              <li><span class="msr" aria-hidden="true">chat</span><span><strong>ことば</strong>SK's Brand の「ことば」のきまり（です・ます、むずかしいことばを使わない）</span></li>
             </ul>
           </div>
         </div>
+
+        <p class="mt-self md-card md-card--tonal" data-reveal><span class="msr" aria-hidden="true">auto_awesome</span><span>このページの中身も、SK Material の部品（文字の段階・カード・タブ・チップ・ボタン・波紋）で作っています。下の「配色」で色を選ぶと、このページ全体の色も変わります。上のヘッダーと下のフッターは、サイト共通のものです。<br><span class="mt-self-sk">いまは「SK Style」で、同じ中身をサイト（SK's Brand）のきまりで表示しています。アプリの画面や部品の見本は、SK Material のままです。</span></span></p>
       </div>
     </section>
 
@@ -193,50 +208,52 @@
         <header class="mt-chapter-head" data-reveal>
           <span class="mt-chapter-num" aria-hidden="true">02</span>
           <div>
-            <span class="eyebrow">Color</span>
-            <h2>テーマカラーから作った配色</h2>
-            <p>SK's Brand のテーマカラーを元に、Google の material-color-utilities（SchemeFidelity）で計算した配色です。計算は前もってすませてあり、Toolbox の設定で選んだ色に切り替わります。</p>
+            <p class="mt-overline">Color</p>
+            <h2>プロダクトごとの配色</h2>
+            <p>どのプロダクトも、1 つの元の色から M3 の色の役割を作ります。元の色と作り方は、プロダクトごとに少しずつちがいます。</p>
           </div>
         </header>
 
-        <div class="mt-pick" role="radiogroup" aria-label="元にするテーマカラー" data-mt-pick data-reveal>
-          <button type="button" role="radio" aria-checked="true" data-mt-color="blue" style="--sw:#2563eb"><i></i>SK's Blue</button>
-          <button type="button" role="radio" aria-checked="false" data-mt-color="sakura" style="--sw:#db2777"><i></i>SK's Sakura</button>
-          <button type="button" role="radio" aria-checked="false" data-mt-color="matcha" style="--sw:#16a34a"><i></i>SK's Matcha</button>
-          <button type="button" role="radio" aria-checked="false" data-mt-color="mikan" style="--sw:#ea580c"><i></i>SK's Mikan</button>
-          <button type="button" role="radio" aria-checked="false" data-mt-color="fuji" style="--sw:#7c3aed"><i></i>SK's Fuji</button>
-          <button type="button" role="radio" aria-checked="false" data-mt-color="sora" style="--sw:#0891b2"><i></i>SK's Sora</button>
-          <button type="button" role="radio" aria-checked="false" data-mt-color="sumi" style="--sw:#334155"><i></i>SK's Sumi</button>
-        </div>
+        <div class="mt-color md-card md-card--outlined" data-reveal>
+          <div class="md-seg" role="radiogroup" aria-label="プロダクト" data-mt-sources>
+            <button type="button" class="m3-state" role="radio" aria-checked="true" data-mt-source="toolbox"><span class="msr" aria-hidden="true">check</span>SK's Toolbox</button>
+            <button type="button" class="m3-state" role="radio" aria-checked="false" data-mt-source="malu"><span class="msr" aria-hidden="true">check</span>MALU</button>
+            <button type="button" class="m3-state" role="radio" aria-checked="false" data-mt-source="nagi"><span class="msr" aria-hidden="true">check</span>Nagi</button>
+          </div>
+          <p class="mt-source-note" data-mt-source-note="toolbox">SK's Brand のテーマカラーを元に、Google の material-color-utilities（SchemeFidelity）で計算した配色です。計算は前もってすませてあり、Toolbox の設定で選んだ色に切り替わります。</p>
+          <p class="mt-source-note" data-mt-source-note="malu" hidden>辞書の分類（辞書によっては辞書ごと）の色を元に、MALU の中の小さな計算で配色を作ります。M3 のトーンの段階をまねていますが、material-color-utilities は使っていません。ここでは MALU と同じ計算をしています。</p>
+          <p class="mt-source-note" data-mt-source-note="nagi" hidden>凪の青緑（#0f766e）から作った配色です。休憩中は、空の青（tertiary）を primary の代わりに使います。</p>
+          <div class="mt-chips" role="radiogroup" aria-label="元の色" data-mt-chips></div>
 
-        <!-- 元の色 → 計算 → 色の役割 -->
-        <div class="mt-flow" data-reveal>
-          <div class="mt-flow-step">
-            <span class="mt-flow-seed" data-mt-seed></span>
-            <strong>元の色</strong>
-            <code data-mt-seed-code>#2563eb</code>
-          </div>
-          <span class="mt-flow-arrow" aria-hidden="true"></span>
-          <div class="mt-flow-step">
-            <span class="mt-flow-calc" aria-hidden="true"><span class="msr">function</span></span>
-            <strong>material-color-utilities</strong>
-            <small>SchemeFidelity・Google</small>
-          </div>
-          <span class="mt-flow-arrow" aria-hidden="true"></span>
-          <div class="mt-flow-step">
-            <span class="mt-flow-roles" data-mt-flow-roles aria-hidden="true"></span>
-            <strong>24 の色の役割</strong>
-            <small>ライトとダーク</small>
+          <!-- 元の色 → 計算 → 色の役割 -->
+          <div class="mt-flow">
+            <div class="mt-flow-step">
+              <span class="mt-flow-seed" data-mt-seed></span>
+              <strong>元の色</strong>
+              <code data-mt-seed-code>#2563eb</code>
+            </div>
+            <span class="mt-flow-arrow" aria-hidden="true"><span class="msr">arrow_forward</span></span>
+            <div class="mt-flow-step">
+              <span class="mt-flow-calc" aria-hidden="true"><span class="msr">function</span></span>
+              <strong data-mt-calc-name>material-color-utilities</strong>
+              <small data-mt-calc-sub>SchemeFidelity・Google</small>
+            </div>
+            <span class="mt-flow-arrow" aria-hidden="true"><span class="msr">arrow_forward</span></span>
+            <div class="mt-flow-step">
+              <span class="mt-flow-roles" data-mt-flow-roles aria-hidden="true"></span>
+              <strong data-mt-role-count>24 の色の役割</strong>
+              <small>ライトとダーク</small>
+            </div>
           </div>
         </div>
 
         <div class="mt-schemes" data-reveal>
           <div class="mt-scheme" data-mt-scheme="light">
-            <h3>ライト</h3>
+            <h3><span class="msr" aria-hidden="true">light_mode</span>ライト</h3>
             <div class="mt-roles" data-mt-roles></div>
           </div>
-          <div class="mt-scheme is-dark" data-mt-scheme="dark">
-            <h3>ダーク</h3>
+          <div class="mt-scheme" data-mt-scheme="dark">
+            <h3><span class="msr" aria-hidden="true">dark_mode</span>ダーク</h3>
             <div class="mt-roles" data-mt-roles></div>
           </div>
         </div>
@@ -244,7 +261,7 @@
 
         <!-- 読みやすさ -->
         <h3 class="mt-h3">文字と背景の読みやすさ</h3>
-        <div class="mt-contrast" data-reveal>
+        <div class="mt-contrast md-card md-card--outlined" data-reveal>
           <div class="mt-contrast-head"><span>組み合わせ</span><span>ライト</span><span>ダーク</span></div>
           <div data-mt-contrast></div>
         </div>
@@ -258,20 +275,20 @@
         <header class="mt-chapter-head" data-reveal>
           <span class="mt-chapter-num" aria-hidden="true">03</span>
           <div>
-            <span class="eyebrow">Shape</span>
+            <p class="mt-overline">Shape</p>
             <h2>角の丸みの大きさ</h2>
             <p>M3 の角の丸みの段階を、そのまま使っています。小さい部品ほど角は小さく、画面の上に浮かぶものほど丸くなります。</p>
           </div>
         </header>
         <div class="mt-shapes" data-reveal>
-          <div style="--r:4px"><i></i><b>Extra small</b><span>4</span><small>文字を入れる欄・スナックバー</small></div>
-          <div style="--r:8px"><i></i><b>Small</b><span>8</span><small>チップ</small></div>
-          <div style="--r:12px"><i></i><b>Medium</b><span>12</span><small>設定の中のアプリのアイコン</small></div>
-          <div style="--r:16px"><i></i><b>Large</b><span>16</span><small>追加のボタン（FAB）・設定のまとまり</small></div>
-          <div style="--r:28px"><i></i><b>Extra large</b><span>28</span><small>ダイアログ</small></div>
-          <div style="--r:999px"><i></i><b>Full</b><span>∞</span><small>ボタン・スイッチ</small></div>
+          <div class="md-card md-card--outlined" style="--r:4px"><i></i><b>Extra small</b><span>4</span><small>文字を入れる欄・スナックバー</small></div>
+          <div class="md-card md-card--outlined" style="--r:8px"><i></i><b>Small</b><span>8</span><small>チップ</small></div>
+          <div class="md-card md-card--outlined" style="--r:12px"><i></i><b>Medium</b><span>12</span><small>カード・設定の中のアプリのアイコン</small></div>
+          <div class="md-card md-card--outlined" style="--r:16px"><i></i><b>Large</b><span>16</span><small>追加のボタン（FAB）・設定のまとまり</small></div>
+          <div class="md-card md-card--outlined" style="--r:28px"><i></i><b>Extra large</b><span>28</span><small>ダイアログ</small></div>
+          <div class="md-card md-card--outlined" style="--r:999px"><i></i><b>Full</b><span>∞</span><small>ボタン・スイッチ</small></div>
         </div>
-        <p class="mt-note">SK's Brand（サイト）の角は「なめらかな角」ですが、SK Material は M3 と同じふつうの角の丸みです。</p>
+        <p class="mt-note">SK's Brand（サイト）の角は「なめらかな角」ですが、SK Material は M3 と同じふつうの角の丸みです。Nagi のタイマーのボタンは、動いているあいだ角の丸みが変わります（M3 の形の変化）。</p>
       </div>
     </section>
 
@@ -281,9 +298,9 @@
         <header class="mt-chapter-head" data-reveal>
           <span class="mt-chapter-num" aria-hidden="true">04</span>
           <div>
-            <span class="eyebrow">Components</span>
+            <p class="mt-overline">Components</p>
             <h2>部品の見本</h2>
-            <p>上で選んだ色で、Toolbox と同じ大きさ・同じ動きの部品を並べています。押してみてください。</p>
+            <p>上で選んだ色で、アプリと同じ大きさ・同じ動きの部品を並べています。押してみてください。</p>
           </div>
         </header>
 
@@ -352,22 +369,22 @@
             </div>
           </div>
         </div>
-        <p class="mt-note">見本は、このページのために同じ大きさで書いたものです。実際の部品は SK's Toolbox の中にあります。</p>
+        <p class="mt-note">見本は、このページのために同じ大きさで書いたものです。実際の部品は、それぞれのアプリの中にあります。</p>
 
         <!-- 重ね色 -->
         <h3 class="mt-h3">押したときの重ね色</h3>
-        <div class="mt-state-lab" data-mt-states data-reveal>
-          <div class="mt-state-stage" data-mt-state-stage>
+        <div class="mt-state-lab md-card md-card--outlined" data-mt-states data-reveal>
+          <div class="mt-state-stage">
             <span class="mt-state-btn" data-mt-state-btn><span class="mt-state-layer" data-mt-state-layer></span><span class="msr" aria-hidden="true">favorite</span>お気に入り</span>
             <span class="mt-state-value" data-mt-state-value>0%</span>
           </div>
           <div class="mt-state-text">
             <p>M3 では、乗せる・押すなどの状態を、文字と同じ色をうすく重ねて表します。重ねる色は部品ごとに変えず、濃さだけで伝えます。</p>
-            <div class="mt-state-pick" role="radiogroup" aria-label="状態">
-              <button type="button" role="radio" aria-checked="true" data-mt-state="0">ふつう<small>0%</small></button>
-              <button type="button" role="radio" aria-checked="false" data-mt-state="8">乗せる<small>8%</small></button>
-              <button type="button" role="radio" aria-checked="false" data-mt-state="10" data-mt-state-focus>フォーカス<small>10%</small></button>
-              <button type="button" role="radio" aria-checked="false" data-mt-state="10" data-mt-state-press>押す<small>10%</small></button>
+            <div class="md-seg mt-state-pick" role="radiogroup" aria-label="状態">
+              <button type="button" class="m3-state" role="radio" aria-checked="true" data-mt-state="0">ふつう<small>0%</small></button>
+              <button type="button" class="m3-state" role="radio" aria-checked="false" data-mt-state="8">乗せる<small>8%</small></button>
+              <button type="button" class="m3-state" role="radio" aria-checked="false" data-mt-state="10" data-mt-state-focus>フォーカス<small>10%</small></button>
+              <button type="button" class="m3-state" role="radio" aria-checked="false" data-mt-state="10" data-mt-state-press>押す<small>10%</small></button>
             </div>
           </div>
         </div>
@@ -380,13 +397,13 @@
         <header class="mt-chapter-head" data-reveal>
           <span class="mt-chapter-num" aria-hidden="true">05</span>
           <div>
-            <span class="eyebrow">Motion</span>
+            <p class="mt-overline">Motion</p>
             <h2>動きのカーブ</h2>
             <p>3 つは M3 のカーブ、1 つは SK で足したカーブです。カードを押すと、見やすいように 3 倍ゆっくり動きます。</p>
           </div>
         </header>
         <div class="mt-curves" data-reveal>
-          <button type="button" class="mt-curve" data-mt-curve=".2, 0, 0, 1" data-mt-dur="300">
+          <button type="button" class="mt-curve md-card md-card--outlined m3-state" data-mt-curve=".2, 0, 0, 1" data-mt-dur="300">
             <span class="mt-curve-tag">M3</span>
             <svg viewBox="-14 -64 128 180" aria-hidden="true"><path class="mt-curve-axis" d="M0 0 V100 H100"/><path class="mt-curve-handle"/><path class="mt-curve-path"/><circle class="mt-curve-dot" r="5" cx="0" cy="100"/></svg>
             <span class="mt-curve-track" aria-hidden="true"><i></i></span>
@@ -394,7 +411,7 @@
             <small>スイッチ・スナックバー・角の形が変わるとき</small>
             <code>cubic-bezier(.2, 0, 0, 1)</code>
           </button>
-          <button type="button" class="mt-curve" data-mt-curve=".05, .7, .1, 1" data-mt-dur="420">
+          <button type="button" class="mt-curve md-card md-card--outlined m3-state" data-mt-curve=".05, .7, .1, 1" data-mt-dur="420">
             <span class="mt-curve-tag">M3</span>
             <svg viewBox="-14 -64 128 180" aria-hidden="true"><path class="mt-curve-axis" d="M0 0 V100 H100"/><path class="mt-curve-handle"/><path class="mt-curve-path"/><circle class="mt-curve-dot" r="5" cx="0" cy="100"/></svg>
             <span class="mt-curve-track" aria-hidden="true"><i></i></span>
@@ -402,7 +419,7 @@
             <small>画面や部品が入ってくるとき</small>
             <code>cubic-bezier(.05, .7, .1, 1)</code>
           </button>
-          <button type="button" class="mt-curve" data-mt-curve=".3, 0, .8, .15" data-mt-dur="200">
+          <button type="button" class="mt-curve md-card md-card--outlined m3-state" data-mt-curve=".3, 0, .8, .15" data-mt-dur="200">
             <span class="mt-curve-tag">M3</span>
             <svg viewBox="-14 -64 128 180" aria-hidden="true"><path class="mt-curve-axis" d="M0 0 V100 H100"/><path class="mt-curve-handle"/><path class="mt-curve-path"/><circle class="mt-curve-dot" r="5" cx="0" cy="100"/></svg>
             <span class="mt-curve-track" aria-hidden="true"><i></i></span>
@@ -410,7 +427,7 @@
             <small>画面や部品が出ていくとき</small>
             <code>cubic-bezier(.3, 0, .8, .15)</code>
           </button>
-          <button type="button" class="mt-curve is-sk" data-mt-curve=".34, 1.4, .64, 1" data-mt-dur="320">
+          <button type="button" class="mt-curve md-card md-card--filled is-sk m3-state" data-mt-curve=".34, 1.4, .64, 1" data-mt-dur="320">
             <span class="mt-curve-tag">SK</span>
             <svg viewBox="-14 -64 128 180" aria-hidden="true"><path class="mt-curve-axis" d="M0 0 V100 H100"/><path class="mt-curve-handle"/><path class="mt-curve-path"/><circle class="mt-curve-dot" r="5" cx="0" cy="100"/></svg>
             <span class="mt-curve-track" aria-hidden="true"><i></i></span>
@@ -429,20 +446,26 @@
         <header class="mt-chapter-head" data-reveal>
           <span class="mt-chapter-num" aria-hidden="true">06</span>
           <div>
-            <span class="eyebrow">In use</span>
+            <p class="mt-overline">In use</p>
             <h2>使っているところ</h2>
-            <p>SK's Toolbox のアプリは、どれも SK Material でできています。サイト（sk-hub.jp）の画面は、SK Material ではなく SK's Brand のきまりで作っています。</p>
+            <p>MALU・Nagi・SK's Toolbox のアプリは、SK Material でできています。サイト（sk-hub.jp）の画面は、SK Material ではなく SK's Brand のきまりで作っています。</p>
           </div>
         </header>
+        <h3 class="mt-h3">アプリ</h3>
+        <div class="mt-apps mt-apps--main" data-reveal>
+          <a class="mt-app md-card md-card--filled m3-state" href="/dictionary/"><img src="/dictionary/ico/icon-192.png" alt="" width="56" height="56"><span><strong>MALU</strong><small>辞書検索・辞書ごとに色が変わる</small></span></a>
+          <a class="mt-app md-card md-card--filled m3-state" href="/nagi/"><img src="/nagi/ico/icon-192.png" alt="" width="56" height="56"><span><strong>Nagi</strong><small>集中タイマー・休憩中は空の青</small></span></a>
+          <a class="mt-app md-card md-card--filled m3-state" href="/toolbox/"><img class="plist-logo" src="/assets/logo.svg" alt="" width="56" height="56"><span><strong>SK's Toolbox</strong><small>ホーム・設定・テーマカラー</small></span></a>
+        </div>
+        <h3 class="mt-h3">SK's Toolbox のアプリ</h3>
         <div class="mt-apps" data-reveal>
-          <a class="mt-app" href="/toolbox/"><img class="plist-logo" src="/assets/logo.svg" alt="" width="44" height="44"><span><strong>SK's Toolbox</strong><small>ホーム・設定</small></span></a>
-          <a class="mt-app" href="/toolbox/clock/"><img src="/toolbox/clock/icon.svg" alt="" width="44" height="44"><span><strong>Clock</strong><small>時計・アラーム・タイマー</small></span></a>
-          <a class="mt-app" href="/toolbox/calc/"><img src="/toolbox/calc/icon.svg" alt="" width="44" height="44"><span><strong>Calc</strong><small>電卓・関数電卓</small></span></a>
-          <a class="mt-app" href="/toolbox/memo/"><img src="/toolbox/memo/icon.svg" alt="" width="44" height="44"><span><strong>Memo</strong><small>画像も入るメモ帳</small></span></a>
-          <a class="mt-app" href="/toolbox/todo/"><img src="/toolbox/todo/icon.svg" alt="" width="44" height="44"><span><strong>Todo</strong><small>リマインダー</small></span></a>
-          <a class="mt-app" href="/toolbox/countdown/"><img src="/toolbox/countdown/icon.svg" alt="" width="44" height="44"><span><strong>Countdown</strong><small>あと何日</small></span></a>
-          <a class="mt-app" href="/toolbox/timetable/"><img src="/toolbox/timetable/icon.svg" alt="" width="44" height="44"><span><strong>Timetable</strong><small>時間割・クラスへの配信</small></span></a>
-          <a class="mt-app" href="/toolbox/roulette/"><img src="/toolbox/roulette/icon.svg" alt="" width="44" height="44"><span><strong>Roulette</strong><small>回して決めるルーレット</small></span></a>
+          <a class="mt-app md-card md-card--outlined m3-state" href="/toolbox/clock/"><img src="/toolbox/clock/icon.svg" alt="" width="44" height="44"><span><strong>Clock</strong><small>時計・アラーム・タイマー</small></span></a>
+          <a class="mt-app md-card md-card--outlined m3-state" href="/toolbox/calc/"><img src="/toolbox/calc/icon.svg" alt="" width="44" height="44"><span><strong>Calc</strong><small>電卓・関数電卓</small></span></a>
+          <a class="mt-app md-card md-card--outlined m3-state" href="/toolbox/memo/"><img src="/toolbox/memo/icon.svg" alt="" width="44" height="44"><span><strong>Memo</strong><small>画像も入るメモ帳</small></span></a>
+          <a class="mt-app md-card md-card--outlined m3-state" href="/toolbox/todo/"><img src="/toolbox/todo/icon.svg" alt="" width="44" height="44"><span><strong>Todo</strong><small>リマインダー</small></span></a>
+          <a class="mt-app md-card md-card--outlined m3-state" href="/toolbox/countdown/"><img src="/toolbox/countdown/icon.svg" alt="" width="44" height="44"><span><strong>Countdown</strong><small>あと何日</small></span></a>
+          <a class="mt-app md-card md-card--outlined m3-state" href="/toolbox/timetable/"><img src="/toolbox/timetable/icon.svg" alt="" width="44" height="44"><span><strong>Timetable</strong><small>時間割・クラスへの配信</small></span></a>
+          <a class="mt-app md-card md-card--outlined m3-state" href="/toolbox/roulette/"><img src="/toolbox/roulette/icon.svg" alt="" width="44" height="44"><span><strong>Roulette</strong><small>回して決めるルーレット</small></span></a>
         </div>
       </div>
     </section>
@@ -453,38 +476,38 @@
         <header class="mt-chapter-head" data-reveal>
           <span class="mt-chapter-num" aria-hidden="true">07</span>
           <div>
-            <span class="eyebrow">Credit</span>
+            <p class="mt-overline">Credit</p>
             <h2>出どころとライセンス</h2>
             <p>SK Material は、次のものを使わせてもらって作っています。</p>
           </div>
         </header>
         <div class="mt-credits" data-reveal>
-          <a class="mt-credit" href="https://m3.material.io/" target="_blank" rel="noopener">
+          <a class="mt-credit md-card md-card--outlined m3-state" href="https://m3.material.io/" target="_blank" rel="noopener">
             <strong>Material Design 3</strong><small>Google LLC</small>
             <p>部品の形・大きさ・動き・色の役割のガイドライン。SK Material の土台です。</p>
-            <span class="mt-credit-link">m3.material.io</span>
+            <span class="mt-credit-link">m3.material.io<span class="msr" aria-hidden="true">open_in_new</span></span>
           </a>
-          <a class="mt-credit" href="https://fonts.google.com/icons" target="_blank" rel="noopener">
-            <strong>Material Symbols</strong><small>Google LLC・Apache License 2.0</small>
-            <p>Toolbox のアイコン（Rounded）。Google Fonts から読み込んでいます。</p>
-            <span class="mt-credit-link">fonts.google.com/icons</span>
+          <a class="mt-credit md-card md-card--outlined m3-state" href="https://fonts.google.com/icons" target="_blank" rel="noopener">
+            <strong>Material Symbols・Material Icons</strong><small>Google LLC・Apache License 2.0</small>
+            <p>Nagi と Toolbox のアイコン（Rounded）。Google Fonts から読み込んでいます。MALU は同じ形のアイコンを SVG で入れています。</p>
+            <span class="mt-credit-link">fonts.google.com/icons<span class="msr" aria-hidden="true">open_in_new</span></span>
           </a>
-          <a class="mt-credit" href="https://github.com/material-foundation/material-color-utilities" target="_blank" rel="noopener">
+          <a class="mt-credit md-card md-card--outlined m3-state" href="https://github.com/material-foundation/material-color-utilities" target="_blank" rel="noopener">
             <strong>material-color-utilities</strong><small>Google LLC・Apache License 2.0</small>
-            <p>テーマカラーから配色を作る計算（SchemeFidelity）。計算した結果の色だけを Toolbox に入れています。</p>
-            <span class="mt-credit-link">GitHub</span>
+            <p>Toolbox のテーマカラーから配色を作る計算（SchemeFidelity）。計算した結果の色だけを Toolbox に入れています。</p>
+            <span class="mt-credit-link">GitHub<span class="msr" aria-hidden="true">open_in_new</span></span>
           </a>
-          <a class="mt-credit" href="https://fonts.google.com/specimen/M+PLUS+1" target="_blank" rel="noopener">
+          <a class="mt-credit md-card md-card--outlined m3-state" href="https://fonts.google.com/specimen/M+PLUS+1" target="_blank" rel="noopener">
             <strong>M PLUS 1</strong><small>M+ FONTS PROJECT・SIL Open Font License</small>
-            <p>Calc・Memo・Todo などの文字。</p>
-            <span class="mt-credit-link">Google Fonts</span>
+            <p>MALU・Nagi・Toolbox の Calc・Memo・Todo などの文字。</p>
+            <span class="mt-credit-link">Google Fonts<span class="msr" aria-hidden="true">open_in_new</span></span>
           </a>
         </div>
-        <p class="mt-note">「Material Design」「Material Symbols」は Google の名前です。「SK Material」は、SK's Toolbox の部品と配色をまとめて呼ぶための、SK の中での呼び名です。ほかの使わせてもらっているものは <a href="/credits/">Link &amp; Credit</a> にまとめています。</p>
+        <p class="mt-note">「Material Design」「Material Symbols」は Google の名前です。「SK Material」は、MALU・Nagi・SK's Toolbox の部品と配色をまとめて呼ぶための、SK の中での呼び名です。ほかの使わせてもらっているものは <a href="/credits/">Link &amp; Credit</a> にまとめています。</p>
 
         <div class="mt-outro" data-reveal>
           <p>土台は Material Design 3。<br>その上に、SK の色とことばをのせています。</p>
-          <a class="mt-outro-link" href="/brand/">SK's Brand に戻る</a>
+          <a class="md-btn md-btn--tonal m3-state" href="/brand/"><span class="msr" aria-hidden="true">arrow_back</span>SK's Brand に戻る</a>
         </div>
       </div>
     </section>

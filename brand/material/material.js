@@ -1,19 +1,25 @@
 // SK Material（/brand/material/）の動き
-//   ・表紙: アプリの見本が、7 色の配色で順番に移り変わる（止められる。動きを減らす設定では動かない）
-//   ・上の目次: いま読んでいる章・読んだ量の線。data-reveal を画面に入ったときに浮かび上がらせる
+//   ・このページの中身（<main>）を、選んだ配色（--md-*）で塗る。サイトのライト・ダークに合わせる
+//   ・表紙: アプリの見本が、Toolbox・Nagi・MALU の配色で順番に移り変わる（止められる。動きを減らす設定では動かない）
+//   ・タブ（目次）: いま読んでいる章・読んだ量の線。data-reveal を画面に入ったときに浮かび上がらせる
 //   ・比べる見本: 表紙のアプリを写して、左に M3 の初期値、右に SK Material を重ね、つまみで境目を動かす
-//   ・配色: テーマカラーを選ぶと、元の色 → 24 の役割の流れ・ライトとダークの役割・読みやすさ（コントラスト比）・見本の --md-* を入れ替える
-//   ・部品の見本（波紋・切りかえ・スナックバー・ダイアログ）、重ね色を試す、動きのカーブ
-// 配色（ROLES・PALETTES）は /toolbox/shared/settings.js と同じもの。あちらを作り直したら、ここも写す
+//   ・配色: プロダクト（Toolbox・MALU・Nagi）と元の色を選ぶと、流れ・ライトとダークの役割・読みやすさ・見本・ページの色を入れ替える
+//   ・部品の見本（波紋・切りかえ・スナックバー・ダイアログ）、重ね色を試す、動きのカーブ、ページ全体の波紋
+// 配色のもとは、それぞれのアプリと同じもの。あちらを変えたら、ここも写す
+//   Toolbox: /toolbox/shared/settings.js の ROLES・PALETTES
+//   MALU: /dictionary/script.js の createColorScheme（と、その計算に使う関数）と、辞書の分類の色
+//   Nagi: /nagi/styles.css の色（ライトとダーク）。休憩中は tertiary を primary の代わりにする
 (function () {
   "use strict";
   var t = window.SKI18N ? window.SKI18N.t : function (s, p) { return p ? s.replace(/\{(\w+)\}/g, function (m, k) { return p[k] != null ? p[k] : m; }) : s; };
   var root = document.documentElement;
+  var main = document.querySelector("main");
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var hasIO = "IntersectionObserver" in window;
   root.classList.add("mt-js");
   window.__mtReady = true;
 
+  // ---------- 配色のもと ----------
   var ROLES = ["primary", "on-primary", "primary-container", "on-primary-container", "secondary-container", "on-secondary-container", "tertiary", "tertiary-container", "on-tertiary-container", "error", "error-container", "on-error-container", "surface", "on-surface", "on-surface-variant", "surface-container-low", "surface-container", "surface-container-high", "surface-container-highest", "outline", "outline-variant", "inverse-surface", "inverse-on-surface", "inverse-primary"];
   var PALETTES = {
     blue: ["004ac6ffffff2563ebeeefffacbfff394c84943700bc4800ffede6ba1a1affdad693000afaf8ff191b23434655f3f3feededf9e7e7f3e1e2ed737686c3c6d72e3039f0f0fbb4c5ff", "b4c5ff002a782563ebeeefff33467ea4b6f5ffb596bc4800ffede6ffb4ab93000affdad611131be1e2edc3c6d7191b231d1f27282a3232343d8d90a0434655e1e2ed2e30390053db"],
@@ -24,19 +30,163 @@
     sora: ["00647cffffff007f9dfafdffc3e8f8466977894e00a86516fffbffba1a1affdad693000af6fafd171c1e3e484df0f4f7eaeef1e5e9ebdfe3e66e797ebdc8ce2c3133edf1f46cd3f7", "6cd3f7003543269dbe00212b2a4e5a9abecdffb873c98031301800ffb4ab93000affdad60f1416dfe3e6bdc8ce171c1e1b2022262b2d3135388792983e484ddfe3e62c3133006780"],
     sumi: ["1d2b3effffff3341559eadc5dee2ee5f656e38270a503d1ec3a881ba1a1affdad693000afbf9fa1b1b1d44474cf5f3f5efedefeae7e9e4e2e475777dc5c6cd303032f2f0f2b9c7e0", "b9c7e02331443341559eadc5424750b0b5c0dfc299503d1ec3a881ffb4ab93000affdad6131315e4e2e4c5c6cd1b1b1d1f1f212a2a2b3435368e919744474ce4e2e4303032515f74"]
   };
+  // MALU と同じ計算（/dictionary/script.js から写したもの）
+  const LAB_EPSILON = 216 / 24389;
+  const LAB_KAPPA = 24389 / 27;
+  const D65_WHITE = [0.95047, 1, 1.08883];
+
+  function srgbToLinear(channel) {
+    const value = channel / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  }
+
+  function linearToSrgb(channel) {
+    const value = channel <= 0.0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - 0.055;
+    return Math.round(Math.min(Math.max(value, 0), 1) * 255);
+  }
+
+  function labF(value) {
+    return value > LAB_EPSILON ? Math.cbrt(value) : (LAB_KAPPA * value + 16) / 116;
+  }
+
+  function labFInverse(value) {
+    const cubed = value ** 3;
+    return cubed > LAB_EPSILON ? cubed : (116 * value - 16) / LAB_KAPPA;
+  }
+
+  function hexToLch(hex) {
+    const number = parseInt(hex.replace('#', ''), 16);
+    const [r, g, b] = [(number >> 16) & 255, (number >> 8) & 255, number & 255].map(srgbToLinear);
+    const fx = labF((0.4124 * r + 0.3576 * g + 0.1805 * b) / D65_WHITE[0]);
+    const fy = labF(0.2126 * r + 0.7152 * g + 0.0722 * b);
+    const fz = labF((0.0193 * r + 0.1192 * g + 0.9505 * b) / D65_WHITE[2]);
+    const a = 500 * (fx - fy);
+    const bValue = 200 * (fy - fz);
+    return { l: 116 * fy - 16, c: Math.hypot(a, bValue), h: Math.atan2(bValue, a) };
+  }
+
+  function lchToLinearRgb(l, c, h) {
+    const fy = (l + 16) / 116;
+    const fx = fy + (c * Math.cos(h)) / 500;
+    const fz = fy - (c * Math.sin(h)) / 200;
+    const x = labFInverse(fx) * D65_WHITE[0];
+    const y = l > LAB_KAPPA * LAB_EPSILON ? fy ** 3 : l / LAB_KAPPA;
+    const z = labFInverse(fz) * D65_WHITE[2];
+    return [
+      3.2406 * x - 1.5372 * y - 0.4986 * z,
+      -0.9689 * x + 1.8758 * y + 0.0415 * z,
+      0.0557 * x - 0.204 * y + 1.057 * z
+    ];
+  }
+
+  // トーンを固定したまま、sRGB に収まるまで彩度を下げる
+  function toneToHex(hue, chroma, tone) {
+    const inGamut = (rgb) => rgb.every((channel) => channel >= -0.0001 && channel <= 1.0001);
+    let rgb = lchToLinearRgb(tone, chroma, hue);
+    if (!inGamut(rgb)) {
+      let low = 0;
+      let high = chroma;
+      for (let i = 0; i < 16; i += 1) {
+        const mid = (low + high) / 2;
+        if (inGamut(lchToLinearRgb(tone, mid, hue))) low = mid;
+        else high = mid;
+      }
+      rgb = lchToLinearRgb(tone, low, hue);
+    }
+    return `#${rgb.map((channel) => linearToSrgb(channel).toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  function createColorScheme(seedColor, isDark) {
+    const { c, h } = hexToLch(seedColor);
+    const primary = (tone) => toneToHex(h, Math.min(Math.max(c, 36), 64), tone);
+    const secondary = (tone) => toneToHex(h, 18, tone);
+    const neutral = (tone) => toneToHex(h, 4, tone);
+    const neutralVariant = (tone) => toneToHex(h, 9, tone);
+    const pick = (light, dark) => (isDark ? dark : light);
+
+    return {
+      primary: primary(pick(40, 80)),
+      'on-primary': primary(pick(100, 20)),
+      'primary-container': primary(pick(90, 30)),
+      'on-primary-container': primary(pick(10, 90)),
+      'inverse-primary': primary(pick(80, 40)),
+      'secondary-container': secondary(pick(90, 30)),
+      'on-secondary-container': secondary(pick(10, 90)),
+      surface: neutral(pick(98, 6)),
+      'surface-container-lowest': neutral(pick(100, 4)),
+      'surface-container-low': neutral(pick(96, 10)),
+      'surface-container': neutral(pick(94, 12)),
+      'surface-container-high': neutral(pick(92, 17)),
+      'surface-container-highest': neutral(pick(90, 22)),
+      'on-surface': neutral(pick(10, 90)),
+      'on-surface-variant': neutralVariant(pick(30, 80)),
+      outline: neutralVariant(pick(50, 60)),
+      'outline-variant': neutralVariant(pick(80, 30)),
+      'inverse-surface': neutral(pick(20, 90)),
+      'inverse-on-surface': neutral(pick(95, 20))
+    };
+  }
+  var NAGI = {"light": {"primary": "#006a60", "on-primary": "#ffffff", "primary-container": "#9ef2e4", "on-primary-container": "#00201c", "secondary-container": "#cce8e2", "on-secondary-container": "#05201c", "tertiary": "#3b5f90", "on-tertiary": "#ffffff", "tertiary-container": "#d4e3ff", "on-tertiary-container": "#001c3a", "error": "#ba1a1a", "error-container": "#ffdad6", "on-error-container": "#410002", "surface": "#f4fbf8", "surface-container-low": "#eef5f2", "surface-container": "#e9efec", "surface-container-high": "#e3eae7", "surface-container-highest": "#dde4e1", "on-surface": "#161d1b", "on-surface-variant": "#3f4946", "outline": "#6f7976", "outline-variant": "#bec9c5", "inverse-surface": "#2b3230", "inverse-on-surface": "#ecf2ef", "inverse-primary": "#82d5c8"}, "dark": {"primary": "#82d5c8", "on-primary": "#003731", "primary-container": "#005048", "on-primary-container": "#9ef2e4", "secondary-container": "#334b47", "on-secondary-container": "#cce8e2", "tertiary": "#a5c8ff", "on-tertiary": "#03305f", "tertiary-container": "#214777", "on-tertiary-container": "#d4e3ff", "error": "#ffb4ab", "error-container": "#93000a", "on-error-container": "#ffdad6", "surface": "#0e1513", "surface-container-low": "#161d1b", "surface-container": "#1a211f", "surface-container-high": "#252b2a", "surface-container-highest": "#2f3634", "on-surface": "#dde4e1", "on-surface-variant": "#bec9c5", "outline": "#899390", "outline-variant": "#3f4946", "inverse-surface": "#dde4e1", "inverse-on-surface": "#2b3230", "inverse-primary": "#006a60"}};
   // M3 の初期値（ベースラインの紫）。比べる見本の左側だけで使う（Material Design 3 の公開されている初期の配色）
   var BASELINE = {
     light: { "primary": "#6750a4", "on-primary": "#ffffff", "primary-container": "#eaddff", "on-primary-container": "#21005d", "secondary-container": "#e8def8", "on-secondary-container": "#1d192b", "tertiary": "#7d5260", "surface": "#fef7ff", "on-surface": "#1d1b20", "on-surface-variant": "#49454f", "surface-container-low": "#f7f2fa", "surface-container": "#f3edf7", "surface-container-high": "#ece6f0", "surface-container-highest": "#e6e0e9", "outline": "#79747e", "outline-variant": "#cac4d0" },
     dark: { "primary": "#d0bcff", "on-primary": "#381e72", "primary-container": "#4f378b", "on-primary-container": "#eaddff", "secondary-container": "#4a4458", "on-secondary-container": "#e8def8", "tertiary": "#efb8c8", "surface": "#141218", "on-surface": "#e6e0e9", "on-surface-variant": "#cac4d0", "surface-container-low": "#1d1b20", "surface-container": "#211f26", "surface-container-high": "#2b2930", "surface-container-highest": "#36343b", "outline": "#938f99", "outline-variant": "#49454f" }
   };
-  var ORDER = ["blue", "sakura", "matcha", "mikan", "fuji", "sora", "sumi"];
-  var NAMES = { blue: "SK's Blue", sakura: "SK's Sakura", matcha: "SK's Matcha", mikan: "SK's Mikan", fuji: "SK's Fuji", sora: "SK's Sora", sumi: "SK's Sumi" };
-  var SEEDS = { blue: "#2563eb", sakura: "#db2777", matcha: "#16a34a", mikan: "#ea580c", fuji: "#7c3aed", sora: "#0891b2", sumi: "#334155" };
 
-  // [ライト, ダーク] の文字列を { 役割: "#rrggbb" } にする
-  function scheme(key, dark) {
-    var s = PALETTES[key][dark ? 1 : 0], out = {};
-    ROLES.forEach(function (r, i) { out[r] = "#" + s.substr(i * 6, 6); });
+  // プロダクトごとの元の色。scheme(dark) で { 役割: "#rrggbb" } を返す
+  var SOURCES = {
+    toolbox: {
+      calc: ["material-color-utilities", t("SchemeFidelity・Google")],
+      seeds: [
+        { key: "blue", name: "SK's Blue", color: "#2563eb" }, { key: "sakura", name: "SK's Sakura", color: "#db2777" },
+        { key: "matcha", name: "SK's Matcha", color: "#16a34a" }, { key: "mikan", name: "SK's Mikan", color: "#ea580c" },
+        { key: "fuji", name: "SK's Fuji", color: "#7c3aed" }, { key: "sora", name: "SK's Sora", color: "#0891b2" },
+        { key: "sumi", name: "SK's Sumi", color: "#334155" }
+      ],
+      scheme: function (seed, dark) {
+        var s = PALETTES[seed.key][dark ? 1 : 0], out = {};
+        ROLES.forEach(function (r, i) { out[r] = "#" + s.substr(i * 6, 6); });
+        return out;
+      }
+    },
+    malu: {
+      calc: [t("MALU の計算"), t("M3 のトーンをまねた SK の計算")],
+      seeds: [
+        { key: "ja", name: t("国語辞典"), color: "#1b4b8d" }, { key: "en", name: t("英語辞書"), color: "#1a73e8" },
+        { key: "ko", name: t("韓国語辞書"), color: "#d93025" }, { key: "zh", name: t("中国語辞典"), color: "#ff6f00" },
+        { key: "ej", name: t("英和・和英辞典"), color: "#0f9d58" }, { key: "jk", name: t("日韓・韓日辞典"), color: "#fbbc05" }
+      ],
+      scheme: function (seed, dark) { return createColorScheme(seed.color, dark); }
+    },
+    nagi: {
+      calc: [t("Nagi の配色"), t("凪の青緑から作ったもの")],
+      seeds: [
+        { key: "focus", name: t("集中"), color: "#0f766e" },
+        { key: "break", name: t("休憩"), color: "#3b5f90" }
+      ],
+      scheme: function (seed, dark) {
+        var base = NAGI[dark ? "dark" : "light"], out = {};
+        Object.keys(base).forEach(function (k) { out[k] = base[k]; });
+        if (seed.key === "break") {
+          out["primary"] = base["tertiary"]; out["on-primary"] = base["on-tertiary"];
+          out["primary-container"] = base["tertiary-container"]; out["on-primary-container"] = base["on-tertiary-container"];
+        }
+        return out;
+      }
+    }
+  };
+  function seedOf(source, key) {
+    var list = SOURCES[source].seeds;
+    for (var i = 0; i < list.length; i++) if (list[i].key === key) return list[i];
+    return list[0];
+  }
+  function schemeOf(source, key, dark) { return SOURCES[source].scheme(seedOf(source, key), dark); }
+  // ページや見本を塗るとき、その配色にない役割（MALU の tertiary・error など）を補う
+  function complete(c, dark) {
+    var out = {}, base = SOURCES.toolbox.scheme(SOURCES.toolbox.seeds[0], dark);
+    Object.keys(base).forEach(function (k) { out[k] = base[k]; });
+    out["tertiary"] = c["primary"]; out["tertiary-container"] = c["secondary-container"]; out["on-tertiary-container"] = c["on-secondary-container"];
+    Object.keys(c).forEach(function (k) { out[k] = c[k]; });
     return out;
   }
   function paint(el, colors) {
@@ -45,6 +195,7 @@
   var siteDark = function () {
     return root.dataset.theme === "dark" || (!root.dataset.theme && window.matchMedia("(prefers-color-scheme: dark)").matches);
   };
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 
   var toastEl = document.querySelector("[data-mt-toast]");
   var toastTimer = null;
@@ -63,10 +214,51 @@
     }
   }
 
+  // ---------- 見た目の切りかえ（SK Style・SK Material。このページだけ。選んだものはこのブラウザに覚える） ----------
+  //   <html data-mt-style="sk"> のとき、material.css が --md-* をサイトの色に読みかえる（<head> の小さなスクリプトが先に付ける）
+  //   SK Style のときは <main> に配色を入れない（入れると、読みかえより強くなるため）
+  var STYLE_KEY = "sk_material_style";
+  function isSkStyle() { return root.getAttribute("data-mt-style") === "sk"; }
+  function markStyle() {
+    document.querySelectorAll("[data-mt-style-set]").forEach(function (b) {
+      b.setAttribute("aria-checked", String((b.dataset.mtStyleSet === "sk") === isSkStyle()));
+    });
+  }
+  function setStyle(style) {
+    if ((style === "sk") === isSkStyle()) return;
+    var apply = function () {
+      if (style === "sk") root.setAttribute("data-mt-style", "sk"); else root.removeAttribute("data-mt-style");
+      try { localStorage.setItem(STYLE_KEY, style); } catch (e) { /* 覚えられなくても切りかえる */ }
+      markStyle();
+      render();
+    };
+    // 対応しているブラウザでは、ふわっと入れかえる
+    if (document.startViewTransition && !reduced) document.startViewTransition(apply); else apply();
+  }
+  document.querySelectorAll("[data-mt-style-set]").forEach(function (b) {
+    b.addEventListener("click", function () { setStyle(b.dataset.mtStyleSet); });
+  });
+
+  // ---------- 波紋（ページの中のどこでも。/toolbox/shared/m3.js と同じ） ----------
+  if (main) {
+    main.addEventListener("pointerdown", function (e) {
+      var target = e.target.closest && e.target.closest(".m3-state");
+      if (!target || target.disabled || reduced) return;
+      var r = target.getBoundingClientRect();
+      var d = Math.hypot(r.width, r.height) * 2;
+      var w = el("span", "ripple");
+      w.style.width = w.style.height = d + "px";
+      w.style.left = (e.clientX - r.left - d / 2) + "px";
+      w.style.top = (e.clientY - r.top - d / 2) + "px";
+      target.appendChild(w);
+      w.addEventListener("animationend", function () { w.remove(); });
+    });
+  }
+
   // ---------- 浮かび上がる ----------
   var reveals = document.querySelectorAll("[data-reveal]");
   if (!hasIO || reduced) {
-    reveals.forEach(function (el) { el.classList.add("is-in"); });
+    reveals.forEach(function (x) { x.classList.add("is-in"); });
   } else {
     var rio = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
@@ -75,13 +267,13 @@
         rio.unobserve(e.target);
       });
     }, { rootMargin: "0px 0px -10% 0px" });
-    reveals.forEach(function (el) { rio.observe(el); });
+    reveals.forEach(function (x) { rio.observe(x); });
   }
 
-  // ---------- 目次・読んだ量 ----------
+  // ---------- タブ（目次）・読んだ量 ----------
   var nav = document.querySelector("[data-mt-nav]");
   var progress = document.querySelector("[data-mt-progress]");
-  var navLinks = nav ? Array.prototype.slice.call(nav.querySelectorAll(".mt-nav-links a")) : [];
+  var navLinks = nav ? Array.prototype.slice.call(nav.querySelectorAll(".mt-tabs-row a")) : [];
   var chapters = navLinks.map(function (a) { return document.querySelector(a.getAttribute("href")); });
   var currentLink = null, ticking = false;
   function onScroll() {
@@ -107,35 +299,37 @@
   window.addEventListener("resize", onScroll);
   onScroll();
 
-  // ---------- 表紙: 7 色で移り変わる ----------
+  // ---------- 表紙: いろいろな配色で移り変わる ----------
   var hero = document.querySelector(".mt-hero");
-  var heroScreen = document.querySelector("[data-mt-hero] [data-mt-screen]");
+  var heroScreen = document.querySelector(".mt-hero [data-mt-screen]");
   var heroName = document.querySelector("[data-mt-hero-name]");
   var pauseBtn = document.querySelector("[data-mt-hero-pause]");
+  var HERO = [];
+  SOURCES.toolbox.seeds.forEach(function (s) { HERO.push(["toolbox", s.key, "SK's Toolbox · " + s.name]); });
+  HERO.push(["nagi", "focus", "Nagi"]);
+  HERO.push(["malu", "ja", "MALU · " + seedOf("malu", "ja").name]);
+  HERO.push(["malu", "en", "MALU · " + seedOf("malu", "en").name]);
   var heroIndex = 0, heroTimer = null, heroPaused = reduced;
-  function showHero(key) {
-    var colors = scheme(key, siteDark());
-    if (heroScreen) paint(heroScreen, colors);
+  function showHero() {
+    var h = HERO[heroIndex], colors = schemeOf(h[0], h[1], siteDark());
+    if (heroScreen) paint(heroScreen, complete(colors, siteDark()));
     if (hero) {
       hero.style.setProperty("--hero-primary", colors["primary"]);
-      hero.style.setProperty("--hero-tertiary", colors["primary-container"]);
+      hero.style.setProperty("--hero-container", colors["primary-container"]);
     }
-    if (heroName) heroName.textContent = NAMES[key];
-  }
-  function stepHero() {
-    heroIndex = (heroIndex + 1) % ORDER.length;
-    showHero(ORDER[heroIndex]);
+    if (heroName) heroName.textContent = h[2];
   }
   function runHero() {
     clearInterval(heroTimer);
-    if (!heroPaused && !document.hidden) heroTimer = setInterval(stepHero, 2800);
+    if (!heroPaused && !document.hidden) heroTimer = setInterval(function () { heroIndex = (heroIndex + 1) % HERO.length; showHero(); }, 2800);
   }
   if (pauseBtn) {
-    if (reduced) { pauseBtn.hidden = true; }
+    if (reduced) pauseBtn.hidden = true;
     pauseBtn.addEventListener("click", function () {
       heroPaused = !heroPaused;
       pauseBtn.setAttribute("aria-pressed", String(heroPaused));
-      pauseBtn.textContent = heroPaused ? t("動かす") : t("止める");
+      pauseBtn.querySelector(".msr").textContent = heroPaused ? "play_arrow" : "pause";
+      pauseBtn.querySelector("[data-mt-hero-pause-label]").textContent = heroPaused ? t("動かす") : t("止める");
       runHero();
     });
   }
@@ -158,10 +352,7 @@
       range.value = String(Math.round(v));
     };
     range.addEventListener("input", function () { setX(+range.value); });
-    var drag = function (e) {
-      var r = stage.getBoundingClientRect();
-      setX((e.clientX - r.left) / r.width * 100);
-    };
+    var drag = function (e) { var r = stage.getBoundingClientRect(); setX((e.clientX - r.left) / r.width * 100); };
     stage.addEventListener("pointerdown", function (e) {
       stage.setPointerCapture(e.pointerId);
       drag(e);
@@ -198,7 +389,7 @@
     ["surface-container-high", "on-surface"], ["surface-container-highest", "on-surface"], ["on-surface", "surface"], ["on-surface-variant", "surface"],
     ["outline", "surface"], ["outline-variant", "on-surface"], ["inverse-surface", "inverse-on-surface"], ["inverse-primary", "inverse-surface"]
   ];
-  // 読みやすさを確かめる組み合わせ [文字, 背景]
+  // 読みやすさを確かめる組み合わせ [文字, 背景]（その配色にない役割は飛ばす）
   var PAIRS = [
     ["on-primary", "primary"], ["on-primary-container", "primary-container"], ["on-secondary-container", "secondary-container"],
     ["on-tertiary-container", "tertiary-container"], ["on-error-container", "error-container"], ["on-surface", "surface"],
@@ -208,14 +399,11 @@
     return [1, 3, 5].map(function (i) { var v = parseInt(hex.substr(i, 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); })
       .reduce(function (s, v, i) { return s + v * [0.2126, 0.7152, 0.0722][i]; }, 0);
   }
-  function ratio(a, b) {
-    var x = lum(a), y = lum(b);
-    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
-  }
-  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function ratio(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
   function renderRoles(box, colors) {
     box.replaceChildren();
     TILES.forEach(function (tile) {
+      if (!colors[tile[0]] || !colors[tile[1]]) return;
       var b = el("button", "mt-role" + (tile[2] ? " is-wide" : ""));
       b.type = "button";
       b.style.setProperty("--bg-c", colors[tile[0]]);
@@ -232,91 +420,115 @@
     chip.style.setProperty("--bg-c", bg);
     chip.style.setProperty("--fg-c", fg);
     var r = ratio(fg, bg);
-    var badge = el("em", r < 4.5 ? "is-low" : null, r >= 7 ? "AAA" : r >= 4.5 ? "AA" : r >= 3 ? "AA Large" : "—");
-    cell.append(chip, document.createTextNode(r.toFixed(1)), badge);
+    cell.append(chip, document.createTextNode(r.toFixed(1)), el("em", r < 4.5 ? "is-low" : null, r >= 7 ? "AAA" : r >= 4.5 ? "AA" : r >= 3 ? "AA Large" : "—"));
     return cell;
   }
 
   var demo = document.querySelector("[data-mt-demo]");
-  var states = document.querySelector("[data-mt-states]");
-  var state = { color: "blue", dark: siteDark() };
+  var state = { source: "toolbox", key: "blue", demoDark: siteDark() };
   try {
     var accent = window.SKTheme ? window.SKTheme.get().accent : "";
-    if (accent && PALETTES[accent]) state.color = accent;
+    if (accent && PALETTES[accent]) state.key = accent;
   } catch (e) { /* ふつうの青のまま */ }
-  heroIndex = ORDER.indexOf(state.color);
+  HERO.forEach(function (h, i) { if (h[0] === "toolbox" && h[1] === state.key) heroIndex = i; });
 
-  function render() {
-    var light = scheme(state.color, false), dark = scheme(state.color, true);
-    document.querySelectorAll("[data-mt-color]").forEach(function (b) { b.setAttribute("aria-checked", String(b.dataset.mtColor === state.color)); });
-    document.querySelectorAll("[data-mt-scheme]").forEach(function (box) {
-      renderRoles(box.querySelector("[data-mt-roles]"), box.dataset.mtScheme === "dark" ? dark : light);
+  function renderChips() {
+    var box = document.querySelector("[data-mt-chips]");
+    if (!box) return;
+    box.replaceChildren();
+    SOURCES[state.source].seeds.forEach(function (s) {
+      var b = el("button", "m3-state");
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", String(s.key === state.key));
+      b.style.setProperty("--sw", s.color);
+      b.append(el("i"), document.createTextNode(s.name));
+      b.addEventListener("click", function () { state.key = s.key; renderChips(); render(); });
+      box.appendChild(b);
     });
-    // 元の色 → 24 の役割
-    var seed = document.querySelector("[data-mt-seed]");
-    if (seed) seed.style.setProperty("--seed", SEEDS[state.color]);
+  }
+  function render() {
+    var src = SOURCES[state.source], seed = seedOf(state.source, state.key);
+    var light = src.scheme(seed, false), dark = src.scheme(seed, true);
+    var page = complete(siteDark() ? dark : light, siteDark());
+    // ページ全体（SK Style のときは入れない。入れてあったものは消す）
+    if (main) {
+      if (isSkStyle()) ROLES.concat(["on-tertiary"]).forEach(function (r) { main.style.removeProperty("--md-" + r); });
+      else paint(main, page);
+    }
+    // 重ね色の見本は、どちらの見た目でも SK Material の色
+    var stateStage = document.querySelector("[data-mt-states] .mt-state-stage");
+    if (stateStage) paint(stateStage, page);
+    document.querySelectorAll("[data-mt-source]").forEach(function (b) { b.setAttribute("aria-checked", String(b.dataset.mtSource === state.source)); });
+    document.querySelectorAll("[data-mt-source-note]").forEach(function (p) { p.hidden = p.dataset.mtSourceNote !== state.source; });
+    // 元の色 → 計算 → 役割
+    var seedEl = document.querySelector("[data-mt-seed]");
+    if (seedEl) seedEl.style.setProperty("--seed", seed.color);
     var seedCode = document.querySelector("[data-mt-seed-code]");
-    if (seedCode) seedCode.textContent = SEEDS[state.color];
+    if (seedCode) seedCode.textContent = seed.color;
+    var calcName = document.querySelector("[data-mt-calc-name]");
+    if (calcName) calcName.textContent = src.calc[0];
+    var calcSub = document.querySelector("[data-mt-calc-sub]");
+    if (calcSub) calcSub.textContent = src.calc[1];
+    var names = ROLES.filter(function (r) { return light[r]; });
+    var count = document.querySelector("[data-mt-role-count]");
+    if (count) count.textContent = t("{n} の色の役割", { n: names.length });
     var flow = document.querySelector("[data-mt-flow-roles]");
     if (flow) {
-      if (!flow.children.length) ROLES.forEach(function (r, i) { var d = el("i"); d.style.setProperty("--i", i); flow.appendChild(d); });
-      Array.prototype.forEach.call(flow.children, function (d, i) { d.style.setProperty("--c", (i % 2 ? dark : light)[ROLES[i]]); });
+      flow.replaceChildren();
+      names.forEach(function (r, i) { var d = el("i"); d.style.setProperty("--i", i); d.style.setProperty("--c", (i % 2 ? dark : light)[r]); flow.appendChild(d); });
     }
+    // ライトとダークの役割
+    document.querySelectorAll("[data-mt-scheme]").forEach(function (box) {
+      var c = box.dataset.mtScheme === "dark" ? dark : light;
+      box.style.setProperty("--s-bg", c["surface-container-low"] || c.surface);
+      box.style.setProperty("--s-fg", c["on-surface"]);
+      box.style.setProperty("--s-line", c["outline-variant"]);
+      renderRoles(box.querySelector("[data-mt-roles]"), c);
+    });
     // 読みやすさ
     var table = document.querySelector("[data-mt-contrast]");
     if (table) {
       table.replaceChildren();
       PAIRS.forEach(function (p) {
+        if (!light[p[0]] || !light[p[1]]) return;
         var row = el("div", "mt-contrast-row");
         row.append(el("b", null, p[0] + " / " + p[1]), contrastCell(light[p[0]], light[p[1]]), contrastCell(dark[p[0]], dark[p[1]]));
         table.appendChild(row);
       });
     }
-    // 見本
-    var current = state.dark ? dark : light;
+    // 部品の見本・比べる見本
     if (demo) {
-      paint(demo, current);
-      demo.style.colorScheme = state.dark ? "dark" : "light";
-      demo.querySelectorAll("[data-mt-mode]").forEach(function (b) { b.setAttribute("aria-checked", String((b.dataset.mtMode === "dark") === state.dark)); });
+      paint(demo, complete(state.demoDark ? dark : light, state.demoDark));
+      demo.style.colorScheme = state.demoDark ? "dark" : "light";
+      demo.querySelectorAll("[data-mt-mode]").forEach(function (b) { b.setAttribute("aria-checked", String((b.dataset.mtMode === "dark") === state.demoDark)); });
     }
-    if (states) paint(states, current);
-    if (cmpSk) paint(cmpSk, siteDark() ? dark : light);
+    if (cmpSk) paint(cmpSk, schemeOf("toolbox", "blue", siteDark()));
     if (cmpM3) paint(cmpM3, BASELINE[siteDark() ? "dark" : "light"]);
   }
-  document.querySelectorAll("[data-mt-color]").forEach(function (b) {
+  document.querySelectorAll("[data-mt-source]").forEach(function (b) {
     b.addEventListener("click", function () {
-      state.color = b.dataset.mtColor;
-      heroIndex = ORDER.indexOf(state.color);
-      showHero(state.color);
-      runHero();
+      if (state.source === b.dataset.mtSource) return;
+      state.source = b.dataset.mtSource;
+      state.key = SOURCES[state.source].seeds[0].key;
+      renderChips();
       render();
     });
   });
-  // サイトのライト・ダークが変わったら、表紙・比べる見本も合わせる
-  var follow = function () { showHero(ORDER[heroIndex]); render(); };
+  // サイトのライト・ダークが変わったら、ページ・表紙・比べる見本も合わせる
+  var follow = function () { state.demoDark = siteDark(); showHero(); render(); };
   new MutationObserver(follow).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", follow);
-  showHero(state.color);
+  renderChips();
+  markStyle();
   render();
+  showHero();
   runHero();
 
   // ---------- 部品の見本 ----------
   if (demo) {
     demo.querySelectorAll("[data-mt-mode]").forEach(function (b) {
-      b.addEventListener("click", function () { state.dark = b.dataset.mtMode === "dark"; render(); });
-    });
-    // 押したところから広がる波紋（/toolbox/shared/m3.js と同じ）
-    demo.addEventListener("pointerdown", function (e) {
-      var target = e.target.closest && e.target.closest(".m3-state");
-      if (!target || target.disabled || !demo.contains(target) || reduced) return;
-      var r = target.getBoundingClientRect();
-      var d = Math.hypot(r.width, r.height) * 2;
-      var w = el("span", "ripple");
-      w.style.width = w.style.height = d + "px";
-      w.style.left = (e.clientX - r.left - d / 2) + "px";
-      w.style.top = (e.clientY - r.top - d / 2) + "px";
-      target.appendChild(w);
-      w.addEventListener("animationend", function () { w.remove(); });
+      b.addEventListener("click", function () { state.demoDark = b.dataset.mtMode === "dark"; render(); });
     });
     demo.querySelectorAll("[data-mt-toggle]").forEach(function (b) {
       b.addEventListener("click", function () { b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); });
@@ -349,6 +561,7 @@
   }
 
   // ---------- 重ね色を試す ----------
+  var states = document.querySelector("[data-mt-states]");
   if (states) {
     var sBtn = states.querySelector("[data-mt-state-btn]");
     var sVal = states.querySelector("[data-mt-state-value]");
