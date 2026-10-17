@@ -327,6 +327,10 @@
 .mt-app strong { font-size: 16px; font-weight: 500; }
 .mt-apps--main .mt-app strong { font-size: 20px; }
 .mt-app small { font-size: 13px; color: var(--md-on-surface-variant); }
+.mt-app--wide { grid-column: 1 / -1; align-items: flex-start; }
+.mt-app--wide > span:not(.msr) { flex: 1; }
+.mt-app-saetab { padding: 6px; background: var(--md-surface); }
+.mt-app-out { margin-left: auto; color: var(--md-on-surface-variant); font-size: 20px; }
 .mt-credits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 700px) { .mt-credits { grid-template-columns: 1fr; } }
 .mt-credit { display: flex; flex-direction: column; padding: 18px 20px; color: var(--md-on-surface) !important; text-decoration: none; }
