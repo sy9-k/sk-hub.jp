@@ -752,7 +752,8 @@ img.yf-tile.yf-tile {
 
 /* ---------- SK Hub Systems アカウント ---------- */
 /* ログイン前・アカウントの作成は中央にまとめ、ログイン後は「左に項目の一覧・右にタイル」（Apple Account のページの形） */
-.acct {
+/* ダイアログ（.acct-dialog）は .acct の外（</section> のあと）にあるので、同じ色の決まりを持たせる */
+.acct, .acct-dialog {
   --acct-ink: #1d1d1f;
   --acct-muted: #6e6e73;
   --acct-tile: #f5f5f7;
@@ -762,6 +763,8 @@ img.yf-tile.yf-tile {
   --acct-link: var(--link);
   --acct-red: #d70015;
   --acct-bg: #ffffff;
+}
+.acct {
   background: var(--acct-bg);
   color: var(--acct-ink);
   min-height: calc(100vh - 52px);
@@ -1310,7 +1313,7 @@ body .RedCheckOSS-consent-card__button--agree { background: var(--accent); color
     --hd-bg: rgba(11, 14, 19, .72); --hd-text: #eef1f5; --hd-menu-bg: #11151b; --hd-menu-muted: rgba(255, 255, 255, .5); --hd-menu-link: #eef1f5; --hd-backdrop: rgba(0, 0, 0, .35);
     color-scheme: dark;
   }
-  :root:not([data-theme="light"]) .acct { --acct-ink: #f5f5f7; --acct-muted: #a1a1a6; --acct-tile: #1b1f26; --acct-tile-hover: #252a32; --acct-line: #363c45; --acct-red: #ff6961; --acct-bg: var(--bg); }
+  :root:not([data-theme="light"]) .acct, :root:not([data-theme="light"]) .acct-dialog { --acct-ink: #f5f5f7; --acct-muted: #a1a1a6; --acct-tile: #1b1f26; --acct-tile-hover: #252a32; --acct-line: #363c45; --acct-red: #ff6961; --acct-bg: var(--bg); }
 }
 :root[data-theme="dark"] {
   --accent: var(--a-d); --accent-ink: var(--a-ink-d); --accent-line: color-mix(in srgb, var(--a-d) 38%, #151a21); --mark: var(--a-mark-d);
@@ -1326,7 +1329,7 @@ body .RedCheckOSS-consent-card__button--agree { background: var(--accent); color
   --hd-bg: rgba(11, 14, 19, .72); --hd-text: #eef1f5; --hd-menu-bg: #11151b; --hd-menu-muted: rgba(255, 255, 255, .5); --hd-menu-link: #eef1f5; --hd-backdrop: rgba(0, 0, 0, .35);
   color-scheme: dark;
 }
-:root[data-theme="dark"] .acct { --acct-ink: #f5f5f7; --acct-muted: #a1a1a6; --acct-tile: #1b1f26; --acct-tile-hover: #252a32; --acct-line: #363c45; --acct-red: #ff6961; --acct-bg: var(--bg); }
+:root[data-theme="dark"] .acct, :root[data-theme="dark"] .acct-dialog { --acct-ink: #f5f5f7; --acct-muted: #a1a1a6; --acct-tile: #1b1f26; --acct-tile-hover: #252a32; --acct-line: #363c45; --acct-red: #ff6961; --acct-bg: var(--bg); }
 
 /* ================================================================
    テーマカラー（SK's ○○）。<html data-accent="…">（assets/site.js の ACCENTS と同じ名前）
