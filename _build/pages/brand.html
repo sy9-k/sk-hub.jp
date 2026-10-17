@@ -1,214 +1,552 @@
-    <!-- SK's Brand: デザインとことばのきまり（動きのある部分は /brand/brand.js） -->
-    <section class="brand-hero band band--plain">
+    <!-- SK's Brand: デザインとことばのきまり（見た目は /brand/brand.css、動きは /brand/brand.js） -->
+
+    <!-- ロゴの部品（色と切り抜き）。ページのあちこちの <svg> から使う -->
+    <svg class="bx-defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="bx-g-top" gradientUnits="userSpaceOnUse" x1="22.34" y1="67" x2="233.66" y2="67"><stop offset="0" stop-color="#0037b8"/><stop offset=".5" stop-color="#3e82ff"/><stop offset="1" stop-color="#8ccfff"/></linearGradient>
+        <linearGradient id="bx-g-right" gradientUnits="userSpaceOnUse" x1="233.66" y1="67" x2="128" y2="250"><stop offset="0" stop-color="#0037b8"/><stop offset=".5" stop-color="#3e82ff"/><stop offset="1" stop-color="#8ccfff"/></linearGradient>
+        <linearGradient id="bx-g-left" gradientUnits="userSpaceOnUse" x1="128" y1="250" x2="22.34" y2="67"><stop offset="0" stop-color="#0037b8"/><stop offset=".5" stop-color="#3e82ff"/><stop offset="1" stop-color="#8ccfff"/></linearGradient>
+        <clipPath id="bx-ring"><path clip-rule="evenodd" d="M 114.14 14 Q 128 6 141.86 14 L 219.8 59 Q 233.66 67 233.66 83 L 233.66 173 Q 233.66 189 219.8 197 L 141.86 242 Q 128 250 114.14 242 L 36.2 197 Q 22.34 189 22.34 173 L 22.34 83 Q 22.34 67 36.2 59 Z M 120.21 85.5 Q 128 81 135.79 85.5 L 160.91 100 Q 168.7 104.5 168.7 113.5 L 168.7 142.5 Q 168.7 151.5 160.91 156 L 135.79 170.5 Q 128 175 120.21 170.5 L 95.09 156 Q 87.3 151.5 87.3 142.5 L 87.3 113.5 Q 87.3 104.5 95.09 100 Z"/></clipPath>
+        <radialGradient id="bx-fade"><stop offset=".5" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        <mask id="bx-grid-mask" maskUnits="userSpaceOnUse" x="-60" y="-60" width="376" height="376"><rect x="-60" y="-60" width="376" height="376" fill="url(#bx-fade)"/></mask>
+        <pattern id="bx-iso" width="26.415" height="45.75" patternUnits="userSpaceOnUse" x="128" y="6"><path d="M0 0 L26.415 15.25 M0 15.25 L26.415 30.5 M0 30.5 L26.415 45.75 M0 -15.25 L26.415 0 M26.415 0 L0 15.25 M26.415 15.25 L0 30.5 M26.415 30.5 L0 45.75 M26.415 45.75 L0 61 M0 0 V45.75" fill="none" stroke="currentColor" stroke-width=".6"/></pattern>
+      </defs>
+    </svg>
+
+    <!-- 表紙 -->
+    <section class="bx-hero" id="top">
+      <div class="bx-hero-grid" aria-hidden="true"></div>
+      <div class="wrap bx-hero-inner">
+        <div class="bx-hero-text">
+          <span class="eyebrow">Brand Guidelines</span>
+          <h1 class="bx-title"><span class="bx-title-line"><span>SK's</span></span> <span class="bx-title-line"><span class="bx-title-accent">Brand</span></span></h1>
+          <p class="bx-lead">SK のプロダクトに共通する、デザインとことばのきまり。見た目だけでなく、使う人への約束も、ここにまとめています。</p>
+          <dl class="bx-hero-meta">
+            <div><dt>章</dt><dd>7</dd></div>
+            <div><dt>テーマカラー</dt><dd>7</dd></div>
+            <div><dt>最後に直した日</dt><dd>2026-10-17</dd></div>
+          </dl>
+        </div>
+        <div class="bx-hero-mark" data-bx-tilt aria-hidden="true">
+          <svg class="bx-mark bx-mark--hero" viewBox="-40 -40 336 336">
+            <g class="bx-hero-guides">
+              <circle cx="128" cy="128" r="122" />
+              <circle cx="128" cy="128" r="47" />
+              <path d="M128 -30 V286 M-8 49.5 L264 206.5 M-8 206.5 L264 49.5" />
+            </g>
+            <g class="bx-face bx-face--top"><g clip-path="url(#bx-ring)"><polygon fill="url(#bx-g-top)" points="22.34 67 128 6 233.66 67 168.7 104.5 128 81 87.3 104.5"/></g></g>
+            <g class="bx-face bx-face--right"><g clip-path="url(#bx-ring)"><polygon fill="url(#bx-g-right)" points="233.66 67 233.66 189 128 250 128 175 168.7 151.5 168.7 104.5"/></g></g>
+            <g class="bx-face bx-face--left"><g clip-path="url(#bx-ring)"><polygon fill="url(#bx-g-left)" points="128 250 22.34 189 22.34 67 87.3 104.5 87.3 151.5 128 175"/></g></g>
+          </svg>
+          <div class="bx-hero-shadow"></div>
+        </div>
+      </div>
+      <a class="bx-scroll" href="#statement"><span>スクロール</span><i aria-hidden="true"></i></a>
+    </section>
+
+    <!-- ページの中の目次（スクロールしても上に残る） -->
+    <nav class="bx-nav" aria-label="このページの目次" data-bx-nav>
       <div class="wrap">
-        <span class="eyebrow">Brand</span>
-        <h1 class="brand-title"><span>SK's</span> <span class="brand-title-accent">Brand</span></h1>
-        <p class="brand-lead">SK のプロダクトに共通する、デザインとことばのきまり。見た目だけでなく、使う人への約束も、ここにまとめています。</p>
-        <nav class="brand-toc" aria-label="このページの目次">
-          <a href="#principles">大切にしていること</a><a href="#logo">ロゴ</a><a href="#color">色</a><a href="#type">文字</a><a href="#shape">形と動き</a><a href="#voice">ことば</a><a href="#promise">約束</a>
-        </nav>
+        <a class="bx-nav-title" href="#top">SK's Brand</a>
+        <div class="bx-nav-links">
+          <a href="#principles"><b>01</b>大切にしていること</a>
+          <a href="#logo"><b>02</b>ロゴ</a>
+          <a href="#color"><b>03</b>色</a>
+          <a href="#type"><b>04</b>文字</a>
+          <a href="#shape"><b>05</b>形と動き</a>
+          <a href="#voice"><b>06</b>ことば</a>
+          <a href="#promise"><b>07</b>約束</a>
+        </div>
+      </div>
+      <span class="bx-nav-progress" data-bx-progress></span>
+    </nav>
+
+    <!-- ひとこと（スクロールに合わせて 1 文ずつ光る） -->
+    <section class="bx-statement" id="statement">
+      <div class="wrap">
+        <p class="bx-statement-text" data-bx-statement>
+          <span>毎日のネットを、もう少し安心で便利に。</span>
+          <span>そのために、色も、文字も、動きも、ことばも、ひとつの考え方でそろえています。</span>
+          <span>気づかれないところにこそ、手をかけます。</span>
+        </p>
       </div>
     </section>
 
-    <!-- 大切にしていること -->
-    <section class="section" id="principles">
+    <!-- 01 大切にしていること -->
+    <section class="bx-chapter" id="principles">
       <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Principles</span>
-          <h2>大切にしていること</h2>
-          <p>毎日のネットを、もう少し安心で便利に。そのために、4 つのことを大切にしています。</p>
-        </div>
-        <div class="brand-principles">
-          <div class="card brand-principle">
-            <span class="brand-num">01</span>
+        <header class="bx-chapter-head" data-reveal>
+          <span class="bx-chapter-num" aria-hidden="true">01</span>
+          <div>
+            <span class="eyebrow">Principles</span>
+            <h2>大切にしていること</h2>
+            <p>どのプロダクトを作るときも、迷ったらこの 4 つに戻ります。</p>
+          </div>
+        </header>
+        <div class="bx-principles">
+          <article class="bx-principle" data-reveal>
+            <div class="bx-principle-ico is-safe" aria-hidden="true">
+              <svg viewBox="0 0 64 64"><rect x="10" y="12" width="44" height="40" rx="10"/><circle class="bx-dot d1" cx="24" cy="28" r="3"/><circle class="bx-dot d2" cx="38" cy="36" r="3"/><circle class="bx-dot d3" cx="30" cy="42" r="3"/></svg>
+            </div>
+            <span class="bx-principle-num">01</span>
             <h3>安心</h3>
-            <p class="brand-principle-sub">集めない・送らない</p>
+            <p class="bx-principle-sub">集めない・送らない</p>
             <p>必要なものだけを、必要なときに。閲覧履歴や検索語は集めません。できることは、ブラウザの中で済ませます。</p>
-          </div>
-          <div class="card brand-principle">
-            <span class="brand-num">02</span>
+          </article>
+          <article class="bx-principle" data-reveal>
+            <div class="bx-principle-ico is-kind" aria-hidden="true">
+              <svg viewBox="0 0 64 64"><path d="M14 12 h36 a8 8 0 0 1 8 8 v16 a8 8 0 0 1 -8 8 h-18 l-10 8 v-8 h-8 a8 8 0 0 1 -8 -8 v-16 a8 8 0 0 1 8 -8 z"/><path class="bx-smile" d="M24 26 v2 M40 26 v2 M24 34 q8 6 16 0"/></svg>
+            </div>
+            <span class="bx-principle-num">02</span>
             <h3>やさしい</h3>
-            <p class="brand-principle-sub">だれにでもわかる</p>
+            <p class="bx-principle-sub">だれにでもわかる</p>
             <p>専門用語をなるべく使わず、小学生にも伝わることばで。説明がなくても、さわればわかる形に。</p>
-          </div>
-          <div class="card brand-principle">
-            <span class="brand-num">03</span>
+          </article>
+          <article class="bx-principle" data-reveal>
+            <div class="bx-principle-ico is-quiet" aria-hidden="true">
+              <svg viewBox="0 0 64 64"><path class="bx-wave" d="M4 32 C 10 14, 16 14, 22 32 S 34 50, 40 32 S 52 14, 60 32"/></svg>
+            </div>
+            <span class="bx-principle-num">03</span>
             <h3>静か</h3>
-            <p class="brand-principle-sub">じゃましない</p>
+            <p class="bx-principle-sub">じゃましない</p>
             <p>通知や動きは控えめに。広告は出しません。使う人の時間と集中を、うばわないように。</p>
-          </div>
-          <div class="card brand-principle">
-            <span class="brand-num">04</span>
+          </article>
+          <article class="bx-principle" data-reveal>
+            <div class="bx-principle-ico is-care" aria-hidden="true">
+              <svg viewBox="0 0 64 64"><g class="bx-px"><rect x="16" y="16" width="7" height="7"/><rect x="23" y="16" width="7" height="7"/><rect x="16" y="23" width="7" height="7"/><rect x="23" y="23" width="7" height="7"/></g><circle cx="26" cy="26" r="15"/><path d="M37 37 L52 52"/></svg>
+            </div>
+            <span class="bx-principle-num">04</span>
             <h3>ていねい</h3>
-            <p class="brand-principle-sub">細かいところまで</p>
+            <p class="bx-principle-sub">細かいところまで</p>
             <p>0.3 秒の動き、1px の余白、ダークモードの色まで。気づかれないところにこそ、手をかけます。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 ロゴ -->
+    <section class="bx-chapter" id="logo">
+      <div class="wrap">
+        <header class="bx-chapter-head" data-reveal>
+          <span class="bx-chapter-num" aria-hidden="true">02</span>
+          <div>
+            <span class="eyebrow">Logo</span>
+            <h2>ロゴ</h2>
+            <p>青いキューブのマークと、「SK」の文字。明るい背景でも、暗い背景でも、そのままの形と色で使います。</p>
+          </div>
+        </header>
+
+        <!-- かたち（組み立て図） -->
+        <div class="bx-anatomy" data-reveal data-bx-anatomy>
+          <div class="bx-anatomy-stage">
+            <svg class="bx-mark bx-mark--anatomy" viewBox="-60 -60 376 376" role="img" aria-label="SK のマークの組み立て図">
+              <rect class="bx-anatomy-grid" x="-60" y="-60" width="376" height="376" fill="url(#bx-iso)" mask="url(#bx-grid-mask)"/>
+              <g class="bx-face bx-face--top"><g clip-path="url(#bx-ring)"><polygon fill="url(#bx-g-top)" points="22.34 67 128 6 233.66 67 168.7 104.5 128 81 87.3 104.5"/></g></g>
+              <g class="bx-face bx-face--right"><g clip-path="url(#bx-ring)"><polygon fill="url(#bx-g-right)" points="233.66 67 233.66 189 128 250 128 175 168.7 151.5 168.7 104.5"/></g></g>
+              <g class="bx-face bx-face--left"><g clip-path="url(#bx-ring)"><polygon fill="url(#bx-g-left)" points="128 250 22.34 189 22.34 67 87.3 104.5 87.3 151.5 128 175"/></g></g>
+              <g class="bx-anatomy-lines">
+                <polygon points="128 6 233.66 67 233.66 189 128 250 22.34 189 22.34 67"/>
+                <polygon points="128 81 168.7 104.5 168.7 151.5 128 175 87.3 151.5 87.3 104.5"/>
+                <path d="M22.34 67 L87.3 104.5 M233.66 67 L168.7 104.5 M128 250 V175"/>
+              </g>
+              <g class="bx-anatomy-dims">
+                <path d="M22.34 290 H233.66 M22.34 282 V298 M233.66 282 V298"/>
+                <text x="128" y="310" text-anchor="middle">1</text>
+                <path d="M87.3 -24 H168.7 M87.3 -32 V-16 M168.7 -32 V-16"/>
+                <text x="128" y="-34" text-anchor="middle">0.39</text>
+              </g>
+            </svg>
+          </div>
+          <div class="bx-anatomy-text">
+            <h3>3 つの面で、ひとつの箱</h3>
+            <p>マークは、六角形のキューブを 3 つの面に分けたもの。どの面も、同じ 3 つの青の濃淡でできています。濃い青から明るい青へ、時計回りに流れます。</p>
+            <ol class="bx-anatomy-points">
+              <li><b>上の面</b>左から右へ、明るくなる</li>
+              <li><b>右の面</b>上から下へ、明るくなる</li>
+              <li><b>左の面</b>下から上へ、明るくなる</li>
+              <li><b>まん中</b>同じ向きの六角形の窓。幅は全体の約 4 割</li>
+            </ol>
+            <div class="bx-stops">
+              <span style="--c:#0037b8"><i></i><code data-copy="#0037b8">#0037b8</code></span>
+              <span style="--c:#3e82ff"><i></i><code data-copy="#3e82ff">#3e82ff</code></span>
+              <span style="--c:#8ccfff"><i></i><code data-copy="#8ccfff">#8ccfff</code></span>
+            </div>
+            <div class="bx-toggles" role="group" aria-label="組み立て図の表示">
+              <button type="button" class="bx-toggle" aria-pressed="false" data-bx-toggle="explode">分けて見る</button>
+              <button type="button" class="bx-toggle" aria-pressed="false" data-bx-toggle="grid">方眼を出す</button>
+              <button type="button" class="bx-toggle" aria-pressed="false" data-bx-toggle="lines">線だけにする</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bx-logo-grid">
+          <!-- 余白 -->
+          <div class="bx-panel bx-clear" data-reveal>
+            <div class="bx-clear-stage">
+              <div class="bx-clear-box">
+                <span class="bx-clear-x is-t">x</span><span class="bx-clear-x is-r">x</span><span class="bx-clear-x is-b">x</span><span class="bx-clear-x is-l">x</span>
+                <img src="/assets/logo.svg" alt="" width="120" height="120">
+              </div>
+            </div>
+            <h3>まわりに余白を</h3>
+            <p>マークの幅の 4 分の 1（x）以上の余白を、上下左右にあけます。ほかの文字や絵を、この中に入れません。</p>
+          </div>
+          <!-- 小さくするとき -->
+          <div class="bx-panel bx-sizes" data-reveal>
+            <div class="bx-sizes-stage">
+              <figure><img src="/assets/logo.svg" alt="" width="96" height="96"><figcaption>96</figcaption></figure>
+              <figure><img src="/assets/logo.svg" alt="" width="48" height="48"><figcaption>48</figcaption></figure>
+              <figure><img src="/assets/logo.svg" alt="" width="32" height="32"><figcaption>32</figcaption></figure>
+              <figure><img src="/assets/logo.svg" alt="" width="16" height="16"><figcaption>16</figcaption></figure>
+            </div>
+            <h3>いちばん小さくて 16px</h3>
+            <p>ブラウザのタブのアイコンが、いちばん小さい大きさです。これより小さくすると、まん中の窓がつぶれて見えます。</p>
+          </div>
+        </div>
+
+        <!-- 背景 -->
+        <h3 class="bx-h3">どの背景でも、同じ色で</h3>
+        <div class="bx-backs" data-reveal>
+          <div class="bx-back is-white"><img src="/assets/logo.svg" alt="SK のマーク（白い背景）" width="72" height="72"><span class="bx-back-word">SK</span><small>白</small></div>
+          <div class="bx-back is-night"><img src="/assets/logo.svg" alt="SK のマーク（黒い背景）" width="72" height="72"><span class="bx-back-word">SK</span><small>黒</small></div>
+          <div class="bx-back is-tint"><img src="/assets/logo.svg" alt="SK のマーク（テーマカラーのうすい背景）" width="72" height="72"><span class="bx-back-word">SK</span><small>テーマカラーのうすい色</small></div>
+          <div class="bx-back is-outline"><span class="bx-back-outline" aria-hidden="true">SK</span><small>フッターの大きな文字（線だけの SK）</small></div>
+        </div>
+
+        <!-- してはいけないこと -->
+        <h3 class="bx-h3">してはいけないこと</h3>
+        <div class="bx-donts" data-reveal>
+          <figure class="bx-dont"><div class="bx-dont-stage"><img class="is-stretch" src="/assets/logo.svg" alt="" width="64" height="64"></div><figcaption><b>のばさない</b>縦横の比を変えない</figcaption></figure>
+          <figure class="bx-dont"><div class="bx-dont-stage"><img class="is-rotate" src="/assets/logo.svg" alt="" width="64" height="64"></div><figcaption><b>回さない</b>まっすぐ立てて使う</figcaption></figure>
+          <figure class="bx-dont"><div class="bx-dont-stage"><img class="is-recolor" src="/assets/logo.svg" alt="" width="64" height="64"></div><figcaption><b>色を変えない</b>テーマカラーを選んでいても青のまま</figcaption></figure>
+          <figure class="bx-dont"><div class="bx-dont-stage"><img class="is-shadow" src="/assets/logo.svg" alt="" width="64" height="64"></div><figcaption><b>影をつけない</b>光る効果やふちどりもなし</figcaption></figure>
+          <figure class="bx-dont"><div class="bx-dont-stage"><img class="is-crop" src="/assets/logo.svg" alt="" width="64" height="64"></div><figcaption><b>切らない</b>はみ出させない</figcaption></figure>
+          <figure class="bx-dont"><div class="bx-dont-stage is-busy"><img src="/assets/logo.svg" alt="" width="64" height="64"></div><figcaption><b>うるさい背景に置かない</b>形が見えにくくなる</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 色 -->
+    <section class="bx-chapter" id="color">
+      <div class="wrap">
+        <header class="bx-chapter-head" data-reveal>
+          <span class="bx-chapter-num" aria-hidden="true">03</span>
+          <div>
+            <span class="eyebrow">Color</span>
+            <h2>色</h2>
+            <p>基本の色は SK's Blue。サイトでは、好きなテーマカラーに変えられます。色を押すと、このサイト全体の色が変わります（コードを押すと、コピーできます）。</p>
+          </div>
+        </header>
+
+        <div class="bx-color" data-reveal>
+          <div class="bx-swatches" data-brand-accents role="group" aria-label="テーマカラー">
+            <button type="button" class="bx-swatch" data-accent="blue" style="--sw:#2563eb; --sw-d:#3b82f6"><i></i><span><strong>SK's Blue</strong><small>いつもの青</small></span><code data-copy="#2563eb">#2563eb</code></button>
+            <button type="button" class="bx-swatch" data-accent="sakura" style="--sw:#db2777; --sw-d:#f472b6"><i></i><span><strong>SK's Sakura</strong><small>さくら</small></span><code data-copy="#db2777">#db2777</code></button>
+            <button type="button" class="bx-swatch" data-accent="matcha" style="--sw:#16a34a; --sw-d:#22c55e"><i></i><span><strong>SK's Matcha</strong><small>抹茶</small></span><code data-copy="#16a34a">#16a34a</code></button>
+            <button type="button" class="bx-swatch" data-accent="mikan" style="--sw:#ea580c; --sw-d:#fb923c"><i></i><span><strong>SK's Mikan</strong><small>みかん</small></span><code data-copy="#ea580c">#ea580c</code></button>
+            <button type="button" class="bx-swatch" data-accent="fuji" style="--sw:#7c3aed; --sw-d:#a78bfa"><i></i><span><strong>SK's Fuji</strong><small>藤</small></span><code data-copy="#7c3aed">#7c3aed</code></button>
+            <button type="button" class="bx-swatch" data-accent="sora" style="--sw:#0891b2; --sw-d:#22d3ee"><i></i><span><strong>SK's Sora</strong><small>空</small></span><code data-copy="#0891b2">#0891b2</code></button>
+            <button type="button" class="bx-swatch" data-accent="sumi" style="--sw:#334155; --sw-d:#94a3b8"><i></i><span><strong>SK's Sumi</strong><small>墨</small></span><code data-copy="#334155">#334155</code></button>
+          </div>
+
+          <!-- いまの色で、部品がどう見えるか -->
+          <div class="bx-live">
+            <div class="bx-live-head">
+              <span class="bx-live-chip" aria-hidden="true"></span>
+              <div><small>いまのテーマカラー</small><strong data-bx-accent-name>SK's Blue</strong></div>
+              <span class="bx-live-mode" data-bx-mode>ライト</span>
+            </div>
+            <div class="bx-tones">
+              <span style="--t:var(--link)"><i></i><b>濃い</b><code data-bx-tone="--link"></code></span>
+              <span style="--t:var(--accent)"><i></i><b>基本</b><code data-bx-tone="--accent"></code></span>
+              <span style="--t:var(--accent-line)"><i></i><b>線</b><code data-bx-tone="--accent-line"></code></span>
+              <span style="--t:var(--green-soft)"><i></i><b>うすい</b><code data-bx-tone="--green-soft"></code></span>
+              <span style="--t:var(--tint-blue)"><i></i><b>ごくうすい</b><code data-bx-tone="--tint-blue"></code></span>
+            </div>
+            <div class="bx-contrast">
+              <div><span class="bx-contrast-sample is-btn" aria-hidden="true">Aa</span><div><small>ボタンの文字</small><strong data-bx-contrast="button">—</strong></div></div>
+              <div><span class="bx-contrast-sample is-link" aria-hidden="true">Aa</span><div><small>カードの上のリンク</small><strong data-bx-contrast="link">—</strong></div></div>
+            </div>
+            <div class="bx-ui" aria-hidden="true">
+              <div class="bx-ui-row">
+                <span class="bx-ui-btn">保存する</span>
+                <span class="bx-ui-btn is-tonal">あとで</span>
+                <span class="bx-ui-switch"><i></i></span>
+              </div>
+              <div class="bx-ui-row">
+                <span class="bx-ui-chip is-on">すべて</span><span class="bx-ui-chip">お知らせ</span><span class="bx-ui-chip">アップデート</span>
+              </div>
+              <div class="bx-ui-row">
+                <span class="bx-ui-check"></span><span class="bx-ui-text">同期する</span>
+                <span class="bx-ui-bar"><i></i></span>
+              </div>
+            </div>
+            <p class="bx-live-note">ダークモードでは、明るくした色の上に濃い文字をのせます。<button type="button" class="bx-link-btn" data-play="theme">ライト・ダークを切り替える</button></p>
+          </div>
+        </div>
+
+        <!-- 色の割合 -->
+        <h3 class="bx-h3">色の割合の目安</h3>
+        <div class="bx-ratio-wrap" data-reveal>
+          <div class="bx-ratio" aria-hidden="true">
+            <span class="is-bg" style="--w:60"></span><span class="is-surface" style="--w:25"></span><span class="is-ink" style="--w:10"></span><span class="is-accent" style="--w:5"></span>
+          </div>
+          <ul class="bx-ratio-legend">
+            <li class="is-bg"><i></i><b>背景</b><small>60%</small></li>
+            <li class="is-surface"><i></i><b>カード</b><small>25%</small></li>
+            <li class="is-ink"><i></i><b>文字</b><small>10%</small></li>
+            <li class="is-accent"><i></i><b>テーマカラー</b><small>5%</small></li>
+          </ul>
+        </div>
+        <p class="bx-note">テーマカラーは「ここを押せる」「ここが大事」の合図。使いすぎると、合図にならなくなります。</p>
+
+        <!-- プロダクトの色 -->
+        <h3 class="bx-h3">プロダクトの色</h3>
+        <div class="bx-products" data-reveal>
+          <div class="bx-product" style="--pc:#ffc83d"><img class="yf-tile" src="/y-filter/shared/icon.svg" alt="" width="52" height="52"><div><strong>Y-FILTER.</strong><small>見守る黄色</small></div><code data-copy="#ffc83d">#ffc83d</code></div>
+          <div class="bx-product" style="--pc:#5a5fe0"><img src="/dictionary/ico/icon-192.png" alt="" width="52" height="52"><div><strong>MALU</strong><small>ことばの紫</small></div><code data-copy="#5a5fe0">#5a5fe0</code></div>
+          <div class="bx-product" style="--pc:#0f766e"><img src="/nagi/ico/icon-192.png" alt="" width="52" height="52"><div><strong>Nagi</strong><small>凪の青緑</small></div><code data-copy="#0f766e">#0f766e</code></div>
+          <div class="bx-product" style="--pc:#0b6bcb"><img class="plist-logo" src="/assets/logo.svg" alt="" width="52" height="52"><div><strong>SK Hub Systems</strong><small>支える青</small></div><code data-copy="#0b6bcb">#0b6bcb</code></div>
+        </div>
+
+        <!-- 基本の色（ライトとダークを並べる） -->
+        <h3 class="bx-h3">基本の色</h3>
+        <div class="bx-neutrals" data-reveal>
+          <div class="bx-neutral" style="--l:#0d1014; --d:#e8ecf1"><i></i><strong>Ink</strong><small>文字</small><span class="bx-hexes"><code data-copy="#0d1014">#0d1014</code><code data-copy="#e8ecf1">#e8ecf1</code></span></div>
+          <div class="bx-neutral" style="--l:#5a6371; --d:#9aa4b2"><i></i><strong>Muted</strong><small>説明の文字</small><span class="bx-hexes"><code data-copy="#5a6371">#5a6371</code><code data-copy="#9aa4b2">#9aa4b2</code></span></div>
+          <div class="bx-neutral" style="--l:#f5f6f8; --d:#0b0e13"><i></i><strong>Background</strong><small>背景</small><span class="bx-hexes"><code data-copy="#f5f6f8">#f5f6f8</code><code data-copy="#0b0e13">#0b0e13</code></span></div>
+          <div class="bx-neutral" style="--l:#ffffff; --d:#151a21"><i></i><strong>Surface</strong><small>カード</small><span class="bx-hexes"><code data-copy="#ffffff">#ffffff</code><code data-copy="#151a21">#151a21</code></span></div>
+          <div class="bx-neutral" style="--l:#e1e4e9; --d:#2a313b"><i></i><strong>Line</strong><small>線</small><span class="bx-hexes"><code data-copy="#e1e4e9">#e1e4e9</code><code data-copy="#2a313b">#2a313b</code></span></div>
+        </div>
+        <p class="bx-note">色の見本は、左半分がライト、右半分がダークのときの色です。</p>
+      </div>
+    </section>
+
+    <!-- 04 文字 -->
+    <section class="bx-chapter" id="type">
+      <div class="wrap">
+        <header class="bx-chapter-head" data-reveal>
+          <span class="bx-chapter-num" aria-hidden="true">04</span>
+          <div>
+            <span class="eyebrow">Typography</span>
+            <h2>文字</h2>
+            <p>読みやすさを第一に。プロダクトごとに、性格に合った書体を選んでいます。</p>
+          </div>
+        </header>
+
+        <!-- 書体を試す -->
+        <div class="bx-tester" data-reveal data-bx-tester>
+          <div class="bx-tester-controls">
+            <label class="bx-tester-input"><span>試す文字</span><input type="text" value="SK's Brand 2026 — 毎日のネットを、もう少し安心で便利に。" maxlength="80" data-bx-tester-text></label>
+            <label class="bx-tester-range"><span>大きさ</span><input type="range" min="14" max="96" value="36" data-bx-tester-size><output data-bx-tester-size-out>36px</output></label>
+            <div class="bx-tester-weights" role="group" aria-label="太さ">
+              <button type="button" aria-pressed="false" data-bx-weight="400">ふつう</button>
+              <button type="button" aria-pressed="true" data-bx-weight="700">太い</button>
+              <button type="button" aria-pressed="false" data-bx-weight="800">とても太い</button>
+            </div>
+          </div>
+          <div class="bx-tester-rows">
+            <div class="bx-tester-row" style="--ff:Inter, 'Noto Sans JP', sans-serif"><div class="bx-tester-label"><strong>Inter ＋ Noto Sans JP</strong><small>サイト全体の文字</small></div><p class="bx-tester-out" data-bx-tester-out></p></div>
+            <div class="bx-tester-row" style="--ff:'Space Grotesk', 'Noto Sans JP', sans-serif"><div class="bx-tester-label"><strong>Space Grotesk</strong><small>Y-FILTER. の見出し</small></div><p class="bx-tester-out" data-bx-tester-out></p></div>
+            <div class="bx-tester-row" style="--ff:'M PLUS 1', 'Noto Sans JP', sans-serif"><div class="bx-tester-label"><strong>M PLUS 1</strong><small>MALU・Nagi の文字</small></div><p class="bx-tester-out" data-bx-tester-out></p></div>
+            <div class="bx-tester-row is-code" style="--ff:'M PLUS 1 Code', ui-monospace, monospace"><div class="bx-tester-label"><strong>M PLUS 1 Code</strong><small>ひみつのターミナル</small></div><p class="bx-tester-out" data-bx-tester-out></p></div>
+          </div>
+        </div>
+
+        <!-- 文字の大きさ -->
+        <h3 class="bx-h3">文字の大きさ</h3>
+        <div class="bx-scale" data-reveal>
+          <div class="bx-scale-row"><span class="bx-scale-meta"><b>表紙</b>112 / 800</span><span class="bx-scale-sample is-display">SK's Brand</span></div>
+          <div class="bx-scale-row"><span class="bx-scale-meta"><b>見出し</b>36 / 800</span><span class="bx-scale-sample is-h2">大切にしていること</span></div>
+          <div class="bx-scale-row"><span class="bx-scale-meta"><b>小見出し</b>20 / 800</span><span class="bx-scale-sample is-h3">3 つの面で、ひとつの箱</span></div>
+          <div class="bx-scale-row"><span class="bx-scale-meta"><b>本文</b>16 / 400・行間 1.75</span><span class="bx-scale-sample is-body">専門用語をなるべく使わず、小学生にも伝わることばで。説明がなくても、さわればわかる形に。</span></div>
+          <div class="bx-scale-row"><span class="bx-scale-meta"><b>ラベル</b>12 / 800・字間 0.14em</span><span class="bx-scale-sample is-label">Typography</span></div>
+        </div>
+
+        <!-- 日本語と英数字を混ぜるとき（見本は日本語のまま見せる） -->
+        <h3 class="bx-h3">日本語と英数字を混ぜるとき</h3>
+        <div class="bx-mix" data-reveal>
+          <div class="bx-mix-card">
+            <strong>英数字の前後には、半角スペース</strong>
+            <p class="bx-mix-ng" data-i18n-skip>SKのプロダクト</p>
+            <p class="bx-mix-ok" data-i18n-skip>SK<span class="bx-sp"> </span>のプロダクト</p>
+          </div>
+          <div class="bx-mix-card">
+            <strong>数字と単位のあいだも、半角スペース</strong>
+            <p class="bx-mix-ng" data-i18n-skip>0.3秒・8文字</p>
+            <p class="bx-mix-ok" data-i18n-skip>0.3<span class="bx-sp"> </span>秒・8<span class="bx-sp"> </span>文字</p>
+          </div>
+          <div class="bx-mix-card">
+            <strong>押すところの名前は「」で</strong>
+            <p class="bx-mix-ng" data-i18n-skip>表示を押す</p>
+            <p class="bx-mix-ok" data-i18n-skip>「表示」を押す</p>
+          </div>
+          <div class="bx-mix-card">
+            <strong>句読点は「、」と「。」</strong>
+            <p class="bx-mix-ng" data-i18n-skip>保存しました．次へ進みます，</p>
+            <p class="bx-mix-ok" data-i18n-skip>保存しました。次へ進みます、</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ロゴ -->
-    <section class="section" id="logo">
+    <!-- 05 形と動き -->
+    <section class="bx-chapter" id="shape">
       <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Logo</span>
-          <h2>ロゴ</h2>
-          <p>青いキューブのマークと、「SK」の文字。明るい背景でも、暗い背景でも、そのままの形と色で使います。</p>
-        </div>
-        <div class="brand-logos">
-          <div class="brand-logo-tile is-light"><img src="/assets/logo.svg" alt="SK のマーク（明るい背景）" width="96" height="96"><span class="brand-logo-word">SK</span></div>
-          <div class="brand-logo-tile is-dark"><img src="/assets/logo.svg" alt="SK のマーク（暗い背景）" width="96" height="96"><span class="brand-logo-word">SK</span></div>
-          <div class="brand-logo-tile is-outline"><span class="brand-logo-outline" aria-hidden="true">SK</span><small>フッターの大きな文字（線だけの SK）</small></div>
-        </div>
-        <ul class="brand-rules">
-          <li><strong>まわりに余白を</strong>マークの 4 分の 1 以上の余白をあけます。</li>
-          <li><strong>形を変えない</strong>のばしたり、回したり、切ったりしません。</li>
-          <li><strong>色を変えない</strong>テーマカラーを選んでいても、マークの色はそのままです。</li>
-          <li><strong>飾らない</strong>影やふちどり、光る効果をつけません。</li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- 色 -->
-    <section class="section" id="color">
-      <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Color</span>
-          <h2>色</h2>
-          <p>基本の色は SK's Blue。サイトでは、好きなテーマカラーに変えられます。色の丸を押すと、このページの色が変わります（色の名前の下のコードを押すと、コピーできます）。</p>
-        </div>
-
-        <h3 class="brand-h3">テーマカラー</h3>
-        <div class="brand-swatches" data-brand-accents>
-          <button type="button" class="brand-swatch" data-accent="blue" style="--sw:#2563eb; --sw-d:#3b82f6"><i></i><strong>SK's Blue</strong><small>いつもの青</small><code data-copy="#2563eb">#2563eb</code></button>
-          <button type="button" class="brand-swatch" data-accent="sakura" style="--sw:#db2777; --sw-d:#f472b6"><i></i><strong>SK's Sakura</strong><small>さくら</small><code data-copy="#db2777">#db2777</code></button>
-          <button type="button" class="brand-swatch" data-accent="matcha" style="--sw:#16a34a; --sw-d:#22c55e"><i></i><strong>SK's Matcha</strong><small>抹茶</small><code data-copy="#16a34a">#16a34a</code></button>
-          <button type="button" class="brand-swatch" data-accent="mikan" style="--sw:#ea580c; --sw-d:#fb923c"><i></i><strong>SK's Mikan</strong><small>みかん</small><code data-copy="#ea580c">#ea580c</code></button>
-          <button type="button" class="brand-swatch" data-accent="fuji" style="--sw:#7c3aed; --sw-d:#a78bfa"><i></i><strong>SK's Fuji</strong><small>藤</small><code data-copy="#7c3aed">#7c3aed</code></button>
-          <button type="button" class="brand-swatch" data-accent="sora" style="--sw:#0891b2; --sw-d:#22d3ee"><i></i><strong>SK's Sora</strong><small>空</small><code data-copy="#0891b2">#0891b2</code></button>
-          <button type="button" class="brand-swatch" data-accent="sumi" style="--sw:#334155; --sw-d:#94a3b8"><i></i><strong>SK's Sumi</strong><small>墨</small><code data-copy="#334155">#334155</code></button>
-        </div>
-
-        <h3 class="brand-h3">プロダクトの色</h3>
-        <div class="brand-products">
-          <div class="brand-product" style="--pc:#ffc83d; --pc-ink:#1a1204"><img class="yf-tile" src="/y-filter/shared/icon.svg" alt="" width="48" height="48"><div><strong>Y-FILTER.</strong><small>見守る黄色</small></div><code data-copy="#ffc83d">#ffc83d</code></div>
-          <div class="brand-product" style="--pc:#5a5fe0; --pc-ink:#fff"><img src="/dictionary/ico/icon-192.png" alt="" width="48" height="48"><div><strong>MALU</strong><small>ことばの紫</small></div><code data-copy="#5a5fe0">#5a5fe0</code></div>
-          <div class="brand-product" style="--pc:#0f766e; --pc-ink:#fff"><img src="/nagi/ico/icon-192.png" alt="" width="48" height="48"><div><strong>Nagi</strong><small>凪の青緑</small></div><code data-copy="#0f766e">#0f766e</code></div>
-          <div class="brand-product" style="--pc:#0b6bcb; --pc-ink:#fff"><img class="plist-logo" src="/assets/logo.svg" alt="" width="48" height="48"><div><strong>SK Hub Systems</strong><small>支える青</small></div><code data-copy="#0b6bcb">#0b6bcb</code></div>
-        </div>
-
-        <h3 class="brand-h3">基本の色</h3>
-        <div class="brand-neutrals">
-          <div class="brand-neutral" style="--n:var(--ink)"><i></i><strong>Ink</strong><small>文字</small><span class="brand-hexes"><code data-copy="#0d1014">#0d1014</code><code data-copy="#e8ecf1">#e8ecf1</code></span></div>
-          <div class="brand-neutral" style="--n:var(--muted)"><i></i><strong>Muted</strong><small>説明の文字</small><span class="brand-hexes"><code data-copy="#5a6371">#5a6371</code><code data-copy="#9aa4b2">#9aa4b2</code></span></div>
-          <div class="brand-neutral" style="--n:var(--bg)"><i></i><strong>Background</strong><small>背景</small><span class="brand-hexes"><code data-copy="#f5f6f8">#f5f6f8</code><code data-copy="#0b0e13">#0b0e13</code></span></div>
-          <div class="brand-neutral" style="--n:var(--surface)"><i></i><strong>Surface</strong><small>カード</small><span class="brand-hexes"><code data-copy="#ffffff">#ffffff</code><code data-copy="#151a21">#151a21</code></span></div>
-          <div class="brand-neutral" style="--n:var(--line)"><i></i><strong>Line</strong><small>線</small><span class="brand-hexes"><code data-copy="#e1e4e9">#e1e4e9</code><code data-copy="#2a313b">#2a313b</code></span></div>
-        </div>
-        <p class="brand-note">コードは、左がライト、右がダークのときの色です。</p>
-      </div>
-    </section>
-
-    <!-- 文字 -->
-    <section class="section" id="type">
-      <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Typography</span>
-          <h2>文字</h2>
-          <p>読みやすさを第一に。プロダクトごとに、性格に合った書体を選んでいます。</p>
-        </div>
-        <div class="brand-fonts">
-          <div class="card brand-font">
-            <div class="brand-font-sample" style="font-family:Inter,'Noto Sans JP',sans-serif">毎日のネットを、<br>もう少し安心で便利に。</div>
-            <div class="brand-font-meta"><strong>Inter ＋ Noto Sans JP</strong><small>サイト全体の文字</small></div>
-            <div class="brand-font-glyphs" style="font-family:Inter,'Noto Sans JP',sans-serif">Aa Bb 0123 あア安</div>
+        <header class="bx-chapter-head" data-reveal>
+          <span class="bx-chapter-num" aria-hidden="true">05</span>
+          <div>
+            <span class="eyebrow">Shape &amp; Motion</span>
+            <h2>形と動き</h2>
+            <p>角はやわらかく、動きは短く。気持ちよさは、気づかれないくらいがちょうどいい。</p>
           </div>
-          <div class="card brand-font">
-            <div class="brand-font-sample" style="font-family:'Space Grotesk','Noto Sans JP',sans-serif;font-weight:700;letter-spacing:-.02em">Y-FILTER.</div>
-            <div class="brand-font-meta"><strong>Space Grotesk</strong><small>Y-FILTER. の見出し</small></div>
-            <div class="brand-font-glyphs" style="font-family:'Space Grotesk',sans-serif">Aa Bb 0123 → ✓</div>
+        </header>
+
+        <!-- なめらかな角 -->
+        <div class="bx-corner" data-reveal data-bx-corner="both">
+          <div class="bx-corner-stage" aria-hidden="true">
+            <div class="bx-corner-shape is-round"></div>
+            <div class="bx-corner-shape is-squircle"></div>
           </div>
-          <div class="card brand-font">
-            <div class="brand-font-sample" style="font-family:'M PLUS 1','Noto Sans JP',sans-serif">集中と休憩を、<br>凪のように。</div>
-            <div class="brand-font-meta"><strong>M PLUS 1</strong><small>MALU・Nagi の文字</small></div>
-            <div class="brand-font-glyphs" style="font-family:'M PLUS 1',sans-serif">Aa 25:00 あア凪</div>
-          </div>
-          <div class="card brand-font">
-            <div class="brand-font-sample brand-font-code" style="font-family:'M PLUS 1 Code',ui-monospace,monospace">sk@hub:~$ whoami</div>
-            <div class="brand-font-meta"><strong>M PLUS 1 Code</strong><small>ひみつのターミナル</small></div>
-            <div class="brand-font-glyphs" style="font-family:'M PLUS 1 Code',monospace">0O 1lI {} =&gt;</div>
+          <div class="bx-corner-text">
+            <h3>なめらかな角</h3>
+            <p>ふつうの角の丸み（円）は、まっすぐな辺から急に曲がり始めます。SK のカードは、辺から少しずつ曲がっていく「なめらかな角」を使います。</p>
+            <ul class="bx-corner-legend"><li class="is-round">ふつうの角</li><li class="is-squircle">なめらかな角</li></ul>
+            <div class="bx-toggles" role="group" aria-label="角の比べ方">
+              <button type="button" class="bx-toggle" aria-pressed="true" data-bx-corner-mode="both">重ねる</button>
+              <button type="button" class="bx-toggle" aria-pressed="false" data-bx-corner-mode="round">ふつうの角</button>
+              <button type="button" class="bx-toggle" aria-pressed="false" data-bx-corner-mode="squircle">なめらかな角</button>
+            </div>
+            <p class="bx-note" data-bx-corner-note hidden>このブラウザは、なめらかな角にまだ対応していません（ふつうの角で表示されます）。</p>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- 形と動き -->
-    <section class="section" id="shape">
-      <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Shape &amp; Motion</span>
-          <h2>形と動き</h2>
-          <p>角はやわらかく、動きは短く。気持ちよさは、気づかれないくらいがちょうどいい。</p>
-        </div>
-        <div class="brand-shapes">
-          <div class="brand-shape"><div class="brand-shape-demo is-card"></div><strong>カード</strong><small>角の丸み 28px（なめらかな角）</small></div>
-          <div class="brand-shape"><div class="brand-shape-demo is-pill"><span>ボタン</span></div><strong>ボタン</strong><small>丸い両端</small></div>
-          <div class="brand-shape"><div class="brand-shape-demo is-icon"><img src="/assets/logo.svg" alt="" width="40" height="40"></div><strong>アイコン</strong><small>角の丸い四角</small></div>
-          <div class="brand-shape"><div class="brand-shape-demo is-shadow"></div><strong>影</strong><small>うすく、やわらかく</small></div>
+        <!-- 角の丸みの大きさ -->
+        <h3 class="bx-h3">角の丸みの大きさ</h3>
+        <div class="bx-radii" data-reveal>
+          <div style="--r:8px"><i></i><b>8</b><small>コード</small></div>
+          <div style="--r:14px"><i></i><b>14</b><small>アイコン</small></div>
+          <div style="--r:18px"><i></i><b>18</b><small>リスト</small></div>
+          <div style="--r:22px"><i></i><b>22</b><small>小さいカード</small></div>
+          <div style="--r:28px"><i></i><b>28</b><small>カード</small></div>
+          <div style="--r:32px"><i></i><b>32</b><small>大きな帯</small></div>
+          <div style="--r:999px"><i></i><b>∞</b><small>ボタン</small></div>
         </div>
 
-        <div class="brand-motions">
-          <div class="card brand-motion">
-            <div class="brand-motion-stage"><span class="brand-motion-page" data-motion="page"></span></div>
+        <!-- 動きのカーブ -->
+        <h3 class="bx-h3">動きのカーブ</h3>
+        <div class="bx-curves" data-reveal>
+          <button type="button" class="bx-curve" data-bx-curve=".22, 1, .36, 1" data-bx-dur="600">
+            <svg viewBox="-14 -64 128 180" aria-hidden="true"><path class="bx-curve-axis" d="M0 0 V100 H100"/><path class="bx-curve-handle"/><path class="bx-curve-path"/><circle class="bx-curve-dot" r="5" cx="0" cy="100"/></svg>
+            <span class="bx-curve-track" aria-hidden="true"><i></i></span>
+            <strong>すっと止まる</strong>
+            <small>出てくるもの・広がるもの</small>
+            <code>cubic-bezier(.22, 1, .36, 1)</code>
+          </button>
+          <button type="button" class="bx-curve" data-bx-curve=".34, 1.56, .64, 1" data-bx-dur="450">
+            <svg viewBox="-14 -64 128 180" aria-hidden="true"><path class="bx-curve-axis" d="M0 0 V100 H100"/><path class="bx-curve-handle"/><path class="bx-curve-path"/><circle class="bx-curve-dot" r="5" cx="0" cy="100"/></svg>
+            <span class="bx-curve-track" aria-hidden="true"><i></i></span>
+            <strong>ポンと弾む</strong>
+            <small>選んだもの</small>
+            <code>cubic-bezier(.34, 1.56, .64, 1)</code>
+          </button>
+          <button type="button" class="bx-curve" data-bx-curve=".4, .04, 0, 1" data-bx-dur="300">
+            <svg viewBox="-14 -64 128 180" aria-hidden="true"><path class="bx-curve-axis" d="M0 0 V100 H100"/><path class="bx-curve-handle"/><path class="bx-curve-path"/><circle class="bx-curve-dot" r="5" cx="0" cy="100"/></svg>
+            <span class="bx-curve-track" aria-hidden="true"><i></i></span>
+            <strong>ページの移動</strong>
+            <small>画面ごと入れかわるとき</small>
+            <code>cubic-bezier(.4, .04, 0, 1)</code>
+          </button>
+        </div>
+        <div class="bx-curves-foot">
+          <div class="bx-durations"><span><b>0.15 秒</b>押したとき</span><span><b>0.2 秒</b>色が変わるとき</span><span><b>0.3 秒</b>ページの移動</span><span><b>0.45 秒</b>弾むとき</span></div>
+          <p class="bx-note">カーブを押すと動きます（見やすいように、3 倍ゆっくり）。</p>
+        </div>
+
+        <!-- 動きの見本 -->
+        <h3 class="bx-h3">動きの見本</h3>
+        <div class="bx-motions" data-reveal>
+          <div class="bx-motion">
+            <div class="bx-motion-stage"><span class="bx-motion-page" data-motion="page"><i></i><i></i><i></i></span></div>
             <div><strong>ページの移動</strong><p>0.3 秒。前のページが少し小さくなって消え、次のページが出てきます。</p></div>
             <button type="button" class="btn btn-tonal" data-play="page">動かしてみる</button>
           </div>
-          <div class="card brand-motion">
-            <div class="brand-motion-stage"><span class="brand-motion-ripple" data-motion="ripple"></span></div>
+          <div class="bx-motion">
+            <div class="bx-motion-stage"><span class="bx-motion-ripple" data-motion="ripple"></span></div>
             <div><strong>表示の切り替え</strong><p>押したところから、新しい色が円く広がります。</p></div>
             <button type="button" class="btn btn-tonal" data-play="theme">ライト・ダークを切り替える</button>
           </div>
-          <div class="card brand-motion">
-            <div class="brand-motion-stage"><span class="brand-motion-pop" data-motion="pop"></span></div>
+          <div class="bx-motion">
+            <div class="bx-motion-stage"><span class="bx-motion-pop" data-motion="pop"></span></div>
             <div><strong>選んだとき</strong><p>選んだものが、ポンと小さく弾みます。</p></div>
             <button type="button" class="btn btn-tonal" data-play="pop">動かしてみる</button>
           </div>
         </div>
-        <p class="brand-note">動きを減らす設定にしている人には、動きを出しません。</p>
+        <p class="bx-note">動きを減らす設定にしている人には、動きを出しません。</p>
       </div>
     </section>
 
-    <!-- ことば -->
-    <section class="section" id="voice">
+    <!-- 06 ことば -->
+    <section class="bx-chapter" id="voice">
       <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Voice</span>
-          <h2>ことば</h2>
-          <p>画面のことばは、となりで話しかけるように。短く、やさしく、相手をせめない。</p>
-        </div>
-        <div class="brand-voice">
-          <div class="brand-voice-rules">
-            <div><strong>です・ます</strong><p>ていねいに、でもかたくなりすぎずに。</p></div>
-            <div><strong>むずかしいことばを使わない</strong><p>「認証」ではなく「ログイン」。「同期処理」ではなく「同期」。</p></div>
-            <div><strong>次にすることを伝える</strong><p>うまくいかなかったときは、理由と、次に何をすればいいかを書く。</p></div>
-            <div><strong>相手をせめない</strong><p>「無効な入力です」ではなく、どう入れればいいかを伝える。</p></div>
-          </div>
-          <div class="brand-voice-table">
-            <div class="brand-voice-row is-head"><span>こうは書かない</span><span>こう書く</span></div>
-            <div class="brand-voice-row"><span>認証に失敗しました</span><span>ログインできませんでした</span></div>
-            <div class="brand-voice-row"><span>同期処理を実行中</span><span>同期しています…</span></div>
-            <div class="brand-voice-row"><span>無効な入力です</span><span>8 文字のコードを入力してください</span></div>
-            <div class="brand-voice-row"><span>ネットワークエラー</span><span>通信できませんでした。インターネットの接続を確認してください。</span></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 約束 -->
-    <section class="section" id="promise">
-      <div class="wrap">
-        <div class="brand-promise">
+        <header class="bx-chapter-head" data-reveal>
+          <span class="bx-chapter-num" aria-hidden="true">06</span>
           <div>
+            <span class="eyebrow">Voice</span>
+            <h2>ことば</h2>
+            <p>画面のことばは、となりで話しかけるように。短く、やさしく、相手をせめない。</p>
+          </div>
+        </header>
+
+        <div class="bx-voice" data-reveal>
+          <div class="bx-voice-rules">
+            <div><b>1</b><strong>です・ます</strong><p>ていねいに、でもかたくなりすぎずに。</p></div>
+            <div><b>2</b><strong>むずかしいことばを使わない</strong><p>「認証」ではなく「ログイン」。「同期処理」ではなく「同期」。</p></div>
+            <div><b>3</b><strong>次にすることを伝える</strong><p>うまくいかなかったときは、理由と、次に何をすればいいかを書く。</p></div>
+            <div><b>4</b><strong>相手をせめない</strong><p>「無効な入力です」ではなく、どう入れればいいかを伝える。</p></div>
+          </div>
+
+          <!-- 同じ場面を、2 つの書き方で -->
+          <div class="bx-dialog-demo" data-bx-voice="sk">
+            <div class="bx-seg" role="group" aria-label="書き方">
+              <button type="button" aria-pressed="false" data-bx-voice-set="plain">よくある書き方</button>
+              <button type="button" aria-pressed="true" data-bx-voice-set="sk">SK の書き方</button>
+            </div>
+            <div class="bx-dialog">
+              <div class="bx-dialog-body is-plain">
+                <span class="bx-dialog-ico" aria-hidden="true">!</span>
+                <strong>エラー</strong>
+                <p>認証に失敗しました。（エラーコード: 401）</p>
+                <div class="bx-dialog-btns"><span>OK</span></div>
+              </div>
+              <div class="bx-dialog-body is-sk">
+                <span class="bx-dialog-ico" aria-hidden="true">?</span>
+                <strong>ログインできませんでした</strong>
+                <p>パスワードがちがうようです。もう一度入れるか、「パスワードを忘れた」から作り直してください。</p>
+                <div class="bx-dialog-btns"><span class="is-sub">パスワードを忘れた</span><span>もう一度</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bx-voice-table" data-reveal>
+          <div class="bx-voice-row is-head"><span>こうは書かない</span><span>こう書く</span></div>
+          <div class="bx-voice-row"><span>認証に失敗しました</span><span>ログインできませんでした</span></div>
+          <div class="bx-voice-row"><span>同期処理を実行中</span><span>同期しています…</span></div>
+          <div class="bx-voice-row"><span>無効な入力です</span><span>8 文字のコードを入力してください</span></div>
+          <div class="bx-voice-row"><span>ネットワークエラー</span><span>通信できませんでした。インターネットの接続を確認してください。</span></div>
+          <div class="bx-voice-row"><span>削除しますか？</span><span>このメモを削除しますか？削除すると、元に戻せません。</span></div>
+          <div class="bx-voice-row"><span>処理が完了しました</span><span>保存しました</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 約束 -->
+    <section class="bx-chapter" id="promise">
+      <div class="wrap">
+        <div class="bx-promise" data-reveal>
+          <div class="bx-promise-head">
+            <span class="bx-chapter-num" aria-hidden="true">07</span>
             <span class="eyebrow">Promise</span>
             <h2>使う人との約束</h2>
             <p>デザインのきまりと同じくらい、大切にしていることです。</p>
@@ -219,7 +557,31 @@
             <li>アクセス解析は、許可した人だけ。</li>
             <li>自分のデータは、いつでもダウンロード・削除できます。</li>
           </ul>
-          <p class="brand-promise-links"><a href="/policies/privacy/">SK プライバシーポリシー</a><a href="/credits/">使わせてもらっているもの</a><a href="/products/">すべてのプロダクト</a></p>
+          <p class="bx-promise-links"><a href="/policies/privacy/">SK プライバシーポリシー</a><a href="/credits/">使わせてもらっているもの</a><a href="/products/">すべてのプロダクト</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 使うときの素材 -->
+    <section class="bx-chapter bx-chapter--last" id="resources">
+      <div class="wrap">
+        <div class="bx-resources" data-reveal>
+          <div class="bx-resources-head">
+            <span class="eyebrow">Resources</span>
+            <h2>使うときの素材</h2>
+            <p>SK を紹介してくれるときは、ここの素材を使ってください。</p>
+          </div>
+          <div class="bx-resource-list">
+            <a class="bx-resource" href="/assets/logo.svg" download="sk-logo.svg"><img src="/assets/logo.svg" alt="" width="40" height="40"><span><strong>マーク（SVG）</strong><small>大きくしてもきれいに見える</small></span><i aria-hidden="true">↓</i></a>
+            <a class="bx-resource" href="/assets/apple-touch-icon.png" download="sk-icon.png"><img src="/assets/apple-touch-icon.png" alt="" width="40" height="40"><span><strong>アイコン（PNG）</strong><small>角の丸い四角に入ったもの</small></span><i aria-hidden="true">↓</i></a>
+            <button type="button" class="bx-resource" data-bx-copy-tokens><span class="bx-resource-ico" aria-hidden="true">{ }</span><span><strong>色のコード（CSS）</strong><small>テーマカラーと基本の色をコピー</small></span><i aria-hidden="true">⧉</i></button>
+          </div>
+        </div>
+        <div class="bx-outro" data-reveal>
+          <svg class="bx-mark bx-mark--outro" viewBox="0 0 256 256" aria-hidden="true">
+            <g clip-path="url(#bx-ring)"><polygon fill="url(#bx-g-top)" points="22.34 67 128 6 233.66 67 168.7 104.5 128 81 87.3 104.5"/><polygon fill="url(#bx-g-right)" points="233.66 67 233.66 189 128 250 128 175 168.7 151.5 168.7 104.5"/><polygon fill="url(#bx-g-left)" points="128 250 22.34 189 22.34 67 87.3 104.5 87.3 151.5 128 175"/></g>
+          </svg>
+          <p>きまりは、使う人のためにあります。<br>よりよい形が見つかったら、ここも変えていきます。</p>
         </div>
       </div>
     </section>

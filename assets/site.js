@@ -93,19 +93,30 @@
   // ---------- ヘッダーメニュー（search3958 の headerv2 と同じ動き） ----------
   // PC: 項目にマウスを乗せると白いパネルが下に開く。スマホ: 2 本線ボタン → 一覧 → 項目を選ぶとロゴが「戻る」になる。
   const MENUS = {
+    // groups があると、見出しつきの列に分けて出す（スマホでは縦に並ぶ）
     products: {
       title: t("プロダクト"),
-      items: [
-        [t("すべてのプロダクト"), lp("/products/")],
-        ["Y-FILTER.", lp("/products/y-filter/")],
-        ["MALU", lp("/products/malu/")],
-        ["Nagi", lp("/products/nagi/")],
-        ["SK Hub Systems", lp("/sk-hub-systems/")],
-        ["SK's Toolbox", lp("/toolbox/")],
-        ["SK's Lab", lp("/lab/")]
+      groups: [
+        {
+          title: t("プロダクト"),
+          items: [
+            [t("すべてのプロダクト"), lp("/products/")],
+            ["SK Hub Systems", lp("/sk-hub-systems/")],
+            ["SK's Brand", lp("/brand/")],
+            ["SK's Toolbox", lp("/toolbox/")]
+          ]
+        },
+        {
+          title: t("SK のプロダクト"),
+          items: [
+            ["Y-FILTER.", lp("/products/y-filter/")],
+            ["MALU", lp("/products/malu/")],
+            ["Nagi", lp("/products/nagi/")],
+            ["SK's Lab", lp("/lab/")]
+          ]
+        }
       ]
     },
-    // groups があると、見出しつきの列に分けて出す（スマホでは縦に並ぶ）
     support: {
       title: t("サポートと情報"),
       groups: [
@@ -404,6 +415,9 @@
         fitHeight();
       }
     }, { passive: true });
+
+    // 同じページの中の移動（サポートの #malu など）でも、メニューを閉じる
+    window.addEventListener("hashchange", () => { if (menu.classList.contains("is-open")) closeMenu(); });
 
     window.addEventListener("scroll", () => {
       if (menu.classList.contains("is-open") && !menu.contains(document.activeElement)) closeMenu();

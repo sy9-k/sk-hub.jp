@@ -15,9 +15,73 @@
   const BRIDGE_ORIGIN = "https://sk-hub.jp";
   const MAIN = "https://sk-hub.jp";
 
-  // ---------- ヘッダーのメニュー（site.js）。「SK」の中身を sk-hub.jp へのリンクにする ----------
+  // ---------- ヘッダーのメニュー（site.js）。サポート記事・お知らせ・お問い合わせと、「SK のサイト」（sk-hub.jp へのリンク） ----------
+  // 記事の分類は help.js の HASH_CATEGORY と同じ #malu など
+  const SUPPORT = ON_SUBDOMAIN ? "/" : "/support/";
   window.SK_HEADER = {
     menus: {
+      guides: {
+        title: t("サポート記事"),
+        groups: [
+          {
+            title: t("サポート記事"),
+            items: [
+              [t("すべての記事"), SUPPORT],
+              [t("アカウント"), `${SUPPORT}#account`],
+              [t("このサイト"), `${SUPPORT}#site`],
+              [t("情報と規約"), `${SUPPORT}#privacy`]
+            ]
+          },
+          {
+            title: t("プロダクトごと"),
+            items: [
+              ["Y-FILTER.", `${SUPPORT}#y-filter`],
+              ["MALU", `${SUPPORT}#malu`],
+              ["Nagi", `${SUPPORT}#nagi`],
+              ["SK Hub Systems", `${SUPPORT}#hub`],
+              ["SK's Lab", `${SUPPORT}#lab`]
+            ]
+          }
+        ]
+      },
+      news: {
+        title: t("お知らせ"),
+        groups: [
+          {
+            title: t("お知らせ"),
+            items: [
+              [t("すべてのお知らせ"), `${SUPPORT}?type=news`]
+            ]
+          },
+          {
+            title: t("あわせて見る"),
+            items: [
+              [t("システム稼働状況"), "https://sk-hub.online/"],
+              [t("アップデート"), `${MAIN}/updates/`]
+            ]
+          }
+        ]
+      },
+      contact: {
+        title: t("お問い合わせ"),
+        groups: [
+          {
+            title: t("お問い合わせ"),
+            items: [
+              [t("お問い合わせフォーム"), `${SUPPORT}contact/`],
+              [t("データの削除（アカウント）"), `${MAIN}/account/`]
+            ]
+          },
+          {
+            title: t("先に確かめると早いこと"),
+            items: [
+              [t("システム稼働状況"), "https://sk-hub.online/"],
+              [t("お知らせ"), `${SUPPORT}?type=news`],
+              [t("サポート記事"), SUPPORT]
+            ]
+          }
+        ]
+      },
       sk: {
         title: t("SK のサイト"),
         groups: [
@@ -27,7 +91,17 @@
               [t("SK のホーム"), `${MAIN}/`],
               [t("すべてのプロダクト"), `${MAIN}/products/`],
               ["SK Hub Systems", `${MAIN}/sk-hub-systems/`],
+              ["SK's Brand", `${MAIN}/brand/`],
               ["SK's Toolbox", `${MAIN}/toolbox/`]
+            ]
+          },
+          {
+            title: t("SK のプロダクト"),
+            items: [
+              ["Y-FILTER.", `${MAIN}/products/y-filter/`],
+              ["MALU", `${MAIN}/products/malu/`],
+              ["Nagi", `${MAIN}/products/nagi/`],
+              ["SK's Lab", `${MAIN}/lab/`]
             ]
           },
           {
