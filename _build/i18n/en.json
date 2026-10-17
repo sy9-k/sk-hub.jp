@@ -3503,7 +3503,6 @@
   "M3 のトーンをまねた SK の計算": "SK's calculation modeled on M3 tones",
   "MALU の計算": "MALU's calculation",
   "MALU・Nagi・SK's Toolbox で使っている部品と配色のきまり「SK Material」。Google の Material Design 3 をもとに、SK の色と文字に合わせて調整したもの。M3 のままのところ・SK で決めたところ・プロダクトごとの配色・出どころとライセンス。": "SK Material: the component and color rules used in MALU, Nagi, and SK's Toolbox. Based on Google's Material Design 3, adjusted for SK's colors and type. What comes from M3, what SK decided, colors per product, and sources and licenses.",
-  "MALU・Nagi・SK's Toolbox のアプリは、SK Material でできています。サイト（sk-hub.jp）の画面は、SK Material ではなく SK's Brand のきまりで作っています。": "MALU, Nagi, and the SK's Toolbox apps are built with SK Material. The site itself (sk-hub.jp) follows SK's Brand rules, not SK Material.",
   "MALU・Nagi・SK's Toolbox の部品と配色のきまり。Google の Material Design 3 を土台に、SK の色と文字をのせています。": "The component and color rules for MALU, Nagi, and SK's Toolbox. Built on Google's Material Design 3, with SK's colors and type on top.",
   "MALU・Nagi・SK's Toolbox の部品と配色（SK Material）は、Material Design 3 のガイドラインをもとに作っています。アイコンは Material Symbols・Material Icons（Apache License 2.0）、Toolbox のテーマカラーからの配色の計算は material-color-utilities（Apache License 2.0）です。SK は Google と関係はありません。": "The components and colors of MALU, Nagi, and SK's Toolbox (SK Material) are based on the Material Design 3 guidelines. Icons are Material Symbols and Material Icons (Apache License 2.0), and Toolbox's color schemes are calculated from the theme colors with material-color-utilities (Apache License 2.0). SK is not affiliated with Google.",
   "MALU・Nagi・Toolbox の Calc・Memo・Todo などの文字。": "The type in MALU, Nagi, and Toolbox apps like Calc, Memo, and Todo.",
@@ -3529,5 +3528,9 @@
   "辞書検索・辞書ごとに色が変わる": "Dictionary search, colors change per dictionary",
   "集中タイマー・休憩中は空の青": "Focus timer, sky blue during breaks",
   "このページの中身も、SK Material の部品（文字の段階・カード・タブ・チップ・ボタン・波紋）で作っています。下の「配色」で色を選ぶと、このページ全体の色も変わります。上のヘッダーと下のフッターは、サイト共通のものです。<br><span class=\"mt-self-sk\">いまは「SK Style」で、同じ中身をサイト（SK's Brand）のきまりで表示しています。アプリの画面や部品の見本は、SK Material のままです。</span>": "The content of this page is also built with SK Material components (type scale, cards, tabs, chips, buttons, ripples). Pick a color under Color below and the whole page changes with it. The header and footer are shared with the rest of the site.<br><span class=\"mt-self-sk\">Right now you're viewing it in SK Style: the same content, following the site's (SK's Brand) rules. App screens and component samples stay in SK Material.</span>",
-  "ページの見た目": "Page style"
+  "ページの見た目": "Page style",
+  "MALU・Nagi・SK's Toolbox のアプリは、SK Material でできています。SaeTab の拡張機能として入れている SK's Toolbox も同じです。サイト（sk-hub.jp）の画面は、SK Material ではなく SK's Brand のきまりで作っています。": "MALU, Nagi, and the SK's Toolbox apps are built with SK Material. So is the SK's Toolbox we've added to SaeTab as an extension. The site itself (sk-hub.jp) follows SK's Brand rules, not SK Material.",
+  "SaeTab 7 の新しいタブで、SK's Toolbox を開けます。SaeTab の中に入るのは SK's Toolbox の部分だけで、SaeTab そのもののデザインは Sentaro さん（Search3958）のものです。": "Open SK's Toolbox right in SaeTab 7's new tab. Only the SK's Toolbox part goes inside SaeTab; SaeTab's own design belongs to Sentaro (Search3958).",
+  "SaeTab の拡張機能": "SaeTab extension",
+  "ほかのプロダクトの中で": "Inside other products"
 }

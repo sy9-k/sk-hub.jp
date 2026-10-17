@@ -3283,7 +3283,6 @@
   "M3 のトーンをまねた SK の計算": "模仿 M3 色调的 SK 计算",
   "MALU の計算": "MALU 的计算",
   "MALU・Nagi・SK's Toolbox で使っている部品と配色のきまり「SK Material」。Google の Material Design 3 をもとに、SK の色と文字に合わせて調整したもの。M3 のままのところ・SK で決めたところ・プロダクトごとの配色・出どころとライセンス。": "SK Material：MALU・Nagi・SK's Toolbox 使用的组件与配色规则。以 Google 的 Material Design 3 为基础，按 SK 的颜色和文字调整。沿用 M3 的部分、SK 决定的部分、各产品的配色、来源与许可。",
-  "MALU・Nagi・SK's Toolbox のアプリは、SK Material でできています。サイト（sk-hub.jp）の画面は、SK Material ではなく SK's Brand のきまりで作っています。": "MALU・Nagi・SK's Toolbox 的应用都使用 SK Material。网站（sk-hub.jp）本身则遵循 SK's Brand 的规则，而不是 SK Material。",
   "MALU・Nagi・SK's Toolbox の部品と配色のきまり。Google の Material Design 3 を土台に、SK の色と文字をのせています。": "MALU・Nagi・SK's Toolbox 的组件与配色规则。以 Google 的 Material Design 3 为基础，加上 SK 的颜色和文字。",
   "MALU・Nagi・SK's Toolbox の部品と配色（SK Material）は、Material Design 3 のガイドラインをもとに作っています。アイコンは Material Symbols・Material Icons（Apache License 2.0）、Toolbox のテーマカラーからの配色の計算は material-color-utilities（Apache License 2.0）です。SK は Google と関係はありません。": "MALU・Nagi・SK's Toolbox 的组件与配色（SK Material）以 Material Design 3 指南为基础制作。图标使用 Material Symbols・Material Icons（Apache License 2.0），Toolbox 由主题色计算配色使用 material-color-utilities（Apache License 2.0）。SK 与 Google 没有关系。",
   "MALU・Nagi・Toolbox の Calc・Memo・Todo などの文字。": "MALU・Nagi・Toolbox 的 Calc・Memo・Todo 等使用的文字。",
@@ -3309,5 +3308,9 @@
   "辞書検索・辞書ごとに色が変わる": "辞典搜索・颜色随辞典变化",
   "集中タイマー・休憩中は空の青": "专注计时器・休息时为天空蓝",
   "このページの中身も、SK Material の部品（文字の段階・カード・タブ・チップ・ボタン・波紋）で作っています。下の「配色」で色を選ぶと、このページ全体の色も変わります。上のヘッダーと下のフッターは、サイト共通のものです。<br><span class=\"mt-self-sk\">いまは「SK Style」で、同じ中身をサイト（SK's Brand）のきまりで表示しています。アプリの画面や部品の見本は、SK Material のままです。</span>": "本页面的内容也使用 SK Material 的组件（字号等级、卡片、标签页、标签、按钮、涟漪）制作。在下方「配色」中选择颜色，整个页面的颜色也会改变。上方的页眉和下方的页脚是整个网站共用的。<br><span class=\"mt-self-sk\">现在是「SK Style」，用网站（SK's Brand）的规则显示相同的内容。应用画面和组件示例仍为 SK Material。</span>",
-  "ページの見た目": "页面外观"
+  "ページの見た目": "页面外观",
+  "MALU・Nagi・SK's Toolbox のアプリは、SK Material でできています。SaeTab の拡張機能として入れている SK's Toolbox も同じです。サイト（sk-hub.jp）の画面は、SK Material ではなく SK's Brand のきまりで作っています。": "MALU・Nagi・SK's Toolbox 的应用都使用 SK Material。作为 SaeTab 扩展功能加入的 SK's Toolbox 也一样。网站（sk-hub.jp）本身则遵循 SK's Brand 的规则，而不是 SK Material。",
+  "SaeTab 7 の新しいタブで、SK's Toolbox を開けます。SaeTab の中に入るのは SK's Toolbox の部分だけで、SaeTab そのもののデザインは Sentaro さん（Search3958）のものです。": "在 SaeTab 7 的新标签页中即可打开 SK's Toolbox。放入 SaeTab 的只有 SK's Toolbox 的部分，SaeTab 本身的设计属于 Sentaro（Search3958）。",
+  "SaeTab の拡張機能": "SaeTab 扩展功能",
+  "ほかのプロダクトの中で": "在其他产品中"
 }
