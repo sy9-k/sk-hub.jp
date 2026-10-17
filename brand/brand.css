@@ -476,6 +476,7 @@ html.sk-theme-ready .bx-swatch[aria-pressed="true"] i { animation: sk-swatch-pop
 .bx-resource img, .bx-resource-ico { width: 48px; height: 48px; flex: none; border-radius: 14px; }
 .bx-resource img { padding: 4px; background: var(--surface-2); }
 .bx-resource-ico { display: grid; place-items: center; background: var(--ink); color: var(--bg); font: 700 15px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.bx-resource-ico.is-material { background: var(--green-soft); color: var(--link); font-family: "Space Grotesk", Inter, sans-serif; font-weight: 700; }
 .bx-resource > span:not(.bx-resource-ico) { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.4; }
 .bx-resource strong { font-size: 15px; }
 .bx-resource small { color: var(--muted); font-size: 12.5px; }
