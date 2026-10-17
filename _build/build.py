@@ -74,9 +74,12 @@ EXTRA = {
     ),
     "hub-account.html": ('  <script src="/sk-hub-systems/hub.js" defer></script>\n', "hx-page"),
     "brand.html": (
-        '  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=M+PLUS+1:wght@400;700&family=M+PLUS+1+Code:wght@500&display=swap"></script>\n'
+        '  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=M+PLUS+1:wght@400;700;800&family=M+PLUS+1+Code:wght@400;500;700&display=swap"></script>\n'
+        '  <link rel="stylesheet" href="/brand/brand.css">\n'
+        # 表紙の組み立てがちらつかないよう、先に印をつける（brand.js が読めなかったら 3 秒で外して、ふつうに見せる）
+        '  <script>(function(){var d=document.documentElement;d.classList.add("bx-js");setTimeout(function(){if(!window.__bxReady)d.classList.remove("bx-js");},3000);})();</script>\n'
         '  <script src="/brand/brand.js" defer></script>\n',
-        None,
+        "brand-page",
     ),
     # SK's Toolbox のホーム画面（マテリアルデザイン。共通の設定・PWA。/toolbox/home.css・home.js）
     "toolbox.html": (
