@@ -17,10 +17,13 @@
 //       全画面でないと問題が見えない。全画面をやめた・ほかのタブやアプリに移った・読み込み直したことを記録する
 //       制限時間（時間が来たら自動で提出）。提出は 1 回だけ。提出したあと、答えを開いて採点（合言葉があれば合言葉を入れてから）
 //       ブラウザの中だけで動くので、完全には防げない（ファイルを書きかえる・ほかの端末を見るなど）。書きかえは暗号の中身と比べて見つける
+//   ・クラスの課題（cloud.js）として配られたプリントは、一覧の classRef にクラスと課題の ID が入る。
+//     「提出する」で答え（と試験の記録）を先生に送る。提出は 1 回だけ。先生が結果を公開したら、先生の採点と答え（合言葉）が届く
 //   ・プリントの HTML は人が作ったものなので、そのままこのページに入れない
 //       右の問題文 … 決まったタグ・クラスだけを作り直す（safe()）
 //       左のプリント … スクリプトを動かさない iframe（sandbox）。外のファイルは CSP で止める
 import { openAnswers, readPrintMeta } from "./printfmt.js";
+import * as cloud from "./cloud.js";
 
 const CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛㉜㉝㉞㉟";
 const CIRCLED_RE = "[①-⑳㉑-㉟]";
@@ -66,7 +69,7 @@ function idb(mode, fn) {
     tx.onabort = () => reject(tx.error);
   }));
 }
-async function getHtml(id) {
+export async function getHtml(id) {
   const v = await idb("readonly", (s) => s.get(id)).catch(() => null);
   if (v) return v;
   try { return localStorage.getItem(htmlKey(id)); } catch (e) { return null; } // 前の版（localStorage に入れていた）
@@ -83,6 +86,15 @@ export async function addPrint(html, title) {
   list.unshift({ id, title: String(title || parsed.title).slice(0, 80), addedAt: Date.now(), blanks: s.total, exam: parsed.exam, minutes: parsed.exam ? parsed.meta.minutes || 0 : 0 });
   writeJSON(LIST_KEY, list);
   return id;
+}
+
+// クラスで配られたプリントを、この端末に入れる（同じ課題なら入れ直す）
+export async function saveClassPrint(id, html, title, classRef) {
+  const parsed = parsePrint(html);
+  await idb("readwrite", (st) => st.put(html, id));
+  const list = listPrints().filter((p) => p.id !== id);
+  list.unshift({ id, title: String(title).slice(0, 80), addedAt: Date.now(), blanks: parsed.blanks.length, exam: parsed.exam, minutes: parsed.exam ? parsed.meta.minutes || 0 : 0, classRef });
+  writeJSON(LIST_KEY, list);
 }
 
 async function deletePrint(id) {
@@ -295,6 +307,55 @@ function check(b, input) {
   return { ok: false, close: [...targets].some((t) => t.length >= 4 && distance(v, t) === 1) };
 }
 
+// 試験用の暗号を開いた中身（payload）を、解答欄に入れる。書きかえられていそうなら true を返す
+function applyPayloadTo(P, payload) {
+  const minutes = Number(P.meta && P.meta.minutes) || 0;
+  const tampered = !payload || payload.mode !== "exam" || Number(payload.minutes || 0) !== minutes || !Array.isArray(payload.answers) || payload.answers.length !== P.blanks.length;
+  for (const b of P.blanks) {
+    const a = ((payload && payload.answers) || [])[b.id];
+    if (!a) continue;
+    b.answer = a.a || "";
+    b.alts = a.alts || [];
+    if (!b.answer && b.type !== "self") b.type = "none";
+  }
+  for (const g of P.groups) {
+    if (!g.blanks.length) continue;
+    const first = Math.min(...g.blanks.map((b) => b.id));
+    g.explanation = (payload && payload.ex && payload.ex[first]) || [];
+  }
+  return tampered;
+}
+
+// 指導者の画面で、提出された答え（解答欄の ID の順）を採点する。試験用は payload（暗号を開いたもの）が要る
+//   marks: { 解答欄の ID: ok / ng / pending（記述で、模範解答と同じでないもの。先生が決める）}
+export function gradeAnswers(html, answers, { payload = null } = {}) {
+  const P = parsePrint(html);
+  if (payload) applyPayloadTo(P, payload);
+  const marks = {};
+  for (const b of P.blanks) {
+    if (b.type === "none") continue;
+    const v = String((answers || [])[b.id] || "");
+    if (!v.trim()) { marks[b.id] = "ng"; continue; }
+    const ok = check(b, v).ok;
+    marks[b.id] = ok ? "ok" : b.type === "self" ? "pending" : "ng";
+  }
+  return { P, marks };
+}
+
+// 採点の点（部分正解は 0.5）。pending は数えない
+export function tally(P, marks) {
+  let ok = 0, total = 0, pending = 0;
+  for (const b of P.blanks) {
+    if (b.type === "none") continue;
+    total++;
+    const m = marks[b.id];
+    if (m === "ok") ok++;
+    else if (m === "partial") ok += 0.5;
+    else if (m === "pending" || !m) pending++;
+  }
+  return { ok, total, pending };
+}
+
 // ---------- 部品 ----------
 
 // 問題文を、決まったタグ・クラスだけで作り直す（プリントの属性やスクリプトは持ちこまない）
@@ -377,7 +438,7 @@ export function printSection(ui) {
     input.value = "";
     if (file) importFile(file, ui);
   });
-  const rows = prints.map((p) => {
+  const rows = prints.filter((p) => !p.classRef).map((p) => {
     const st = loadState(p.id);
     const answered = Object.values(st.answers).filter((v) => String(v).trim()).length;
     const last = st.history[st.history.length - 1];
@@ -487,11 +548,40 @@ export async function renderPrint(id, ui) {
   st.cur = Math.max(0, Math.min(st.cur || 0, B.length - 1));
   if (exam) { st.exam = { events: [], ...(st.exam || {}) }; st.instant = false; }
   const save = () => writeJSON(stateKey(id), st);
+  // クラスの課題: 提出ずみか・先生の採点・結果の公開（答えの合言葉）を読む
+  const classRef = meta.classRef || null;
+  const cls = { sub: null, assign: null, grade: null, error: null };
+  if (classRef) {
+    st.instant = false;
+    try {
+      [cls.sub, cls.assign, cls.grade] = await Promise.all([
+        cloud.mySubmission(classRef.cid, classRef.aid), cloud.getAssignment(classRef.cid, classRef.aid), cloud.myGrade(classRef.cid, classRef.aid)
+      ]);
+    } catch (e) {
+      cls.error = e;
+    }
+    if (location.hash !== hash) return;
+    if (cls.sub) {
+      st.classSubmitted = true;
+      st.classPending = false;
+      // ほかの端末で提出したときは、提出した答えを入れる
+      let data = {};
+      try { data = JSON.parse(cls.sub.data || "{}"); } catch (e) { /* 読めなければ空 */ }
+      if (!Object.values(st.answers).some((v) => String(v).trim()) && Array.isArray(data.answers)) data.answers.forEach((v, i) => { if (v) st.answers[i] = v; });
+      if (exam) {
+        if (!st.exam.startedAt) st.exam.startedAt = (data.exam && data.exam.startedAt) || cloud.toMillis(cls.sub.submittedAt) || Date.now();
+        if (!st.exam.submittedAt) st.exam.submittedAt = cloud.toMillis(cls.sub.submittedAt) || Date.now();
+        if (!st.exam.events.length && data.exam && Array.isArray(data.exam.events)) st.exam.events = data.exam.events;
+      }
+      save();
+    }
+  }
+  const submittedClass = () => !!(classRef && st.classSubmitted);
   const answerOf = (b) => String(st.answers[b.id] || "");
   const answeredCount = () => B.filter((b) => answerOf(b).trim()).length;
   const submitted = () => !!(exam && st.exam.submittedAt);
   const examActive = () => !!(exam && st.exam.startedAt && !st.exam.submittedAt);
-  const locked = () => st.graded || submitted();
+  const locked = () => st.graded || submitted() || submittedClass();
   const minutes = exam ? Number(P.meta.minutes) || 0 : 0;
 
   // ---- 試験: はじめる前の画面 ----
@@ -530,7 +620,9 @@ export async function renderPrint(id, ui) {
   // ---- 枠 ----
   const progressEl = h("span", { class: "print-progress" });
   const timerEl = h("span", { class: "exam-timer", hidden: !(examActive() && minutes) });
-  const gradeBtn = exam ? button("filled", "提出する", "send", () => submit(false)) : button("filled", "採点する", "grading", () => gradeAll());
+  const gradeBtn = exam ? button("filled", "提出する", "send", () => submit(false))
+    : classRef ? button("filled", "提出する", "send", () => submitPractice())
+      : button("filled", "採点する", "grading", () => gradeAll());
   const modeSel = h("select", { class: "field-select mode-select", "aria-label": "答え合わせのしかた", onchange: (e) => { st.instant = e.target.value === "instant"; save(); draw(); } },
     h("option", { value: "end", selected: !st.instant }, "最後にまとめて採点"),
     h("option", { value: "instant", selected: st.instant }, "1 問ずつ答え合わせ"));
@@ -551,11 +643,12 @@ export async function renderPrint(id, ui) {
     h("div", { class: "pp-nav" }, prevBtn, nextBtn),
     h("details", { class: "pp-map-wrap", open: exam }, h("summary", null, icon("grid_view"), "解答欄の一覧"), mapEl),
     h("div", { class: "pp-tools" },
-      exam ? h("span", { class: "muted small tools-note" }, icon("lock"), "試験用のプリント") : modeSel,
-      exam ? null : button("text", "全部消す", "restart_alt", async () => {
+      classRef ? h("span", { class: "muted small tools-note" }, icon("groups"), exam ? "クラスの試験" : "クラスの課題（提出は 1 回）")
+        : exam ? h("span", { class: "muted small tools-note" }, icon("lock"), "試験用のプリント") : modeSel,
+      exam || classRef ? null : button("text", "全部消す", "restart_alt", async () => {
         if (await confirmDialog("答えを全部消しますか？", "このプリントの答えと採点を消して、最初からやり直します。", "全部消す", true)) reset(false);
       }),
-      examActive() ? null : button("text", "プリントを削除", "delete", async () => {
+      examActive() || classRef ? null : button("text", "プリントを削除", "delete", async () => {
         if (await confirmDialog("このプリントを削除しますか？", `「${meta.title}」と、その答えを消します。もとに戻せません。`, "削除する", true)) {
           await deletePrint(id);
           toast("削除しました");
@@ -714,25 +807,47 @@ export async function renderPrint(id, ui) {
     guard();
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     if (auto) toast("時間になったので、提出しました");
-    await openAndGrade("");
+    await openAndGrade(classRef && cls.assign && cls.assign.answerKey ? cls.assign.answerKey : "");
+    if (classRef) await sendToClass();
     draw();
+  }
+
+  // クラスの課題（練習用のプリント）: 採点してから、先生に送る
+  async function submitPractice() {
+    if (submittedClass()) return;
+    const empty = B.length - answeredCount();
+    if (!(await confirmDialog("提出しますか？", `提出は 1 回だけです。提出すると採点して、答えと点数が先生に届きます。${empty ? `まだ答えていない解答欄が ${empty} 個あります。` : ""}`, "提出する"))) return;
+    await gradeAll(true);
+    await sendToClass();
+    draw();
+  }
+
+  // 答え（解答欄の ID の順）・採点・試験の記録を、先生に送る
+  async function sendToClass() {
+    const s = score();
+    const data = {
+      kind: "print",
+      answers: Array.from({ length: B.length }, (_, i) => String(st.answers[i] || "")),
+      marks: st.graded ? Object.fromEntries(B.map((b) => [b.id, st.marks[b.id] || ""])) : null,
+      exam: exam ? { startedAt: st.exam.startedAt, submittedAt: st.exam.submittedAt, auto: !!st.exam.auto, events: st.exam.events || [], tampered: !!(st.exam.tampered || P.tampered) } : null
+    };
+    try {
+      await cloud.submit(classRef.cid, classRef.aid, st.graded ? s : { ok: 0, total: s.total }, data);
+      st.classSubmitted = true;
+      st.classPending = false;
+      toast("先生に提出しました");
+    } catch (e) {
+      // すでに提出していた（ほかの端末など）ときは、提出ずみとして扱う
+      const sub = await cloud.mySubmission(classRef.cid, classRef.aid).catch(() => null);
+      if (sub) { st.classSubmitted = true; st.classPending = false; }
+      else { st.classPending = true; toast(`先生に送れませんでした。${cloud.explain(e)}`); }
+    }
+    save();
   }
 
   // 暗号を開いて、答えを解答欄に入れる。開けたら true
   function applyPayload(payload) {
-    if (!payload || payload.mode !== "exam" || Number(payload.minutes || 0) !== minutes || !Array.isArray(payload.answers) || payload.answers.length !== B.length) st.exam.tampered = true;
-    for (const b of B) {
-      const a = (payload.answers || [])[b.id];
-      if (!a) continue;
-      b.answer = a.a || "";
-      b.alts = a.alts || [];
-      if (!b.answer && b.type !== "self") b.type = "none";
-    }
-    for (const g of P.groups) {
-      if (!g.blanks.length) continue;
-      const first = Math.min(...g.blanks.map((b) => b.id));
-      g.explanation = (payload.ex && payload.ex[first]) || [];
-    }
+    if (applyPayloadTo(P, payload)) st.exam.tampered = true;
   }
   async function openAndGrade(pass) {
     if (!exam || !submitted()) return false;
@@ -937,6 +1052,19 @@ export async function renderPrint(id, ui) {
       st.exam.tampered || P.tampered ? h("p", { class: "warn" }, icon("warning"), "このプリントは書きかえられているようです。") : null);
   }
 
+  // クラスの課題: 先生に届いたか・先生の採点
+  function classBox() {
+    if (!classRef) return null;
+    const g = cls.grade;
+    return h("div", { class: "class-box" },
+      st.classPending ? h("p", { class: "warn small" }, icon("cloud_off"), "まだ先生に届いていません。",
+        button("text", "もう一度送る", "send", async () => { await sendToClass(); draw(); }))
+        : submittedClass() ? h("p", { class: "small" }, icon("task_alt"), "先生に提出しました") : null,
+      g ? h("p", { class: "teacher-grade" }, icon("school"), `先生の採点: ${g.ok} / ${g.total}（${g.pct}%）`) : null,
+      g && g.note ? h("p", { class: "small" }, g.note) : null,
+      cls.error ? h("p", { class: "warn small" }, icon("cloud_off"), cloud.explain(cls.error)) : null);
+  }
+
   function summary() {
     if (exam && submitted() && !st.graded) {
       const pass = h("input", { type: "password", class: "field-input", placeholder: "答え合わせの合言葉", autocomplete: "off", "aria-label": "答え合わせの合言葉" });
@@ -951,7 +1079,8 @@ export async function renderPrint(id, ui) {
           h("strong", null, icon("task_alt"), "提出しました"),
           h("span", { class: "small" }, "先生から合言葉を聞いたら、入れると答え合わせができます。"),
           h("div", { class: "pass-row" }, pass, button("filled", "答え合わせ", "lock_open", go2)),
-          examLog()));
+          examLog(),
+          classBox()));
     }
     const s = score();
     return h("div", { class: "pp-score" },
@@ -959,9 +1088,10 @@ export async function renderPrint(id, ui) {
       h("div", { class: "pp-score-text" },
         h("strong", null, `${s.total} 問中 ${s.ok} 問 正解`),
         s.pending ? h("span", { class: "warn small" }, `記述の自己採点があと ${s.pending} 問`) : h("span", { class: "muted small" }, s.wrong ? `まちがい ${s.wrong} 問` : "全問正解！"),
-        exam ? examLog() : h("div", { class: "pp-score-actions" },
+        exam ? examLog() : classRef ? null : h("div", { class: "pp-score-actions" },
           s.wrong ? button("filled", "まちがいを解き直す", "replay", () => reset(true)) : null,
-          button("text", "全部やり直す", "restart_alt", () => reset(false)))));
+          button("text", "全部やり直す", "restart_alt", () => reset(false))),
+        classBox()));
   }
 
   function drawMap() {
@@ -979,8 +1109,8 @@ export async function renderPrint(id, ui) {
     const b = B[st.cur];
     const g = b.group;
     progressEl.textContent = `${answeredCount()} / ${B.length}`;
-    gradeBtn.hidden = exam ? !examActive() : st.graded;
-    summaryEl.replaceChildren(...(st.graded || submitted() ? [summary()] : []));
+    gradeBtn.hidden = exam ? !examActive() : classRef ? submittedClass() : st.graded;
+    summaryEl.replaceChildren(...(st.graded || submitted() || submittedClass() ? [summary()] : []));
     put(contextEl, 
       g.article ? h("span", null, g.article) : null,
       g.section ? h("span", null, g.section) : null,
@@ -1028,5 +1158,9 @@ export async function renderPrint(id, ui) {
 
   // 提出したあと（合言葉のいらない試験）で、まだ採点していなければ採点する
   if (exam && submitted() && !st.graded && !P.meta.sealed.pass) await openAndGrade("");
+  // 先生が結果を公開して、合言葉を入れていれば答え合わせする
+  if (exam && submitted() && !st.graded && classRef && cls.assign && cls.assign.resultsOpen && cls.assign.answerKey) await openAndGrade(cls.assign.answerKey);
+  // 提出したのに先生に届いていなければ、もう一度送る
+  if (classRef && st.classPending && (submitted() || st.graded)) await sendToClass();
   draw();
 }

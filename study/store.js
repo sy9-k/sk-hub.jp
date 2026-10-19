@@ -7,12 +7,15 @@
 //   ・覚えぐあい … sk_study_progress = { <セットの ID>: { <単語>: { b, due, ok, ng, at } } }
 //       b = 箱（0〜6）。正解で 1 つ上がり、間違えると 0 に戻る。箱ごとに次に出すまでの日数（INTERVALS）が長くなる
 //       due = 次に出す日（dayNumber() の日数）。due が今日以前のものが「今日の復習」
+//   ・クラスで配られた単語帳 … sk_study_class_sets = { "cls-<クラス>-<課題>": { id, source: "class", classRef: { cid, aid, kind }, title, lang, words, … } }
+//       課題を開いたときに入れる（マイ単語帳には出さない。覚えぐあいはふつうのセットと同じく記録する）
 //   ・学習した日 … sk_study_days = { "2026-10-19": 答えた数 }（続けた日数に使う）
 //   SK Hub Systems アカウントへの保存はあとで決める。そのときはこのファイルの読み書きを差しかえる
 const SETS_KEY = "sk_study_sets";
 const PROGRESS_KEY = "sk_study_progress";
 const DAYS_KEY = "sk_study_days";
 const PREFS_KEY = "sk_study_prefs";
+const CLASS_SETS_KEY = "sk_study_class_sets";
 
 // 箱ごとの、次に出すまでの日数
 const INTERVALS = [0, 1, 2, 4, 7, 15, 30];
@@ -72,7 +75,18 @@ export async function loadSkSets() {
 }
 export const getSkSets = () => skSets;
 export const getMySets = () => read(SETS_KEY, []);
-export const allSets = () => [...skSets, ...getMySets()];
+export const getClassSets = () => Object.values(read(CLASS_SETS_KEY, {}));
+export const allSets = () => [...skSets, ...getMySets(), ...getClassSets()];
+
+// クラスの課題の単語帳を入れる（同じ課題なら入れ直す）
+export function cacheClassSet(cid, aid, kind, data, title) {
+  const id = `cls-${cid}-${aid}`;
+  const set = { ...cleanSet({ ...data, title: data.title || title }), id, source: "class", classRef: { cid, aid, kind }, assignTitle: String(title || "").slice(0, 80) };
+  const all = read(CLASS_SETS_KEY, {});
+  all[id] = set;
+  write(CLASS_SETS_KEY, all);
+  return set;
+}
 export const getSet = (id) => allSets().find((s) => s.id === id) || null;
 
 export function langOf(set) {

@@ -738,6 +738,82 @@ body[data-view="maker"] .page { max-width: 1280px; }
 .mk-summary li { display: flex; align-items: center; gap: 8px; }
 .mk-summary .warn { color: var(--error); }
 
+/* ---------- クラス（生徒） ---------- */
+.class-thumb { background: var(--secondary); }
+.thumb.kind-words { background: var(--lang-en); }
+.thumb.kind-wordtest { background: var(--tertiary); }
+.thumb.kind-print { background: var(--lang-custom); }
+.thumb.is-exam { background: var(--error); }
+.thumb .ms { font-size: 26px; }
+:root[data-theme="dark"] .class-thumb, :root[data-theme="dark"] .thumb.kind-wordtest { color: #10141a; }
+.kind-pill, .code-pill, .pub-pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 6px; font-size: .72rem; font-weight: 800; background: var(--surface-container-high); color: var(--on-surface-variant); }
+.code-pill { font-family: ui-monospace, monospace; letter-spacing: .08em; }
+.pub-pill.on { background: var(--good-container); color: var(--on-good-container); }
+.set-row-meta .done, .tc-table .done { color: var(--good); display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
+.set-row-meta .warn, .set-row-sub .warn { color: var(--error); font-weight: 700; }
+.set-list.flat { box-shadow: none; border: 1px solid var(--outline-variant); }
+.class-home { display: flex; flex-direction: column; gap: 10px; }
+.class-join-row { display: flex; justify-content: flex-start; }
+.class-banner { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--secondary-container); color: var(--on-secondary-container); font-size: .9rem; }
+.code-input { font-family: ui-monospace, monospace; font-size: 1.6rem; letter-spacing: .3em; text-align: center; text-transform: uppercase; margin-top: 8px; }
+.join-info { margin-top: 12px; }
+.join-found { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--primary-container); color: var(--on-primary-container); }
+.join-found strong { font-size: 1.1rem; }
+.join-found p { margin: 6px 0 0; }
+.class-box { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.class-box p { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; }
+.class-box .ms { font-size: 18px; }
+.teacher-grade { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 800; color: var(--primary); }
+.task-lobby { max-width: 560px; margin: 16px auto; }
+.task-result { max-width: 640px; margin: 0 auto; }
+.task-result h1 { font-size: 1.4rem; }
+
+/* ---------- 指導者メニュー（パソコン向け） ---------- */
+body[data-view="teach"] .page { max-width: 1120px; }
+.tc-head { margin: 4px 0 18px; }
+.tc-head h1 { font-size: 1.7rem; font-weight: 800; margin: 2px 0 4px; }
+.tc-head p { margin: 0; }
+.tc-eyebrow { display: flex; align-items: center; gap: 6px; margin: 0; font-size: .82rem; font-weight: 700; color: var(--tertiary); }
+.tc-eyebrow .ms { font-size: 18px; }
+.tc-grid { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr); gap: 16px; align-items: start; }
+.tc-grid > .mk-card { margin-bottom: 16px; }
+.tc-code { align-items: stretch; }
+.code-big { margin: 0; font-family: ui-monospace, monospace; font-size: 2.6rem; font-weight: 800; letter-spacing: .2em; text-align: center; color: var(--primary); padding: 8px 0; border-radius: 14px; background: var(--primary-container); }
+.tc-dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; }
+.tc-dl dt { color: var(--on-surface-variant); font-size: .85rem; }
+.tc-dl dd { margin: 0; }
+.tc-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.tc-table th { text-align: left; font-size: .78rem; color: var(--on-surface-variant); font-weight: 700; padding: 6px 8px; border-bottom: 1px solid var(--outline-variant); }
+.tc-table td { padding: 8px; border-bottom: 1px solid var(--outline-variant); vertical-align: middle; }
+.tc-table tr.is-missing td { color: var(--on-surface-variant); }
+.tc-table td.warn { color: var(--error); font-weight: 700; }
+.tc-table .ms { font-size: 18px; }
+.tc-actions { text-align: right; white-space: nowrap; }
+.tc-form { display: flex; flex-direction: column; gap: 14px; }
+.tc-kinds { grid-template-columns: repeat(3, 1fr); }
+.tc-kinds .ms { font-size: 18px; vertical-align: -3px; }
+.tc-source { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; background: var(--surface-container-low); }
+.dialog.dialog-wide { width: min(860px, calc(100vw - 32px)); }
+.tc-detail { display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow: auto; }
+.tc-blanks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tc-blank { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--outline-variant); border-left-width: 4px; }
+.tc-blank.mark-ok { border-left-color: var(--good); }
+.tc-blank.mark-ng { border-left-color: var(--error); }
+.tc-blank.mark-partial { border-left-color: var(--st-learning); }
+.tc-blank.mark-pending { border-left-color: var(--tertiary); background: color-mix(in srgb, var(--tertiary-container) 40%, transparent); }
+.tc-blank-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tc-blank-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 6px; }
+.tc-blank-body p { margin: 2px 0 0; overflow-wrap: anywhere; }
+.tc-answer { font-weight: 700; }
+.tc-marks { display: flex; gap: 6px; }
+.tc-mark { min-width: 48px; min-height: 32px; border-radius: 8px; border: 1.5px solid var(--outline-variant); background: transparent; font-weight: 800; cursor: pointer; color: var(--on-surface); }
+.tc-mark.ok[aria-checked="true"] { background: var(--good); color: var(--on-good); border-color: var(--good); }
+.tc-mark.partial[aria-checked="true"] { background: var(--st-learning); color: #241a00; border-color: var(--st-learning); }
+.tc-mark.ng[aria-checked="true"] { background: var(--error); color: var(--on-error); border-color: var(--error); }
+@media (max-width: 900px) {
+  .tc-grid, .tc-kinds, .tc-blank-body { grid-template-columns: 1fr; }
+}
+
 /* ---------- 読み上げの設定 ---------- */
 .speech-settings { display: flex; flex-direction: column; gap: 16px; }
 .switch-row { display: flex; align-items: center; gap: 12px; cursor: pointer; }

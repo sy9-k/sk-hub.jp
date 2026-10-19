@@ -22,6 +22,7 @@
   var APPS = [
     { key: "malu", name: "MALU", url: "/dictionary/", icon: "/dictionary/ico/icon-192.png" },
     { key: "nagi", name: "Nagi", url: "/nagi/", icon: "/nagi/ico/icon-192.png" },
+    { key: "study", name: "SK Study", url: "/study/", icon: "/study/icon.svg" },
     { key: "yfilter", name: "Y-FILTER. 管理コンソール", short: "管理コンソール", url: "/y-filter/", icon: "/y-filter/shared/icon.svg", dark: true }
   ];
 

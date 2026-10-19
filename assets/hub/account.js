@@ -75,7 +75,9 @@ export const SERVICES = {
   nagi: { name: "Nagi", url: "/nagi/", icon: "/nagi/ico/icon-192.png", terms: "/policies/#sk-terms" },
   // SK's Toolbox のオンライン同期（任意）: accounts/{UID}/toolbox/{key|settings|todo|memo|countdown|calc}（toolbox/shared/sync-core.js）
   //   中身は端末で暗号化したものだけ（同期用のパスフレーズは本人だけが知っている）。接続しても、Toolbox の設定で同期を始めるまでは何も保存しない
-  toolbox: { name: "SK's Toolbox", url: "/toolbox/", icon: "/toolbox/icon-192.png", terms: "/policies/#sk-terms" }
+  toolbox: { name: "SK's Toolbox", url: "/toolbox/", icon: "/toolbox/icon-192.png", terms: "/policies/#sk-terms" },
+  // SK Study のデータ: 参加しているクラスの一覧 accounts/{UID}/studyClasses/{cid}。クラス・課題・提出は studyClasses/{cid}/…（study/cloud.js）
+  study: { name: "SK Study", url: "/study/", icon: "/study/icon.svg", terms: "/policies/#sk-terms" }
 };
 
 export function isConnected(account, key) {

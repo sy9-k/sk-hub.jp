@@ -41,6 +41,7 @@ export const NAV = [
   { heading: "ユーザー" },
   { id: "accounts", href: "/accounts/", icon: "manage_search", label: "アカウントを探す" },
   { id: "access", href: "/access/", icon: "shield_person", label: "アクセスの制限" },
+  { id: "teachers", href: "/teachers/", icon: "school", label: "SK Study の指導者" },
   { heading: "コンテンツ" },
   { id: "share", href: "/share/", icon: "lock_open", label: "SK Share" },
   { id: "files", href: "/files/", icon: "folder_open", label: "試作品のファイル" },
@@ -222,7 +223,10 @@ export const LOG_LABEL = {
   "block.remove": "アクセスの制限を解除した",
   "maintenance.save": "メンテナンスの告知を変えた",
   "cleanup.run": "期限切れのデータを消した",
-  "cleanup.auto": "期限切れのデータを自動で消した"
+  "cleanup.auto": "期限切れのデータを自動で消した",
+  "teacher.approve": "SK Study の指導者を承認した",
+  "teacher.reject": "SK Study の指導者の申し込みを却下した",
+  "teacher.revoke": "SK Study の指導者を取り消した"
 };
 let currentUser = null;
 let logWarned = false;

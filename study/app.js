@@ -8,6 +8,8 @@
 //     #/import/<コード>   共有リンクで受け取った単語帳（share.js）
 //     #/print/<ID>       プリントに答える（print.js）
 //     #/maker            PDF からプリントを作る（maker.js）
+//     #/class/<cid>・#/task/<cid>/<aid>  クラスと課題（生徒。classroom.js）
+//     #/teach/…          指導者メニュー（teach.js）
 //   おまかせ学習:
 //     ・方向（外国語 → 日本語 / 日本語 → 外国語）は 1 問ごとにまぜる
 //     ・問題の形式は単語の覚えぐあい（store.js の箱）で変わる（難易度の自動調整）
@@ -23,6 +25,8 @@ import { decodeSet, encodeSet, extractCode, shareUrl } from "./share.js";
 import * as tts from "./speech.js";
 import { printSection, renderPrint } from "./print.js";
 import { renderMaker } from "./maker.js";
+import { classSection, renderClass, renderTask, reportProgress } from "./classroom.js";
+import { renderTeach } from "./teach.js";
 
 const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
@@ -261,12 +265,20 @@ function route() {
     else if (view === "import") renderImport(parts.slice(1).join("/"));
     else if (view === "print") renderPrint(id, printUi).catch((e) => { console.error(e); renderMessage("うまく表示できませんでした", String(e && e.message || e)); });
     else if (view === "maker") renderMaker(printUi);
+    else if (view === "class") renderClass(id, printUi).catch(showError);
+    else if (view === "task") renderTask(id, parts[2], printUi).catch(showError);
+    else if (view === "teach") renderTeach(parts.slice(1), printUi).catch(showError);
     else renderMessage("ページが見つかりません", "リンクがまちがっているかもしれません。");
   } catch (e) {
     console.error(e);
     renderMessage("うまく表示できませんでした", String(e && e.message || e));
   }
   app.focus({ preventScroll: true });
+}
+
+function showError(e) {
+  console.error(e);
+  renderMessage("うまく表示できませんでした", String(e && e.message || e));
 }
 
 function renderMessage(title, text) {
@@ -349,6 +361,7 @@ function renderHome() {
 
   app.append(
     today,
+    classSection(printUi),
     started.length ? h("section", { class: "section" },
       h("div", { class: "section-head" }, h("h2", null, "続きから")),
       h("div", { class: "set-list" }, started.slice(0, 4).map(({ set }) => setRow(set, { start: true })))) : null,
@@ -422,10 +435,11 @@ function renderSet(id) {
   const formatSelect = h("select", { class: "field-select", "aria-label": "問題の形式", onchange: (e) => store.setPrefs({ format: e.target.value }) },
     FORMATS.map(([v, label]) => h("option", { value: v, selected: prefs.format === v }, label)));
 
-  const mine = set.source !== "sk";
+  const mine = set.source !== "sk" && set.source !== "class";
+  const fromClass = set.source === "class" && set.classRef;
   const actions = h("div", { class: "set-actions" },
     mine ? linkButton("outlined", "編集", "edit", `#/edit/${encodeURIComponent(set.id)}`) : null,
-    button("outlined", "共有", "share", () => openShare(set)),
+    fromClass ? null : button("outlined", "共有", "share", () => openShare(set)),
     !mine ? button("outlined", "自分用にコピー", "content_copy", () => {
       const copy = store.copySet(set);
       toast("マイ単語帳にコピーしました。自由に編集できます");
@@ -459,7 +473,8 @@ function renderSet(id) {
   }));
 
   app.append(
-    backLink("ホーム", "#/"),
+    fromClass ? backLink("クラス", `#/class/${encodeURIComponent(set.classRef.cid)}`) : backLink("ホーム", "#/"),
+    fromClass ? h("p", { class: "class-banner" }, icon("groups"), `クラスの課題「${set.assignTitle || set.title}」。学習すると、覚えた語の数が先生に届きます。`) : null,
     h("section", { class: "set-head" },
       thumb(lang),
       h("div", null,
@@ -877,6 +892,9 @@ function runSession(cfg) {
   function finish() {
     keyHandler = null;
     if (isTest) { finishTest(); return; }
+    // クラスの単語帳の課題なら、進み具合を先生に送る
+    const classSets = new Set(cfg.items.map((it) => it.set).filter((x) => x.source === "class"));
+    classSets.forEach((x) => reportProgress(x));
     levelEl.replaceChildren();
     barFill.style.width = "100%";
     counter.textContent = "";
@@ -923,6 +941,7 @@ function runSession(cfg) {
     const wrong = results.filter((r) => !r.ok).map((r) => r.item);
     const setIds = new Set(results.map((r) => r.item.set.id));
     if (setIds.size === 1) store.recordTest([...setIds][0], ok, total);
+    if (cfg.onTestDone) cfg.onTestDone(results);
     const message = pct === 100 ? "満点！" : pct >= 80 ? "合格ライン！" : pct >= 50 ? "あと少し" : "学習してから、もう一度";
     body.replaceChildren(h("div", { class: "result" },
       h("p", { class: "test-pill big" }, "小テストの結果"),
@@ -1152,7 +1171,8 @@ async function renderImport(code) {
 const printUi = {
   h, icon, button, linkButton, toast, openDialog, confirmDialog, go, ring, app,
   message: renderMessage,
-  setKeys: (fn) => { keyHandler = fn; }
+  setKeys: (fn) => { keyHandler = fn; },
+  backLink, shuffle, runSession: (cfg) => runSession(cfg)
 };
 
 // ---------- はじめ ----------
