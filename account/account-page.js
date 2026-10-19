@@ -701,7 +701,7 @@ $("[data-acct-sync]").addEventListener("click", async (e) => {
 // ---------- サービス（接続しているものだけ出す） ----------
 
 // サービスごとの文言（接続の確認・接続の解除）
-const SERVICE_NAMES = { yfilter: t("Y-FILTER. 管理コンソール"), malu: "MALU", nagi: "Nagi", toolbox: "SK's Toolbox" };
+const SERVICE_NAMES = { yfilter: t("Y-FILTER. 管理コンソール"), malu: "MALU", nagi: "Nagi", toolbox: "SK's Toolbox", study: "SK Study" };
 const SERVICE_TEXT = {
   yfilter: {
     lead: t("このアカウントを管理コンソールに接続すると、端末の設定をまとめて管理できるようになります。"),
@@ -742,6 +742,16 @@ const SERVICE_TEXT = {
     disconnect: t("解除すると、Toolbox の同期が止まります。アカウントに保存した暗号化されたデータは、そのまま残ります。"),
     wipe: t("アカウントに保存した Toolbox の同期のデータも削除する"),
     wipeNote: t("元に戻せません。端末に保存されている Toolbox のデータは消えません")
+  },
+  study: {
+    lead: t("このアカウントを SK Study に接続すると、先生（指導者）のクラスに参加して、配られた単語帳・小テスト・プリントに取り組み、提出できるようになります。"),
+    usesTitle: t("SK Study が使う情報"),
+    uses: [t("表示名（参加したクラスの先生に表示されます）"), t("参加しているクラスと、提出した答え・点数・試験中の記録（そのクラスの先生が見られます）")],
+    note: t("ひとりで使う単語学習やプリントの記録は、この端末の中だけに保存します。接続は、アカウントのページの「サービス」からいつでも解除できます。"),
+    termsName: t("SK 利用規約"),
+    disconnect: t("解除すると、新しくクラスに参加したり、提出したりできなくなります。参加しているクラスと提出した答えは、そのまま残ります。"),
+    wipe: t("参加しているクラスから抜けて、クラスの一覧も削除する"),
+    wipeNote: t("元に戻せません。提出した答えは、先生のクラスに残ります")
   }
 };
 
@@ -776,6 +786,19 @@ function renderServices(user, account) {
   if (isConnected(account, "malu")) renderMalu(user, account);
   if (isConnected(account, "nagi")) renderNagi(user);
   if (isConnected(account, "toolbox")) renderToolbox(user);
+  if (isConnected(account, "study")) renderStudy(user);
+}
+
+// SK Study: 参加しているクラスの数
+async function renderStudy(user) {
+  const elStudy = $("[data-acct-study]");
+  try {
+    const classes = await getCountFromServer(collection(db, "accounts", user.uid, "studyClasses"));
+    const n = classes.data().count;
+    elStudy.textContent = n ? t("{n} クラスに参加", { n }) : t("まだクラスに参加していません");
+  } catch (e) {
+    elStudy.textContent = t("クラスを確認できませんでした");
+  }
 }
 
 // SK's Toolbox: 同期を始めているか（中身は暗号化されているので、ここでは読めない）
@@ -870,6 +893,7 @@ disconnectDialog.addEventListener("close", async () => {
     if (wipe && disconnectKey === "malu") await deleteMaluData(user.uid);
     if (wipe && disconnectKey === "nagi") await deleteNagiData(user.uid);
     if (wipe && disconnectKey === "toolbox") await deleteToolboxData(user.uid);
+    if (wipe && disconnectKey === "study") await deleteStudyData(user.uid);
     await disconnectService(user, disconnectKey);
     const services = { ...(account.services || {}) };
     delete services[disconnectKey];
@@ -1026,7 +1050,7 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
   if (busy || !user) return;
   setBusy(true, btn);
   try {
-    const [teams, devices, notices, maluWords, maluHistory, backups, nagiData, timetableInbox, timetableUserInbox, ...toolboxDocs] = await Promise.all([
+    const [teams, devices, notices, maluWords, maluHistory, backups, nagiData, timetableInbox, timetableUserInbox, studyClasses, ...toolboxDocs] = await Promise.all([
       getDocs(query(collection(db, "teams"), where("members", "array-contains", user.uid))),
       getDocs(query(collection(db, "devices"), where("ownerUid", "==", user.uid))),
       getDocs(collection(db, "accounts", user.uid, "notices")),
@@ -1036,6 +1060,7 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
       getDoc(doc(db, "accounts", user.uid, "nagi", "data")),
       getDoc(inboxRef()).catch(() => null),
       getDoc(doc(db, "timetableUserInbox", user.uid)).catch(() => null),
+      getDocs(collection(db, "accounts", user.uid, "studyClasses")),
       ...TOOLBOX_DOCS.map((id) => getDoc(doc(db, "accounts", user.uid, "toolbox", id)))
     ]);
     // 日時は ISO 8601、バイト列（Toolbox の暗号文）は Base64 にする
@@ -1067,6 +1092,8 @@ $("[data-acct-export]").addEventListener("click", async (e) => {
       // Nagi の集中の記録（s = 始めた時刻（ミリ秒）、m = 集中した分）と 1 日の目標
       nagi: nagiData.exists() ? plain(nagiData.data()) : null,
       // SK's Toolbox の同期のデータ（端末で暗号化したもの。同期用のパスフレーズがないと読めません）
+      // SK Study で参加しているクラス（提出した答えは、それぞれのクラスの先生のところにあります）
+      studyClasses: studyClasses.docs.map((d) => ({ id: d.id, ...plain(d.data()) })),
       toolbox: Object.fromEntries(toolboxDocs.filter((d) => d.exists()).map((d) => [d.id, plain(d.data())])),
       // SK's Toolbox の時間割の配信で、このアカウントのメールアドレスあてに配信された時間割の ID
       timetableInbox: timetableInbox && timetableInbox.exists() ? plain(timetableInbox.data()) : null,
@@ -1140,6 +1167,7 @@ async function deleteServiceData(uid) {
   await deleteMaluData(uid);
   await deleteNagiData(uid);
   await deleteToolboxData(uid);
+  await deleteStudyData(uid);
   await deleteTimetableInbox();
   await deleteConsoleData(uid);
 }
@@ -1157,6 +1185,14 @@ async function deleteTimetableInbox() {
 const TOOLBOX_DOCS = ["key", "settings", "todo", "memo", "countdown", "calc", "timetable", "roulette"];
 async function deleteToolboxData(uid) {
   await deleteRefs(TOOLBOX_DOCS.map((id) => doc(db, "accounts", uid, "toolbox", id)));
+}
+
+// SK Study のデータ: 参加しているクラスから抜けて（クラスの名簿から自分を消す）、クラスの一覧を消す
+//   クラスが消されている・外されているときは、名簿はもうないので気にしない。提出した答えは先生のクラスに残る
+async function deleteStudyData(uid) {
+  const classes = await getDocs(collection(db, "accounts", uid, "studyClasses"));
+  for (const c of classes.docs) await deleteRefs([doc(db, "studyClasses", c.id, "members", uid)]).catch(() => {});
+  await deleteRefs(classes.docs.map((d) => d.ref));
 }
 
 // Nagi のデータ: 同期した集中の記録と目標

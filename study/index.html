@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="description" content="単語カード・4 択・書き取りで、英語・韓国語・中国語や自分で作った単語帳を覚える学習アプリ" />
+<!-- 試作のあいだは検索に出さない（公開するときに消す） -->
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#f3f6fb" />
+<title>SK Study</title>
+<!-- 表示（ライト・ダーク）。サイトで選んだものに合わせる（CSS より先に <html> に付ける。サイトの assets/site.js の「表示」） -->
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}");if(t.mode==="light"||t.mode==="dark")document.documentElement.setAttribute("data-theme",t.mode);}catch(e){}})();</script>
+<!-- 文字は M PLUS 1（M+）。韓国語・中国語は端末の書体。アイコンは Material Symbols -->
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700;800&display=swap" data-icons="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"></script>
+<link rel="stylesheet" href="study.css" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+</head>
+<body>
+  <!-- 上の帯 -->
+  <header class="top-bar">
+    <a class="brand" href="#/" aria-label="SK Study のホーム">
+      <img src="icon.svg" alt="" width="32" height="32">
+      <span>SK Study</span>
+      <span class="beta">試作</span>
+    </a>
+    <div class="top-actions">
+      <!-- 読み上げの設定（声・速さ・自動で読み上げ。app.js） -->
+      <button type="button" id="speech-settings" class="icon-btn" aria-label="読み上げの設定" title="読み上げの設定"><span class="ms" aria-hidden="true">record_voice_over</span></button>
+      <!-- SK Hub Systems アカウント（アプリ共通のアカウントの画面。/assets/hub/account-button.js） -->
+      <sk-account-button app="study" style="--ska-size:32px"></sk-account-button>
+    </div>
+  </header>
+
+  <!-- 画面（app.js が # のあとの場所に合わせて作る） -->
+  <main class="page" id="app" tabindex="-1">
+    <p class="loading"><span class="spinner" aria-hidden="true"></span>読み込み中…</p>
+  </main>
+
+  <div class="snackbar" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="app.js"></script>
+  <script src="/assets/hub/account-button.js" defer></script>
+  <!-- SK Hub Systems アカウントの設定の同期（ログイン中だけ） -->
+  <script src="/assets/hub/sync-loader.js" defer></script>
+  <script src="/frameworks/check.js" defer></script>
+  <!-- アクセス解析（Google アナリティクス。許可した人だけ） -->
+  <script src="/assets/analytics.js" defer></script>
+  <script src="/assets/maintenance.js" defer></script>
+</body>
+</html>
