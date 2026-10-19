@@ -1663,7 +1663,7 @@
   "部屋の掃除": "Clean the room",
   "Calc のキーと、Todo のチェック。対応している端末（Android など）だけです": "Calc keys and Todo checkboxes. Only on supported devices (such as Android).",
   "Calc は青、Memo はオレンジ、Todo は緑": "Calc in blue, Memo in orange, Todo in green",
-  "Calc・Memo・Todo のボタンや背景の色。SK's Brand の色から選べます。Clock は空の色のままです": "The color of buttons and backgrounds in Calc, Memo and Todo, chosen from the SK's Brand colors. Clock keeps its sky colors.",
+  "Toolbox とアプリのアイコン、Calc・Memo・Todo などのボタンや背景の色。SK's Brand の色から選べます。Clock の画面は空の色のままです": "The color of the Toolbox and app icons, and of buttons and backgrounds in Calc, Memo, Todo and more, chosen from the SK's Brand colors. The Clock screen keeps its sky colors.",
   "Clock は、時計の下のボタンでテーマを選びます": "In Clock, choose a theme with the buttons below the clock.",
   "Clock・Calc・Memo・Todo のデータと、この設定を消去します。元に戻すことはできません。": "This deletes the data of Clock, Calc, Memo and Todo, and these settings. This can't be undone.",
   "SK's Toolbox のアプリ一覧": "All SK's Toolbox apps",

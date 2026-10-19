@@ -141,13 +141,13 @@
     var box = $("look-swatches");
     if (!box.childNodes.length) {
       S.colors.forEach(function (c) {
-        var b = el("button", "tbs-swatch m3-state" + (c.key === "app" ? " tbs-swatch--app" : ""));
+        var b = el("button", "tbs-swatch m3-state");
         b.type = "button";
         b.dataset.color = c.key;
         b.setAttribute("role", "radio");
         b.setAttribute("aria-label", c.name + "（" + c.note + "）");
         b.title = c.name;
-        if (c.sw) b.style.setProperty("--sw", c.sw);
+        b.style.setProperty("--sw", c.sw);
         b.appendChild(icon("check"));
         b.addEventListener("click", function () { S.set({ color: c.key }); });
         box.appendChild(b);
