@@ -7,13 +7,13 @@
 //       <html data-theme> に付ける）のまま。ライト・ダークを選んでいれば Toolbox の設定を優先する（ヘッダーもいっしょに変わる）
 //
 //   ・設定は localStorage の sk_toolbox に保存する（オンライン同期をオンにしたときだけ、暗号化して SK Hub Systems アカウントにも保存する）
-//       { theme: "auto|light|dark", color: "app|blue|sakura|…", motion: "auto|reduce", haptics: true|false, badge: true|false, homeStart: "last|widgets|apps",
+//       { theme: "auto|light|dark", color: "blue|sakura|…", motion: "auto|reduce", haptics: true|false, badge: true|false, homeStart: "last|widgets|apps",
 //         apps: { clock: { notify }, calc: { history, group }, memo: { trashDays }, todo: { notify } },
 //         titlebar: { center: "command|menu|island|chips|ticker|timeline|tabs|none", chips: ["class","todo","alarm","timer"], brand, name, apps, search, settings: true|false } }
 //   ・テーマ: <html data-theme="light|dark">（auto のときは付けない。各アプリの CSS が端末の設定に合わせる）
 //   ・テーマカラー: SK's Brand のテーマカラー（SK's Blue など 7 色）から作った Material 3 の配色で --md-* を上書きする
 //       配色は Google の material-color-utilities（SchemeFidelity）で前もって計算したもの。
-//       "app" のときは各アプリの色（Calc は青、Memo はオレンジ、Todo は緑）のまま
+//       Toolbox とミニアプリのアイコンも同じ色で塗りなおす（前にあった「アプリの色」は廃止。初期値は SK's Blue）
 //   ・動きを減らす: <html data-motion="reduce">（/toolbox/shared/m3.css が動きを止める）
 //   ・設定の画面: SKToolbox.openSettings()（全画面。MALU・Nagi の設定と同じ形で、左にカテゴリ、右に中身）。/toolbox/settings/ では SKToolbox.renderSettings(要素)
 //   ・ほかのタブで変えたときも、storage イベントで反映する
@@ -71,7 +71,7 @@
     sora: ["00647cffffff007f9dfafdffc3e8f8466977894e00a86516fffbffba1a1affdad693000af6fafd171c1e3e484df0f4f7eaeef1e5e9ebdfe3e66e797ebdc8ce2c3133edf1f46cd3f7", "6cd3f7003543269dbe00212b2a4e5a9abecdffb873c98031301800ffb4ab93000affdad60f1416dfe3e6bdc8ce171c1e1b2022262b2d3135388792983e484ddfe3e62c3133006780"],
     sumi: ["1d2b3effffff3341559eadc5dee2ee5f656e38270a503d1ec3a881ba1a1affdad693000afbf9fa1b1b1d44474cf5f3f5efedefeae7e9e4e2e475777dc5c6cd303032f2f0f2b9c7e0", "b9c7e02331443341559eadc5424750b0b5c0dfc299503d1ec3a881ffb4ab93000affdad6131315e4e2e4c5c6cd1b1b1d1f1f212a2a2b3435368e919744474ce4e2e4303032515f74"]
   };
-  // 名前と見本の色は SK's Brand（/brand/）と同じ
+  // 名前と見本の色は SK's Brand（/brand/）と同じ（いちばん上が初期値）
   var COLORS = [
     { key: "blue", name: "SK's Blue", note: t("いつもの青"), sw: "#2563eb" },
     { key: "sakura", name: "SK's Sakura", note: t("さくら"), sw: "#db2777" },
@@ -82,12 +82,123 @@
     { key: "sumi", name: "SK's Sumi", note: t("墨"), sw: "#334155" }
   ];
 
+  // ---- アイコンをテーマカラーで塗る ----
+  //   ・Toolbox のアイコン（/toolbox/icon.svg の 4 つのタイル）: 見本の色（sw）の色相を中心に作りなおす。
+  //       背景は暗く・タイルは明るさと色相を少しずつずらしたグラデーション
+  //   ・ミニアプリのアイコン（/toolbox/todo/icon.svg など）: SVG を読み込んで、色の色相を「SK's Blue → 選んだ色」の分だけ回す。
+  //       どのアイコンも SK's Blue に近い青とグレーでできている。グレーはそのまま、彩度は見本の色に合わせる。SK's Blue なら元の絵のまま
+  //   ページの <img> とタブのアイコン（<link rel="icon">）を、塗った SVG（data: URL）に差し替える（あとから足されたものも）。
+  //   PWA としてホーム画面に入れたアイコン（manifest の絵）は、ブラウザが持つので変えられない
+  var TOOLBOX_ICON = "/toolbox/icon.svg";
+  var ICON_RE = /^\/toolbox\/(?:[a-z]+\/)?icon\.svg$/;
+  function rgbHsl(r, g, b) { // 0〜1 → [色相 0〜360, 彩度 0〜1, 明るさ 0〜1]
+    var max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min, h = 0, l = (max + min) / 2;
+    if (d) h = max === r ? (g - b) / d % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [(h * 60 + 360) % 360, d ? d / (1 - Math.abs(2 * l - 1)) : 0, l];
+  }
+  function hexHsl(hex) { var n = parseInt(hex.slice(1), 16); return rgbHsl((n >> 16) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); }
+  function swatch(key) { return (COLORS.filter(function (x) { return x.key === key; })[0] || COLORS[0]).sw; }
+  function svgUrl(svg) { return "data:image/svg+xml," + encodeURIComponent(svg); }
+  function toolboxIcon(key) {
+    var hs = hexHsl(swatch(key)), h = hs[0], s = hs[1] * 100;
+    function hsl(dh, sat, l) { return "hsl(" + Math.round((h + dh + 360) % 360) + " " + Math.round(Math.min(s, sat)) + "% " + l + "%)"; }
+    function grad(id, from, to, diag) {
+      return '<linearGradient id="' + id + '" x1="0" y1="0" x2="' + (diag ? 1 : 0) + '" y2="1"><stop offset="0" stop-color="' + from + '"/><stop offset="1" stop-color="' + to + '"/></linearGradient>';
+    }
+    return svgUrl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs>' +
+      grad("bg", hsl(0, 55, 15), hsl(0, 50, 30), true) +
+      grad("a", hsl(0, 90, 38), hsl(30, 90, 74)) +
+      grad("b", hsl(-24, 90, 40), hsl(-24, 90, 72), true) +
+      grad("c", hsl(18, 90, 80), hsl(18, 90, 55), true) +
+      grad("d", hsl(-10, 90, 66), hsl(-10, 90, 36), true) +
+      '</defs><rect width="512" height="512" fill="url(#bg)"/>' +
+      '<rect x="126" y="126" width="118" height="118" rx="34" fill="url(#a)"/>' +
+      '<rect x="268" y="126" width="118" height="118" rx="34" fill="url(#b)"/>' +
+      '<rect x="126" y="268" width="118" height="118" rx="34" fill="url(#c)"/>' +
+      '<rect x="268" y="268" width="118" height="118" rx="59" fill="url(#d)"/></svg>');
+  }
+  // 色相を回すのは OKLCH で（HSL で回すと、緑や水色だけ明るくギラついて見えるため）。sRGB 0〜1 ⇔ [L, C, h]
+  function lin(v) { return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+  function gam(v) { return v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; }
+  function rgbLch(r, g, b) {
+    r = lin(r); g = lin(g); b = lin(b);
+    var l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    var m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    var s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    var A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, B = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+    return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, Math.sqrt(A * A + B * B), Math.atan2(B, A) * 180 / Math.PI];
+  }
+  function lchRgb(L, C, h) {
+    var A = C * Math.cos(h * Math.PI / 180), B = C * Math.sin(h * Math.PI / 180);
+    var l = Math.pow(L + 0.3963377774 * A + 0.2158037573 * B, 3), m = Math.pow(L - 0.1055613458 * A - 0.0638541728 * B, 3), s = Math.pow(L - 0.0894841775 * A - 1.2914855480 * B, 3);
+    return [gam(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s), gam(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s), gam(-0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s)];
+  }
+  function hexLch(hex) { var n = parseInt(hex.slice(1), 16); return rgbLch((n >> 16) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); }
+  // SVG の中の色（#rrggbb・color(display-p3 r g b)・rgba(r, g, b, a)）の色相を「SK's Blue → 選んだ色」の分だけ回す。
+  // 鮮やかさも見本の色に合わせる（SK's Sumi なら落ち着いた色に）。表せない色になったら、鮮やかさを下げて収める
+  function recolor(svg, key) {
+    var from = hexLch(COLORS[0].sw), to = hexLch(swatch(key)), dh = to[2] - from[2], kc = Math.min(1.2, to[1] / from[1]);
+    function shift(r, g, b) {
+      var x = rgbLch(r, g, b), c = x[1] * kc, out;
+      if (x[1] < 0.03) return null;
+      for (var i = 0; i < 24; i++, c *= 0.92) {
+        out = lchRgb(x[0], c, x[2] + dh);
+        if (out.every(function (v) { return v >= -0.001 && v <= 1.001; })) break;
+      }
+      return out;
+    }
+    function byte(v) { return Math.round(Math.max(0, Math.min(1, v)) * 255); }
+    return svg
+      .replace(/#([0-9a-f]{6})\b/gi, function (m, hex) {
+        var n = parseInt(hex, 16), c = shift((n >> 16) / 255, (n >> 8 & 255) / 255, (n & 255) / 255);
+        return c ? "#" + c.map(function (v) { return (byte(v) + 256).toString(16).slice(1); }).join("") : m;
+      })
+      .replace(/color\(display-p3 ([\d.]+) ([\d.]+) ([\d.]+)\)/g, function (m, r, g, b) {
+        var c = shift(+r, +g, +b);
+        return c ? "color(display-p3 " + c.map(function (v) { return (byte(v) / 255).toFixed(4); }).join(" ") + ")" : m;
+      })
+      .replace(/rgba\((\d+), ?(\d+), ?(\d+), ?([\d.]+)\)/g, function (m, r, g, b, a) {
+        var c = shift(r / 255, g / 255, b / 255);
+        return c ? "rgba(" + c.map(byte).join(", ") + ", " + a + ")" : m;
+      });
+  }
+  var svgText = {}, iconCache = {};
+  // 塗った絵の URL。ミニアプリの絵をまだ読み込んでいなければ null を返し、読み込めたら done を呼ぶ
+  function iconUrl(path, key, done) {
+    if (path === TOOLBOX_ICON) return iconCache[key] || (iconCache[key] = toolboxIcon(key));
+    if (key === COLORS[0].key) return path;
+    var id = key + path;
+    if (iconCache[id]) return iconCache[id];
+    if (!svgText[path]) svgText[path] = fetch(path).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); });
+    svgText[path].then(function (text) { iconCache[id] = iconCache[id] || svgUrl(recolor(text, key)); done(); }, function () { /* 元の絵のまま */ });
+    return null;
+  }
+  // data-tb-icon … 元の絵のパス（色を変えたときに、もう一度塗る。ほかの絵に変えられたら付けなおす・外す）
+  function paintIcon(node) {
+    var attr = node.tagName === "LINK" ? "href" : "src", v = node.getAttribute(attr) || "", path = node.getAttribute("data-tb-icon");
+    if (!path || v.indexOf("data:") !== 0) {
+      path = null;
+      try {
+        var u = new URL(v, location.href);
+        if (u.origin === location.origin && ICON_RE.test(u.pathname)) path = u.pathname;
+      } catch (e) { /* 塗らない */ }
+      if (!path) { if (node.hasAttribute("data-tb-icon")) node.removeAttribute("data-tb-icon"); return; }
+      if (node.getAttribute("data-tb-icon") !== path) node.setAttribute("data-tb-icon", path);
+    }
+    var url = iconUrl(path, settings.color, function () { if (node.getAttribute("data-tb-icon") === path) paintIcon(node); });
+    if (url && v !== url) node.setAttribute(attr, url);
+  }
+  function paintIcons(node) {
+    if (node.tagName === "IMG" || node.tagName === "LINK") paintIcon(node);
+    else if (node.querySelectorAll) Array.prototype.forEach.call(node.querySelectorAll("img, link[rel~='icon']"), paintIcon);
+  }
+
   // ---- 設定の読み書き ----
   var STORE = "sk_toolbox";
   var TB_CENTERS = ["command", "menu", "island", "chips", "ticker", "timeline", "tabs", "none"];
   var TB_CHIPS = ["class", "todo", "alarm", "timer"];
   var TB_PARTS = ["brand", "name", "apps", "search", "settings"];
-  var DEFAULTS = { theme: "auto", color: "app", motion: "auto", haptics: true, badge: true, homeStart: "last" };
+  var DEFAULTS = { theme: "auto", color: "blue", motion: "auto", haptics: true, badge: true, homeStart: "last" };
   // アプリ別の設定（設定の画面の「アプリ」。各アプリは SKToolbox.app("calc") などで読む）
   //   clock.notify … アラームとタイマーを通知する（/toolbox/shared/remind.js）
   //   calc.history … 計算の履歴を残す / calc.group … 3 けたごとに区切る（/toolbox/calc/calc.js）
@@ -122,7 +233,8 @@
     try { d = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { /* 初期値 */ }
     settings = {
       theme: ["auto", "light", "dark"].indexOf(d.theme) >= 0 ? d.theme : DEFAULTS.theme,
-      color: d.color === "app" || PALETTES[d.color] ? d.color : DEFAULTS.color,
+      // 前にあった「アプリの色」（"app"）を選んでいた人は SK's Blue になる
+      color: PALETTES[d.color] ? d.color : DEFAULTS.color,
       motion: d.motion === "reduce" ? "reduce" : "auto",
       haptics: typeof d.haptics === "boolean" ? d.haptics : DEFAULTS.haptics,
       badge: typeof d.badge === "boolean" ? d.badge : DEFAULTS.badge,
@@ -169,9 +281,10 @@
         document.head.appendChild(styleEl);
       }
       // html:root:root … アプリの :root[data-theme="dark"] などより強くする
-      styleEl.textContent = PALETTES[settings.color] ? "html:root:root{" + paletteCss(settings.color, isDark()) + "}" : "";
+      styleEl.textContent = "html:root:root{" + paletteCss(settings.color, isDark()) + "}";
       root.setAttribute("data-color", settings.color);
     }
+    paintIcons(root);
     listeners.forEach(function (fn) { try { fn(settings); } catch (e) { /* ほかの処理は続ける */ } });
   }
   function set(patch) {
@@ -184,6 +297,15 @@
   read();
   apply();
   darkMq.addEventListener("change", apply);
+  // あとから出てくるアイコン（ホームの HTML・タイトルバー・検索・設定の画面など）も塗る
+  if (window.MutationObserver) {
+    new MutationObserver(function (list) {
+      list.forEach(function (m) {
+        if (m.type === "attributes") { if (m.target.tagName === "IMG" || m.target.tagName === "LINK") paintIcon(m.target); }
+        else Array.prototype.forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1) paintIcons(n); });
+      });
+    }).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["src", "href"] });
+  }
   // サイトのページ: ヘッダーの「表示」でライト・ダークを変えたとき
   if (scope === "site" && window.MutationObserver) {
     new MutationObserver(function () {
@@ -909,19 +1031,19 @@
       function () { return settings.theme; }, function (v) { set({ theme: v }); });
     lookSec.appendChild(themeRow);
     var colorRow = el("div", "tbs-item tbs-item--col");
-    colorRow.appendChild(label(t("テーマカラー"), t("Calc・Memo・Todo のボタンや背景の色。SK's Brand の色から選べます。Clock は空の色のままです")));
+    colorRow.appendChild(label(t("テーマカラー"), t("Toolbox とアプリのアイコン、Calc・Memo・Todo などのボタンや背景の色。SK's Brand の色から選べます。Clock の画面は空の色のままです")));
     var sw = el("div", "tbs-swatches");
     sw.setAttribute("role", "radiogroup");
     sw.setAttribute("aria-label", t("テーマカラー"));
     var current = el("p", "tbs-swatch-name");
     current.setAttribute("aria-live", "polite");
-    [{ key: "app", name: t("アプリの色"), note: t("Calc は青、Memo はオレンジ、Todo は緑") }].concat(COLORS).forEach(function (c) {
-      var b = el("button", "tbs-swatch m3-state" + (c.key === "app" ? " tbs-swatch--app" : ""));
+    COLORS.forEach(function (c) {
+      var b = el("button", "tbs-swatch m3-state");
       b.type = "button";
       b.setAttribute("role", "radio");
       b.setAttribute("aria-label", c.name + "（" + c.note + "）");
       b.title = c.name + "（" + c.note + "）";
-      if (c.sw) b.style.setProperty("--sw", c.sw);
+      b.style.setProperty("--sw", c.sw);
       b.appendChild(icon("check"));
       b.addEventListener("click", function () { set({ color: c.key }); });
       updaters.push(function () {
@@ -1290,8 +1412,8 @@
     set: set,
     onChange: function (fn) { listeners.push(fn); fn(settings); },
     vibrate: vibrate,
-    // テーマカラーの一覧（SK's Brand の色。"app" は各アプリの色）。ホーム画面の「見た目」でも使う
-    colors: [{ key: "app", name: t("アプリの色"), note: t("Calc は青、Memo はオレンジ、Todo は緑") }].concat(COLORS),
+    // テーマカラーの一覧（SK's Brand の色）。ホーム画面の「見た目」でも使う
+    colors: COLORS,
     openSettings: openSettings,
     renderSettings: renderSettings,
     forceUpdate: forceUpdate,
