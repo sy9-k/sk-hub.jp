@@ -363,6 +363,48 @@ body[data-view="learn"] .page { padding-bottom: 0; }
 .write-helpers { display: flex; justify-content: center; gap: 4px; }
 .hint { margin: 0; text-align: center; font-weight: 700; letter-spacing: .12em; color: var(--tertiary); }
 
+/* 画面内キーボード・文字を選ぶ（keyboard.js） */
+.vk-area { padding: 0 0 12px; }
+.vk { display: flex; flex-direction: column; gap: 10px; max-width: 560px; margin: 0 auto; }
+.vk-display {
+  min-height: 56px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; padding: 8px 14px;
+  border-radius: 12px 12px 0 0; border-bottom: 2px solid var(--primary); background: var(--surface-container);
+  font-size: 1.35rem; font-weight: 700; cursor: text; outline: none;
+}
+.vk-display:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent); }
+.vk-display.is-shake { animation: shake .35s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.vk-text { white-space: pre-wrap; }
+.vk-placeholder { color: var(--outline); font-size: .95rem; font-weight: 500; }
+.vk-caret { width: 2px; height: 1.3em; background: var(--primary); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.vk.is-disabled .vk-caret { display: none; }
+.vk-rows { display: flex; flex-direction: column; gap: 6px; }
+.vk-row { display: flex; justify-content: center; gap: 5px; }
+.vk-key {
+  flex: 0 1 46px; min-width: 0; height: 48px; border-radius: 10px; border: 0; cursor: pointer;
+  background: var(--surface-container-high); color: var(--on-surface); font: inherit; font-size: 1.1rem; font-weight: 700;
+  box-shadow: 0 1px 0 var(--outline-variant); display: inline-grid; place-items: center;
+}
+.vk-key:active { background: var(--primary-container); }
+.vk-key.vk-wide { flex-basis: 66px; background: var(--surface-container-highest); }
+.vk-key.is-on { background: var(--primary); color: var(--on-primary); }
+.vk-key.vk-space { flex: 0 1 280px; font-size: .9rem; }
+.vk-key .ms { font-size: 20px; }
+.vk-hangul .vk-key { font-family: var(--font-ko); }
+.vk-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.vk-tile {
+  min-width: 52px; height: 52px; padding: 0 10px; border-radius: 12px; border: 1.5px solid var(--outline-variant); cursor: pointer;
+  background: var(--surface-container-lowest); color: var(--on-surface); font: inherit; font-size: 1.3rem; font-weight: 800;
+}
+.vk-tile:disabled { opacity: .25; cursor: default; }
+.vk-chip { display: inline-grid; place-items: center; min-width: 1.6em; padding: 0 4px; border-radius: 6px; background: var(--primary-container); color: var(--on-primary-container); }
+.vk-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.vk-ok { min-height: 48px; padding: 0 28px; }
+.vk.is-disabled .vk-rows, .vk.is-disabled .vk-tiles, .vk.is-disabled .vk-actions { display: none; }
+.vk.is-disabled .vk-display { border-bottom-color: var(--outline-variant); }
+@media (max-width: 480px) { .vk-key { height: 44px; font-size: 1rem; } .vk-row { gap: 4px; } }
+
 /* ○・× */
 .q-area { position: relative; }
 .judge {
@@ -405,6 +447,8 @@ body[data-view="learn"] .page { padding-bottom: 0; }
 .detail-ex { display: flex; flex-direction: column; margin: 6px 0 0; font-size: .86rem; color: var(--on-surface-variant); }
 .fix-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin: 0; }
 .next-btn { min-height: 54px; font-size: 1.05rem; width: 100%; }
+/* 読み上げが終わるのを待っているあいだ */
+.learn-body.is-waiting-speech .next-btn, .learn-body.is-waiting-speech .rate button { opacity: .6; cursor: progress; }
 .a-area .next-btn { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 3; box-shadow: 0 4px 14px var(--shadow); }
 
 /* 単語カード（めくると裏返る） */
@@ -867,4 +911,60 @@ body[data-view="teach"] .page { max-width: 1120px; }
   .edit-row { grid-template-columns: 22px 1fr; }
   .edit-tools { grid-column: 2; justify-content: flex-end; margin-top: -4px; }
   .choice { padding: 10px 20px; }
+}
+
+/* ---------- 画面の動き ----------
+   短く・小さく。端末の「動きを減らす」設定がオンなら、すべて止める（いちばん下） */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes bounce { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.05); } 70% { transform: scale(.98); } }
+@keyframes wiggle { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+@keyframes ringIn { from { stroke-dashoffset: var(--ring-c); } }
+
+/* 問題が変わるとき */
+.learn-body .q-area > *, .learn-body .card-area { animation: slideIn .35s var(--ease-emph) both; }
+.learn-body .q-area > :nth-child(2) { animation-delay: .04s; }
+.learn-body .q-area > :nth-child(3) { animation-delay: .08s; }
+.learn-body .choices .choice { animation: fadeUp .3s var(--ease-emph) both; }
+.learn-body .choices .choice:nth-child(2) { animation-delay: .04s; }
+.learn-body .choices .choice:nth-child(3) { animation-delay: .08s; }
+.learn-body .choices .choice:nth-child(4) { animation-delay: .12s; }
+.learn-body .choices .choice:nth-child(5) { animation-delay: .16s; }
+.vk-area { animation: fadeUp .35s .06s var(--ease-emph) both; }
+
+/* 押したとき・答えたとき */
+.choice, .pa-opt, .vk-key, .vk-tile, .mode-card, .filled-btn, .tonal-btn, .outlined-btn, .chip, .map-cell { transition: transform .12s var(--ease), background-color .2s var(--ease), color .2s var(--ease); }
+.choice:not(:disabled):active, .pa-opt:not(:disabled):active, .vk-tile:not(:disabled):active { transform: scale(.97); }
+.vk-key:active { transform: scale(.9); }
+.filled-btn:not(:disabled):active, .tonal-btn:not(:disabled):active, .outlined-btn:not(:disabled):active { transform: scale(.97); }
+.learn-body .choices .choice.is-correct, .pa-opt.is-picked { animation: bounce .45s var(--ease-emph); }
+.learn-body .choices .choice.is-wrong { animation: wiggle .4s var(--ease); }
+.verdict.ok { animation: pop .4s var(--ease-emph); transform-origin: left center; }
+.verdict.ng { animation: wiggle .4s var(--ease); }
+.vk-last, .vk-chip { display: inline-block; animation: pop .22s var(--ease-emph); }
+.vk-tile:disabled { transform: scale(.85); }
+
+/* 輪のメーターが 0 から伸びる */
+.ring-fg { animation: ringIn .9s var(--ease-emph) both; }
+
+/* 結果・一覧が順に出る */
+.result > * { animation: fadeUp .4s var(--ease-emph) both; }
+.result > :nth-child(2) { animation-delay: .06s; }
+.result > :nth-child(3) { animation-delay: .12s; }
+.result > :nth-child(4) { animation-delay: .18s; }
+.result > :nth-child(n+5) { animation-delay: .24s; }
+.test-row, .result-row { animation: fadeUp .35s var(--ease-emph) both; }
+.set-list > .set-row, .word-list > .word-row { animation: fadeUp .35s var(--ease-emph) both; }
+.set-list > .set-row:nth-child(2), .word-list > .word-row:nth-child(2), .test-row:nth-child(2), .result-row:nth-child(2) { animation-delay: .04s; }
+.set-list > .set-row:nth-child(3), .word-list > .word-row:nth-child(3), .test-row:nth-child(3), .result-row:nth-child(3) { animation-delay: .08s; }
+.set-list > .set-row:nth-child(4), .word-list > .word-row:nth-child(4), .test-row:nth-child(4), .result-row:nth-child(4) { animation-delay: .12s; }
+.set-list > .set-row:nth-child(n+5), .word-list > .word-row:nth-child(n+5), .test-row:nth-child(n+5), .result-row:nth-child(n+5) { animation-delay: .16s; }
+.today, .memory-card, .start-card, .mk-card, .lobby-card { animation: fadeUp .4s var(--ease-emph) both; }
+
+/* プリント: 解答欄を移ったとき */
+.pp-prompt .pq, .pp-answer { animation: fadeUp .25s var(--ease-emph) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

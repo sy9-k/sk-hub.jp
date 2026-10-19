@@ -284,7 +284,8 @@ export function testsOf(setId) {
 // ---------- 設定（問題の数・形式など） ----------
 //   format: auto（難易度に合わせて 4 択と書き取りをまぜる）/ choice（4 択だけ）/ write（書き取りだけ）
 
-export const getPrefs = () => ({ count: 10, format: "auto", filter: "all", ...read(PREFS_KEY, {}) });
+//   input: auto（画面内キーボード）/ tiles（文字を選ぶ）/ keyboard（パソコンのキーボード）。書き取りの入力（keyboard.js）
+export const getPrefs = () => ({ count: 10, format: "auto", filter: "all", input: "auto", ...read(PREFS_KEY, {}) });
 export function setPrefs(patch) {
   write(PREFS_KEY, { ...getPrefs(), ...patch });
 }

@@ -87,9 +87,33 @@ export function canSpeak(lang) {
 }
 
 let current = null; // Chrome は話している途中の発話を片づけて止めてしまうことがあるので、参照を持っておく
+let waiters = [];    // 読み上げが終わるのを待っている人（whenDone）
+function settle(u) {
+  if (u && current !== u) return;
+  current = null;
+  const list = waiters;
+  waiters = [];
+  list.forEach((fn) => fn());
+}
+
+// 読み上げ中か（読み上げを始める準備中も含む）
+export function speaking() {
+  return !!current;
+}
+// 読み上げが終わるまで待つ。読み上げていなければすぐ。ブラウザが終わりを知らせないときのために、長くても max ミリ秒
+export function whenDone(max = 10000) {
+  if (!current) return Promise.resolve();
+  return new Promise((resolve) => {
+    const t = setTimeout(() => { waiters = waiters.filter((f) => f !== done); resolve(); }, max);
+    const done = () => { clearTimeout(t); resolve(); };
+    waiters.push(done);
+  });
+}
+
 export function speak(text, lang, { button = null } = {}) {
   if (!supported || !lang || !text) return;
   speechSynthesis.cancel();
+  if (current) settle(current);
   const u = new SpeechSynthesisUtterance(String(text));
   u.lang = lang;
   const voice = pickVoice(lang);
@@ -98,10 +122,12 @@ export function speak(text, lang, { button = null } = {}) {
   if (button) {
     document.querySelectorAll(".speak.is-speaking").forEach((b) => b.classList.remove("is-speaking"));
     button.classList.add("is-speaking");
-    const done = () => button.classList.remove("is-speaking");
-    u.addEventListener("end", done);
-    u.addEventListener("error", done);
+    const off = () => button.classList.remove("is-speaking");
+    u.addEventListener("end", off);
+    u.addEventListener("error", off);
   }
+  u.addEventListener("end", () => settle(u));
+  u.addEventListener("error", () => settle(u));
   current = u;
   // Chrome は cancel() の直後の speak() を落とすことがあるので、少し待つ
   setTimeout(() => { if (current === u) speechSynthesis.speak(u); }, 30);
@@ -109,7 +135,7 @@ export function speak(text, lang, { button = null } = {}) {
 
 export function stop() {
   if (!supported) return;
-  current = null;
+  settle(current);
   speechSynthesis.cancel();
   document.querySelectorAll(".speak.is-speaking").forEach((b) => b.classList.remove("is-speaking"));
 }

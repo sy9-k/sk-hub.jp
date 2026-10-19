@@ -27,12 +27,15 @@ import { printSection, renderPrint } from "./print.js";
 import { renderMaker } from "./maker.js";
 import { classSection, renderClass, renderTask, reportProgress } from "./classroom.js";
 import { renderTeach } from "./teach.js";
+import { chooseMode, createInput } from "./keyboard.js";
 
 const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
 let keyHandler = null;
 
 const COUNTS = [[10, "10 問"], [20, "20 問"], [30, "30 問"], [0, "すべて"]];
+// 書き取りの入力（keyboard.js）
+const INPUTS = [["auto", "画面内キーボード（おすすめ）"], ["tiles", "文字を選ぶ"], ["keyboard", "パソコンのキーボード"]];
 const FORMATS = [["auto", "おまかせ（難易度を自動で調整）"], ["choice", "4 択だけ"], ["write", "書き取りだけ"]];
 const STATUS = {
   mastered: { label: "記憶済み", color: "var(--st-mastered)" },
@@ -115,10 +118,27 @@ function ring(pct, { size = 44, stroke = 5, color = "var(--primary)", label = nu
   const el = h("span", { class: "ring", style: `width:${size}px;height:${size}px` });
   el.innerHTML = `<svg viewBox="0 0 ${size} ${size}" aria-hidden="true">` +
     `<circle class="ring-bg" cx="${size / 2}" cy="${size / 2}" r="${r}" stroke-width="${stroke}"/>` +
-    `<circle class="ring-fg" cx="${size / 2}" cy="${size / 2}" r="${r}" stroke-width="${stroke}" stroke="${color}" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - p)}"/></svg>`;
+    `<circle class="ring-fg" cx="${size / 2}" cy="${size / 2}" r="${r}" stroke-width="${stroke}" stroke="${color}" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - p)}" style="--ring-c:${C}"/></svg>`;
   if (check) el.append(icon("check", "ring-check"));
   else if (label != null) el.append(h("span", { class: "ring-label" }, label));
   return el;
+}
+
+// 数字を 0 から数え上げる（「60%」「3/10」の最初の数字）。動きを減らす設定ならすぐに
+function countUp(el, ms = 900) {
+  if (!el) return;
+  const text = el.textContent;
+  const m = /\d+/.exec(text);
+  if (!m || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const to = Number(m[0]);
+  const t0 = performance.now();
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / ms);
+    const v = Math.round(to * (1 - Math.pow(1 - k, 3)));
+    el.textContent = text.slice(0, m.index) + v + text.slice(m.index + m[0].length);
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 // 記憶度のドーナツ（記憶済み・記憶中・弱点・未学習）
@@ -434,6 +454,8 @@ function renderSet(id) {
     COUNTS.map(([v, label]) => h("option", { value: String(v), selected: prefs.count === v }, label)));
   const formatSelect = h("select", { class: "field-select", "aria-label": "問題の形式", onchange: (e) => store.setPrefs({ format: e.target.value }) },
     FORMATS.map(([v, label]) => h("option", { value: v, selected: prefs.format === v }, label)));
+  const inputSelect = h("select", { class: "field-select", "aria-label": "書き取りの入力", onchange: (e) => store.setPrefs({ input: e.target.value }) },
+    INPUTS.map(([v, label]) => h("option", { value: v, selected: (prefs.input || "auto") === v }, label)));
 
   const mine = set.source !== "sk" && set.source !== "class";
   const fromClass = set.source === "class" && set.classRef;
@@ -497,7 +519,8 @@ function renderSet(id) {
       h("p", { class: "start-note" }, `${lang.name} ↔ 日本語 を両方向でまぜて出題。4 択・書き取りの難易度は、覚えぐあいに合わせて自動で変わります。`),
       h("div", { class: "start-options" },
         h("label", { class: "option" }, h("span", null, "問題の数"), countSelect),
-        h("label", { class: "option" }, h("span", null, "形式"), formatSelect)),
+        h("label", { class: "option" }, h("span", null, "形式"), formatSelect),
+        h("label", { class: "option" }, h("span", null, "書き取りの入力"), inputSelect)),
       h("div", { class: "start-more" },
         button("tonal", "単語カードで覚える", "style", () => go(learnUrl("card")), { class: "tonal-btn" }),
         button("outlined", "小テスト", "quiz", () => go(learnUrl("test")), { class: "outlined-btn" })),
@@ -663,8 +686,20 @@ function runSession(cfg) {
     judge.classList.add("show");
   }
 
-  function next() {
+  // 読み上げ中なら、終わってから次へ（何度押しても 1 回だけ進む）
+  let waitingNext = false;
+  let cleanups = []; // 問題ごとの後始末（画面内キーボードのキーの見張りをやめる）
+  const cleanUp = () => { cleanups.forEach((f) => f()); cleanups = []; };
+  async function next() {
     clearTimeout(autoNext);
+    if (waitingNext) return;
+    if (tts.speaking()) {
+      waitingNext = true;
+      body.classList.add("is-waiting-speech");
+      await tts.whenDone();
+      body.classList.remove("is-waiting-speech");
+      waitingNext = false;
+    }
     judge.className = "judge";
     if (pending !== null) {
       const { item, retry } = queue[pos];
@@ -687,6 +722,7 @@ function runSession(cfg) {
     barFill.style.width = `${(done / cfg.items.length) * 100}%`;
     barFill.parentElement.setAttribute("aria-valuenow", String(done));
     tts.stop();
+    cleanUp();
     body.replaceChildren();
     const { item, retry } = queue[pos];
     if (mode === "card") { levelEl.replaceChildren(); showCard(item); return; }
@@ -787,11 +823,25 @@ function runSession(cfg) {
       lang: fw ? "ja" : langAttr(lang), "aria-label": "答え",
       placeholder: fw ? "日本語で答える" : reading ? `${lang.name}で（ピンインでも OK）` : `${lang.name}で答える`
     });
+    // 入力のしかた: 画面内キーボード（英字・ハングル）・文字を選ぶ・パソコンのキーボード
+    const mode = chooseMode(store.getPrefs().input || "auto", fw ? "ja" : lang.key, target);
+    const vk = mode === "keyboard" ? null : createInput({
+      h, icon, mode, answer: target, lang: fw ? "ja" : langAttr(lang),
+      pool: item.set.words.map((w) => (fw ? w.m : w.w)).filter((x) => x !== target),
+      placeholder: mode === "tiles" ? "下の文字を順に押してください" : reading ? "ピンインで（声調はなくてよい）" : `${lang.name}で答える（キーボードでも打てます）`,
+      onSubmit: (typed) => {
+        if (answered) return;
+        const r = grade(typed, target, { lang: fw ? "ja" : lang.key, reading });
+        settle(r.ok, typed, r.close);
+      }
+    });
+    if (vk) cleanups.push(() => vk.destroy());
+    const focusInput = () => (vk ? vk.focus() : input.focus());
     const hintEl = h("p", { class: "hint", hidden: true });
     const feedback = h("div", { class: "feedback", "aria-live": "polite" });
     const submitBtn = h("button", { type: "submit", class: "filled-btn" }, h("span", null, "確定"));
     const helpers = h("div", { class: "write-helpers" },
-      isTest ? null : button("text", "ヒント", "lightbulb", () => { hintEl.textContent = hint(target); hintEl.hidden = false; input.focus(); }),
+      isTest ? null : button("text", "ヒント", "lightbulb", () => { hintEl.textContent = hint(target); hintEl.hidden = false; focusInput(); }),
       button("text", isTest ? "わからない（とばす）" : "わからない", "help", () => settle(false, "")));
     const nextBtn = button("filled", "次へ", "arrow_forward", next, { class: "filled-btn next-btn", hidden: true });
     let answered = false;
@@ -801,6 +851,7 @@ function runSession(cfg) {
       pending = ok;
       if (isTest) { given = typed; next(); return; }
       input.disabled = true;
+      if (vk) vk.disable();
       submitBtn.hidden = true;
       helpers.hidden = true;
       if (typed) showJudge(ok);
@@ -835,12 +886,14 @@ function runSession(cfg) {
     } }, input, submitBtn);
 
     const q = questionArea(item, qn.dir);
-    q.append(form, hintEl, helpers);
-    body.append(q, h("div", { class: "a-area" }, feedback, nextBtn));
+    // 画面内キーボードのときは、問題の下にキーボード（答えの欄もキーボードの中）
+    if (vk) q.append(hintEl, helpers);
+    else q.append(form, hintEl, helpers);
+    body.append(...[q, vk ? h("div", { class: "vk-area" }, vk.el) : null, h("div", { class: "a-area" }, feedback, nextBtn)].filter(Boolean));
     keyHandler = (e) => {
       if (answered && e.key === "Enter" && !isControl(e)) { e.preventDefault(); next(); }
     };
-    input.focus();
+    focusInput();
   }
 
   // ---- 単語カード（表は外国語か日本語のどちらか） ----
@@ -891,6 +944,7 @@ function runSession(cfg) {
   // ---- 結果 ----
   function finish() {
     keyHandler = null;
+    cleanUp();
     if (isTest) { finishTest(); return; }
     // クラスの単語帳の課題なら、進み具合を先生に送る
     const classSets = new Set(cfg.items.map((it) => it.set).filter((x) => x.source === "class"));
@@ -927,6 +981,7 @@ function runSession(cfg) {
           speakButton(item.word.w, lang.speech),
           wordRing(rec));
       }))));
+    countUp(body.querySelector(".result .ring-label"));
   }
 
   // ---- 小テストの結果 ----
@@ -965,6 +1020,7 @@ function runSession(cfg) {
             h("span", { class: "test-correct" }, "正解: ", h("strong", { lang: fw ? "ja" : langAttr(lang) }, correct))),
           speakButton(item.word.w, lang.speech));
       }))));
+    countUp(body.querySelector(".result .ring-label"));
   }
 
   show();

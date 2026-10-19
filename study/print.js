@@ -794,6 +794,8 @@ export async function renderPrint(id, ui) {
 
   async function submit(auto) {
     if (!examActive()) return;
+    // 確認のダイアログを 2 つ出さない（最後の解答欄の Enter と「提出する」を続けて押したときなど）
+    if (!auto && document.querySelector("dialog[open]")) return;
     if (!auto) {
       const empty = B.length - answeredCount();
       if (!(await confirmDialog("提出しますか？", `提出は 1 回だけです。提出したあとは答えを直せません。${empty ? `まだ答えていない解答欄が ${empty} 個あります。` : ""}`, "提出する"))) return;
@@ -804,6 +806,8 @@ export async function renderPrint(id, ui) {
     st.exam.auto = !!auto;
     save();
     clearInterval(timer);
+    timerEl.hidden = true;
+    document.querySelectorAll("dialog[open]").forEach((d) => d.close());
     guard();
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     if (auto) toast("時間になったので、提出しました");
