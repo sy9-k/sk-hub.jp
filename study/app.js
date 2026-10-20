@@ -364,7 +364,7 @@ function renderHome() {
     classSection(printUi),
     started.length ? h("section", { class: "section" },
       h("div", { class: "section-head" }, h("h2", null, "続きから")),
-      h("div", { class: "set-list" }, started.slice(0, 4).map(({ set }) => setRow(set, { start: true })))) : null,
+      h("div", { class: "set-list" }, started.slice(0, 4).map(({ set }) => setRow(set, { start: true })))) : "", // append は null を「null」の文字にするので、ないときは空の文字
     h("section", { class: "section" },
       h("div", { class: "section-head" }, h("h2", null, "SK の単語セット")),
       chips, list),
@@ -474,7 +474,7 @@ function renderSet(id) {
 
   app.append(
     fromClass ? backLink("クラス", `#/class/${encodeURIComponent(set.classRef.cid)}`) : backLink("ホーム", "#/"),
-    fromClass ? h("p", { class: "class-banner" }, icon("groups"), `クラスの課題「${set.assignTitle || set.title}」。学習すると、覚えた語の数が先生に届きます。`) : null,
+    fromClass ? h("p", { class: "class-banner" }, icon("groups"), `クラスの課題「${set.assignTitle || set.title}」。学習すると、覚えた語の数が先生に届きます。`) : "",
     h("section", { class: "set-head" },
       thumb(lang),
       h("div", null,
@@ -1185,6 +1185,51 @@ document.addEventListener("keydown", (e) => {
 
 const speechBtn = document.getElementById("speech-settings");
 if (speechBtn) speechBtn.addEventListener("click", openSpeechSettings);
+
+// 押したところから広がる波紋（SK Material。MALU・Nagi と同じ）
+const RIPPLE = ".filled-btn, .tonal-btn, .outlined-btn, .text-btn, .danger-btn, .pill-btn, .icon-btn, .chip, .choice, .set-row, .segmented button, .print-tabs button, .pa-opt, .map-cell, .tc-mark, .mk-roles button";
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+document.addEventListener("pointerdown", (e) => {
+  const target = e.target.closest && e.target.closest(RIPPLE);
+  if (!target || target.disabled || reducedMotion.matches) return;
+  const r = target.getBoundingClientRect();
+  const size = Math.hypot(r.width, r.height) * 2;
+  const dot = h("span", { class: "ripple" });
+  Object.assign(dot.style, { width: `${size}px`, height: `${size}px`, left: `${e.clientX - r.left - size / 2}px`, top: `${e.clientY - r.top - size / 2}px` });
+  target.append(dot);
+  dot.addEventListener("animationend", () => dot.remove());
+});
+
+// 上の帯: 下に動かすと面の色を変える（M3 のトップアプリバー）
+const topBar = document.querySelector(".top-bar");
+const onScroll = () => topBar.classList.toggle("is-scrolled", window.scrollY > 0);
+window.addEventListener("scroll", onScroll, { passive: true });
+onScroll();
+
+// ホーム画面に追加（PWA。オフラインでも開けるように sw.js を入れる）
+const INSTALL_KEY = "sk_study_install_dismissed";
+const installBanner = document.getElementById("install-banner");
+let installEvent = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  installEvent = e;
+  let dismissed = false;
+  try { dismissed = localStorage.getItem(INSTALL_KEY) === "1"; } catch {}
+  if (!dismissed) installBanner.hidden = false;
+});
+document.getElementById("install-button").addEventListener("click", () => {
+  installBanner.hidden = true;
+  if (installEvent) installEvent.prompt();
+  installEvent = null;
+});
+document.getElementById("install-dismiss").addEventListener("click", () => {
+  installBanner.hidden = true;
+  try { localStorage.setItem(INSTALL_KEY, "1"); } catch {}
+});
+window.addEventListener("appinstalled", () => { installBanner.hidden = true; });
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 
 (async () => {
   try {

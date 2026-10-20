@@ -85,7 +85,7 @@ async function applyView(ts, s, ui) {
   const purpose = h("textarea", { class: "field-input", rows: "3", maxlength: "500", placeholder: "例: 英語の授業で、毎週の単語テストを配りたい" }, (appDoc && appDoc.purpose) || "");
   const agree = h("input", { type: "checkbox" });
   app.replaceChildren(...parts,
-    appDoc && appDoc.status === "rejected" ? h("p", { class: "warn" }, icon("info"), `前回の申し込みは承認されませんでした。${appDoc.note ? `（${appDoc.note}）` : ""}内容を見直して、もう一度申し込めます。`) : null,
+    appDoc && appDoc.status === "rejected" ? h("p", { class: "warn" }, icon("info"), `前回の申し込みは承認されませんでした。${appDoc.note ? `（${appDoc.note}）` : ""}内容を見直して、もう一度申し込めます。`) : "",
     h("section", { class: "mk-card" },
       h("h2", null, icon("how_to_reg"), "申し込み"),
       h("label", { class: "field" }, h("span", { class: "field-label" }, "名前（生徒に「〇〇 先生」と表示されます）"), name),
