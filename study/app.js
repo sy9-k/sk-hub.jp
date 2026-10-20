@@ -27,6 +27,8 @@ import { printSection, renderPrint } from "./print.js";
 import { renderMaker } from "./maker.js";
 import { classSection, renderClass, renderTask, reportProgress } from "./classroom.js";
 import { renderTeach } from "./teach.js";
+import { renderSettings, applyThemeColor } from "./settings.js";
+import { watchSelects } from "./select.js";
 
 const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
@@ -167,10 +169,12 @@ function autoSpeak(text, speech, near) {
 
 const VOICE_LANGS = [["en-US", "英語", "Hello. Nice to meet you."], ["ko-KR", "韓国語", "안녕하세요. 반갑습니다."], ["zh-CN", "中国語", "你好，很高兴认识你。"]];
 
-function openSpeechSettings() {
+// 読み上げの設定（学習中のダイアログと、設定の画面の両方で使う）。止めるときは panel.stop()
+function speechPanel() {
   if (!tts.supported) {
-    const d0 = openDialog("読み上げ", h("p", null, "このブラウザは読み上げに対応していません。"), [button("filled", "閉じる", null, () => d0.close())]);
-    return;
+    const p = h("p", { class: "muted" }, "このブラウザは読み上げに対応していません。");
+    p.stop = () => {};
+    return p;
   }
   const body = h("div", { class: "speech-settings" });
   function draw() {
@@ -210,8 +214,14 @@ function openSpeechSettings() {
   }
   draw();
   const stopWatch = tts.onVoicesChanged(draw);
+  body.stop = () => { stopWatch(); tts.stop(); };
+  return body;
+}
+
+function openSpeechSettings() {
+  const body = speechPanel();
   const d = openDialog("読み上げの設定", body, [button("filled", "閉じる", null, () => d.close())]);
-  d.addEventListener("close", () => { stopWatch(); tts.stop(); });
+  d.addEventListener("close", () => body.stop());
 }
 
 // ---------- ダイアログ ----------
@@ -268,6 +278,7 @@ function route() {
     else if (view === "class") renderClass(id, printUi).catch(showError);
     else if (view === "task") renderTask(id, parts[2], printUi).catch(showError);
     else if (view === "teach") renderTeach(parts.slice(1), printUi).catch(showError);
+    else if (view === "settings") renderSettings(id, settingsUi);
     else renderMessage("ページが見つかりません", "リンクがまちがっているかもしれません。");
   } catch (e) {
     console.error(e);
@@ -1183,11 +1194,12 @@ document.addEventListener("keydown", (e) => {
   keyHandler(e);
 });
 
-const speechBtn = document.getElementById("speech-settings");
-if (speechBtn) speechBtn.addEventListener("click", openSpeechSettings);
+// 項目を選ぶ部品を SK Material のメニューに（select.js）。ブラウザの上の帯の色を表示に合わせる
+watchSelects();
+applyThemeColor();
 
 // 押したところから広がる波紋（SK Material。MALU・Nagi と同じ）
-const RIPPLE = ".filled-btn, .tonal-btn, .outlined-btn, .text-btn, .danger-btn, .pill-btn, .icon-btn, .chip, .choice, .set-row, .segmented button, .print-tabs button, .pa-opt, .map-cell, .tc-mark, .mk-roles button";
+const RIPPLE = ".filled-btn, .tonal-btn, .outlined-btn, .text-btn, .danger-btn, .pill-btn, .icon-btn, .chip, .choice, .set-row, .segmented button, .print-tabs button, .pa-opt, .map-cell, .tc-mark, .mk-roles button, .settings-nav__item, .settings-action, .select-menu__item";
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 document.addEventListener("pointerdown", (e) => {
   const target = e.target.closest && e.target.closest(RIPPLE);
@@ -1210,6 +1222,11 @@ onScroll();
 const INSTALL_KEY = "sk_study_install_dismissed";
 const installBanner = document.getElementById("install-banner");
 let installEvent = null;
+// 設定の画面（settings.js）に渡す部品
+const settingsUi = {
+  ...printUi, COUNTS, FORMATS, speechPanel,
+  install: () => (installEvent ? { prompt: () => { installBanner.hidden = true; installEvent.prompt(); installEvent = null; } } : null)
+};
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   installEvent = e;
