@@ -6,14 +6,20 @@
 <meta name="description" content="単語カード・4 択・書き取りで、英語・韓国語・中国語や自分で作った単語帳を覚える学習アプリ" />
 <!-- 試作のあいだは検索に出さない（公開するときに消す） -->
 <meta name="robots" content="noindex" />
-<meta name="theme-color" content="#f3f6fb" />
+<meta name="theme-color" content="#faf8ff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#10131c" media="(prefers-color-scheme: dark)" />
 <title>SK Study</title>
 <!-- 表示（ライト・ダーク）。サイトで選んだものに合わせる（CSS より先に <html> に付ける。サイトの assets/site.js の「表示」） -->
 <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}");if(t.mode==="light"||t.mode==="dark")document.documentElement.setAttribute("data-theme",t.mode);}catch(e){}})();</script>
 <!-- 文字は M PLUS 1（M+）。韓国語・中国語は端末の書体。アイコンは Material Symbols -->
-<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700;800&display=swap" data-icons="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"></script>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700&display=swap" data-icons="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"></script>
 <link rel="stylesheet" href="study.css" />
 <link rel="icon" type="image/svg+xml" href="icon.svg" />
+<!-- ホーム画面に追加（PWA。manifest.json・sw.js） -->
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="ico/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="SK Study" />
 </head>
 <body>
   <!-- 上の帯 -->
@@ -37,6 +43,14 @@
   </main>
 
   <div class="snackbar" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ホーム画面に追加（Chrome・Edge などで追加できるときだけ出す。app.js） -->
+  <div id="install-banner" class="install" hidden>
+    <img src="ico/icon-192.png" alt="" width="40" height="40">
+    <div class="install-text"><strong>SK Study をホーム画面に追加</strong><span>アプリのように、すぐ開けます。オフラインでも学習できます。</span></div>
+    <button type="button" id="install-dismiss" class="text-btn">あとで</button>
+    <button type="button" id="install-button" class="filled-btn">追加</button>
+  </div>
 
   <script type="module" src="app.js"></script>
   <script src="/assets/hub/account-button.js" defer></script>

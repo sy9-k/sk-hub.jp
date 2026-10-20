@@ -1,0 +1,19 @@
+{
+  "name": "SK Study — 単語学習",
+  "short_name": "SK Study",
+  "description": "単語カード・4 択・書き取りで、英語・韓国語・中国語や自分で作った単語帳を覚える学習アプリ",
+  "id": "/study/",
+  "start_url": "/study/",
+  "scope": "/study/",
+  "display": "standalone",
+  "background_color": "#faf8ff",
+  "theme_color": "#faf8ff",
+  "lang": "ja",
+  "icons": [
+    { "src": "ico/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "ico/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "ico/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "ico/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["education"]
+}
