@@ -7,8 +7,9 @@
 //   { sk: "bridge", id, op: "token" }             → ログイン中なら { uid, token }（お問い合わせで、返事をアカウントで受け取るため）
 // sk-hub.jp とサブドメインは同じサイト（sk-hub.jp）なので、iframe の中でも sk-hub.jp の保存場所がそのまま読める。
 // 答えるのは ORIGINS のページだけ。ほかのサイトに埋め込まれても何も渡さない。
+//   office.sk-hub.jp（SK Hub Office）は、ログイン中かのヒント（skhub_account）だけを使う（office/shared/office.js）
 
-const ORIGINS = ["https://support.sk-hub.jp"];
+const ORIGINS = ["https://support.sk-hub.jp", "https://office.sk-hub.jp"];
 const PREFS = ["sk_lang", "sk_theme", "sk_analytics", "skhub_terms_accepted", "skhub_terms_notice_shown", "skhub_uuid", "skhub_account"];
 const WRITABLE = ["sk_lang", "sk_theme", "sk_analytics", "skhub_terms_accepted", "skhub_terms_notice_shown"];
 const WRITE_IF_EMPTY = ["skhub_uuid"];
