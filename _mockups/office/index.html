@@ -1,0 +1,919 @@
+<title>SK Hub Office</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block">
+<style>
+/* SK Material（Material Design 3 がもと）。色は SK's Toolbox のテーマカラーを material-color-utilities で計算した値をそのまま使う。
+   Doc＝SK's Blue、Sheet＝SK's Matcha、Slide＝SK's Mikan。文字は M PLUS 1、アイコンは Material Symbols Rounded。
+   レイアウト：ホームは上のバー＋ファイル一覧＋FAB、エディタは「上のバー／タブと道具／本体／下のバー」の 4 段。 */
+:root {
+  /* SK's Blue・ライト */
+  --md-primary: #004ac6; --md-on-primary: #ffffff; --md-primary-container: #2563eb; --md-on-primary-container: #eeefff;
+  --md-secondary-container: #acbfff; --md-on-secondary-container: #394c84;
+  --md-tertiary: #943700; --md-tertiary-container: #bc4800; --md-on-tertiary-container: #ffede6;
+  --md-error: #ba1a1a;
+  --md-surface: #faf8ff; --md-on-surface: #191b23; --md-on-surface-variant: #434655;
+  --md-surface-container-low: #f3f3fe; --md-surface-container: #ededf9; --md-surface-container-high: #e7e7f3; --md-surface-container-highest: #e1e2ed;
+  --md-outline: #737686; --md-outline-variant: #c3c6d7;
+  --md-inverse-surface: #2e3039; --md-inverse-on-surface: #f0f0fb; --md-inverse-primary: #b4c5ff;
+  --md-font: "M PLUS 1", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ease-decel: cubic-bezier(.05, .7, .1, 1);
+  --ease-sk: cubic-bezier(.34, 1.4, .64, 1); /* SK：選んだときの弾み */
+  --elev-1: 0 1px 2px rgba(0, 0, 0, .3), 0 1px 3px 1px rgba(0, 0, 0, .15);
+  --elev-3: 0 4px 8px 3px rgba(0, 0, 0, .15), 0 1px 3px rgba(0, 0, 0, .3);
+}
+[data-app="matcha"] {
+  --md-primary: #006b2c; --md-on-primary: #ffffff; --md-primary-container: #00873a; --md-on-primary-container: #f7fff2;
+  --md-secondary-container: #baecbc; --md-on-secondary-container: #406c46;
+  --md-tertiary: #a72d51; --md-tertiary-container: #c74668; --md-on-tertiary-container: #fffbff;
+  --md-surface: #f4fcf0; --md-on-surface: #171d16; --md-on-surface-variant: #3e4a3d;
+  --md-surface-container-low: #eff6ea; --md-surface-container: #e9f0e5; --md-surface-container-high: #e3eadf; --md-surface-container-highest: #dde5d9;
+  --md-outline: #6e7b6c; --md-outline-variant: #bdcaba;
+  --md-inverse-surface: #2b322b; --md-inverse-on-surface: #ecf3e7; --md-inverse-primary: #62df7d;
+}
+[data-app="mikan"] {
+  --md-primary: #a33900; --md-on-primary: #ffffff; --md-primary-container: #cc4900; --md-on-primary-container: #fffbff;
+  --md-secondary-container: #ff9971; --md-on-secondary-container: #772f0f;
+  --md-tertiary: #005da8; --md-tertiary-container: #0076d2; --md-on-tertiary-container: #fdfcff;
+  --md-surface: #fff8f6; --md-on-surface: #261813; --md-on-surface-variant: #5a4138;
+  --md-surface-container-low: #fff1ec; --md-surface-container: #ffe9e2; --md-surface-container-high: #fee2d9; --md-surface-container-highest: #f8ddd4;
+  --md-outline: #8e7166; --md-outline-variant: #e2bfb2;
+  --md-inverse-surface: #3d2d27; --md-inverse-on-surface: #ffede7; --md-inverse-primary: #ffb599;
+}
+
+/* ダーク（OS の設定） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]), :root:not([data-theme="light"]) [data-app="blue"] {
+    --md-primary: #b4c5ff; --md-on-primary: #002a78; --md-primary-container: #2563eb; --md-on-primary-container: #eeefff;
+    --md-secondary-container: #33467e; --md-on-secondary-container: #a4b6f5;
+    --md-tertiary: #ffb596; --md-tertiary-container: #bc4800; --md-on-tertiary-container: #ffede6;
+    --md-error: #ffb4ab;
+    --md-surface: #11131b; --md-on-surface: #e1e2ed; --md-on-surface-variant: #c3c6d7;
+    --md-surface-container-low: #191b23; --md-surface-container: #1d1f27; --md-surface-container-high: #282a32; --md-surface-container-highest: #32343d;
+    --md-outline: #8d90a0; --md-outline-variant: #434655;
+    --md-inverse-surface: #e1e2ed; --md-inverse-on-surface: #2e3039; --md-inverse-primary: #0053db;
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"]) [data-app="matcha"] {
+    --md-primary: #62df7d; --md-on-primary: #003914; --md-primary-container: #1ca64d; --md-on-primary-container: #002e0f;
+    --md-secondary-container: #23502c; --md-on-secondary-container: #90c193;
+    --md-tertiary: #ffb2bf; --md-tertiary-container: #ec6284; --md-on-tertiary-container: #55001f;
+    --md-surface: #0e150f; --md-on-surface: #dde5d9; --md-on-surface-variant: #bdcaba;
+    --md-surface-container-low: #171d16; --md-surface-container: #1b211a; --md-surface-container-high: #252c24; --md-surface-container-highest: #30372f;
+    --md-outline: #879485; --md-outline-variant: #3e4a3d;
+    --md-inverse-surface: #dde5d9; --md-inverse-on-surface: #2b322b; --md-inverse-primary: #006e2d;
+  }
+  :root:not([data-theme="light"]) [data-app="mikan"] {
+    --md-primary: #ffb599; --md-on-primary: #5a1c00; --md-primary-container: #f66018; --md-on-primary-container: #401100;
+    --md-secondary-container: #7c3313; --md-on-secondary-container: #ffa17c;
+    --md-tertiary: #a4c9ff; --md-tertiary-container: #2192fd; --md-on-tertiary-container: #002141;
+    --md-surface: #1d100b; --md-on-surface: #f8ddd4; --md-on-surface-variant: #e2bfb2;
+    --md-surface-container-low: #261813; --md-surface-container: #2b1c17; --md-surface-container-high: #362621; --md-surface-container-highest: #42312b;
+    --md-outline: #a98a7e; --md-outline-variant: #5a4138;
+    --md-inverse-surface: #f8ddd4; --md-inverse-on-surface: #3d2d27; --md-inverse-primary: #a73a00;
+  }
+}
+/* ダーク（ページの切りかえ） */
+:root[data-theme="dark"], :root[data-theme="dark"] [data-app="blue"] {
+  --md-primary: #b4c5ff; --md-on-primary: #002a78; --md-primary-container: #2563eb; --md-on-primary-container: #eeefff;
+  --md-secondary-container: #33467e; --md-on-secondary-container: #a4b6f5;
+  --md-tertiary: #ffb596; --md-tertiary-container: #bc4800; --md-on-tertiary-container: #ffede6;
+  --md-error: #ffb4ab;
+  --md-surface: #11131b; --md-on-surface: #e1e2ed; --md-on-surface-variant: #c3c6d7;
+  --md-surface-container-low: #191b23; --md-surface-container: #1d1f27; --md-surface-container-high: #282a32; --md-surface-container-highest: #32343d;
+  --md-outline: #8d90a0; --md-outline-variant: #434655;
+  --md-inverse-surface: #e1e2ed; --md-inverse-on-surface: #2e3039; --md-inverse-primary: #0053db;
+  color-scheme: dark;
+}
+:root[data-theme="dark"] [data-app="matcha"] {
+  --md-primary: #62df7d; --md-on-primary: #003914; --md-primary-container: #1ca64d; --md-on-primary-container: #002e0f;
+  --md-secondary-container: #23502c; --md-on-secondary-container: #90c193;
+  --md-tertiary: #ffb2bf; --md-tertiary-container: #ec6284; --md-on-tertiary-container: #55001f;
+  --md-surface: #0e150f; --md-on-surface: #dde5d9; --md-on-surface-variant: #bdcaba;
+  --md-surface-container-low: #171d16; --md-surface-container: #1b211a; --md-surface-container-high: #252c24; --md-surface-container-highest: #30372f;
+  --md-outline: #879485; --md-outline-variant: #3e4a3d;
+  --md-inverse-surface: #dde5d9; --md-inverse-on-surface: #2b322b; --md-inverse-primary: #006e2d;
+}
+:root[data-theme="dark"] [data-app="mikan"] {
+  --md-primary: #ffb599; --md-on-primary: #5a1c00; --md-primary-container: #f66018; --md-on-primary-container: #401100;
+  --md-secondary-container: #7c3313; --md-on-secondary-container: #ffa17c;
+  --md-tertiary: #a4c9ff; --md-tertiary-container: #2192fd; --md-on-tertiary-container: #002141;
+  --md-surface: #1d100b; --md-on-surface: #f8ddd4; --md-on-surface-variant: #e2bfb2;
+  --md-surface-container-low: #261813; --md-surface-container: #2b1c17; --md-surface-container-high: #362621; --md-surface-container-highest: #42312b;
+  --md-outline: #a98a7e; --md-outline-variant: #5a4138;
+  --md-inverse-surface: #f8ddd4; --md-inverse-on-surface: #3d2d27; --md-inverse-primary: #a73a00;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--md-surface); color: var(--md-on-surface);
+  font-family: var(--md-font); font-size: 14px; line-height: 20px;
+}
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 2px; }
+.view { height: 100%; background: var(--md-surface); color: var(--md-on-surface); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---- アイコン（Material Symbols Rounded） ---- */
+.msr {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal; font-style: normal; font-size: 24px; line-height: 1;
+  letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr;
+  display: inline-block; font-feature-settings: "liga";
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  user-select: none; -webkit-user-select: none; flex: none;
+}
+.msr--fill { font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
+
+/* ---- 状態レイヤー（hover 8%・押したとき 10%）と波紋 ---- */
+.m3-state { position: relative; overflow: hidden; isolation: isolate; }
+.m3-state::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: currentColor; opacity: 0; transition: opacity .15s linear; pointer-events: none;
+}
+.m3-state:hover::before { opacity: .08; }
+.m3-state:active::before { opacity: .1; }
+.ripple {
+  position: absolute; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: currentColor; opacity: .12; transform: scale(0);
+  animation: m3-ripple .5s var(--ease-standard) forwards;
+}
+@keyframes m3-ripple { 60% { transform: scale(1); opacity: .12; } to { transform: scale(1); opacity: 0; } }
+
+/* ---- ボタン ---- */
+.icon-btn {
+  display: grid; place-items: center; width: 40px; height: 40px; flex: none;
+  border: 0; border-radius: 50%; background: transparent; color: var(--md-on-surface-variant); cursor: pointer;
+  transition: background-color .2s linear, color .2s linear, border-radius .3s var(--ease-standard);
+}
+.icon-btn[aria-pressed="true"] { background: var(--md-secondary-container); color: var(--md-on-secondary-container); border-radius: 12px; }
+.icon-btn[aria-pressed="true"] .msr { font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
+.m3-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: none;
+  height: 40px; padding: 0 24px; border: 0; border-radius: 20px; cursor: pointer;
+  background: var(--md-primary); color: var(--md-on-primary);
+  font-size: 14px; font-weight: 500; letter-spacing: .01em; white-space: nowrap;
+}
+.m3-btn .msr { font-size: 18px; }
+.m3-btn--icon { padding: 0 24px 0 16px; }
+.m3-btn--tonal { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.m3-btn--outlined { background: none; color: var(--md-primary); box-shadow: inset 0 0 0 1px var(--md-outline); }
+.text-btn {
+  display: inline-flex; align-items: center; height: 40px; padding: 0 12px; border: 0; border-radius: 20px;
+  background: none; cursor: pointer; color: var(--md-primary); font-size: 14px; font-weight: 500; letter-spacing: .01em;
+}
+
+/* ---- 上のバー（Top app bar） ---- */
+.appbar {
+  display: flex; align-items: center; gap: 4px; min-height: 64px;
+  padding-block: 8px;
+  padding-left: max(4px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--md-surface-container); color: var(--md-on-surface);
+}
+.appbar-title { flex: 1; min-width: 0; display: grid; padding-left: 4px; }
+.appbar-title strong { font-size: 18px; font-weight: 500; line-height: 26px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--md-on-surface-variant); }
+.saved .msr { font-size: 16px; color: var(--md-primary); }
+.app-icon {
+  width: 40px; height: 40px; border-radius: 12px; flex: none; display: grid; place-items: center;
+  background: var(--md-primary-container); color: var(--md-on-primary-container);
+}
+.avatars { display: flex; margin-right: 8px; }
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 12px; font-weight: 700; border: 2px solid var(--md-surface-container);
+  background: var(--md-tertiary-container); color: var(--md-on-tertiary-container);
+}
+.avatar:nth-child(2) { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.avatar:nth-child(3) { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.avatar + .avatar { margin-left: -8px; }
+
+/* ───────── ホーム ───────── */
+#home { overflow-y: auto; position: relative; }
+#home .appbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--md-surface); }
+.home-brand { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding-left: 12px; }
+.home-brand img, .logo { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--md-primary); color: var(--md-on-primary); font-weight: 700; font-size: 13px; letter-spacing: .02em; flex: none; }
+.home-brand strong { font-size: 22px; font-weight: 500; line-height: 28px; white-space: nowrap; }
+.home-brand span { color: var(--md-on-surface-variant); font-weight: 400; }
+.home-wrap {
+  max-width: 1040px; margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 8px 112px;
+  display: grid; gap: 32px;
+}
+.search {
+  display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 16px; border-radius: 28px;
+  background: var(--md-surface-container-high); color: var(--md-on-surface-variant); font-size: 16px; line-height: 24px;
+  max-width: 720px; cursor: text; border: 0; width: 100%; text-align: left;
+}
+.headline { margin: 0; font-size: 28px; font-weight: 400; line-height: 36px; }
+.section-title { margin: 0 0 12px; font-size: 14px; font-weight: 500; line-height: 20px; color: var(--md-primary); }
+.proto-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px 0 10px;
+  border: 1px solid var(--md-outline-variant); border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--md-on-surface-variant);
+}
+.proto-chip .msr { font-size: 18px; }
+
+.create { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.create-card {
+  text-align: left; cursor: pointer; border: 0;
+  display: grid; gap: 12px; align-content: start;
+  padding: 12px 12px 16px; border-radius: 12px;
+  background: var(--md-surface-container-highest); color: var(--md-on-surface);
+}
+.create-thumb {
+  aspect-ratio: 16 / 10; max-width: 100%; border-radius: 8px; position: relative; overflow: hidden;
+  background: var(--md-surface); display: grid; place-items: center;
+}
+.create-thumb .badge {
+  width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center;
+  background: var(--md-primary-container); color: var(--md-on-primary-container);
+  transition: border-radius .3s var(--ease-standard);
+}
+.create-card:hover .badge { border-radius: 28px; }
+.create-thumb .badge .msr { font-size: 32px; }
+.create-text { display: grid; gap: 2px; padding-inline: 4px; }
+.create-name { font-size: 16px; font-weight: 500; line-height: 24px; display: flex; align-items: center; gap: 8px; }
+.create-desc { font-size: 14px; line-height: 20px; color: var(--md-on-surface-variant); }
+.fmt { font-size: 12px; font-weight: 500; line-height: 16px; padding: 2px 8px; border-radius: 8px; background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+
+.files { border-radius: 16px; overflow: hidden; background: var(--md-surface-container-low); }
+.file-row {
+  width: 100%; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 40px; gap: 16px; align-items: center;
+  padding: 12px 8px 12px 16px; min-height: 72px; border: 0; background: none; text-align: left; cursor: pointer;
+}
+.file-row + .file-row { border-top: 1px solid var(--md-outline-variant); }
+.file-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--md-primary-container); color: var(--md-on-primary-container); }
+.file-name { display: block; font-size: 16px; line-height: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-meta { display: block; font-size: 14px; line-height: 20px; color: var(--md-on-surface-variant); }
+.file-when { font-size: 12px; font-weight: 500; color: var(--md-on-surface-variant); }
+.file-more { color: var(--md-on-surface-variant); display: grid; place-items: center; }
+
+.fab {
+  position: fixed; z-index: 10;
+  right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 20px 0 16px;
+  border: 0; border-radius: 16px; cursor: pointer;
+  background: var(--md-primary-container); color: var(--md-on-primary-container);
+  font-size: 14px; font-weight: 500; letter-spacing: .01em; box-shadow: var(--elev-3);
+}
+
+/* ───────── エディタ共通 ───────── */
+.editor { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; height: 100%; }
+.ribbon { background: var(--md-surface-container); }
+.tabs {
+  display: flex; gap: 0; overflow-x: auto;
+  padding-left: max(8px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+.tab {
+  flex: none; height: 48px; padding: 0 16px; border: 0; background: none; cursor: pointer;
+  color: var(--md-on-surface-variant); font-size: 14px; font-weight: 500; letter-spacing: .01em;
+}
+.tab > span { position: relative; display: inline-flex; align-items: center; height: 100%; }
+.tab[aria-selected="true"] { color: var(--md-primary); }
+.tab[aria-selected="true"] > span::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--md-primary); border-radius: 3px 3px 0 0;
+  animation: tab-in .32s var(--ease-sk);
+}
+@keyframes tab-in { from { transform: scaleX(.4); } }
+.tools {
+  display: flex; align-items: center; gap: 4px; overflow-x: auto; scrollbar-width: thin;
+  padding-block: 8px;
+  padding-left: max(8px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.chip {
+  flex: none; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px 0 12px;
+  border: 1px solid var(--md-outline-variant); border-radius: 8px; background: none; cursor: pointer;
+  color: var(--md-on-surface); font-size: 14px; font-weight: 500; line-height: 1;
+}
+.chip .msr { font-size: 18px; color: var(--md-on-surface-variant); }
+.chip--lead { padding: 0 12px 0 8px; }
+.chip--lead .msr { color: var(--md-primary); }
+.sep { flex: none; width: 1px; height: 24px; background: var(--md-outline-variant); margin-inline: 4px; }
+.statusbar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 32px; padding-block: 4px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--md-surface-container); color: var(--md-on-surface-variant);
+  font-size: 12px; line-height: 16px; font-weight: 500;
+}
+.statusbar .push { margin-left: auto; }
+
+/* ───────── Doc ───────── */
+.doc-body { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; background: var(--md-surface-container-low); }
+.outline { overflow-y: auto; padding: 12px; }
+.outline .section-title { padding: 12px 16px 0; color: var(--md-on-surface-variant); }
+.outline ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.outline a {
+  display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 16px; border-radius: 24px;
+  color: var(--md-on-surface-variant); text-decoration: none; font-size: 14px; font-weight: 500;
+}
+.outline a .msr { font-size: 20px; }
+.outline a.sub { padding-left: 48px; font-weight: 400; }
+.outline a.on { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.doc-scroll { overflow: auto; padding: 24px 16px 48px; }
+.page {
+  max-width: 760px; margin-inline: auto; min-height: 960px;
+  background: var(--md-surface); border-radius: 12px; box-shadow: var(--elev-1);
+  padding: 64px clamp(24px, 8vw, 80px);
+}
+.page h1 { font-size: 32px; font-weight: 700; line-height: 44px; margin: 0 0 4px; text-wrap: balance; }
+.page .byline { font-size: 14px; color: var(--md-on-surface-variant); margin: 0 0 32px; }
+.page h2 { font-size: 22px; font-weight: 700; line-height: 30px; margin: 32px 0 12px; color: var(--md-primary); }
+.page p, .page li { font-size: 16px; line-height: 1.85; max-width: 36em; }
+.page p { margin: 0 0 12px; }
+.page ul, .page ol { margin: 0 0 12px; padding-left: 1.4em; }
+.page mark { background: var(--md-secondary-container); color: var(--md-on-secondary-container); padding-inline: 2px; border-radius: 2px; }
+.caret { display: inline-block; width: 2px; height: 1.1em; background: var(--md-primary); vertical-align: text-bottom; animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.tbl-wrap { overflow-x: auto; margin-bottom: 12px; }
+.page table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; border: 1px solid var(--md-outline-variant); border-radius: 12px; overflow: hidden; }
+.page th, .page td { padding: 10px 14px; text-align: left; line-height: 20px; }
+.page td { border-top: 1px solid var(--md-outline-variant); }
+.page th { background: var(--md-surface-container-high); font-weight: 500; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+
+/* ───────── Sheet ───────── */
+.formula {
+  display: flex; align-items: center; gap: 8px; padding-block: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--md-surface);
+  border-bottom: 1px solid var(--md-outline-variant);
+}
+.namebox, .fx-input {
+  height: 36px; display: flex; align-items: center; padding-inline: 12px;
+  border-radius: 4px; background: var(--md-surface-container-highest); font-size: 14px;
+  box-shadow: inset 0 -1px 0 var(--md-on-surface-variant);
+}
+.namebox { width: 72px; flex: none; justify-content: center; font-weight: 500; }
+.fx { color: var(--md-on-surface-variant); }
+.fx-input { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
+.sheet-main { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+.grid-scroll { overflow: auto; background: var(--md-surface); }
+.grid { border-collapse: separate; border-spacing: 0; font-size: 14px; line-height: 20px; }
+.grid th, .grid td { border-right: 1px solid var(--md-outline-variant); border-bottom: 1px solid var(--md-outline-variant); height: 32px; padding: 0 10px; white-space: nowrap; }
+.grid thead th {
+  position: sticky; top: 0; z-index: 2; background: var(--md-surface-container);
+  font-weight: 500; color: var(--md-on-surface-variant); font-size: 12px; text-align: center; min-width: 100px;
+}
+.grid tbody th {
+  position: sticky; left: 0; z-index: 1; background: var(--md-surface-container);
+  font-weight: 500; color: var(--md-on-surface-variant); font-size: 12px; width: 48px; min-width: 48px; text-align: center;
+}
+.grid thead th.corner { left: 0; z-index: 3; min-width: 48px; }
+.grid td { min-width: 100px; cursor: cell; }
+.grid td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.grid tr.head td { font-weight: 700; background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.grid tr.total td { font-weight: 700; background: var(--md-surface-container-low); border-top: 2px solid var(--md-primary); }
+.grid td.sel { outline: 2px solid var(--md-primary); outline-offset: -2px; position: relative; }
+.grid td.sel::after { content: ""; position: absolute; right: -4px; bottom: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--md-primary); border: 2px solid var(--md-surface); z-index: 1; }
+.grid th.hl { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.sheet-tabs {
+  display: flex; align-items: center; gap: 8px; padding-block: 8px; overflow-x: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--md-surface-container-low); border-top: 1px solid var(--md-outline-variant);
+}
+.fchip {
+  flex: none; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 16px;
+  border: 1px solid var(--md-outline-variant); border-radius: 8px; background: none; cursor: pointer;
+  color: var(--md-on-surface-variant); font-size: 14px; font-weight: 500;
+  transition: background-color .2s linear;
+}
+.fchip .msr { font-size: 18px; display: none; }
+.fchip[aria-selected="true"] { padding-left: 8px; border-color: transparent; background: var(--md-secondary-container); color: var(--md-on-secondary-container); animation: pop .32s var(--ease-sk); }
+.fchip[aria-selected="true"] .msr { display: inline-block; }
+@keyframes pop { from { transform: scale(.94); } }
+
+/* ───────── Slide ───────── */
+.slide-body { display: grid; grid-template-columns: 216px minmax(0, 1fr); min-height: 0; background: var(--md-surface-container-low); }
+.thumbs { overflow-y: auto; padding: 16px 12px; display: grid; gap: 12px; align-content: start; }
+.thumb {
+  display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; align-items: start;
+  background: none; border: 0; padding: 6px; border-radius: 16px; cursor: pointer; text-align: left;
+}
+.thumb-no { font-size: 12px; font-weight: 500; color: var(--md-on-surface-variant); line-height: 16px; padding-top: 2px; text-align: right; }
+.thumb .slide { border-radius: 8px; box-shadow: inset 0 0 0 1px var(--md-outline-variant); }
+.thumb[aria-current="true"] { background: var(--md-secondary-container); }
+.thumb[aria-current="true"] .thumb-no { color: var(--md-on-secondary-container); }
+.thumb[aria-current="true"] .slide { box-shadow: 0 0 0 2px var(--md-primary); }
+.stage { overflow: auto; padding: 32px 24px; display: grid; gap: 16px; align-content: start; justify-items: center; }
+.stage .slide { border-radius: 12px; box-shadow: var(--elev-1); }
+.notes {
+  width: min(100%, 880px); display: flex; gap: 12px; align-items: flex-start;
+  background: var(--md-surface-container-high); border-radius: 12px; padding: 12px 16px;
+  font-size: 14px; line-height: 20px; color: var(--md-on-surface-variant);
+}
+.notes .msr { font-size: 20px; color: var(--md-primary); }
+.notes b { color: var(--md-on-surface); font-weight: 500; display: block; }
+
+/* スライド本体：幅に合わせて文字も縮む */
+.slide {
+  container-type: inline-size; aspect-ratio: 16 / 9; max-width: 100%; width: 100%;
+  background: var(--md-surface); color: var(--md-on-surface); position: relative; overflow: hidden;
+}
+.s-in { position: absolute; inset: 0; padding: 7cqw 8cqw; display: grid; align-content: center; gap: 2cqw; }
+.s-in.top { align-content: start; }
+.s-blob { position: absolute; right: -8cqw; top: -10cqw; width: 42cqw; height: 42cqw; border-radius: 50%; background: var(--md-primary-container); opacity: .9; }
+.s-blob2 { position: absolute; right: 18cqw; bottom: -14cqw; width: 26cqw; height: 26cqw; border-radius: 6cqw; background: var(--md-secondary-container); transform: rotate(18deg); }
+.s-mark { position: absolute; right: 6cqw; top: 9cqw; font-family: "Material Symbols Rounded"; font-size: 13cqw; line-height: 1; color: var(--md-on-primary-container); font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 48; }
+.s-kicker { font-size: 1.8cqw; font-weight: 500; letter-spacing: .08em; color: var(--md-primary); line-height: 1.4; position: relative; }
+.s-title { font-size: 6.6cqw; font-weight: 700; line-height: 1.2; margin: 0; position: relative; }
+.s-h { font-size: 4cqw; font-weight: 700; line-height: 1.3; margin: 0 0 1.2cqw; }
+.s-sub { font-size: 2.4cqw; color: var(--md-on-surface-variant); line-height: 1.6; margin: 0; position: relative; }
+.s-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 1.6cqw; }
+.s-list li { font-size: 2.4cqw; line-height: 1.5; display: grid; grid-template-columns: 5cqw minmax(0, 1fr); align-items: center; background: var(--md-surface-container); border-radius: 1.6cqw; padding: 1.4cqw 2cqw; }
+.s-list li i { font-family: "Material Symbols Rounded"; font-style: normal; font-size: 3cqw; color: var(--md-primary); line-height: 1; }
+.s-list b { font-weight: 700; }
+.s-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2cqw; }
+.s-col { background: var(--md-surface-container-high); border-radius: 2.4cqw; padding: 2.6cqw; display: grid; gap: 1cqw; align-content: start; }
+.s-col i { font-family: "Material Symbols Rounded"; font-style: normal; font-size: 3.6cqw; width: 6.4cqw; height: 6.4cqw; border-radius: 1.8cqw; display: grid; place-items: center; background: var(--md-primary-container); color: var(--md-on-primary-container); line-height: 1; }
+.s-col .t { font-size: 2.8cqw; font-weight: 700; line-height: 1.3; }
+.s-col .d { font-size: 1.9cqw; color: var(--md-on-surface-variant); line-height: 1.55; }
+.s-steps { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6cqw; counter-reset: st; }
+.s-steps li { counter-increment: st; font-size: 2cqw; line-height: 1.5; display: grid; gap: 1.2cqw; align-content: start; }
+.s-steps li::before { content: counter(st); width: 5.6cqw; height: 5.6cqw; border-radius: 50%; display: grid; place-items: center; background: var(--md-primary); color: var(--md-on-primary); font-size: 2.6cqw; font-weight: 700; }
+.s-foot { position: absolute; right: 4cqw; bottom: 3cqw; font-size: 1.5cqw; font-weight: 500; color: var(--md-on-surface-variant); }
+
+/* ---- スナックバー ---- */
+.snackbar {
+  position: fixed; z-index: 30; left: 50%; bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  translate: -50% 0; margin: 0; min-width: 240px; max-width: calc(100vw - 32px);
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 8px 4px 16px; min-height: 48px; border-radius: 4px;
+  background: var(--md-inverse-surface); color: var(--md-inverse-on-surface);
+  font-size: 14px; line-height: 20px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, .2), 0 1px 18px rgba(0, 0, 0, .12);
+  opacity: 0; transform: translateY(16px); pointer-events: none;
+  transition: opacity .2s linear, transform .3s var(--ease-standard);
+}
+.snackbar.is-on { opacity: 1; transform: none; pointer-events: auto; }
+.snackbar > span { flex: 1; padding: 10px 0; }
+.snackbar .text-btn { color: var(--md-inverse-primary); }
+
+/* せまい画面 */
+@media (max-width: 760px) {
+  .create { grid-template-columns: minmax(0, 1fr); }
+  .create-card { grid-template-columns: 96px minmax(0, 1fr); align-items: center; padding: 8px 16px 8px 8px; }
+  .create-thumb { aspect-ratio: 1; }
+  .create-thumb .badge { width: 48px; height: 48px; border-radius: 14px; }
+  .file-row { grid-template-columns: 40px minmax(0, 1fr) 40px; }
+  .file-when { display: none; }
+  .doc-body, .slide-body { grid-template-columns: minmax(0, 1fr); }
+  .outline { display: none; }
+  .doc-scroll { padding: 12px 8px 32px; }
+  .page { padding: 40px 20px; min-height: 0; }
+  .slide-body { grid-template-rows: minmax(0, 1fr) auto; }
+  .thumbs { order: 2; grid-auto-flow: column; grid-auto-columns: 148px; overflow-x: auto; overflow-y: hidden; border-top: 1px solid var(--md-outline-variant); }
+  .stage { padding: 16px; }
+  .avatars, .hide-sm { display: none; }
+  .m3-btn--icon { padding: 0 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+
+<!-- ───────── ホーム ───────── -->
+<main id="home" class="view" data-app="blue">
+  <div class="appbar">
+    <div class="home-brand"><span class="logo">SK</span><strong>SK Hub <span>Office</span></strong></div>
+    <button class="icon-btn m3-state" aria-label="設定" data-todo="設定"><span class="msr">settings</span></button>
+    <span class="avatar" style="width:36px;height:36px">SK</span>
+  </div>
+  <div class="home-wrap">
+    <button class="search m3-state" data-todo="検索"><span class="msr">search</span>ファイルを検索</button>
+
+    <div style="display:grid;gap:12px;justify-items:start">
+      <h1 class="headline">ファイル</h1>
+      <span class="proto-chip"><span class="msr">info</span>見た目だけの試作です</span>
+    </div>
+
+    <section>
+      <h2 class="section-title">新しく作る</h2>
+      <div class="create">
+        <button class="create-card m3-state" data-app="blue" data-open="doc">
+          <span class="create-thumb"><span class="badge"><span class="msr msr--fill">description</span></span></span>
+          <span class="create-text">
+            <span class="create-name">Doc <span class="fmt">.docx</span></span>
+            <span class="create-desc">文書を書く。企画書、レポート、お知らせなど。</span>
+          </span>
+        </button>
+        <button class="create-card m3-state" data-app="matcha" data-open="sheet">
+          <span class="create-thumb"><span class="badge"><span class="msr msr--fill">table_chart</span></span></span>
+          <span class="create-text">
+            <span class="create-name">Sheet <span class="fmt">.xlsx</span></span>
+            <span class="create-desc">表で計算する。会計、名簿、記録など。</span>
+          </span>
+        </button>
+        <button class="create-card m3-state" data-app="mikan" data-open="slide">
+          <span class="create-thumb"><span class="badge"><span class="msr msr--fill">slideshow</span></span></span>
+          <span class="create-text">
+            <span class="create-name">Slide <span class="fmt">.pptx</span></span>
+            <span class="create-desc">発表をつくる。説明会、授業、紹介など。</span>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">最近のファイル（例）</h2>
+      <div class="files">
+        <button class="file-row m3-state" data-app="blue" data-open="doc">
+          <span class="file-ico"><span class="msr">description</span></span>
+          <span style="min-width:0"><span class="file-name">SK Hub Office 企画メモ</span><span class="file-meta">Doc ・ 自分</span></span>
+          <span class="file-when num">10/21 9:41</span>
+          <span class="file-more"><span class="msr">more_vert</span></span>
+        </button>
+        <button class="file-row m3-state" data-app="matcha" data-open="sheet">
+          <span class="file-ico"><span class="msr">table_chart</span></span>
+          <span style="min-width:0"><span class="file-name">文化祭 模擬店の売上</span><span class="file-meta">Sheet ・ 3 人で編集</span></span>
+          <span class="file-when num">10/20 18:05</span>
+          <span class="file-more"><span class="msr">more_vert</span></span>
+        </button>
+        <button class="file-row m3-state" data-app="mikan" data-open="slide">
+          <span class="file-ico"><span class="msr">slideshow</span></span>
+          <span style="min-width:0"><span class="file-name">SK Hub Office のご紹介</span><span class="file-meta">Slide ・ 自分</span></span>
+          <span class="file-when num">10/19 21:30</span>
+          <span class="file-more"><span class="msr">more_vert</span></span>
+        </button>
+      </div>
+    </section>
+  </div>
+  <button class="fab m3-state" data-todo="新規作成"><span class="msr">add</span>新規作成</button>
+</main>
+
+<!-- ───────── Doc ───────── -->
+<div id="doc" class="view editor" data-app="blue" hidden>
+  <div class="appbar">
+    <button class="icon-btn m3-state" data-home aria-label="ファイルにもどる"><span class="msr">arrow_back</span></button>
+    <span class="app-icon"><span class="msr msr--fill">description</span></span>
+    <div class="appbar-title"><strong>SK Hub Office 企画メモ</strong><span class="saved"><span class="msr">cloud_done</span>保存しました</span></div>
+    <div class="avatars"><span class="avatar">SK</span></div>
+    <button class="m3-btn m3-btn--icon m3-state" data-todo="共有"><span class="msr">share</span><span class="hide-sm">共有</span></button>
+  </div>
+  <div class="ribbon">
+    <div class="tabs" role="tablist">
+      <button class="tab m3-state" role="tab" aria-selected="true"><span>ホーム</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>挿入</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>レイアウト</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>表示</span></button>
+    </div>
+    <div class="tools">
+      <button class="icon-btn m3-state" aria-label="元に戻す"><span class="msr">undo</span></button>
+      <button class="icon-btn m3-state" aria-label="やり直す"><span class="msr">redo</span></button>
+      <span class="sep"></span>
+      <button class="chip m3-state">本文<span class="msr">arrow_drop_down</span></button>
+      <button class="chip m3-state">M PLUS 1<span class="msr">arrow_drop_down</span></button>
+      <button class="chip m3-state num">16<span class="msr">arrow_drop_down</span></button>
+      <span class="sep"></span>
+      <button class="icon-btn m3-state" aria-label="太字" aria-pressed="true"><span class="msr">format_bold</span></button>
+      <button class="icon-btn m3-state" aria-label="斜体" aria-pressed="false"><span class="msr">format_italic</span></button>
+      <button class="icon-btn m3-state" aria-label="下線" aria-pressed="false"><span class="msr">format_underlined</span></button>
+      <button class="icon-btn m3-state" aria-label="文字の色"><span class="msr">format_color_text</span></button>
+      <span class="sep"></span>
+      <button class="icon-btn m3-state" aria-label="左にそろえる" aria-pressed="true"><span class="msr">format_align_left</span></button>
+      <button class="icon-btn m3-state" aria-label="中央にそろえる" aria-pressed="false"><span class="msr">format_align_center</span></button>
+      <button class="icon-btn m3-state" aria-label="箇条書き"><span class="msr">format_list_bulleted</span></button>
+      <button class="icon-btn m3-state" aria-label="番号付きの箇条書き"><span class="msr">format_list_numbered</span></button>
+      <span class="sep"></span>
+      <button class="icon-btn m3-state" aria-label="画像を入れる"><span class="msr">image</span></button>
+      <button class="icon-btn m3-state" aria-label="表を入れる"><span class="msr">table</span></button>
+      <button class="icon-btn m3-state" aria-label="リンク"><span class="msr">link</span></button>
+      <button class="icon-btn m3-state" aria-label="コメント"><span class="msr">add_comment</span></button>
+    </div>
+  </div>
+  <div class="doc-body">
+    <nav class="outline" aria-label="見出し">
+      <h2 class="section-title">見出し</h2>
+      <ol>
+        <li><a href="#d-goal" class="m3-state on"><span class="msr">flag</span>やりたいこと</a></li>
+        <li><a href="#d-apps" class="m3-state sub">3 つのアプリ</a></li>
+        <li><a href="#d-steps" class="m3-state"><span class="msr">route</span>進め方</a></li>
+        <li><a href="#d-open" class="m3-state"><span class="msr">help</span>まだ決めていないこと</a></li>
+      </ol>
+    </nav>
+    <div class="doc-scroll">
+      <article class="page">
+        <h1>SK Hub Office 企画メモ</h1>
+        <p class="byline num">2026年10月21日 ・ SK Hub Systems</p>
+
+        <h2 id="d-goal">やりたいこと</h2>
+        <p>Word・Excel・PowerPoint のように、<b>文書・表・スライド</b>を SK Hub の中で作れるようにします。ソフトを入れなくても、ブラウザを開けばすぐに使えるのが目標です。</p>
+        <p>はじめは「1 人で書いて、保存して、また開ける」ところまでを作ります。<mark>みんなで同時に編集する機能は、あとから足します。</mark><span class="caret" aria-hidden="true"></span></p>
+
+        <h2 id="d-apps">3 つのアプリ</h2>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>名前</th><th>できること</th><th>テーマカラー</th></tr></thead>
+            <tbody>
+              <tr><td>Doc</td><td>文書を書く</td><td><span class="dot" style="background:#2563eb"></span>SK's Blue</td></tr>
+              <tr><td>Sheet</td><td>表で計算する</td><td><span class="dot" style="background:#16a34a"></span>SK's Matcha</td></tr>
+              <tr><td>Slide</td><td>発表をつくる</td><td><span class="dot" style="background:#ea580c"></span>SK's Mikan</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="d-steps">進め方</h2>
+        <ol>
+          <li>まず Doc を作る（編集の部品は TipTap）</li>
+          <li>SK Hub 独自の形式で保存して、開けるようにする</li>
+          <li>.docx などの Office 形式で書き出せるようにする</li>
+          <li>Sheet と Slide を足す</li>
+        </ol>
+
+        <h2 id="d-open">まだ決めていないこと</h2>
+        <ul>
+          <li>保存先を、この端末にするか、クラウドにするか</li>
+          <li>Office のファイルを読み込めるようにするか</li>
+          <li>SK Hub Systems アカウントの同期とつなぐか</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+  <div class="statusbar">
+    <span class="num">1 / 1 ページ</span>
+    <span class="num">412 文字</span>
+    <span class="push hide-sm">日本語</span>
+    <span class="num">100%</span>
+  </div>
+</div>
+
+<!-- ───────── Sheet ───────── -->
+<div id="sheet" class="view editor" data-app="matcha" hidden>
+  <div class="appbar">
+    <button class="icon-btn m3-state" data-home aria-label="ファイルにもどる"><span class="msr">arrow_back</span></button>
+    <span class="app-icon"><span class="msr msr--fill">table_chart</span></span>
+    <div class="appbar-title"><strong>文化祭 模擬店の売上</strong><span class="saved"><span class="msr">cloud_done</span>保存しました</span></div>
+    <div class="avatars"><span class="avatar">SK</span><span class="avatar">YT</span><span class="avatar">MA</span></div>
+    <button class="m3-btn m3-btn--icon m3-state" data-todo="共有"><span class="msr">share</span><span class="hide-sm">共有</span></button>
+  </div>
+  <div class="ribbon">
+    <div class="tabs" role="tablist">
+      <button class="tab m3-state" role="tab" aria-selected="true"><span>ホーム</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>挿入</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>数式</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>データ</span></button>
+    </div>
+    <div class="tools">
+      <button class="icon-btn m3-state" aria-label="元に戻す"><span class="msr">undo</span></button>
+      <button class="icon-btn m3-state" aria-label="やり直す"><span class="msr">redo</span></button>
+      <span class="sep"></span>
+      <button class="chip m3-state num">14<span class="msr">arrow_drop_down</span></button>
+      <button class="icon-btn m3-state" aria-label="太字" aria-pressed="false"><span class="msr">format_bold</span></button>
+      <button class="icon-btn m3-state" aria-label="塗りつぶし"><span class="msr">format_color_fill</span></button>
+      <button class="icon-btn m3-state" aria-label="右にそろえる" aria-pressed="true"><span class="msr">format_align_right</span></button>
+      <button class="chip m3-state">通貨 ¥<span class="msr">arrow_drop_down</span></button>
+      <span class="sep"></span>
+      <button class="chip chip--lead m3-state"><span class="msr">functions</span>合計</button>
+      <button class="chip chip--lead m3-state"><span class="msr">filter_list</span>しぼりこみ</button>
+      <button class="chip chip--lead m3-state"><span class="msr">sort</span>並べかえ</button>
+      <button class="chip chip--lead m3-state"><span class="msr">bar_chart</span>グラフ</button>
+    </div>
+  </div>
+  <div class="sheet-main">
+    <div class="formula">
+      <span class="namebox num" id="namebox">E12</span>
+      <span class="msr fx" aria-hidden="true">function</span>
+      <span class="fx-input num" id="fxinput">=SUM(E2:E11)</span>
+    </div>
+    <div class="grid-scroll">
+      <table class="grid" id="grid"></table>
+    </div>
+    <div class="sheet-tabs" role="tablist">
+      <button class="fchip" role="tab" aria-selected="true"><span class="msr">check</span>売上</button>
+      <button class="fchip" role="tab" aria-selected="false"><span class="msr">check</span>材料費</button>
+      <button class="fchip" role="tab" aria-selected="false"><span class="msr">check</span>シフト</button>
+      <button class="icon-btn m3-state" aria-label="シートを足す"><span class="msr">add</span></button>
+    </div>
+  </div>
+  <div class="statusbar">
+    <span>準備できました</span>
+    <span class="push num" id="sheetstat">合計 ¥0</span>
+    <span class="num hide-sm">100%</span>
+  </div>
+</div>
+
+<!-- ───────── Slide ───────── -->
+<div id="slide" class="view editor" data-app="mikan" hidden>
+  <div class="appbar">
+    <button class="icon-btn m3-state" data-home aria-label="ファイルにもどる"><span class="msr">arrow_back</span></button>
+    <span class="app-icon"><span class="msr msr--fill">slideshow</span></span>
+    <div class="appbar-title"><strong>SK Hub Office のご紹介</strong><span class="saved"><span class="msr">cloud_done</span>保存しました</span></div>
+    <button class="m3-btn m3-btn--outlined m3-btn--icon m3-state hide-sm" data-todo="発表する"><span class="msr">play_arrow</span>発表する</button>
+    <button class="m3-btn m3-btn--icon m3-state" data-todo="共有"><span class="msr">share</span><span class="hide-sm">共有</span></button>
+  </div>
+  <div class="ribbon">
+    <div class="tabs" role="tablist">
+      <button class="tab m3-state" role="tab" aria-selected="true"><span>ホーム</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>挿入</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>デザイン</span></button>
+      <button class="tab m3-state" role="tab" aria-selected="false"><span>切りかえ</span></button>
+    </div>
+    <div class="tools">
+      <button class="icon-btn m3-state" aria-label="元に戻す"><span class="msr">undo</span></button>
+      <button class="icon-btn m3-state" aria-label="やり直す"><span class="msr">redo</span></button>
+      <span class="sep"></span>
+      <button class="chip chip--lead m3-state"><span class="msr">add</span>スライドを足す</button>
+      <span class="sep"></span>
+      <button class="icon-btn m3-state" aria-label="テキスト"><span class="msr">title</span></button>
+      <button class="icon-btn m3-state" aria-label="図形"><span class="msr">category</span></button>
+      <button class="icon-btn m3-state" aria-label="画像"><span class="msr">image</span></button>
+      <button class="icon-btn m3-state" aria-label="グラフ"><span class="msr">bar_chart</span></button>
+      <span class="sep"></span>
+      <button class="icon-btn m3-state" aria-label="太字" aria-pressed="false"><span class="msr">format_bold</span></button>
+      <button class="icon-btn m3-state" aria-label="中央にそろえる" aria-pressed="false"><span class="msr">format_align_center</span></button>
+      <button class="chip m3-state">テーマ<span class="msr">arrow_drop_down</span></button>
+    </div>
+  </div>
+  <div class="slide-body">
+    <div class="thumbs" id="thumbs"></div>
+    <div class="stage">
+      <div id="stageSlide" style="width:min(100%, 880px)"></div>
+      <div class="notes"><span class="msr">sticky_note_2</span><div id="notes"></div></div>
+    </div>
+  </div>
+  <div class="statusbar">
+    <span class="num" id="slidestat">スライド 1 / 4</span>
+    <span class="push hide-sm">発表者メモ</span>
+    <span class="num">16:9</span>
+  </div>
+</div>
+
+<div class="snackbar" id="snackbar" role="status" aria-live="polite"><span id="snackText"></span><button class="text-btn m3-state" id="snackClose">閉じる</button></div>
+
+<script>
+(function () {
+  // 波紋（M3）
+  document.addEventListener("pointerdown", function (e) {
+    var el = e.target.closest(".m3-state");
+    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var r = el.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2;
+    var s = document.createElement("span");
+    s.className = "ripple";
+    s.style.width = s.style.height = size + "px";
+    s.style.left = (e.clientX - r.left - size / 2) + "px";
+    s.style.top = (e.clientY - r.top - size / 2) + "px";
+    el.appendChild(s);
+    setTimeout(function () { s.remove(); }, 600);
+  });
+
+  // 画面の切りかえ
+  var views = ["home", "doc", "sheet", "slide"];
+  function show(name) {
+    if (views.indexOf(name) < 0) name = "home";
+    views.forEach(function (v) { document.getElementById(v).hidden = v !== name; });
+    try { history.replaceState(null, "", "#" + name); } catch (e) {}
+  }
+
+  // スナックバー
+  var snack = document.getElementById("snackbar"), snackText = document.getElementById("snackText"), timer;
+  function notify(msg) {
+    snackText.textContent = msg;
+    snack.classList.add("is-on");
+    clearTimeout(timer);
+    timer = setTimeout(function () { snack.classList.remove("is-on"); }, 3000);
+  }
+  document.getElementById("snackClose").addEventListener("click", function (e) {
+    e.stopPropagation(); snack.classList.remove("is-on");
+  });
+
+  document.addEventListener("click", function (e) {
+    var open = e.target.closest("[data-open]");
+    if (open) { show(open.getAttribute("data-open")); return; }
+    if (e.target.closest("[data-home]")) { show("home"); return; }
+    var tab = e.target.closest(".tab, .fchip");
+    if (tab) {
+      tab.parentElement.querySelectorAll("[role=tab]").forEach(function (t) { t.setAttribute("aria-selected", t === tab ? "true" : "false"); });
+      notify("「" + tab.textContent.replace("check", "").trim() + "」の中身は、まだ作っていません");
+      return;
+    }
+    var btn = e.target.closest(".icon-btn, .chip, [data-todo]");
+    if (btn && !btn.closest("#snackbar")) {
+      if (btn.hasAttribute("aria-pressed")) btn.setAttribute("aria-pressed", btn.getAttribute("aria-pressed") === "true" ? "false" : "true");
+      var name = btn.getAttribute("data-todo") || btn.getAttribute("aria-label") || btn.textContent.replace(/arrow_drop_down|functions|filter_list|sort|bar_chart|add/g, "").trim();
+      notify("「" + name + "」は、まだ使えません。いまは見た目だけです");
+    }
+  });
+
+  // Doc：見出しの選択
+  document.querySelectorAll(".outline a").forEach(function (a) {
+    a.addEventListener("click", function () {
+      document.querySelectorAll(".outline a").forEach(function (x) { x.classList.toggle("on", x === a); });
+    });
+  });
+
+  // Sheet：例のデータ
+  var cols = ["A", "B", "C", "D", "E", "F", "G", "H"];
+  var rows = [
+    ["10/18", "焼きそば", 300, 42], ["10/18", "フランクフルト", 200, 35],
+    ["10/18", "ラムネ", 150, 58], ["10/18", "わたあめ", 200, 27],
+    ["10/19", "焼きそば", 300, 61], ["10/19", "フランクフルト", 200, 44],
+    ["10/19", "ラムネ", 150, 73], ["10/19", "わたあめ", 200, 39],
+    ["10/19", "チョコバナナ", 250, 30], ["10/19", "チョコバナナ", 250, 26]
+  ];
+  var yen = function (n) { return "¥" + n.toLocaleString("ja-JP"); };
+  var cells = {};
+  function put(ref, show, formula, value) { cells[ref] = { show: show, formula: formula || show, value: value }; }
+  put("A1", "日付"); put("B1", "品目"); put("C1", "単価"); put("D1", "数量"); put("E1", "売上"); put("F1", "メモ");
+  var sumQ = 0, sumE = 0;
+  rows.forEach(function (r, i) {
+    var n = i + 2, sale = r[2] * r[3];
+    sumQ += r[3]; sumE += sale;
+    put("A" + n, r[0]); put("B" + n, r[1]);
+    put("C" + n, yen(r[2]), String(r[2]), r[2]);
+    put("D" + n, String(r[3]), String(r[3]), r[3]);
+    put("E" + n, yen(sale), "=C" + n + "*D" + n, sale);
+  });
+  put("F6", "2 日目は午前で完売");
+  put("F11", "追加で仕入れ");
+  put("A12", "合計");
+  put("D12", String(sumQ), "=SUM(D2:D11)", sumQ);
+  put("E12", yen(sumE), "=SUM(E2:E11)", sumE);
+
+  var grid = document.getElementById("grid");
+  var html = "<thead><tr><th class='corner'></th>" + cols.map(function (c) { return "<th data-col='" + c + "'>" + c + "</th>"; }).join("") + "</tr></thead><tbody>";
+  for (var r = 1; r <= 30; r++) {
+    var cls = r === 1 ? "head" : r === 12 ? "total" : "";
+    html += "<tr class='" + cls + "'><th data-row='" + r + "' class='num'>" + r + "</th>";
+    cols.forEach(function (c) {
+      var ref = c + r, cell = cells[ref];
+      var isNum = cell && typeof cell.value === "number";
+      html += "<td data-ref='" + ref + "'" + (isNum ? " class='n'" : "") + ">" + (cell ? cell.show : "") + "</td>";
+    });
+    html += "</tr>";
+  }
+  grid.innerHTML = html + "</tbody>";
+
+  var namebox = document.getElementById("namebox"), fx = document.getElementById("fxinput"), stat = document.getElementById("sheetstat");
+  function select(ref) {
+    grid.querySelectorAll(".sel, .hl").forEach(function (x) { x.classList.remove("sel", "hl"); });
+    var td = grid.querySelector("[data-ref='" + ref + "']");
+    if (!td) return;
+    td.classList.add("sel");
+    var col = ref.charAt(0), row = ref.slice(1);
+    grid.querySelector("[data-col='" + col + "']").classList.add("hl");
+    grid.querySelector("[data-row='" + row + "']").classList.add("hl");
+    var cell = cells[ref];
+    namebox.textContent = ref;
+    fx.textContent = cell ? cell.formula : "";
+    stat.textContent = cell && typeof cell.value === "number" ? "合計 " + (col === "D" ? cell.value : yen(cell.value)) : "合計 —";
+  }
+  grid.addEventListener("click", function (e) {
+    var td = e.target.closest("td[data-ref]");
+    if (td) select(td.getAttribute("data-ref"));
+  });
+  select("E12");
+
+  // Slide：例のスライド
+  var slides = [
+    { html: "<div class='s-blob'></div><div class='s-blob2'></div><span class='s-mark'>dashboard</span><div class='s-in'><div class='s-kicker'>SK Hub Systems</div><h2 class='s-title'>SK Hub Office</h2><p class='s-sub'>文書・表・スライドを、SK Hub の中で。</p></div><div class='s-foot'>2026.10</div>",
+      note: "最初にひとこと：ソフトを入れなくても、ブラウザで開けばすぐに使えることを伝える。" },
+    { html: "<div class='s-in top'><h2 class='s-h'>3 つのアプリ</h2><div class='s-cols'>" +
+        "<div class='s-col'><i>description</i><span class='t'>Doc</span><span class='d'>企画書やレポートを書く</span></div>" +
+        "<div class='s-col'><i>table_chart</i><span class='t'>Sheet</span><span class='d'>会計や名簿を計算する</span></div>" +
+        "<div class='s-col'><i>slideshow</i><span class='t'>Slide</span><span class='d'>説明会や授業で発表する</span></div>" +
+        "</div></div><div class='s-foot'>2 / 4</div>",
+      note: "Word・Excel・PowerPoint に近いもの、と言えば伝わりやすい。" },
+    { html: "<div class='s-in top'><h2 class='s-h'>進め方</h2><ol class='s-steps'>" +
+        "<li>Doc を作る</li><li>独自の形式で保存する</li><li>Office 形式で書き出す</li><li>Sheet と Slide を足す</li>" +
+        "</ol></div><div class='s-foot'>3 / 4</div>",
+      note: "順番が大事。保存と読み込みが固まってから、次のアプリに進む。" },
+    { html: "<div class='s-in top'><h2 class='s-h'>まだ決めていないこと</h2><ul class='s-list'>" +
+        "<li><i>cloud</i><span><b>保存先</b>：この端末か、クラウドか</span></li>" +
+        "<li><i>upload_file</i><span><b>読み込み</b>：Office のファイルを開けるようにするか</span></li>" +
+        "<li><i>group</i><span><b>共同編集</b>：みんなで同時に書けるようにするか</span></li>" +
+        "</ul></div><div class='s-foot'>4 / 4</div>",
+      note: "ここで意見を聞く。どれも、あとから足すこともできる。" }
+  ];
+  var thumbs = document.getElementById("thumbs"), stage = document.getElementById("stageSlide"),
+      notes = document.getElementById("notes"), sstat = document.getElementById("slidestat");
+  thumbs.innerHTML = slides.map(function (s, i) {
+    return "<button class='thumb m3-state' data-slide='" + i + "' aria-label='スライド " + (i + 1) + "'><span class='thumb-no'>" + (i + 1) + "</span><div class='slide'>" + s.html + "</div></button>";
+  }).join("");
+  function pick(i) {
+    stage.innerHTML = "<div class='slide'>" + slides[i].html + "</div>";
+    notes.innerHTML = "<b>発表者メモ</b>" + slides[i].note;
+    sstat.textContent = "スライド " + (i + 1) + " / " + slides.length;
+    thumbs.querySelectorAll(".thumb").forEach(function (t, j) { t.setAttribute("aria-current", j === i ? "true" : "false"); });
+  }
+  thumbs.addEventListener("click", function (e) {
+    var t = e.target.closest(".thumb");
+    if (t) { e.stopPropagation(); pick(+t.getAttribute("data-slide")); }
+  });
+  pick(0);
+
+  show((location.hash || "").slice(1));
+})();
+</script>

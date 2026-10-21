@@ -63,6 +63,7 @@ URL は変えずに、`/lang/` で選んだ言語でページを訳して表示�
 - `qr-prj/`・`smart-dash/`（SK's Lab）
 - `news/`（サポートへの転送）・`usercheck/`（同意・アクセス制限の画面）
 - `view/`（SK Share。マテリアルデザイン）
+- `office/`（SK Hub Office。開発中。**開くのは https://office.sk-hub.jp/**。`_workers/office/` の Worker が sk-hub.jp/office/ を中継する（admin.sk-hub.jp と同じしくみ。くわしくは `_workers/office/README.md`）。入り口の `/` と、Doc・Sheet・Slide の `/doc/`・`/sheet/`・`/slide/`。画面の形は Microsoft Office（スタート画面・リボン）、見た目は SK Material。共通の部分は `office/shared/`（`office.js`・`office.css`・保存の `store.js`・テンプレートの `templates.js`）で、ページからは相対パスで読む。ファイルは PC の選んだフォルダに 1 つずつ保存する（`名前.skdoc`・`.sksheet`・`.skslide`。Chrome・Edge のパソコンの File System Access API）。フォルダに保存できないブラウザは、ブラウザの localStorage の `sk_office_files`。オプション（ユーザー名・テーマ・自動保存など）は `sk_office_settings`。検索には載せない（noindex）。紹介ページは build で作る `/products/office/`）
 - `inbox/`・`studio/`・`view/editor/`（管理画面 https://admin.sk-hub.jp/ へ転送するだけのページ）
 - `admin/`（管理画面。下の「管理画面」）
 

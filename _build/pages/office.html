@@ -1,0 +1,221 @@
+    <!-- SK Hub Office の製品ページ（開発中）。見た目は /products/office/office.css、動きは /products/office/office.js
+         画面のイメージはすべて CSS で描いたもの（開発中なので、本物の画面とはちがうことがある） -->
+
+    <!-- 表紙 -->
+    <section class="of-hero">
+      <div class="wrap of-hero-inner">
+        <div class="of-hero-text">
+          <div class="of-name"><span class="of-wordmark">SK Hub <b>Office</b></span><span class="of-tag">開発中</span></div>
+          <div class="of-eyebrow">Doc · Sheet · Slide</div>
+          <h1 class="of-title">
+            <span class="of-w of-w--doc">書く。</span>
+            <span class="of-w of-w--sheet">計算する。</span>
+            <span class="of-w of-w--slide">伝える。</span>
+          </h1>
+          <p class="of-lead">文書の Doc、表計算の Sheet、スライドの Slide。Word・Excel・PowerPoint のようなことが、ソフトを入れなくても、ブラウザを開くだけでできるようになります。</p>
+          <div class="btn-row">
+            <a class="btn btn-primary of-btn" aria-disabled="true">まだ使えません</a>
+            <a class="btn btn-tonal" href="#apps">3 つのアプリを見る</a>
+          </div>
+        </div>
+
+        <div class="of-stack" aria-hidden="true" data-of-stack>
+          <div class="of-paper of-paper--slide">
+            <div class="of-paper-tag">Slide</div>
+            <div class="of-mini-slide"><i></i><small>SK Hub Systems</small><strong>SK Hub Office</strong></div>
+          </div>
+          <div class="of-paper of-paper--sheet">
+            <div class="of-paper-tag">Sheet</div>
+            <div class="of-mini-cells">
+              <span class="h">品目</span><span class="h n">売上</span>
+              <span>焼きそば</span><span class="n">¥30,900</span>
+              <span>ラムネ</span><span class="n">¥19,650</span>
+              <span class="t">合計</span><span class="t n">¥63,750</span>
+            </div>
+          </div>
+          <div class="of-paper of-paper--doc">
+            <div class="of-paper-tag">Doc</div>
+            <strong class="of-mini-h">SK Hub Office 企画メモ</strong>
+            <span class="of-bar" style="--w:92%"></span>
+            <span class="of-bar" style="--w:78%"></span>
+            <span class="of-bar of-bar--mark" style="--w:86%"></span>
+            <span class="of-bar" style="--w:54%"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="wrap">
+      <div class="of-notice" role="note">
+        <strong>現在開発中です</strong>
+        <p>SK Hub Office はまだ使えません。このページの画面は、開発中のイメージです。使えるようになったら、このページとアップデートでお知らせします。</p>
+      </div>
+    </div>
+
+    <!-- スクロールに合わせて光る文 -->
+    <section class="of-statement-wrap">
+      <div class="wrap">
+        <p class="of-statement" data-of-statement><span>ソフトを入れなくても、</span><span>ブラウザを開けば、</span><span>いつもの</span><span class="g">「書く・計算する・伝える」が、</span><span>そのままできる。</span></p>
+        <div class="of-stats" data-reveal>
+          <div><b>3</b><span>つのアプリ</span></div>
+          <div><b>0<small>個</small></b><span>入れるソフト</span></div>
+          <div><b>3</b><span>つの Office の形式で書き出し</span></div>
+          <div><b>7</b><span>つのテーマカラー</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 つのアプリ（左の画面が、読んでいるアプリに切りかわる） -->
+    <section class="of-apps" id="apps">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Apps</span>
+          <h2>3 つのアプリ</h2>
+          <p>どれも同じ画面の形で、同じように使えます。</p>
+        </div>
+        <div class="of-apps-grid">
+          <div class="of-stage" data-of-stage data-app="doc" aria-hidden="true">
+            <div class="window of-window">
+              <div class="window-bar"><i></i><i></i><i></i><span class="window-url">office.sk-hub.jp</span></div>
+              <div class="of-screen">
+                <!-- Doc -->
+                <div class="of-layer of-layer--doc">
+                  <div class="of-appbar"><span class="of-chip">Doc</span><strong>SK Hub Office 企画メモ</strong><span class="of-share">共有</span></div>
+                  <div class="of-tools"><i></i><i></i><i class="w"></i><i class="on"></i><i></i><i></i></div>
+                  <div class="of-docpaper">
+                    <b>やりたいこと</b>
+                    <p><span data-of-type>文書・表・スライドを、SK Hub の中で作れるようにします。</span><i class="of-caret"></i></p>
+                    <span class="of-bar" style="--w:94%"></span>
+                    <span class="of-bar" style="--w:70%"></span>
+                    <b>進め方</b>
+                    <span class="of-bar of-bar--mark" style="--w:84%"></span>
+                    <span class="of-bar" style="--w:62%"></span>
+                  </div>
+                </div>
+                <!-- Sheet -->
+                <div class="of-layer of-layer--sheet">
+                  <div class="of-appbar"><span class="of-chip">Sheet</span><strong>文化祭 模擬店の売上</strong><span class="of-share">共有</span></div>
+                  <div class="of-fx"><span>D5</span><code>=SUM(D2:D4)</code></div>
+                  <div class="of-grid">
+                    <span class="c"></span><span class="c">A</span><span class="c">B</span><span class="c">C</span><span class="c">D</span>
+                    <span class="r">1</span><span class="h">品目</span><span class="h n">単価</span><span class="h n">数量</span><span class="h n">売上</span>
+                    <span class="r">2</span><span>焼きそば</span><span class="n">¥300</span><span class="n">103</span><span class="n">¥30,900</span>
+                    <span class="r">3</span><span>ラムネ</span><span class="n">¥150</span><span class="n">131</span><span class="n">¥19,650</span>
+                    <span class="r">4</span><span>わたあめ</span><span class="n">¥200</span><span class="n">66</span><span class="n">¥13,200</span>
+                    <span class="r">5</span><span class="t">合計</span><span class="t"></span><span class="t n">300</span><span class="t n sel">¥<b data-of-count="63750">63,750</b></span>
+                  </div>
+                </div>
+                <!-- Slide -->
+                <div class="of-layer of-layer--slide">
+                  <div class="of-appbar"><span class="of-chip">Slide</span><strong>SK Hub Office のご紹介</strong><span class="of-share">共有</span></div>
+                  <div class="of-deck">
+                    <div class="of-thumbs"><i class="on"></i><i></i><i></i></div>
+                    <div class="of-big-slide"><i></i><small>SK Hub Systems</small><strong>SK Hub Office</strong><span>文書・表・スライドを、SK Hub の中で。</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="of-steps">
+            <article class="of-step of-step--doc" data-of-step="doc">
+              <div class="of-num">01</div>
+              <p class="of-step-name">Doc</p>
+              <h3>文書を書く</h3>
+              <p>企画書・レポート・お知らせなど。見出し・表・画像を入れて、読みやすい文書にできます。</p>
+              <ul><li>見出しの一覧から、読みたいところへ</li><li>表と画像を、そのまま入れられる</li><li>Word で開ける .docx に書き出し</li></ul>
+            </article>
+            <article class="of-step of-step--sheet" data-of-step="sheet">
+              <div class="of-num">02</div>
+              <p class="of-step-name">Sheet</p>
+              <h3>表で計算する</h3>
+              <p>会計・名簿・記録など。合計などの数式を入れると、数字を変えたときに計算し直します。</p>
+              <ul><li>合計・平均などの数式</li><li>グラフで、ひと目でわかる</li><li>Excel で開ける .xlsx に書き出し</li></ul>
+            </article>
+            <article class="of-step of-step--slide" data-of-step="slide">
+              <div class="of-num">03</div>
+              <p class="of-step-name">Slide</p>
+              <h3>発表をつくる</h3>
+              <p>説明会・授業・紹介など。発表者メモを見ながら、画面いっぱいに映して発表できます。</p>
+              <ul><li>スライドの一覧で並べかえ</li><li>発表者メモ</li><li>PowerPoint で開ける .pptx に書き出し</li></ul>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- できるようになること -->
+    <section class="section of-features">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Features</span>
+          <h2>できるようになること</h2>
+          <p>いま作っているところです。内容は、これから変わることがあります。</p>
+        </div>
+        <div class="of-bento">
+          <div class="of-tile of-tile--wide" data-reveal>
+            <p class="of-formats"><span class="d">.docx</span><span class="s">.xlsx</span><span class="p">.pptx</span></p>
+            <h3>Office の形式で書き出せる</h3>
+            <p>書いたものを Office の形式で書き出して、Word・Excel・PowerPoint でも開けるようにします。</p>
+          </div>
+          <div class="of-tile of-tile--zero" data-reveal>
+            <p class="of-zero">0<small>個</small></p>
+            <h3>入れるソフト</h3>
+            <p>パソコンでもスマホでも、sk-hub.jp を開けばすぐに書けます。</p>
+          </div>
+          <div class="of-tile of-tile--half" data-reveal>
+            <div class="of-sync"><span>スマホで書く</span><i></i><span>パソコンで続き</span></div>
+            <h3>端末のあいだで続きから</h3>
+            <p>SK Hub Systems アカウントでログインすると、書いたものを端末のあいだでそろえます。</p>
+          </div>
+          <div class="of-tile of-tile--half" data-reveal>
+            <div class="of-offline"><span class="on">オフライン</span><span>保存は、つながったときに</span></div>
+            <h3>オフラインでも書ける</h3>
+            <p>ホーム画面に追加すると、アプリのようにすぐ開けます。電波がなくても書けるようにします。</p>
+          </div>
+          <div class="of-tile" data-reveal>
+            <div class="of-swatches"><i style="--c:#2563eb"></i><i style="--c:#db2777"></i><i style="--c:#16a34a"></i><i style="--c:#ea580c"></i><i style="--c:#7c3aed"></i><i style="--c:#0891b2"></i><i style="--c:#334155"></i></div>
+            <h3>SK's Toolbox と同じ見た目</h3>
+            <p>SK Material で作ります。ライト・ダークとテーマカラーは、SK's Toolbox の設定とそろえます。</p>
+          </div>
+          <div class="of-tile of-tile--wide" data-reveal>
+            <p class="of-cowrite">みんなで<span class="of-cursor of-cursor--a" data-name="SK"></span>書くと、<span class="of-cursor of-cursor--b" data-name="YT"></span>早い。</p>
+            <h3>みんなで同時に編集</h3>
+            <p>同じファイルを、何人かで同時に書けるようにします。はじめの版のあとで足す予定です。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 作る順番（スクロールに合わせて線がのびる） -->
+    <section class="section of-road-wrap">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Roadmap</span>
+          <h2>作る順番</h2>
+          <p>まず Doc を、書いて・保存して・また開けるところまで作り、そのあと Sheet と Slide を足します。</p>
+        </div>
+        <ol class="of-road" data-of-road>
+          <li class="is-now"><span class="of-road-now">いまここ</span><strong>Doc を作る</strong><p>文書を書く画面と、見出し・表・画像。</p></li>
+          <li><strong>保存して開ける</strong><p>書いたものを保存して、あとで続きから。</p></li>
+          <li><strong>Office の形式で書き出す</strong><p>.docx で書き出して、Word でも開ける。</p></li>
+          <li><strong>Sheet と Slide を足す</strong><p>表とスライドも、同じように使える。</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- おわりに -->
+    <section class="section">
+      <div class="wrap">
+        <div class="of-outro" data-reveal>
+          <p class="of-outro-kicker">SK Hub Office</p>
+          <h2>使えるようになったら、<br>お知らせします。</h2>
+          <p>SK Hub Office は開発中で、まだ使えません。使えるようになったら、アップデートとサポートのお知らせで伝えます。</p>
+          <div class="btn-row">
+            <a class="btn of-outro-btn" href="/updates/">アップデート</a>
+            <a class="btn of-outro-line" href="https://support.sk-hub.jp/?type=news">お知らせ</a>
+            <a class="btn of-outro-line" href="/sk-hub-systems/account/">SK Hub Systems アカウント</a>
+          </div>
+        </div>
+      </div>
+    </section>

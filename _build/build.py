@@ -35,6 +35,7 @@ pages = [
     ("brand.html", "brand/index.html", "SK's Brand | SK", "SK のプロダクトに共通するデザインとことばのきまり。大切にしていること・ロゴ・色・文字・形と動き・使う人との約束。", False, True),
     ("material.html", "brand/material/index.html", "SK Material | SK", "MALU・Nagi・SK's Toolbox で使っている部品と配色のきまり「SK Material」。Google の Material Design 3 をもとに、SK の色と文字に合わせて調整したもの。M3 のままのところ・SK で決めたところ・プロダクトごとの配色・出どころとライセンス。", False, True),
     ("nagi.html", "products/nagi/index.html", "Nagi | SK", "集中と休憩をくり返して、勉強や作業の時間を記録する集中タイマー「Nagi」。1 日の目標と連続日数、端末のあいだの同期。", False, True),
+    ("office.html", "products/office/index.html", "SK Hub Office | SK", "文書の「Doc」・表計算の「Sheet」・スライドの「Slide」を、ブラウザだけで使える「SK Hub Office」（開発中）。Office の形式での書き出し、端末のあいだの同期。", False, True),
     ("hub-account.html", "sk-hub-systems/account/index.html", "SK Hub Systems アカウント | SK", "SK のサービスを、いつもの Google アカウントひとつで。使えるサービス、端末のあいだの同期、保存する情報、データのダウンロードと削除について。", False, True),
     ("account.html", "account/index.html", "SK Hub Systems アカウント | SK", "SK のサービスを 1 つの Google アカウントで使える「SK Hub Systems アカウント」。ログイン・アカウントの確認・削除。", True, True),
     ("privacy.html", "policies/privacy/index.html", "SK プライバシーポリシー | SK", "SK のサービス（サイト・MALU・Nagi・SK's Toolbox・Y-FILTER.・SK Hub Systems アカウント）での情報の取り扱い。Google アカウントでログインしたときの情報（Google のユーザーデータ）の取り扱いを含みます。", True, True),
@@ -109,6 +110,15 @@ EXTRA = {
         '  <meta name="apple-mobile-web-app-title" content="SK\'s Toolbox">\n',
         "tb-home-page",
     ),
+    # SK Hub Office の製品ページ（開発中。/products/office/office.css・office.js）
+    # 出てくる動きがちらつかないよう、先に印をつける（office.js が読めなかったら 3 秒で外して、ふつうに見せる）
+    "office.html": (
+        '  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap"></script>\n'
+        '  <link rel="stylesheet" href="/products/office/office.css">\n'
+        '  <script>(function(){var d=document.documentElement;d.classList.add("of-js");setTimeout(function(){if(!window.__ofReady)d.classList.remove("of-js");},3000);})();</script>\n'
+        '  <script src="/products/office/office.js" defer></script>\n',
+        "of-page",
+    ),
     "partner-sentaro.html": ('  <link rel="stylesheet" href="/assets/partner/partner.css">\n', "partner-page"),
     "credits.html": ('  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap"></script>\n', None),
     "y-filter.html": (
@@ -129,6 +139,7 @@ RUNTIME_SOURCES = [
     "toolbox/timetable/timetable.js", "toolbox/roulette/roulette.js", "toolbox/lang/lang.js",
     "move/move.js", "moved/moved.js",
     "view/view.js",
+    "office/shared/office.js", "office/shared/templates.js",
 ]
 # build で作らないページ（ブラウザでページごと訳す）
 STANDALONE_PAGES = [
@@ -139,6 +150,7 @@ STANDALONE_PAGES = [
     "toolbox/timetable/index.html", "toolbox/roulette/index.html", "toolbox/install/index.html", "toolbox/lang/index.html",
     "move/index.html", "moved/index.html",
     "view/index.html",
+    "office/index.html", "office/doc/index.html", "office/sheet/index.html", "office/slide/index.html",
     "support/index.html", "support/contact/index.html",
 ]
 # 英語だけに訳すページ（SK's Lab のツール。<html data-i18n-langs="ja en">）。ページの文とスクリプトの t("…") の両方を探す

@@ -112,6 +112,7 @@
             ["Y-FILTER.", lp("/products/y-filter/")],
             ["MALU", lp("/products/malu/")],
             ["Nagi", lp("/products/nagi/")],
+            ["SK Hub Office", lp("/products/office/")],
             ["SK's Lab", lp("/lab/")]
           ]
         }
