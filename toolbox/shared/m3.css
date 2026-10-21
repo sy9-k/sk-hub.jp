@@ -319,8 +319,9 @@ body:has(.tbs-dialog-scrim) .RedCheckOSS-info-widget { display: none !important;
 .tbt { display: none; }
 @media (display-mode: window-controls-overlay) {
   :root { --tbt-h: env(titlebar-area-height, 33px); }
-  /* 中身をタイトルバーの分だけ下げる（Clock は空を下まで広げるので下げない） */
-  html:not([data-tbt="overlay"]) body { box-sizing: border-box; padding-top: var(--tbt-h); }
+  /* 中身をタイトルバーの分だけ下げる（Clock は空を下まで広げるので下げない）。
+     .tbt があるページだけ（m3.css を使う Office などは、自分でタイトルバーを作るので下げない） */
+  html:not([data-tbt="overlay"]) body:has(> .tbt) { box-sizing: border-box; padding-top: var(--tbt-h); }
   .tbt {
     position: fixed; z-index: 35;
     top: env(titlebar-area-y, 0); left: env(titlebar-area-x, 0); width: env(titlebar-area-width, 100%); height: var(--tbt-h);
