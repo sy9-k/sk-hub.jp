@@ -147,7 +147,7 @@ STANDALONE_PAGES = [
     "dictionary/index.html", "dictionary/offline.html",
     "nagi/index.html",
     "toolbox/clock/index.html", "toolbox/calc/index.html", "toolbox/memo/index.html", "toolbox/todo/index.html", "toolbox/countdown/index.html", "toolbox/settings/index.html",
-    "toolbox/timetable/index.html", "toolbox/roulette/index.html", "toolbox/install/index.html", "toolbox/lang/index.html",
+    "toolbox/timetable/index.html", "toolbox/roulette/index.html", "toolbox/install/index.html", "toolbox/lang/index.html", "toolbox/naming/index.html",
     "move/index.html", "moved/index.html",
     "view/index.html",
     "office/index.html", "office/doc/index.html", "office/sheet/index.html", "office/slide/index.html",
@@ -321,7 +321,7 @@ for code, tr in translators.items():
         path.unlink()
 
 # サイトマップ（このスクリプトで作るページ ＋ 別に作っているアプリ）
-sitemap += [ORIGIN + "/dictionary/", ORIGIN + "/nagi/", ORIGIN + "/y-filter/", ORIGIN + "/qr-prj/", ORIGIN + "/smart-dash/", ORIGIN + "/lyrics/", ORIGIN + "/toolbox/clock/", ORIGIN + "/toolbox/calc/", ORIGIN + "/toolbox/memo/", ORIGIN + "/toolbox/todo/", ORIGIN + "/toolbox/countdown/", ORIGIN + "/toolbox/timetable/", ORIGIN + "/toolbox/roulette/", ORIGIN + "/toolbox/install/"]
+sitemap += [ORIGIN + "/dictionary/", ORIGIN + "/nagi/", ORIGIN + "/y-filter/", ORIGIN + "/qr-prj/", ORIGIN + "/smart-dash/", ORIGIN + "/lyrics/", ORIGIN + "/toolbox/clock/", ORIGIN + "/toolbox/calc/", ORIGIN + "/toolbox/memo/", ORIGIN + "/toolbox/todo/", ORIGIN + "/toolbox/countdown/", ORIGIN + "/toolbox/timetable/", ORIGIN + "/toolbox/roulette/", ORIGIN + "/toolbox/install/", ORIGIN + "/toolbox/naming/"]
 today = datetime.date.today().isoformat()
 xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
 xml += [f"  <url><loc>{u}</loc><lastmod>{today}</lastmod></url>" for u in sitemap]

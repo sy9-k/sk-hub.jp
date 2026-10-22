@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<script src="/assets/coming-soon.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="SK Study・SK Hub Office・SK's Toolbox の新しい名前を募集しています。思いついた名前を、1 つからでも送ってください。">
+<meta name="theme-color" content="#f9f9ff" id="theme-color">
+<title>名前を募集しています | SK's Toolbox</title>
+<link rel="canonical" href="https://sk-hub.jp/toolbox/naming/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SK's Toolbox">
+<meta property="og:title" content="名前を募集しています | SK's Toolbox">
+<meta property="og:description" content="SK Study・SK Hub Office・SK's Toolbox の新しい名前を募集しています。">
+<meta property="og:url" content="https://sk-hub.jp/toolbox/naming/">
+<meta property="og:image" content="https://sk-hub.jp/toolbox/icon-512.png">
+<!-- 多言語: /lang/ で選んだ言語で表示する（/assets/i18n.js。body の最後で translatePage()） -->
+<script src="/assets/i18n.js"></script>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@300;400;500;700;800&display=swap" data-icons="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block"></script>
+<link rel="stylesheet" href="/toolbox/shared/m3.css">
+<link rel="manifest" href="/toolbox/manifest.json">
+<link rel="icon" type="image/svg+xml" href="/toolbox/icon.svg">
+<link rel="apple-touch-icon" href="/toolbox/icon-192.png">
+<style>
+  /* 色はホームと同じ（ブルー系）。テーマカラーを選ぶと settings.js が上書きする */
+  :root {
+    --md-primary: #415f91; --md-on-primary: #ffffff;
+    --md-primary-container: #d6e3ff; --md-on-primary-container: #284777;
+    --md-secondary-container: #dae2f9; --md-on-secondary-container: #3e4759;
+    --md-error: #ba1a1a;
+    --md-surface: #f9f9ff; --md-on-surface: #191c20; --md-on-surface-variant: #44474e;
+    --md-surface-container-low: #f3f3fa; --md-surface-container: #ededf4; --md-surface-container-high: #e7e8ee; --md-surface-container-highest: #e2e2e9;
+    --md-outline: #74777f; --md-outline-variant: #c4c6d0;
+    --md-inverse-surface: #2e3036; --md-inverse-on-surface: #f0f0f7; --md-inverse-primary: #aac7ff;
+    --md-font: "M PLUS 1", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --md-primary: #aac7ff; --md-on-primary: #0a305f;
+      --md-primary-container: #284777; --md-on-primary-container: #d6e3ff;
+      --md-secondary-container: #3e4759; --md-on-secondary-container: #dae2f9;
+      --md-error: #ffb4ab;
+      --md-surface: #111318; --md-on-surface: #e2e2e9; --md-on-surface-variant: #c4c6d0;
+      --md-surface-container-low: #191c20; --md-surface-container: #1d2024; --md-surface-container-high: #282a2f; --md-surface-container-highest: #333539;
+      --md-outline: #8e9099; --md-outline-variant: #44474e;
+      --md-inverse-surface: #e2e2e9; --md-inverse-on-surface: #2e3036; --md-inverse-primary: #415f91;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --md-primary: #aac7ff; --md-on-primary: #0a305f;
+    --md-primary-container: #284777; --md-on-primary-container: #d6e3ff;
+    --md-secondary-container: #3e4759; --md-on-secondary-container: #dae2f9;
+    --md-error: #ffb4ab;
+    --md-surface: #111318; --md-on-surface: #e2e2e9; --md-on-surface-variant: #c4c6d0;
+    --md-surface-container-low: #191c20; --md-surface-container: #1d2024; --md-surface-container-high: #282a2f; --md-surface-container-highest: #333539;
+    --md-outline: #8e9099; --md-outline-variant: #44474e;
+    --md-inverse-surface: #e2e2e9; --md-inverse-on-surface: #2e3036; --md-inverse-primary: #415f91;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { min-height: 100dvh; background: var(--md-surface); color: var(--md-on-surface); font-family: var(--md-font); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  button, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--md-primary); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .page { max-width: 760px; margin: 0 auto; padding: max(4px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  .app-bar { display: flex; align-items: center; min-height: 64px; margin: 0 -4px; }
+
+  /* はじめ（3 つのアイコンを重ねて並べる） */
+  .hero { position: relative; overflow: hidden; padding: 28px; border-radius: 32px; isolation: isolate;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--md-primary) 22%, var(--md-surface-container-low)), var(--md-surface-container-low) 70%); }
+  .hero::after { content: ""; position: absolute; z-index: -1; right: -80px; top: -90px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--md-primary) 30%, transparent), transparent 70%); }
+  .hero__icons { display: flex; margin: 0 0 18px; }
+  .hero__icons img { width: 56px; height: 56px; border-radius: 16px; box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .45); background: var(--md-surface); }
+  .hero__icons img + img { margin-left: -10px; }
+  .hero__chip { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 4px 12px 4px 8px; border-radius: 999px; background: var(--md-primary); color: var(--md-on-primary); font-size: 13px; font-weight: 700; }
+  .hero__chip .msr { font-size: 18px; }
+  .hero h1 { margin: 0; font-size: clamp(24px, 5vw, 32px); font-weight: 800; line-height: 1.3; }
+  .hero p { margin: 8px 0 0; font-size: 15px; line-height: 1.7; color: var(--md-on-surface-variant); }
+
+  h2 { margin: 32px 4px 12px; font-size: 20px; font-weight: 700; }
+  .lead { margin: -4px 4px 14px; font-size: 14px; line-height: 1.7; color: var(--md-on-surface-variant); }
+
+  /* アプリごとの欄 */
+  .apps { display: flex; flex-direction: column; gap: 12px; }
+  .app { padding: 18px; border-radius: 24px; background: var(--md-surface-container-low); transition: background-color .2s linear, box-shadow .2s linear; }
+  .app.is-filled { background: color-mix(in srgb, var(--md-primary) 9%, var(--md-surface-container-low)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-primary) 35%, transparent); }
+  .app__head { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
+  .app__head img { flex: none; width: 48px; height: 48px; border-radius: 14px; }
+  .app__name { flex: 1; min-width: 0; }
+  .app__name h3 { margin: 0; font-size: 17px; font-weight: 700; }
+  .app__name span { display: block; margin-top: 2px; font-size: 13px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .app__mark { flex: none; color: var(--md-primary); visibility: hidden; }
+  .app.is-filled .app__mark { visibility: visible; }
+  .app .m3-field + .m3-field { margin-top: 8px; }
+  .app textarea { min-height: 52px; }
+  .m3-field__count { align-self: flex-end; font-size: 11px; color: var(--md-on-surface-variant); }
+
+  /* 送る */
+  .about { display: grid; gap: 8px; }
+  .msg { min-height: 1.5em; margin: 12px 4px 0; font-size: 14px; color: var(--md-error); }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 8px 0 0; }
+  .actions .m3-btn .msr { font-size: 20px; }
+  .actions__hint { font-size: 13px; color: var(--md-on-surface-variant); }
+  .note { display: flex; gap: 10px; margin: 16px 0 0; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--md-primary) 9%, transparent); font-size: 13.5px; line-height: 1.7; color: var(--md-on-surface-variant); }
+  .note .msr { flex: none; font-size: 20px; color: var(--md-primary); }
+  /* 人には見えない欄（機械的な送信をはじく） */
+  .trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  /* 送ったあと */
+  .done { margin: 16px 0 0; padding: 28px 24px; border-radius: 28px; text-align: center; background: color-mix(in srgb, #16a34a 12%, var(--md-surface-container-low)); }
+  .done:focus { outline: none; }
+  .done > .msr { font-size: 48px; color: #16a34a; }
+  .done h2 { margin: 8px 0 6px; }
+  .done p { margin: 0 0 6px; font-size: 14px; line-height: 1.7; color: var(--md-on-surface-variant); }
+  .done code { font-size: 15px; font-weight: 700; letter-spacing: .06em; color: var(--md-on-surface); }
+  .done .m3-btn { margin-top: 12px; }
+
+  .foot { margin: 32px 4px 0; text-align: center; font-size: 13px; color: var(--md-on-surface-variant); }
+  .foot a { color: var(--md-primary); }
+  @media (max-width: 600px) {
+    .hero { padding: 22px; }
+    .hero__icons img { width: 48px; height: 48px; border-radius: 14px; }
+    .app { padding: 16px 14px; }
+  }
+</style>
+<!-- SK's Toolbox の共通の設定 -->
+<script src="/toolbox/shared/settings.js" data-scope="page"></script>
+<script src="/toolbox/shared/m3.js"></script>
+<!-- パソコンでアプリとして入れたときのタイトルバー -->
+<script src="/toolbox/shared/titlebar.js"></script>
+<!-- タイトルバーの真ん中（コマンドバー・アイランドなど。Toolbox の設定で選ぶ） -->
+<script src="/toolbox/shared/tbcenter.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="app-bar">
+      <a class="tb-back m3-state" href="/toolbox/" aria-label="SK's Toolbox に戻る"><span class="msr" aria-hidden="true">arrow_back</span><span>SK's Toolbox</span></a>
+    </header>
+
+    <section class="hero">
+      <div class="hero__icons" aria-hidden="true">
+        <img src="/study/icon.svg" alt="" width="56" height="56">
+        <img src="/office/icons/icon.svg" alt="" width="56" height="56">
+        <img src="/toolbox/icon.svg" alt="" width="56" height="56">
+      </div>
+      <div class="hero__chip"><span class="msr" aria-hidden="true">campaign</span><span>名前を募集しています</span></div>
+      <h1>この 3 つのアプリに、新しい名前をつけてください</h1>
+      <p>SK Study・SK Hub Office・SK's Toolbox の名前を募集しています。思いついたものを、1 つのアプリだけでも気軽に送ってください。何回でも送れます。</p>
+    </section>
+
+    <form id="naming" autocomplete="off" novalidate>
+      <h2>名前の案</h2>
+      <p class="lead">書いたアプリの分だけ送ります。理由や込めた思いがあれば、あわせて教えてください。</p>
+
+      <div class="apps">
+        <!-- data-app は送るときの見出し（受信箱で読む） -->
+        <section class="app" data-app="SK Study" aria-labelledby="app-study">
+          <div class="app__head">
+            <img src="/study/icon.svg" alt="" width="48" height="48">
+            <div class="app__name"><h3 id="app-study">SK Study</h3><span>単語カード・4 択・書き取りで覚える学習アプリ</span></div>
+            <span class="msr app__mark" aria-hidden="true">check_circle</span>
+          </div>
+          <label class="m3-field"><span class="m3-field__label">名前の案</span><input class="m3-field__input" name="study-name" maxlength="40" enterkeyhint="next"></label>
+          <label class="m3-field"><span class="m3-field__label">理由・込めた思い（なくても大丈夫）</span><textarea name="study-reason" maxlength="200" rows="2"></textarea></label>
+        </section>
+
+        <section class="app" data-app="SK Hub Office" aria-labelledby="app-office">
+          <div class="app__head">
+            <img src="/office/icons/icon.svg" alt="" width="48" height="48">
+            <div class="app__name"><h3 id="app-office">SK Hub Office</h3><span>文書の Doc・表計算の Sheet・スライドの Slide（開発中）</span></div>
+            <span class="msr app__mark" aria-hidden="true">check_circle</span>
+          </div>
+          <label class="m3-field"><span class="m3-field__label">名前の案</span><input class="m3-field__input" name="office-name" maxlength="40" enterkeyhint="next"></label>
+          <label class="m3-field"><span class="m3-field__label">理由・込めた思い（なくても大丈夫）</span><textarea name="office-reason" maxlength="200" rows="2"></textarea></label>
+        </section>
+
+        <section class="app" data-app="SK's Toolbox" aria-labelledby="app-toolbox">
+          <div class="app__head">
+            <img src="/toolbox/icon.svg" alt="" width="48" height="48">
+            <div class="app__name"><h3 id="app-toolbox">SK's Toolbox</h3><span>Clock・Todo・Memo など、毎日ちょっと使う小さなアプリの道具箱</span></div>
+            <span class="msr app__mark" aria-hidden="true">check_circle</span>
+          </div>
+          <label class="m3-field"><span class="m3-field__label">名前の案</span><input class="m3-field__input" name="toolbox-name" maxlength="40" enterkeyhint="next"></label>
+          <label class="m3-field"><span class="m3-field__label">理由・込めた思い（なくても大丈夫）</span><textarea name="toolbox-reason" maxlength="200" rows="2"></textarea></label>
+        </section>
+      </div>
+
+      <h2>あなたについて</h2>
+      <div class="about">
+        <label class="m3-field"><span class="m3-field__label">ニックネーム（なくても大丈夫）</span><input class="m3-field__input" name="nickname" maxlength="30"></label>
+      </div>
+      <label class="trap" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
+
+      <p class="msg" id="msg" role="alert" data-i18n-skip></p>
+      <div class="actions">
+        <button type="submit" class="m3-btn m3-state" id="send"><span class="msr" aria-hidden="true">send</span><span id="send-label">送る</span></button>
+        <span class="actions__hint" id="count" data-i18n-skip></span>
+      </div>
+      <p class="note"><span class="msr" aria-hidden="true">lock</span><span>送った案は、開発者だけが読みます。名前やメールアドレスは送られません（ニックネームを書いたときだけ、それを添えます）。</span></p>
+    </form>
+
+    <section class="done" id="done" tabindex="-1" hidden>
+      <span class="msr" aria-hidden="true">celebration</span>
+      <h2>送りました。ありがとうございます！</h2>
+      <p>受付番号 <code id="receipt" data-i18n-skip></code></p>
+      <p>ほかにも思いついたら、いつでも送ってください。</p>
+      <button type="button" class="m3-btn m3-btn--tonal m3-state" id="again"><span class="msr" aria-hidden="true">add</span><span>ほかの案も送る</span></button>
+    </section>
+
+    <p class="foot"><a href="/toolbox/">SK's Toolbox のホーム</a> · <a href="/products/">SK のプロダクト</a> · <a href="/policies/">利用規約・プライバシーポリシー</a></p>
+  </div>
+
+  <script>
+    // 送り先はお問い合わせと同じ（SK Hub Systems の contacts。support/contact/contact.js）。開発者が管理画面の「お問い合わせ」で読む
+    // 種類は「要望・アイデア」、どれについては「その他」で、本文の 1 行目を【名前募集】にする
+    (function () {
+      "use strict";
+      var I18N = window.SKI18N;
+      function t(s, v) { return I18N ? I18N.t(s, v) : (v ? s.replace(/\{(\w+)\}/g, function (m, k) { return v[k] != null ? v[k] : m; }) : s); }
+      function $(id) { return document.getElementById(id); }
+
+      var HUB = { projectId: "y-filter-systems", apiKey: "AIzaSyB4gqzPEPyP0NrEJw33-OTAxUrF48MmiuI" }; // frameworks/check.js と同じ
+      var URL_ = "https://firestore.googleapis.com/v1/projects/" + HUB.projectId + "/databases/(default)/documents/contacts?key=" + HUB.apiKey;
+      var COOLDOWN_MS = 60 * 1000; // 続けて送れるのは 1 分に 1 回まで（お問い合わせとは別に数える）
+      var COOLDOWN_KEY = "sk_toolbox_naming_sent";
+
+      var form = $("naming");
+      var apps = Array.prototype.slice.call(form.querySelectorAll(".app"));
+      function field(app, kind) { return app.querySelector("[name$='-" + kind + "']"); }
+      function filled() { return apps.filter(function (a) { return field(a, "name").value.trim(); }); }
+
+      // 書いたアプリに印を付けて、いくつ送るかを出す
+      function update() {
+        var n = filled().length;
+        apps.forEach(function (a) { a.classList.toggle("is-filled", !!field(a, "name").value.trim()); });
+        $("count").textContent = n ? t("{n} つのアプリの案を送ります", { n: n }) : "";
+      }
+      form.addEventListener("input", update);
+
+      function lastSent() { try { return Number(localStorage.getItem(COOLDOWN_KEY) || 0); } catch (e) { return 0; } }
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var msg = $("msg");
+        msg.textContent = "";
+        if (form.elements.website.value) return; // 人には見えない欄に入力がある = 機械的な送信
+        var list = filled();
+        if (!list.length) { msg.textContent = t("名前の案を 1 つ以上書いてください。"); field(apps[0], "name").focus(); return; }
+        var wait = COOLDOWN_MS - (Date.now() - lastSent());
+        if (wait > 0) { msg.textContent = t("続けて送るには、あと {n} 秒お待ちください。", { n: Math.ceil(wait / 1000) }); return; }
+
+        var lines = ["【名前募集】"];
+        list.forEach(function (a) {
+          lines.push("", "■ " + a.dataset.app, "案: " + field(a, "name").value.trim());
+          var reason = field(a, "reason").value.trim();
+          if (reason) lines.push("理由: " + reason);
+        });
+        var nickname = form.elements.nickname.value.trim();
+        if (nickname) lines.push("", "ニックネーム: " + nickname);
+
+        var fields = {
+          kind: { stringValue: "request" },
+          product: { stringValue: "other" },
+          message: { stringValue: lines.join("\n").slice(0, 2000) },
+          email: { stringValue: "" },
+          supportId: { stringValue: "" },
+          userAgent: { stringValue: "" },
+          language: { stringValue: "" },
+          status: { stringValue: "new" },
+          createdAt: { timestampValue: new Date().toISOString() }
+        };
+
+        var send = $("send");
+        send.disabled = true;
+        $("send-label").textContent = t("送信しています…");
+        fetch(URL_, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fields: fields }),
+          credentials: "omit",
+          referrerPolicy: "no-referrer"
+        }).then(function (res) {
+          if (!res.ok) throw new Error(String(res.status));
+          return res.json();
+        }).then(function (doc) {
+          try { localStorage.setItem(COOLDOWN_KEY, String(Date.now())); } catch (err) { /* 保存できなくても送れる */ }
+          $("receipt").textContent = String(doc.name || "").split("/").pop().slice(0, 8).toUpperCase();
+          form.reset();
+          update();
+          form.hidden = true;
+          $("done").hidden = false;
+          $("done").focus();
+        }).catch(function () {
+          msg.textContent = t("送信できませんでした。時間をおいてもう一度お試しください。続くときは、システム稼働状況をご確認ください。");
+        }).then(function () {
+          send.disabled = false;
+          $("send-label").textContent = t("送る");
+        });
+      });
+
+      $("again").addEventListener("click", function () {
+        $("done").hidden = true;
+        form.hidden = false;
+        field(apps[0], "name").focus();
+      });
+
+      var meta = $("theme-color");
+      if (window.SKToolbox) SKToolbox.onChange(function () { meta.content = getComputedStyle(document.documentElement).getPropertyValue("--md-surface").trim(); });
+    })();
+  </script>
+  <script>window.SKI18N && SKI18N.translatePage();</script>
+  <!-- 横断検索（Ctrl+K） -->
+  <script src="/toolbox/shared/search.js"></script>
+  <script src="/frameworks/check.js" defer></script>
+  <script src="/assets/analytics.js" defer></script>
+  <script src="/assets/maintenance.js" defer></script>
+</body>
+</html>
