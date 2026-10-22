@@ -1,0 +1,16 @@
+/*
+Theme Name: SK Blog
+Theme URI: https://sk-hub.jp/
+Author: SK
+Author URI: https://sk-hub.jp/
+Description: SK のサイトと SK Hub Support のデザイン（上のバー・カード・ダークモード・テーマカラー）をベースにした、ブログ用のクラシックテーマ。
+Version: 1.0.0
+Requires at least: 6.0
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: sk-blog
+Tags: blog, two-columns, custom-menu, featured-images, translation-ready, accessibility-ready, threaded-comments
+
+実際のスタイルは assets/css/main.css（functions.php で読み込む）。ここはテーマの情報だけ。
+*/
