@@ -223,6 +223,15 @@ a.tbh-tile:active { transform: scale(.985); }
 .tbh-look__more .msr { font-size: 18px; margin-right: 6px; }
 
 /* いちばん下: 使い方のヒント */
+/* 名前の募集の帯（/toolbox/naming/ へ） */
+.tbh-naming { display: flex; align-items: center; gap: 14px; margin: 0 0 16px; padding: 14px 18px; border-radius: 24px; text-decoration: none;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--md-primary) 18%, var(--md-surface-container-low)), var(--md-surface-container-low) 75%); }
+.tbh-naming__icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--md-primary); color: var(--md-on-primary); }
+.tbh-naming__text { flex: 1; min-width: 0; }
+.tbh-naming__text b { display: block; font-size: 15px; }
+.tbh-naming__text span { display: block; margin-top: 2px; font-size: 13px; line-height: 1.5; color: var(--md-on-surface-variant); }
+.tbh-naming > .msr { flex: none; color: var(--md-primary); }
+
 .tbh-foot { margin-top: 28px; }
 .tbh-tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
 .tbh-tips li { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; border-radius: 20px; background: var(--md-surface-container-low); font-size: 13px; line-height: 1.6; color: var(--md-on-surface-variant); }

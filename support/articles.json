@@ -5,6 +5,8 @@
     "Nagi",
     "Y-FILTER.",
     "SK Hub Systems",
+    "SK's Toolbox",
+    "SK Hub Office",
     "アカウント",
     "SK's Lab",
     "このサイト",
@@ -4291,6 +4293,622 @@
             },
             {
               "note": "자세한 내용은 [SK 개인정보 처리방침](/policies/privacy/) 제4조의2를 참고하세요."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "toolbox-about",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK's Toolbox",
+      "title": "SK's Toolbox でできること",
+      "summary": "Clock・Todo・Timetable・Memo・Calc・Countdown・Roulette の 7 つのアプリが入っています。",
+      "body": [
+        {
+          "p": "SK's Toolbox は、毎日の小さな「困った」をまとめて助ける、ブラウザで開くアプリ集です。アカウントもアプリストアもいらず、[sk-hub.jp/toolbox/](/toolbox/) を開くとすぐ使えます。"
+        },
+        {
+          "h": "入っているアプリ"
+        },
+        {
+          "list": [
+            "Clock … 時計・アラーム・タイマー",
+            "Todo … リマインダー・やること",
+            "Timetable … 時間割・クラスの連絡",
+            "Memo … 画像も入るメモ帳",
+            "Calc … 電卓・関数電卓",
+            "Countdown … あと何日",
+            "Roulette … ルーレット・抽選"
+          ]
+        },
+        {
+          "h": "ホーム画面の使い方"
+        },
+        {
+          "list": [
+            "「ウィジェット」では、今日の予定やタスクをひと目で見られます。「アプリ」では、アプリをアイコンで一覧できます。",
+            "右上の「ホームを編集」で、タイルの順番と表示を変えられます。",
+            "`Ctrl` + `K`（Mac は `⌘` + `K`）で、メモ・タスク・予定をまとめて検索できます。",
+            "「Toolbox の設定」で、ライト・ダークとテーマカラーを選べます。"
+          ]
+        },
+        {
+          "p": "ホーム画面に追加すると、アプリのように開いてオフラインでも使えます。入れ方は [アプリとして入れる](/toolbox/install/) をご覧ください。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "What you can do with SK's Toolbox",
+          "summary": "Seven apps: Clock, Todo, Timetable, Memo, Calc, Countdown and Roulette.",
+          "body": [
+            {
+              "p": "SK's Toolbox is a set of browser apps that help with the small everyday things. No account or app store is needed. Just open [sk-hub.jp/toolbox/](/toolbox/)."
+            },
+            {
+              "h": "Included apps"
+            },
+            {
+              "list": [
+                "Clock: clock, alarms and timers",
+                "Todo: reminders and to-dos",
+                "Timetable: class schedule and class notices",
+                "Memo: a notepad that takes images",
+                "Calc: calculator and scientific calculator",
+                "Countdown: how many days left",
+                "Roulette: roulette and drawing lots"
+              ]
+            },
+            {
+              "h": "Using the home screen"
+            },
+            {
+              "list": [
+                "\"Widgets\" shows today's schedule and tasks at a glance. \"Apps\" lists the apps as icons.",
+                "Use \"Edit home\" at the top right to change the order and visibility of tiles.",
+                "Press `Ctrl` + `K` (`⌘` + `K` on Mac) to search memos, tasks and events together.",
+                "In \"Toolbox settings\", choose light or dark and a theme color."
+              ]
+            },
+            {
+              "p": "Add it to your home screen to open it like an app, even offline. See [Install as an app](/toolbox/install/) for how."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "toolbox-install",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK's Toolbox",
+      "title": "SK's Toolbox をアプリとして入れたい",
+      "summary": "ホーム画面・Dock に追加すると、アプリのように開けてオフラインでも使えます。",
+      "body": [
+        {
+          "p": "SK's Toolbox は、お使いの端末に「アプリとして」入れられます。お金はかからず、アプリストアもいりません。"
+        },
+        {
+          "h": "iPhone・iPad"
+        },
+        {
+          "steps": [
+            "Safari で [sk-hub.jp/toolbox/](/toolbox/) を開きます。",
+            "画面の下（iPad は右上）の「共有」を押します。",
+            "「ホーム画面に追加」を押します。",
+            "右上の「追加」を押します。"
+          ]
+        },
+        {
+          "h": "Android"
+        },
+        {
+          "steps": [
+            "Chrome で [sk-hub.jp/toolbox/](/toolbox/) を開きます。",
+            "右上のメニューから「アプリをインストール」（または「ホーム画面に追加」）を押します。",
+            "「インストール」を押します。"
+          ]
+        },
+        {
+          "h": "パソコン（Chrome・Edge）"
+        },
+        {
+          "steps": [
+            "Chrome か Edge で [sk-hub.jp/toolbox/](/toolbox/) を開きます。",
+            "アドレスバーの右にある「インストール」のマークを押します。",
+            "「インストール」を押します。"
+          ]
+        },
+        {
+          "h": "Mac（Safari）"
+        },
+        {
+          "p": "macOS Sonoma（14）以降の Safari で、メニューバーの「ファイル」→「Dock に追加」を選びます。"
+        },
+        {
+          "note": "パソコンの Firefox には、アプリとして入れる機能がありません。Chrome・Edge（Mac は Safari も）で開いてください。"
+        },
+        {
+          "p": "Clock だけ、Todo だけなど、アプリごとに入れることもできます。くわしい手順は [アプリとして入れる](/toolbox/install/) にあります。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "How to install SK's Toolbox as an app",
+          "summary": "Add it to your home screen or Dock to open it like an app, even offline.",
+          "body": [
+            {
+              "p": "You can install SK's Toolbox on your device as an app. It's free and doesn't need an app store."
+            },
+            {
+              "h": "iPhone and iPad"
+            },
+            {
+              "steps": [
+                "Open [sk-hub.jp/toolbox/](/toolbox/) in Safari.",
+                "Tap \"Share\" at the bottom (top right on iPad).",
+                "Tap \"Add to Home Screen\".",
+                "Tap \"Add\" at the top right."
+              ]
+            },
+            {
+              "h": "Android"
+            },
+            {
+              "steps": [
+                "Open [sk-hub.jp/toolbox/](/toolbox/) in Chrome.",
+                "From the top-right menu, tap \"Install app\" (or \"Add to Home screen\").",
+                "Tap \"Install\"."
+              ]
+            },
+            {
+              "h": "Computer (Chrome and Edge)"
+            },
+            {
+              "steps": [
+                "Open [sk-hub.jp/toolbox/](/toolbox/) in Chrome or Edge.",
+                "Click the install icon at the right of the address bar.",
+                "Click \"Install\"."
+              ]
+            },
+            {
+              "h": "Mac (Safari)"
+            },
+            {
+              "p": "In Safari on macOS Sonoma (14) or later, choose File → Add to Dock from the menu bar."
+            },
+            {
+              "note": "Firefox on computers can't install it as an app. Use Chrome or Edge (or Safari on Mac)."
+            },
+            {
+              "p": "You can also install a single app, such as only Clock or only Todo. See [Install as an app](/toolbox/install/) for details."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "toolbox-notifications",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK's Toolbox",
+      "title": "Toolbox の通知（リマインダー・アラーム）が届かない",
+      "summary": "iPhone・iPad は、ホーム画面に追加したアプリからだけ通知が届きます。",
+      "body": [
+        {
+          "list": [
+            "Todo のリマインダー、Clock のアラーム・タイマー、Timetable のクラスの連絡は、通知を許可していないと届きません。ブラウザかアプリの設定で、SK's Toolbox の通知を許可してください。",
+            "iPhone・iPad では、通知は **ホーム画面に追加したアプリからだけ** 届きます（Apple の決まりです）。先に [アプリとして入れて](/toolbox/install/)、そのアプリから通知を許可してください。",
+            "端末のおやすみモードや集中モード、省電力モードがオンだと、通知が遅れたり届かなかったりします。",
+            "アプリを入れたあとは、アイコンに期限切れと今日の Todo の数が出ます。"
+          ]
+        },
+        {
+          "p": "それでも届かないときは、[お問い合わせ](/contact/) からご連絡ください。サポートIDを添えていただくと調査がスムーズです。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "Toolbox notifications (reminders and alarms) don't arrive",
+          "summary": "On iPhone and iPad, notifications only arrive from the app added to the Home Screen.",
+          "body": [
+            {
+              "list": [
+                "Todo reminders, Clock alarms and timers, and Timetable class notices don't arrive unless notifications are allowed. Allow notifications for SK's Toolbox in your browser or app settings.",
+                "On iPhone and iPad, notifications arrive **only from the app added to the Home Screen** (an Apple rule). [Install it as an app](/toolbox/install/) first, then allow notifications from that app.",
+                "Do Not Disturb, Focus or Low Power Mode can delay or block notifications.",
+                "Once installed, the icon shows the number of overdue and today's Todo items."
+              ]
+            },
+            {
+              "p": "If they still don't arrive, please [contact us](/contact/). Including your Support ID helps us look into it."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "toolbox-data",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK's Toolbox",
+      "title": "Toolbox のデータの保存先とバックアップ",
+      "summary": "データはこの端末のブラウザの中に保存されます。機種変更の前にバックアップか同期を。",
+      "body": [
+        {
+          "p": "SK's Toolbox のメモ・タスク・時間割などは、**この端末のブラウザの中だけ** に保存されます。SK のサーバーには送られません（オンライン同期をオンにした場合を除く）。"
+        },
+        {
+          "h": "次のときは、データが見えなくなることがあります"
+        },
+        {
+          "list": [
+            "ブラウザの閲覧データ（サイトデータ）を消したとき",
+            "アプリを消したとき（アプリの中のデータも消えることがあります）",
+            "別の端末や別のブラウザで開いたとき",
+            "iPhone・iPad で、Safari で使っていたデータをホーム画面のアプリで開いたとき（保存場所が別々になります）"
+          ]
+        },
+        {
+          "h": "データを守るには"
+        },
+        {
+          "list": [
+            "各アプリの「バックアップを書き出す」でファイルに保存し、必要なときに「読み込む」で戻します。",
+            "[オンライン同期](/support/?a=toolbox-sync) を使うと、別の端末にもデータをそろえられます。"
+          ]
+        },
+        {
+          "p": "アプリを消す前や端末を替える前は、先にバックアップを書き出しておくと安心です。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "Where Toolbox data is stored, and backups",
+          "summary": "Data is stored inside this device's browser. Back up or sync before changing devices.",
+          "body": [
+            {
+              "p": "Memos, tasks, timetables and other SK's Toolbox data are stored **only in this device's browser**. They aren't sent to SK's servers (unless you turn on online sync)."
+            },
+            {
+              "h": "Data may disappear when"
+            },
+            {
+              "list": [
+                "You clear the browser's site data",
+                "You delete the app (data inside it may be deleted too)",
+                "You open it on another device or browser",
+                "On iPhone and iPad, you open data from Safari in the Home Screen app (they're stored separately)"
+              ]
+            },
+            {
+              "h": "How to keep your data safe"
+            },
+            {
+              "list": [
+                "Use \"Export backup\" in each app to save a file, then \"Import\" to restore it.",
+                "Use [online sync](/support/?a=toolbox-sync) to keep data the same across devices."
+              ]
+            },
+            {
+              "p": "Before deleting the app or changing devices, export a backup first."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "toolbox-sync",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK's Toolbox",
+      "title": "Toolbox のオンライン同期を使うには",
+      "summary": "SK Hub Systems アカウントで、端末のあいだでデータをそろえられます（任意）。",
+      "body": [
+        {
+          "p": "オンライン同期は任意の機能で、最初はオフです。オンにした端末どうしで、データをそろえられます。中身は **端末で暗号化してから** 送られ、同期用のパスフレーズはサーバーに送られません。"
+        },
+        {
+          "h": "始め方"
+        },
+        {
+          "steps": [
+            "[SK Hub Systems アカウント](/account/) でログインします。",
+            "アカウントのページで、SK's Toolbox に接続します。",
+            "Toolbox の設定を開き、「オンライン同期」で「同期を始める」を選びます。",
+            "同期用のパスフレーズを決めます。別の端末でも、同じパスフレーズを入れます。"
+          ]
+        },
+        {
+          "h": "同期できるもの"
+        },
+        {
+          "p": "アプリごとに選べます。Toolbox の設定とホームの並び・Todo・Memo の文章（画像は同期しません）・Countdown・Calc の履歴・自分の時間割・ルーレットです。"
+        },
+        {
+          "note": "パスフレーズを忘れると、同期したデータは読めなくなります。忘れないよう、安全な場所に控えておいてください。"
+        },
+        {
+          "p": "同期は、開いたとき・データを変えて少ししたとき・画面に戻ったとき・5 分ごとなどに行われます。同期をやめたいときは、設定で同期をオフにするか、ログアウトしてください。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "How to use Toolbox online sync",
+          "summary": "Keep data the same across devices with your SK Hub Systems account (optional).",
+          "body": [
+            {
+              "p": "Online sync is optional and off by default. Devices where you turn it on keep the same data. Contents are **encrypted on your device** before being sent, and your sync passphrase is never sent to the server."
+            },
+            {
+              "h": "Getting started"
+            },
+            {
+              "steps": [
+                "Log in with your [SK Hub Systems account](/account/).",
+                "On the account page, connect SK's Toolbox.",
+                "Open Toolbox settings and choose \"Start syncing\" under \"Online sync\".",
+                "Set a sync passphrase. Enter the same passphrase on your other devices."
+              ]
+            },
+            {
+              "h": "What syncs"
+            },
+            {
+              "p": "You can choose per app: Toolbox settings and home layout, Todo, Memo text (images aren't synced), Countdown, Calc history, your timetable, and Roulette."
+            },
+            {
+              "note": "If you forget the passphrase, synced data can't be read. Keep it somewhere safe."
+            },
+            {
+              "p": "Sync runs when you open the app, shortly after you change data, when you return to the screen, and every 5 minutes. To stop, turn sync off in settings or log out."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "office-about",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK Hub Office",
+      "title": "SK Hub Office とは（開発中）",
+      "summary": "文書の Doc・表計算の Sheet・スライドの Slide をまとめた、ブラウザで使うオフィスアプリです。",
+      "body": [
+        {
+          "p": "SK Hub Office（仮名称）は、文書の **Doc**、表計算の **Sheet**、スライドの **Slide** をまとめた、ブラウザで使うオフィスアプリです。ソフトを入れなくても、ブラウザを開くだけで「書く・計算する・伝える」ができます。"
+        },
+        {
+          "note": "SK Hub Office は開発中です。名前は仮のもので、機能や画面は予告なく変わることがあります。使えるようになったら、お知らせでお伝えします。"
+        },
+        {
+          "h": "3 つのアプリ"
+        },
+        {
+          "list": [
+            "Doc … 見出し・表・画像を入れた文書を書けます。縦書きにも対応しています。",
+            "Sheet … 数式やグラフで計算できます。並べ替え・フィルター・条件付き書式もあります。",
+            "Slide … スライドを作り、発表者ビューを見ながら発表できます。"
+          ]
+        },
+        {
+          "h": "特長"
+        },
+        {
+          "list": [
+            "Word・Excel・PowerPoint の形式（.docx・.xlsx・.pptx）で読み込み・書き出しができます。",
+            "元に戻す・やり直し、検索と置換、印刷・PDF の書き出しが使えます。",
+            "ホーム画面に追加すると、オフラインでも書けます。",
+            "ライト・ダークとテーマカラーを選べます。"
+          ]
+        },
+        {
+          "p": "名前は [アプリの名前の募集](/toolbox/naming/) で募集しています。ご意見をお待ちしています。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "About SK Hub Office (in development)",
+          "summary": "A browser-based office app combining Doc, Sheet and Slide.",
+          "body": [
+            {
+              "p": "SK Hub Office (working name) is a browser-based office app that combines **Doc** for documents, **Sheet** for spreadsheets and **Slide** for presentations. You can write, calculate and present just by opening your browser, with nothing to install."
+            },
+            {
+              "note": "SK Hub Office is in development. The name is provisional, and features and screens may change without notice. We'll announce it when it's ready."
+            },
+            {
+              "h": "Three apps"
+            },
+            {
+              "list": [
+                "Doc: write documents with headings, tables and images. Vertical writing is supported.",
+                "Sheet: calculate with formulas and charts. Includes sorting, filters and conditional formatting.",
+                "Slide: build slides and present with the presenter view."
+              ]
+            },
+            {
+              "h": "Highlights"
+            },
+            {
+              "list": [
+                "Open and export Word, Excel and PowerPoint formats (.docx, .xlsx, .pptx).",
+                "Undo and redo, find and replace, and printing or PDF export.",
+                "Add it to your home screen to write offline.",
+                "Choose light or dark and a theme color."
+              ]
+            },
+            {
+              "p": "We're collecting name ideas on [the app naming page](/toolbox/naming/). We'd love to hear yours."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "office-save",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK Hub Office",
+      "title": "SK Hub Office のファイルの保存先",
+      "summary": "ファイルは、選んだ PC のフォルダかブラウザの中に保存されます。",
+      "body": [
+        {
+          "p": "SK Hub Office のファイルは、SK のサーバーには置かれません。保存先は使っているブラウザによって変わります。"
+        },
+        {
+          "list": [
+            "Chrome・Edge（パソコン）… 最初に選んだ PC のフォルダに、1 つずつ保存されます（`名前.skdoc`・`名前.sksheet`・`名前.skslide`）。",
+            "それ以外のブラウザ … ブラウザの中に保存されます。ブラウザのデータを消すと失われるので、書き出し・読み込みで別に残してください。"
+          ]
+        },
+        {
+          "note": "Google ドライブへの保存と、SK Hub Systems アカウントどうしでの共有・同時編集は準備中です。使えるようになったらお知らせします。"
+        },
+        {
+          "h": "ファイルが見つからないとき"
+        },
+        {
+          "list": [
+            "スタート画面の「開く」や検索で探してください。",
+            "別のブラウザや別の端末で作ったファイルは、そこには出ません。元のブラウザで .docx などに書き出して、読み込んでください。",
+            "保存するフォルダは、オプションから選びなおせます。"
+          ]
+        },
+        {
+          "p": "ログインは、名前とアイコンを表示するためだけに使われます。ファイルの中身はアカウントに保存されません。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "Where SK Hub Office files are saved",
+          "summary": "Files are saved in a folder on your computer or inside the browser.",
+          "body": [
+            {
+              "p": "SK Hub Office files aren't stored on SK's servers. Where they're saved depends on your browser."
+            },
+            {
+              "list": [
+                "Chrome and Edge (computer): saved one by one in the folder you pick first (`name.skdoc`, `name.sksheet`, `name.skslide`).",
+                "Other browsers: saved inside the browser. Clearing browser data loses them, so keep copies by exporting and importing."
+              ]
+            },
+            {
+              "note": "Saving to Google Drive, and sharing and co-editing between SK Hub Systems accounts, are in preparation. We'll let you know when they're available."
+            },
+            {
+              "h": "If you can't find a file"
+            },
+            {
+              "list": [
+                "Look under \"Open\" on the start screen, or use search.",
+                "Files made in another browser or device don't appear here. Export them from the original browser as .docx etc. and import them.",
+                "You can change the save folder in Options."
+              ]
+            },
+            {
+              "p": "Logging in is used only to show your name and icon. File contents aren't saved to your account."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "office-export",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK Hub Office",
+      "title": "SK Hub Office のファイルを Word・Excel・PowerPoint で開きたい",
+      "summary": "書き出しで .docx・.xlsx・.pptx にできます。細かい書式は変わることがあります。",
+      "body": [
+        {
+          "steps": [
+            "書き出したいファイルを開きます。",
+            "スタート画面（ファイルのメニュー）を開き、「エクスポート」を選びます。",
+            "Doc は .docx、Sheet は .xlsx、Slide は .pptx を選びます。"
+          ]
+        },
+        {
+          "p": "読み込みは、反対に .docx・.xlsx・.pptx を開きます。ほかに、Doc は .html・.md・.txt、Sheet は .csv も読み込み・書き出しができます。PDF にもできます（印刷から）。"
+        },
+        {
+          "note": "Word・Excel・PowerPoint で開いたときに、フォントの扱いや、細かい書式（タブ位置・均等割り付け・表のスタイルなど）が元と変わることがあります。Sheet のグラフは .xlsx に書き出されず、Slide の表とアニメーションは .pptx に書き出されません。"
+        },
+        {
+          "p": "大事な書類は、書き出したあとに開いて確かめてください。見た目がちがうところは、[お問い合わせ](/contact/) で教えていただけると助かります。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "Opening SK Hub Office files in Word, Excel and PowerPoint",
+          "summary": "Export to .docx, .xlsx or .pptx. Fine formatting may change.",
+          "body": [
+            {
+              "steps": [
+                "Open the file you want to export.",
+                "Open the start screen (file menu) and choose \"Export\".",
+                "Choose .docx for Doc, .xlsx for Sheet or .pptx for Slide."
+              ]
+            },
+            {
+              "p": "To go the other way, open a .docx, .xlsx or .pptx file. Doc also reads and writes .html, .md and .txt, and Sheet .csv. You can also make a PDF (from Print)."
+            },
+            {
+              "note": "When opened in Word, Excel or PowerPoint, fonts and fine formatting (tab stops, justified spacing, table styles, etc.) may differ. Sheet charts aren't exported to .xlsx, and Slide tables and animations aren't exported to .pptx."
+            },
+            {
+              "p": "For important documents, open the exported file and check it. If something looks different, please tell us through [Contact](/contact/)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "office-history",
+      "type": "guide",
+      "date": "2026-10-22",
+      "category": "SK Hub Office",
+      "title": "SK Hub Office で前の版に戻したい",
+      "summary": "開いたとき・保存したとき・10 分ごとに、前の版が残ります。",
+      "body": [
+        {
+          "p": "SK Hub Office は、ファイルを開いたとき・保存したとき・10 分ごとに、前の版をこのブラウザの中に残します（20 個まで）。"
+        },
+        {
+          "steps": [
+            "戻したいファイルを開きます。",
+            "スタート画面（バックステージ）の「情報」を開きます。",
+            "版の履歴から戻したい版を選びます。"
+          ]
+        },
+        {
+          "list": [
+            "編集中の操作は、「元に戻す」「やり直し」で戻せます（100 回まで）。",
+            "版の履歴は、このブラウザの中にあります。別のブラウザや端末には引き継がれません。ブラウザのデータを消すと、履歴も消えます。"
+          ]
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "Restoring an earlier version in SK Hub Office",
+          "summary": "Earlier versions are kept when you open, save and every 10 minutes.",
+          "body": [
+            {
+              "p": "SK Hub Office keeps earlier versions inside this browser when you open a file, when you save, and every 10 minutes (up to 20)."
+            },
+            {
+              "steps": [
+                "Open the file you want to restore.",
+                "Open \"Info\" on the start screen (backstage).",
+                "Choose the version you want from the version history."
+              ]
+            },
+            {
+              "list": [
+                "While editing, use Undo and Redo (up to 100 steps).",
+                "Version history lives in this browser. It isn't carried to other browsers or devices, and clearing browser data removes it."
+              ]
             }
           ]
         }

@@ -1372,41 +1372,56 @@
   // ================================================================
   // 管理者の画面（#admin。管理者だけ）: 配信・連絡・特別な日程・招待コード・参加している人をまとめて
   // ================================================================
-  var adminView = false, adminCache = { tid: null, invites: null, joins: null, members: null, loading: false };
+  // again … 読み込み中に読み込み直しを頼まれた（終わったら、もう一度読み込む）
+  var adminView = false, adminPushed = false, adminCache = { tid: null, invites: null, joins: null, members: null, loading: false, again: false };
   function openAdmin() {
     if (!admin) return;
     if (data.view !== "mine") { data.view = "mine"; save(); }
     adminView = true;
     root.classList.add("is-admin-view");
-    if (location.hash !== "#admin") history.pushState(null, "", location.pathname + "#admin");
+    if (location.hash !== "#admin") { history.pushState(null, "", location.pathname + "#admin"); adminPushed = true; }
     adminCache.tid = null;
     render();
     window.scrollTo(0, 0);
   }
   function closeAdmin() {
     adminView = false;
+    adminPushed = false;
     root.classList.remove("is-admin-view");
     if (location.hash === "#admin") history.replaceState(null, "", location.pathname);
     firstRender = true;
     render();
   }
+  // 画面の「戻る」: 開いたときに履歴を足したなら、ブラウザの戻ると同じに（履歴に #admin を残さない）
+  function leaveAdmin() {
+    if (adminPushed && location.hash === "#admin") history.back();
+    else closeAdmin();
+  }
   window.addEventListener("popstate", function () { if (adminView && location.hash !== "#admin") closeAdmin(); else if (!adminView && location.hash === "#admin" && admin) openAdmin(); });
   // 招待コード・参加している人・メールアドレスの配信先を読み込む（管理者の画面を開いたとき・変えたとき）
   function loadAdminData(force) {
     var tb = data.table;
-    if (!tb.share || adminCache.loading) return;
-    if (!force && adminCache.tid === tb.share.tid) return;
+    if (!tb.share) return;
+    var tid = tb.share.tid;
+    if (adminCache.loading) { if (force || adminCache.tid !== tid) adminCache.again = true; return; }
+    if (!force && adminCache.tid === tid) return;
+    // ちがう配信になったら、前の配信の招待コード・参加している人は出さない
+    if (adminCache.tid !== tid) adminCache.invites = adminCache.joins = adminCache.members = null;
     adminCache.loading = true;
-    adminCache.tid = tb.share.tid;
+    adminCache.tid = tid;
     loadShare().then(function (m) {
       return Promise.all([
-        m.listInvites(tb.share.tid).catch(function () { return null; }),
-        m.listJoins(tb.share.tid).catch(function () { return null; }),
-        m.loadMembers(tb.share.tid).catch(function () { return null; })
+        m.listInvites(tid).catch(function () { return null; }),
+        m.listJoins(tid).catch(function () { return null; }),
+        m.loadMembers(tid).catch(function () { return null; })
       ]);
     }).then(function (r) {
-      adminCache.invites = r[0]; adminCache.joins = r[1]; adminCache.members = r[2];
-    }).catch(function () { /* 読めなかった */ }).then(function () { adminCache.loading = false; if (adminView) renderAdmin(); });
+      if (adminCache.tid === tid) { adminCache.invites = r[0]; adminCache.joins = r[1]; adminCache.members = r[2]; }
+    }).catch(function () { /* 読めなかった */ }).then(function () {
+      adminCache.loading = false;
+      if (adminCache.again) { adminCache.again = false; loadAdminData(true); }
+      if (adminView) renderAdmin();
+    });
   }
   function adminSection(title, iconName, actions) {
     var sec = el("section", "ad-section");
@@ -1432,7 +1447,7 @@
     back.type = "button";
     back.setAttribute("aria-label", t("時間割に戻る"));
     back.appendChild(icon("arrow_back"));
-    back.addEventListener("click", closeAdmin);
+    back.addEventListener("click", leaveAdmin);
     var tt = el("div", "ad-top__text");
     tt.append(el("h1", "head__title", t("管理者の画面")), el("p", "head__sub", t("配信・連絡・特別な日程・招待コード・参加している人")));
     top.append(back, tt);
@@ -1452,7 +1467,7 @@
       function count(n, label) { var c = el("div", "ad-count"); c.append(el("b", "", n === null ? (adminCache.loading ? "…" : "—") : String(n)), el("span", "", label)); counts.appendChild(c); }
       var ppl = peopleOf();
       count(ppl ? ppl.length : null, t("参加している人"));
-      count(ppl ? ppl.filter(function (p) { return p.pending; }).length : null, t("まだ開いていない"));
+      count(ppl && adminCache.joins ? ppl.filter(function (p) { return p.pending; }).length : null, t("まだ開いていない"));
       count((tb.notices || []).filter(function (n) { return noticeActive(n, today); }).length, t("出している連絡"));
       card.append(icon(stale ? "sync_problem" : "cloud_done"), tx, counts);
     }
@@ -1501,6 +1516,7 @@
       else if (!people.length) mem.appendChild(el("p", "specials__empty", t("まだだれもいません。メールアドレスか招待コードで届けると、ここに出ます。")));
       else {
         mem.appendChild(el("p", "ad-note ad-note--top", t("{n} 人 · 名前とアイコンは、その人が時間割を開くと出ます。ほかの参加者には見えません。", { n: people.length })));
+        if (!adminCache.loading && (!adminCache.joins || !adminCache.members)) mem.appendChild(el("p", "ad-note ad-note--top", t("一部を読み込めませんでした。「読み込み直す」を押してください。")));
         var rows = el("div", "ad-rows");
         people.forEach(function (p) {
           var r = el("div", "ad-row" + (p.pending ? " is-pending" : ""));
@@ -1516,12 +1532,14 @@
     loadAdminData(false);
   }
   // 参加している人の一覧: 名前・アイコンのある人（joins）と、まだ開いていないメールアドレスの配信先
+  //   片方だけ読めたときは、読めたほうだけで出す（どちらも読めなければ null）
   function peopleOf() {
-    if (!adminCache.joins || !adminCache.members) return adminCache.joins && !adminCache.members ? adminCache.joins.map(function (j) { return personOf(j); }) : null;
+    var joins = adminCache.joins, members = adminCache.members;
+    if (!joins && !members) return null;
     var byEmail = {}, out = [];
-    adminCache.joins.forEach(function (j) { byEmail[j.email] = true; out.push(personOf(j)); });
-    adminCache.members.forEach(function (e) { if (!byEmail[e]) out.push({ email: e, name: "", photo: "", color: "", via: "email", pending: true, member: true }); });
-    out.forEach(function (p) { if (adminCache.members.indexOf(p.email) >= 0) p.member = true; });
+    (joins || []).forEach(function (j) { if (j.email) byEmail[j.email] = true; out.push(personOf(j)); });
+    (members || []).forEach(function (e) { if (!byEmail[e]) out.push({ email: e, name: "", photo: "", color: "", via: "email", pending: true, member: true }); });
+    if (members) out.forEach(function (p) { if (p.email && members.indexOf(p.email) >= 0) p.member = true; });
     return out.sort(function (a, b) { return (a.pending - b.pending) || (a.name || a.email).localeCompare(b.name || b.email, locale); });
   }
   function personOf(j) { return { uid: j.uid, email: j.email, name: j.name, photo: j.photo, color: j.color, via: j.code ? "code" : "email", joinedAt: j.joinedAt, pending: false }; }
@@ -1687,8 +1705,9 @@
   render();
   if (embed) return;
   // 1 分ごとに、いまの授業を新しく
-  setInterval(function () { if (document.visibilityState === "visible" && !document.querySelector(".tbs-dialog-scrim")) render(); }, 30000);
-  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") render(); });
+  //   管理者の画面では作り直さない（押そうとしたボタンやフォーカスが入れかわるため。中身が変わったときは、そのたびに作り直す）
+  setInterval(function () { if (document.visibilityState === "visible" && !adminView && !document.querySelector(".tbs-dialog-scrim")) render(); }, 30000);
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && !adminView) render(); });
   window.addEventListener("storage", function (e) { if (e.key === STORE) { load(); render(); } });
 
   // 招待のリンク（?join=コード）で開いたとき
