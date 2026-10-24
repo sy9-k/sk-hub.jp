@@ -39,6 +39,8 @@
               ["MALU", `${SUPPORT}#malu`],
               ["Nagi", `${SUPPORT}#nagi`],
               ["SK Hub Systems", `${SUPPORT}#hub`],
+              ["SK's Toolbox", `${SUPPORT}#toolbox`],
+              ["SK Hub Office", `${SUPPORT}#office`],
               ["SK's Lab", `${SUPPORT}#lab`]
             ]
           }

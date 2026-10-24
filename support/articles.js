@@ -12,7 +12,7 @@
   const CACHE_MS = 5 * 60 * 1000; // 同じタブでは 5 分間は読み直さない（読み取りの回数を減らす）
 
   // カテゴリの並び順（記事にこれ以外のカテゴリがあれば後ろに足す）
-  const CATEGORIES = ["MALU", "Nagi", "Y-FILTER.", "SK Hub Systems", "アカウント", "SK's Lab", "このサイト", "情報と規約"];
+  const CATEGORIES = ["MALU", "Nagi", "Y-FILTER.", "SK Hub Systems", "SK's Toolbox", "SK Hub Office", "アカウント", "SK's Lab", "このサイト", "情報と規約"];
 
   // ---------- 本文の書き方 ----------
   // 1 行 = 1 段落。行の頭で種類が決まる（空の行は無視）
