@@ -14,6 +14,7 @@
 //     window.SKMaintenance.render(data, closable)（帯）・renderClosed(data)（閉じた画面）を使える
 (function () {
   "use strict";
+  var ORIGIN = (function () { try { return new URL(document.currentScript.src).origin; } catch (e) { return ""; } })();
   var HUB = { projectId: "y-filter-systems", apiKey: "AIzaSyB4gqzPEPyP0NrEJw33-OTAxUrF48MmiuI" }; // frameworks/check.js と同じ
   var URL_ = "https://firestore.googleapis.com/v1/projects/" + HUB.projectId + "/databases/(default)/documents/config/maintenance?key=" + HUB.apiKey;
   var CACHE_KEY = "sk_maintenance";
@@ -182,7 +183,7 @@
     wrap.setAttribute("aria-labelledby", "skm-closed-title");
     var card = el("div", "skm-closed__card");
     var logo = el("img", "skm-closed__logo");
-    logo.src = "/assets/logo.svg";
+    logo.src = ORIGIN + "/assets/logo.svg";
     logo.alt = "SK";
     var icon = el("span", "skm-closed__icon");
     icon.appendChild(svgIcon(level));

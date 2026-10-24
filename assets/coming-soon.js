@@ -8,6 +8,7 @@
 //   ・公開のあと落ち着いたら、このファイルと各ページの <script src="/assets/coming-soon.js"> を消す
 (function () {
   "use strict";
+  var ORIGIN = (function () { try { return new URL(document.currentScript.src).origin; } catch (e) { return ""; } })();
   var LAUNCH = Date.UTC(2026, 9, 14, 3, 0, 0); // 2026-10-14 12:00（日本時間）
   if (Date.now() >= LAUNCH) return;
   if (/^\/(sk-hub-systems|policies)\//.test(location.pathname)) return;
@@ -62,7 +63,7 @@
     box.setAttribute("role", "main");
     box.innerHTML =
       '<div class="ss-in">' +
-      '<img class="ss-logo" src="/assets/apple-touch-icon.png" alt="SK">' +
+      '<img class="ss-logo" src="' + ORIGIN + '/assets/apple-touch-icon.png" alt="SK">' +
       '<p class="ss-domain">sk-hub.jp</p>' +
       '<h1>Coming Soon<span class="ss-dots">...</span></h1>' +
       '<p class="ss-lead">SK の新しいアドレスです。もうすぐ公開します。</p>' +

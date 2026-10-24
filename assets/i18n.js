@@ -6,6 +6,8 @@
 //   ・訳の単位と見つけ方は _build/i18n.py と同じ（リンクなどを含む文はタグごと 1 つの文。辞書のキーは key() の形）
 (function () {
   "use strict";
+  // 別のアドレス（office.sk-hub.jp など）から絶対 URL で読まれても、辞書はこのファイルと同じ場所から取る
+  var ORIGIN = (function () { try { return new URL(document.currentScript.src).origin; } catch (e) { return ""; } })();
 
   var LANGS = [
     { code: "ja", name: "日本語", locale: "ja-JP" },
@@ -29,7 +31,7 @@
   if (lang !== "ja") {
     root.lang = lang;
     if (!window.SK_I18N_DICT && document.readyState === "loading") {
-      document.write('<script src="/assets/i18n/' + lang + '.js"><\/script>');
+      document.write('<script src="' + ORIGIN + '/assets/i18n/' + lang + '.js"><\/script>');
       document.write('<style id="sk-i18n-hide">html.sk-i18n-pending body{opacity:0!important}</style>');
       root.classList.add("sk-i18n-pending");
       // 万一訳せなくても、日本語のまま見せる
