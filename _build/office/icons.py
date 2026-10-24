@@ -6,6 +6,7 @@
 #   maskable-192.png・maskable-512.png … Android などで形を切り抜かれても大丈夫なアイコン（白い四角いっぱい・絵は真ん中 70%）
 #   apple-touch-icon.png（180）        … iPhone・iPad のホーム画面
 #   doc-96.png・sheet-96.png・slide-96.png … アプリのショートカット（manifest の shortcuts）
+#   doc-192/512.png・doc-maskable-192/512.png・doc-apple.png（Sheet・Slide も同じ） … アプリごとの PWA のアイコン（doc/manifest.json など）
 #   icon.svg                           … ファビコン（/products/office/icon.svg のコピー）
 import pathlib, shutil
 from PIL import Image, ImageDraw
@@ -59,13 +60,16 @@ def icon(size, maskable=False, rounded=True):
     return img.resize((size, size), Image.LANCZOS)
 
 
-def app_icon(size, color, kind):
-    """ショートカットのアイコン（アプリの色の角丸の板に、白い絵）"""
+def app_icon(size, color, kind, maskable=False, rounded=True):
+    """アプリのアイコン（アプリの色の角丸の板に、白い絵）。maskable は色いっぱいの四角"""
     big = size * S
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle([0, 0, big - 1, big - 1], radius=big * 0.26, fill=color)
-    u = big / 24
+    if maskable or not rounded:
+        d.rectangle([0, 0, big, big], fill=color)
+    else:
+        d.rounded_rectangle([0, 0, big - 1, big - 1], radius=big * 0.26, fill=color)
+    u = big / 24  # 絵は 24×24 の座標（もともと真ん中の 6 割ほどに収まっているので、maskable もそのまま）
     w = round(1.9 * u)
     if kind == "doc":
         d.rounded_rectangle([7 * u, 4 * u, 17 * u, 20 * u], radius=1.6 * u, outline=WHITE, width=w)
@@ -89,5 +93,9 @@ for n in (192, 512):
 icon(180, rounded=False).convert("RGB").save(OUT / "apple-touch-icon.png")
 for kind, color in (("doc", BLUE), ("sheet", GREEN), ("slide", ORANGE)):
     app_icon(96, color, kind).save(OUT / f"{kind}-96.png")
+    for n in (192, 512):
+        app_icon(n, color, kind).save(OUT / f"{kind}-{n}.png")
+        app_icon(n, color, kind, maskable=True).save(OUT / f"{kind}-maskable-{n}.png")
+    app_icon(180, color, kind, rounded=False).convert("RGB").save(OUT / f"{kind}-apple.png")
 shutil.copyfile(REPO / "products" / "office" / "icon.svg", OUT / "icon.svg")
 print("wrote", ", ".join(sorted(p.name for p in OUT.iterdir())))
