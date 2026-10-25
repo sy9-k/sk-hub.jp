@@ -23,6 +23,10 @@ let next = safeNext(new URLSearchParams(location.search).get("next"));
 const desktopQuery = new URLSearchParams(location.search);
 const desktopPort = /^\d{4,5}$/.test(desktopQuery.get("desktop") || "") && +desktopQuery.get("desktop") >= 1024 && +desktopQuery.get("desktop") <= 65535 ? desktopQuery.get("desktop") : "";
 const desktopState = /^[A-Za-z0-9_-]{16,128}$/.test(desktopQuery.get("state") || "") ? desktopQuery.get("state") : "";
+// アプリの中の小さなログイン用のウィンドウ（&inapp=1）では、ポップアップでログインする方法（Google・GitHub・Microsoft）は使えない
+//   （Google は組み込みの画面でのログインを断る）ので、そのボタンを押したら、アプリが待っている 127.0.0.1 の /switch に移って、いつものブラウザに切りかえてもらう
+const desktopInApp = !!desktopPort && !!desktopState && desktopQuery.get("inapp") === "1";
+const POPUP_LOGINS = ["google", "github", "microsoft"];
 function handoffToDesktop(user, account) {
   rememberAccount(user, account);
   let hint = "";
@@ -996,6 +1000,11 @@ $("[data-acct-security-lead]").textContent = accountNames.length <= 1 && (accoun
   : t("このアカウントには、{names} のアカウントでログインします。SK がパスワードを発行・保存することはありません。2 段階認証などは、それぞれのアカウントで設定します。", { names: accountList });
 root.querySelectorAll("[data-acct-signin]").forEach((btn) => btn.addEventListener("click", async () => {
   if (busy) return;
+  // アプリの中の小さなウィンドウでは、ポップアップのログインを使わず、いつものブラウザに切りかえてもらう
+  if (desktopInApp && POPUP_LOGINS.includes(btn.dataset.acctSignin || "google")) {
+    location.assign(`http://127.0.0.1:${desktopPort}/switch`);
+    return;
+  }
   setBusy(true, btn);
   $("[data-acct-link]").hidden = true;
   try {
