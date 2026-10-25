@@ -2,6 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "office",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8790", "-d", "../office"],
+      "port": 8790,
+      "autoPort": false
+    },
+    {
       "name": "site",
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8765"],

@@ -1,101 +1,121 @@
-# SK Hub Office のアプリのアイコン（PWA・ホーム画面・ショートカット）を作るスクリプト
+# SK Hub Office の製品ページ（/products/office/）で使う絵を作るスクリプト
 #   python _build/office/icons.py
-# 絵は /products/office/icon.svg と同じ（後ろから Slide・Sheet・Doc の紙を重ねたもの。色は SK's Mikan・Matcha・Blue）。
-# 書き出すもの（office/icons/）:
-#   icon-192.png・icon-512.png         … ふつうのアイコン（白い角丸の板）
-#   maskable-192.png・maskable-512.png … Android などで形を切り抜かれても大丈夫なアイコン（白い四角いっぱい・絵は真ん中 70%）
-#   apple-touch-icon.png（180）        … iPhone・iPad のホーム画面
-#   doc-96.png・sheet-96.png・slide-96.png … アプリのショートカット（manifest の shortcuts）
-#   doc-192/512.png・doc-maskable-192/512.png・doc-apple.png（Sheet・Slide も同じ） … アプリごとの PWA のアイコン（doc/manifest.json など）
-#   icon.svg                           … ファビコン（/products/office/icon.svg のコピー）
-import pathlib, shutil
+# アプリ本体（https://office.sk-hub.jp/）のアイコンは、office リポジトリの _build/icons.py が作る。ここは同じ絵（public/icons/ の 1024px の PNG）から、製品ページ用だけを作る。
+# 書き出すもの（products/office/img/）:
+#   office-logo.png・doc-logo.png・sheet-logo.png・slide-logo.png … アプリのロゴ（六角形だけ・透明。256）
+#   office-part-{sheet,slide,doc}.png                              … Office のロゴを 3 つの面に分けたもの
+# （products/office/icon.png は、製品の一覧で使う白い角丸のロゴ。192）
+import pathlib
 from PIL import Image, ImageDraw
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
-OUT = REPO / "office" / "icons"
+SRC = REPO / "public" / "icons"
+OUT = REPO / "products" / "office" / "img"
 OUT.mkdir(parents=True, exist_ok=True)
-S = 4  # 4 倍で描いてから縮める（ふちをなめらかに）
+WHITE = (255, 255, 255, 255)
+S = 256
 
-BLUE, GREEN, ORANGE, WHITE = (37, 99, 235), (22, 163, 74), (234, 88, 12), (255, 255, 255)
-
-
-def papers(d, box):
-    """96×96 の絵（icon.svg と同じ座標）を box（x, y, 大きさ）に描く"""
-    ox, oy, size = box
-    k = size / 96
-
-    def r(x, y, w, h, rad, fill):
-        d.rounded_rectangle([ox + x * k, oy + y * k, ox + (x + w) * k, oy + (y + h) * k], radius=rad * k, fill=fill)
-
-    def line(x1, y1, x2, y2, width, fill):
-        d.line([ox + x1 * k, oy + y1 * k, ox + x2 * k, oy + y2 * k], fill=fill, width=max(1, round(width * k)))
-
-    # Slide（いちばん後ろ）
-    r(40, 16, 42, 30, 7, ORANGE)
-    r(47, 23, 16, 4, 2, (255, 230, 215))
-    # Sheet
-    r(28, 31, 40, 34, 7, GREEN)
-    for y in (43, 54):
-        line(28, y, 68, y, 2.5, (190, 235, 205))
-    line(41, 31, 41, 65, 2.5, (190, 235, 205))
-    # Doc（いちばん前）
-    r(14, 46, 36, 36, 7, BLUE)
-    for y, x2 in ((57, 42), (64, 42), (71, 35)):
-        line(22, y, x2, y, 3.5, WHITE)
+CENTER = (512, 512)  # 六角形の真ん中（Doc・Sheet・Slide の絵は同じ形・同じ位置）
+HEX_BOX = (197, 169, 827, 855)  # 六角形のほんたい（影はふくまない）
 
 
-def icon(size, maskable=False, rounded=True):
-    big = size * S
-    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
+# (アプリ, 回す角度, 入れる扇形)。もとの絵の下（270°）が、上（90°）・左下（210°）・右下（330°）に来る
+OFFICE_PARTS = (("sheet", 180, (30, 150)), ("slide", -60, (150, 270)), ("doc", 60, (270, 390)))
+
+
+def wedge(angles, r=1400):
+    """真ん中から見て、angles（度。数学の向き）のあいだだけを白くしたマスク。上・右下・左下の 3 つに分けるときに使う"""
+    import math
+    mask = Image.new("L", (1024 * 2, 1024 * 2), 0)
+    pts = [(CENTER[0] * 2, CENTER[1] * 2)]
+    a0, a1 = angles
+    n = 24
+    for i in range(n + 1):
+        a = math.radians(a0 + (a1 - a0) * i / n)
+        pts.append((CENTER[0] * 2 + r * 2 * math.cos(a), CENTER[1] * 2 - r * 2 * math.sin(a)))
+    ImageDraw.Draw(mask).polygon(pts, fill=255)
+    return mask.resize((1024, 1024), Image.LANCZOS)
+
+
+def office_parts():
+    """office_mark を 3 つの扇形に分けたもの（起動画面で、3 つが組み上がるのに使う）。名前 → 絵"""
+    parts = {}
+    for name, turn, angles in OFFICE_PARTS:
+        src = Image.open(SRC / f"sk-{name}.png").convert("RGBA").rotate(turn, resample=Image.BICUBIC, center=CENTER)
+        piece = Image.new("RGBA", src.size, (0, 0, 0, 0))
+        piece.paste(src, (0, 0), wedge(angles))
+        parts[name] = piece
+    return parts
+
+
+def office_mark():
+    """Office のアイコン。Doc（青）・Sheet（緑）・Slide（オレンジ）の六角形のうち、記号のない下の 120° を、それぞれ上・左下・右下に回して 1 つにしたもの（六角形は 60° ずつ回しても同じ形）"""
+    out = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+    for piece in office_parts().values():
+        out.alpha_composite(piece)
+    return out
+
+def office_file():
+    """Office のファイルアイコン。sk-office-file.png の紙に、office_mark の六角形をバッジとして重ねる"""
+    paper = Image.open(SRC / "sk-office-file.png").convert("RGBA")
+    x0, y0, x1, y1 = HEX_BOX
+    m = 70  # 影のぶん
+    badge = office_mark().crop((x0 - m, y0 - m, x1 + m, y1 + m))
+    k = 350 / (y1 - y0)
+    badge = badge.resize((round(badge.width * k), round(badge.height * k)), Image.LANCZOS)
+    cx, cy = 758, 735
+    paper.alpha_composite(badge, (cx - badge.width // 2, cy - badge.height // 2))
+    return paper
+
+
+def source(name):
+    return office_mark() if name == "office" else Image.open(SRC / f"sk-{name}.png").convert("RGBA")
+
+
+def load(name):
+    """元の絵を白い地に敷いて返す（六角形のまわりの影もそのまま残す）"""
+    src = source(name)
+    base = Image.new("RGBA", src.size, WHITE)
+    base.alpha_composite(src)
+    return base
+
+
+def icon(art, size, maskable=False, rounded=True):
+    """白い角丸の板（maskable・rounded=False は四角いっぱい）に絵を入れる。六角形はもともと真ん中の 7 割に収まっている"""
+    img = art.resize((size, size), Image.LANCZOS)
     if maskable or not rounded:
-        d.rectangle([0, 0, big, big], fill=WHITE)
-    else:
-        d.rounded_rectangle([0, 0, big - 1, big - 1], radius=big * 24 / 96, fill=WHITE)
-    if maskable:
-        inner = big * 0.7
-        papers(d, ((big - inner) / 2, (big - inner) / 2, inner))
-    else:
-        papers(d, (0, 0, big))
-    return img.resize((size, size), Image.LANCZOS)
+        return img
+    mask = Image.new("L", (size * 4, size * 4), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, size * 4 - 1, size * 4 - 1], radius=size * 4 * 0.24, fill=255)
+    out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    out.paste(img, (0, 0), mask.resize((size, size), Image.LANCZOS))
+    return out
 
 
-def app_icon(size, color, kind, maskable=False, rounded=True):
-    """アプリのアイコン（アプリの色の角丸の板に、白い絵）。maskable は色いっぱいの四角"""
-    big = size * S
-    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    if maskable or not rounded:
-        d.rectangle([0, 0, big, big], fill=color)
-    else:
-        d.rounded_rectangle([0, 0, big - 1, big - 1], radius=big * 0.26, fill=color)
-    u = big / 24  # 絵は 24×24 の座標（もともと真ん中の 6 割ほどに収まっているので、maskable もそのまま）
-    w = round(1.9 * u)
-    if kind == "doc":
-        d.rounded_rectangle([7 * u, 4 * u, 17 * u, 20 * u], radius=1.6 * u, outline=WHITE, width=w)
-        for y in (9, 12.5, 16):
-            d.line([9.8 * u, y * u, 14.2 * u, y * u], fill=WHITE, width=w)
-    elif kind == "sheet":
-        d.rounded_rectangle([5 * u, 5 * u, 19 * u, 19 * u], radius=1.6 * u, outline=WHITE, width=w)
-        d.line([5 * u, 9.7 * u, 19 * u, 9.7 * u], fill=WHITE, width=w)
-        d.line([5 * u, 14.3 * u, 19 * u, 14.3 * u], fill=WHITE, width=w)
-        d.line([10.5 * u, 5 * u, 10.5 * u, 19 * u], fill=WHITE, width=w)
-    else:
-        d.rounded_rectangle([4 * u, 5 * u, 20 * u, 16 * u], radius=1.6 * u, outline=WHITE, width=w)
-        d.line([12 * u, 16 * u, 12 * u, 19.5 * u], fill=WHITE, width=w)
-        d.line([8.5 * u, 19.5 * u, 15.5 * u, 19.5 * u], fill=WHITE, width=w)
-    return img.resize((size, size), Image.LANCZOS)
+def tight(art, size):
+    """ファビコン用に、六角形だけを大きく切り出す"""
+    w = art.convert("RGB")
+    bbox = Image.eval(w, lambda v: 255 - v).convert("L").point(lambda v: 255 if v > 24 else 0).getbbox()
+    x0, y0, x1, y1 = bbox
+    side = max(x1 - x0, y1 - y0)
+    cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+    box = (cx - side // 2, cy - side // 2, cx + side // 2, cy + side // 2)
+    return art.crop(box).resize((size, size), Image.LANCZOS)
 
 
-for n in (192, 512):
-    icon(n).save(OUT / f"icon-{n}.png")
-    icon(n, maskable=True).save(OUT / f"maskable-{n}.png")
-icon(180, rounded=False).convert("RGB").save(OUT / "apple-touch-icon.png")
-for kind, color in (("doc", BLUE), ("sheet", GREEN), ("slide", ORANGE)):
-    app_icon(96, color, kind).save(OUT / f"{kind}-96.png")
-    for n in (192, 512):
-        app_icon(n, color, kind).save(OUT / f"{kind}-{n}.png")
-        app_icon(n, color, kind, maskable=True).save(OUT / f"{kind}-maskable-{n}.png")
-    app_icon(180, color, kind, rounded=False).convert("RGB").save(OUT / f"{kind}-apple.png")
-shutil.copyfile(REPO / "products" / "office" / "icon.svg", OUT / "icon.svg")
+def trim(im, size, like=None):
+    """透明な余白を切り落として、正方形の透明な PNG にする（影はそのまま残す）。like を渡すと、その絵と同じ切り方にする"""
+    x0, y0, x1, y1 = (like or im).getchannel("A").getbbox()
+    side = max(x1 - x0, y1 - y0)
+    cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+    return im.crop((cx - side // 2, cy - side // 2, cx + side // 2, cy + side // 2)).resize((size, size), Image.LANCZOS)
+
+mark = office_mark()
+trim(mark, S).save(OUT / "office-logo.png")
+for kind in ("doc", "sheet", "slide"):
+    trim(source(kind), S).save(OUT / f"{kind}-logo.png")
+for name, piece in office_parts().items():
+    trim(piece, S, like=mark).save(OUT / f"office-part-{name}.png")
+icon(load("office"), 192).save(REPO / "products" / "office" / "icon.png")
+
 print("wrote", ", ".join(sorted(p.name for p in OUT.iterdir())))
