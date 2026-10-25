@@ -17,6 +17,25 @@ const $ = (sel) => root.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
 let next = safeNext(new URLSearchParams(location.search).get("next"));
 // サービスを最初に使うとき（?connect=yfilter）: アカウントが使えるようになったら、接続するか確かめる
+// SK Hub Office のデスクトップ版から外部ブラウザで来たとき（?desktop=ポート&state=確認用の文字列）:
+//   ログインできたら、そのパソコンの 127.0.0.1:ポート（デスクトップ版が待っている）に、ログイン中かのヒント（skhub_account）だけを渡す
+//   ポートは 1024〜65535、state は 16 文字以上の英数字だけ許可する（ほかの場所へは渡さない）
+const desktopQuery = new URLSearchParams(location.search);
+const desktopPort = /^\d{4,5}$/.test(desktopQuery.get("desktop") || "") && +desktopQuery.get("desktop") >= 1024 && +desktopQuery.get("desktop") <= 65535 ? desktopQuery.get("desktop") : "";
+const desktopState = /^[A-Za-z0-9_-]{16,128}$/.test(desktopQuery.get("state") || "") ? desktopQuery.get("state") : "";
+// アプリの中の小さなログイン用のウィンドウ（&inapp=1）では、ポップアップでログインする方法（Google・GitHub・Microsoft）は使えない
+//   （Google は組み込みの画面でのログインを断る）ので、そのボタンを押したら、アプリが待っている 127.0.0.1 の /switch に移って、いつものブラウザに切りかえてもらう
+const desktopInApp = !!desktopPort && !!desktopState && desktopQuery.get("inapp") === "1";
+const POPUP_LOGINS = ["google", "github", "microsoft"];
+function handoffToDesktop(user, account) {
+  rememberAccount(user, account);
+  let hint = "";
+  try { hint = localStorage.getItem("skhub_account") || ""; } catch (e) { /* 渡せない */ }
+  const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(hint))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  $("[data-acct-next]").textContent = t("ログインしました。SK Hub Office に戻ります…");
+  $("[data-acct-next]").hidden = false;
+  location.replace(`http://127.0.0.1:${desktopPort}/callback?state=${encodeURIComponent(desktopState)}&hint=${b64}`);
+}
 let connectKey = SERVICES[new URLSearchParams(location.search).get("connect")] ? new URLSearchParams(location.search).get("connect") : "";
 // 多言語（assets/i18n.js）
 const I18N = window.SKI18N;
@@ -253,7 +272,8 @@ function renderView(state) {
     $("[data-acct-connect-user]").replaceChildren(userChip(user));
     return;
   }
-  if (next) {
+  if (desktopPort && desktopState) handoffToDesktop(user, account);
+  else if (next) {
     $("[data-acct-next]").hidden = false;
     location.replace(next);
   }
@@ -980,6 +1000,11 @@ $("[data-acct-security-lead]").textContent = accountNames.length <= 1 && (accoun
   : t("このアカウントには、{names} のアカウントでログインします。SK がパスワードを発行・保存することはありません。2 段階認証などは、それぞれのアカウントで設定します。", { names: accountList });
 root.querySelectorAll("[data-acct-signin]").forEach((btn) => btn.addEventListener("click", async () => {
   if (busy) return;
+  // アプリの中の小さなウィンドウでは、ポップアップのログインを使わず、いつものブラウザに切りかえてもらう
+  if (desktopInApp && POPUP_LOGINS.includes(btn.dataset.acctSignin || "google")) {
+    location.assign(`http://127.0.0.1:${desktopPort}/switch`);
+    return;
+  }
   setBusy(true, btn);
   $("[data-acct-link]").hidden = true;
   try {

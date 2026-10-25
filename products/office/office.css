@@ -1,13 +1,14 @@
 /* SK Hub Office の製品ページ（/products/office/。_build/pages/office.html）
-   サイトのきまり（SK's Brand）の上に、3 つのアプリの色（Doc＝SK's Blue・Sheet＝SK's Matcha・Slide＝SK's Mikan）をのせる。
+   サイトのきまり（SK's Brand）の上に、3 つのアプリの色（Doc＝SK's Blue・Sheet＝SK's Matcha・Slide＝SK's Gold）と、入り口の色（SK's Slate）をのせる。
    この 3 色は、テーマカラーを変えても変わらない。-ink は文字に使う色、-soft はうすい面。
    動きは office.js（.of-js が付いているときだけ、出てくる前の形にする） */
 .of-page {
   --doc: #2563eb; --doc-ink: #1d4ed8; --doc-soft: #e6efff;
   --sheet: #16a34a; --sheet-ink: #15803d; --sheet-soft: #dcfce7;
-  --slide: #ea580c; --slide-ink: #c2410c; --slide-soft: #ffedd5;
+  --slide: #d9a000; --slide-ink: #8a6500; --slide-soft: #fdf0c4;
+  --hub: #35456b; --hub-ink: #35456b; --hub-soft: #e6e9f5; /* Office 全体（入り口）の色 */
   --of-paper: #f3f5f9;           /* このページの地（方眼紙） */
-  --of-rule: rgba(37, 99, 235, .07); /* 方眼の線 */
+  --of-rule: rgba(53, 69, 107, .07); /* 方眼の線 */
   --of-display: "Space Grotesk", var(--font);
   --of-ease: cubic-bezier(.22, 1, .36, 1);
   background: var(--of-paper);
@@ -16,15 +17,17 @@
   :root:not([data-theme="light"]) .of-page {
     --doc-ink: #7aa7ff; --doc-soft: #16233a;
     --sheet-ink: #4ade80; --sheet-soft: #10281a;
-    --slide-ink: #fb923c; --slide-soft: #2d1a0c;
-    --of-paper: #0b0e13; --of-rule: rgba(122, 167, 255, .07);
+    --slide-ink: #f5c542; --slide-soft: #2b2208;
+    --hub-ink: #b8c4ee; --hub-soft: #1a2036;
+    --of-paper: #0b0e13; --of-rule: rgba(184, 196, 238, .07);
   }
 }
 :root[data-theme="dark"] .of-page {
   --doc-ink: #7aa7ff; --doc-soft: #16233a;
   --sheet-ink: #4ade80; --sheet-soft: #10281a;
-  --slide-ink: #fb923c; --slide-soft: #2d1a0c;
-  --of-paper: #0b0e13; --of-rule: rgba(122, 167, 255, .07);
+  --slide-ink: #f5c542; --slide-soft: #2b2208;
+  --hub-ink: #b8c4ee; --hub-soft: #1a2036;
+  --of-paper: #0b0e13; --of-rule: rgba(184, 196, 238, .07);
 }
 /* ページ全体の下敷き（方眼と、3 色の光） */
 .of-page::before {
@@ -51,11 +54,14 @@
 @keyframes of-drift { to { transform: translate(-3%, 2%) scale(1.05); } }
 .of-hero-inner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 48px; align-items: center; }
 .of-name { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-/* ロゴの代わりの文字（3 色の短い線を下に） */
+/* ロゴ（Office のアイコン）と、文字（3 色の短い線を下に） */
+.of-mark { width: 64px; height: 64px; flex: none; margin-right: 2px; filter: drop-shadow(0 10px 14px color-mix(in srgb, var(--hub) 30%, transparent)); }
+.of-js .of-mark { animation: of-mark-in .8s cubic-bezier(.3, 1.3, .5, 1) backwards; }
+@keyframes of-mark-in { from { opacity: 0; transform: scale(.6) rotate(-10deg); } }
 .of-wordmark { position: relative; padding-bottom: 8px; font-family: var(--of-display); font-size: 22px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
-.of-wordmark b { color: var(--doc-ink); }
+.of-wordmark b { color: var(--hub-ink); }
 .of-wordmark::after { content: ""; position: absolute; left: 0; bottom: 0; width: 54px; height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--doc) 0 33%, var(--sheet) 33% 66%, var(--slide) 66%); }
-.of-tag { font-family: var(--of-display); font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 999px; color: var(--doc-ink); background: var(--doc-soft); border: 1px solid color-mix(in srgb, var(--doc) 35%, transparent); }
+.of-tag { font-family: var(--of-display); font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 999px; color: var(--hub-ink); background: var(--hub-soft); border: 1px solid color-mix(in srgb, var(--hub) 35%, transparent); }
 .of-eyebrow { display: inline-flex; align-items: center; gap: 10px; margin-top: 28px; font-family: var(--of-display); font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .of-eyebrow::before { content: ""; width: 28px; height: 1px; background: currentColor; }
 .of-title { margin-top: 14px; font-size: clamp(46px, 7.4vw, 92px); font-weight: 900; line-height: 1.08; letter-spacing: -.045em; }
@@ -68,7 +74,9 @@
 .of-w--doc { --c: var(--doc); } .of-w--sheet { --c: var(--sheet); } .of-w--slide { --c: var(--slide); }
 .of-lead { font-size: clamp(16px, 1.8vw, 18px); color: var(--muted); max-width: 520px; margin-top: 26px; }
 .of-hero .btn-row { margin-top: 30px; }
-.of-btn { background: var(--doc); color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--doc) 32%, transparent); }
+.of-btn { background: var(--hub); color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--hub) 32%, transparent); }
+:root[data-theme="dark"] .of-btn { background: var(--hub-ink); color: #1e2b52; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .of-btn { background: var(--hub-ink); color: #1e2b52; } }
 
 /* 重なった 3 枚の紙 */
 .of-stack { position: relative; height: 440px; }
@@ -321,8 +329,8 @@
 .of-outro::before {
   content: ""; position: absolute; inset: 0; z-index: -1;
   background:
-    radial-gradient(420px 240px at 92% 0%, rgba(37, 99, 235, .45), transparent 70%),
-    radial-gradient(360px 220px at 0% 100%, rgba(234, 88, 12, .32), transparent 70%),
+    radial-gradient(420px 240px at 92% 0%, rgba(68, 85, 138, .6), transparent 70%),
+    radial-gradient(360px 220px at 0% 100%, rgba(217, 160, 0, .32), transparent 70%),
     radial-gradient(300px 200px at 60% 120%, rgba(22, 163, 74, .3), transparent 70%);
 }
 .of-outro-kicker { font-family: var(--of-display); font-size: 14px; font-weight: 700; color: rgba(255, 255, 255, .6); letter-spacing: .02em; }
@@ -336,3 +344,12 @@
   .of-page *, .of-page *::before, .of-page *::after { animation: none !important; transition: none !important; }
   .of-hero::before { animation: none; }
 }
+
+/* アプリのロゴ（products/office/img/。紙のタグ・アプリの説明・おわりに） */
+.of-paper-tag { gap: 6px; padding-left: 4px; }
+.of-paper-tag img { width: 18px; height: 18px; flex: none; margin-top: -1px; }
+.of-paper-tag { display: inline-flex; align-items: center; }
+.of-step-ico { display: block; width: 72px; height: 72px; margin-bottom: 14px; filter: drop-shadow(0 8px 12px color-mix(in srgb, var(--c) 30%, transparent)); }
+.of-step--doc { --c: var(--doc); } .of-step--sheet { --c: var(--sheet); } .of-step--slide { --c: var(--slide); }
+.of-outro-mark { display: block; width: 72px; height: 72px; margin-bottom: 14px; filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .35)); }
+@media (max-width: 760px) { .of-mark { width: 52px; height: 52px; } .of-step-ico { width: 56px; height: 56px; } }

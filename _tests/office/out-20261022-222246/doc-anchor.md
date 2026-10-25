@@ -1,4 +1,0 @@
-![floating](image)
-
-floating image
-
