@@ -302,6 +302,11 @@ a.product-card:hover .more svg { transform: translateX(3px); }
 .pc-yf { --c: var(--yf); --c-soft: var(--yf-soft); --c-glow: rgba(240, 170, 30, .22); }
 .pc-malu { --c: var(--malu); --c-soft: var(--malu-soft); --c-glow: rgba(90, 95, 224, .22); }
 .pc-nagi { --c: var(--nagi); --c-soft: var(--nagi-soft); --c-glow: rgba(20, 184, 166, .22); }
+.pc-office { --c: #35456b; --c-soft: #e6e9f5; --c-glow: rgba(53, 69, 107, .22); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pc-office { --c: #b8c4ee; --c-soft: #1a2036; --c-glow: rgba(184, 196, 238, .16); }
+}
+:root[data-theme="dark"] .pc-office { --c: #b8c4ee; --c-soft: #1a2036; --c-glow: rgba(184, 196, 238, .16); }
 
 /* 私について（トップの案内） */
 .about-teaser {
