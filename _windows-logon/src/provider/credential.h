@@ -19,6 +19,7 @@ struct Flow {
   SRWLOCK lock = SRWLOCK_INIT;
   std::wstring code;
   std::wstring status;
+  int phase = 0;  // 0 = コードを用意している、1 = 承認を待っている、2 = 終わった（期限切れ・失敗。新しいコードでやり直す）
   bool ready = false;
   std::wstring user, domain, password;
   ~Flow();
@@ -71,6 +72,8 @@ class CCredential : public ICredentialProviderCredential {
   void StopFlow();
   void OnFlowUpdate(UINT id);
   void SetText(FIELD_ID id, const std::wstring& text);
+  // リンク（SFI_QR・SFI_NEWCODE）を出し入れする
+  void SetVisible(FIELD_ID id, bool visible);
   void ClearSecret();
   void OpenQrWindow();
   void CloseQrWindow();
@@ -82,6 +85,7 @@ class CCredential : public ICredentialProviderCredential {
   CProvider* _provider;
   ICredentialProviderCredentialEvents* _events;
   std::wstring _text[SFI_NUM_FIELDS];
+  CREDENTIAL_PROVIDER_FIELD_STATE _fieldState[SFI_NUM_FIELDS];
   HWND _hwnd;
   HWND _qrWnd;        // QR コードのウィンドウ（開いているときだけ）
   std::wstring _code;  // いまのコード（8 文字。ハイフンなし）

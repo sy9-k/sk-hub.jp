@@ -169,7 +169,7 @@ static int ExportQr(const std::wstring& dir) {
     QrWindowContent content;
     if (i == 0) {
       content.code = L"ABCD2345";
-      content.status = L"スマートフォンで承認されるのを待っています（残り 9:41）";
+      content.status = L"sk-hub.jp/pc で承認（残り 9:41）";
     }
     SIZE size = QrWindowSize(1.0);
     Check(SaveBmp(dir + (i == 0 ? L"\\qr-window.bmp" : L"\\qr-window-empty.bmp"), size.cx, size.cy,
@@ -249,11 +249,25 @@ int wmain(int argc, wchar_t** argv) {
   if (bmp) {
     BITMAP info = {};
     GetObjectW(bmp, sizeof(info), &info);
-    printf("  tile image %ldx%ld\n", info.bmWidth, info.bmHeight);
+    printf("  tile image %ldx%ld %dbpp\n", info.bmWidth, info.bmHeight, info.bmBitsPixel);
+    // 角は暗い色 #181A1F（透明にすると、サインイン画面では黒く出る）
+    HDC dc = CreateCompatibleDC(nullptr);
+    HGDIOBJ old = SelectObject(dc, bmp);
+    const COLORREF corner = GetPixel(dc, 0, 0), center = GetPixel(dc, info.bmWidth / 2, 24);
+    SelectObject(dc, old);
+    DeleteDC(dc);
+    Check(corner == RGB(24, 26, 31) && center == RGB(255, 255, 255), "tile image: dark corners and a white circle");
     DeleteObject(bmp);
   }
   DWORD adjacent = 0;
-  Check(SUCCEEDED(cred->GetSubmitButtonValue(SFI_SUBMIT, &adjacent)) && adjacent == SFI_CODE, "submit button");
+  Check(cred->GetSubmitButtonValue(SFI_CODE, &adjacent) == E_INVALIDARG, "no submit button");
+  // リンクは、コードがないうちは出さない
+  CREDENTIAL_PROVIDER_FIELD_STATE fs;
+  CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE fis;
+  cred->GetFieldState(SFI_QR, &fs, &fis);
+  Check(fs == CPFS_HIDDEN, "QR link hidden before a code exists");
+  cred->GetFieldState(SFI_NEWCODE, &fs, &fis);
+  Check(fs == CPFS_HIDDEN, "new code link hidden while nothing failed");
 
   CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE response;
   CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION serialization;
