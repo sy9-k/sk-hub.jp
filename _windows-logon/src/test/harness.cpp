@@ -9,7 +9,10 @@
 #include "../provider/common.h"
 #include "../provider/helpers.h"
 #include "../common/qr.h"
+#include "../common/skhub.h"
 #include "../provider/qrwindow.h"
+#include <set>
+#include <vector>
 
 HINSTANCE g_hinst = nullptr;
 void DllAddRef() {}
@@ -90,6 +93,118 @@ class FakeCredentialEvents : public ICredentialProviderCredentialEvents {
     return S_OK;
   }
 };
+
+// サインイン画面のユーザーの一覧（V2 の SetUserArray に渡す）
+class FakeUser : public ICredentialProviderUser {
+ public:
+  explicit FakeUser(const std::wstring& sid) : sid_(sid) {}
+  IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) {
+    if (riid == IID_IUnknown || riid == IID_ICredentialProviderUser) {
+      *ppv = this;
+      return S_OK;
+    }
+    *ppv = nullptr;
+    return E_NOINTERFACE;
+  }
+  IFACEMETHODIMP_(ULONG) AddRef() { return 2; }
+  IFACEMETHODIMP_(ULONG) Release() { return 1; }
+  IFACEMETHODIMP GetSid(LPWSTR* sid) { return SHStrDupW(sid_.c_str(), sid); }
+  IFACEMETHODIMP GetProviderID(GUID* id) {
+    *id = GUID_NULL;
+    return S_OK;
+  }
+  IFACEMETHODIMP GetStringValue(REFPROPERTYKEY, LPWSTR* value) {
+    *value = nullptr;
+    return E_NOTIMPL;
+  }
+  IFACEMETHODIMP GetValue(REFPROPERTYKEY, PROPVARIANT*) { return E_NOTIMPL; }
+
+ private:
+  std::wstring sid_;
+};
+
+class FakeUserArray : public ICredentialProviderUserArray {
+ public:
+  std::vector<FakeUser*> users;
+  IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) {
+    if (riid == IID_IUnknown || riid == IID_ICredentialProviderUserArray) {
+      *ppv = this;
+      return S_OK;
+    }
+    *ppv = nullptr;
+    return E_NOINTERFACE;
+  }
+  IFACEMETHODIMP_(ULONG) AddRef() { return 2; }
+  IFACEMETHODIMP_(ULONG) Release() { return 1; }
+  IFACEMETHODIMP SetProviderFilter(REFGUID) { return S_OK; }
+  IFACEMETHODIMP GetAccountOptions(CREDENTIAL_PROVIDER_ACCOUNT_OPTIONS* options) {
+    *options = CPAO_NONE;
+    return S_OK;
+  }
+  IFACEMETHODIMP GetCount(DWORD* count) {
+    *count = (DWORD)users.size();
+    return S_OK;
+  }
+  IFACEMETHODIMP GetAt(DWORD index, ICredentialProviderUser** user) {
+    if (index >= users.size()) return E_INVALIDARG;
+    *user = users[index];
+    return S_OK;
+  }
+};
+
+// V2: つないだユーザーのタイルにだけ出して、「他のユーザー」用にも 1 つ出す（この PC のレジストリにつないだユーザーがあれば、それを使う）
+static void TestUserTiles(IClassFactory* factory) {
+  std::vector<skhub::LinkedUser> linked;
+  skhub::ListLinkedUsers(linked);
+  std::set<std::wstring> linkedSids;
+  for (const auto& user : linked) {
+    std::wstring sid;
+    if (SUCCEEDED(skhub::LinkedUserSid(user, sid))) linkedSids.insert(sid);
+  }
+  printf("  linked users on this PC: %zu (SIDs found: %zu)\n", linked.size(), linkedSids.size());
+
+  std::vector<FakeUser> users;
+  for (const auto& sid : linkedSids) users.emplace_back(sid);
+  users.emplace_back(L"S-1-5-21-1-2-3-9999");  // つないでいないユーザー
+  FakeUserArray array;
+  for (auto& u : users) array.users.push_back(&u);
+
+  ICredentialProvider* provider = nullptr;
+  ICredentialProviderSetUserArray* setUsers = nullptr;
+  Check(SUCCEEDED(factory->CreateInstance(nullptr, IID_PPV_ARGS(&provider))), "CreateInstance (V2)");
+  Check(SUCCEEDED(provider->QueryInterface(IID_PPV_ARGS(&setUsers))), "ICredentialProviderSetUserArray");
+  setUsers->SetUserArray(&array);
+  setUsers->Release();
+  provider->SetUsageScenario(CPUS_LOGON, 0);
+  DWORD count = 0, def = 0;
+  BOOL autoLogon = FALSE;
+  provider->GetCredentialCount(&count, &def, &autoLogon);
+  Check(count == linkedSids.size() + 1, "one tile per linked user + other user");
+  DWORD again = 0;
+  provider->GetCredentialCount(&again, &def, &autoLogon);
+  Check(again == count, "tiles are not created twice");
+  size_t matched = 0, other = 0;
+  for (DWORD i = 0; i < count; i++) {
+    ICredentialProviderCredential* cred = nullptr;
+    ICredentialProviderCredential2* cred2 = nullptr;
+    provider->GetCredentialAt(i, &cred);
+    if (!cred || FAILED(cred->QueryInterface(IID_PPV_ARGS(&cred2)))) {
+      Check(false, "ICredentialProviderCredential2");
+      if (cred) cred->Release();
+      continue;
+    }
+    PWSTR sid = nullptr;
+    HRESULT hr = cred2->GetUserSid(&sid);
+    if (hr == S_FALSE && !sid) other++;
+    else if (hr == S_OK && sid && linkedSids.count(sid)) matched++;
+    if (sid) CoTaskMemFree(sid);
+    cred2->Release();
+    cred->Release();
+  }
+  Check(matched == linkedSids.size(), "linked users' tiles have their SIDs");
+  Check(other == 1, "other user tile returns S_FALSE and no SID");
+  provider->Release();
+}
 
 // KERB_INTERACTIVE_UNLOCK_LOGON の詰め方（Buffer がバッファの先頭からの位置になっているか）
 static void TestPack() {
@@ -203,6 +318,8 @@ int wmain(int argc, wchar_t** argv) {
   CLSID other = {};
   void* dummy = nullptr;
   Check(getClassObject(other, IID_IClassFactory, &dummy) == CLASS_E_CLASSNOTAVAILABLE, "other CLSID is rejected");
+
+  TestUserTiles(factory);
 
   ICredentialProvider* provider = nullptr;
   Check(SUCCEEDED(factory->CreateInstance(nullptr, IID_PPV_ARGS(&provider))), "CreateInstance");

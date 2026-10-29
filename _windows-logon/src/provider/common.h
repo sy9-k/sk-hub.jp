@@ -31,6 +31,7 @@ enum FIELD_ID {
   SFI_QR,             // QR コードで承認（QR コードのウィンドウを開く。qrwindow.cpp）
   SFI_NEWCODE,        // 新しいコードを表示
   SFI_SUBMIT,         // サインイン（承認されると自動でサインインするので、押さなくてもよい）
+  SFI_LABEL,          // 「サインイン オプション」のアイコンにマウスを置いたときの名前（画面には出さない）
   SFI_NUM_FIELDS
 };
 
@@ -48,15 +49,17 @@ static const FIELD_STATE_PAIR s_rgFieldStatePairs[SFI_NUM_FIELDS] = {
   { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_QR
   { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_NEWCODE
   { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_SUBMIT
+  { CPFS_HIDDEN, CPFIS_NONE },                    // SFI_LABEL
 };
 
 static const CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR s_rgFieldDescriptors[SFI_NUM_FIELDS] = {
   { SFI_TILEIMAGE, CPFT_TILE_IMAGE, const_cast<LPWSTR>(L"Image"), CPFG_CREDENTIAL_PROVIDER_LOGO },
-  { SFI_TITLE, CPFT_LARGE_TEXT, const_cast<LPWSTR>(L"SK Hub でサインイン"), CPFG_CREDENTIAL_PROVIDER_LABEL },
+  { SFI_TITLE, CPFT_LARGE_TEXT, const_cast<LPWSTR>(L"SK Hub でサインイン") },
   { SFI_INSTRUCTION, CPFT_SMALL_TEXT, const_cast<LPWSTR>(L"説明") },
   { SFI_CODE, CPFT_LARGE_TEXT, const_cast<LPWSTR>(L"コード") },
   { SFI_STATUS, CPFT_SMALL_TEXT, const_cast<LPWSTR>(L"状態") },
   { SFI_QR, CPFT_COMMAND_LINK, const_cast<LPWSTR>(L"QR コードで承認") },
   { SFI_NEWCODE, CPFT_COMMAND_LINK, const_cast<LPWSTR>(L"新しいコードを表示") },
   { SFI_SUBMIT, CPFT_SUBMIT_BUTTON, const_cast<LPWSTR>(L"サインイン") },
+  { SFI_LABEL, CPFT_SMALL_TEXT, const_cast<LPWSTR>(L"SK Hub でサインイン"), CPFG_CREDENTIAL_PROVIDER_LABEL },
 };

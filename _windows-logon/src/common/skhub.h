@@ -53,6 +53,8 @@ HRESULT ListLinkedUsers(std::vector<LinkedUser>& out);
 HRESULT SaveLinkedUser(const LinkedUser& user, const std::wstring& password);
 HRESULT RemoveLinkedUser(const std::wstring& uid);
 HRESULT ReadLinkedPassword(const std::wstring& uid, std::wstring& password);
+// つないだ Windows のユーザーの SID（S-1-5-21-…）。サインイン画面のユーザーのタイルと結びつけるのに使う
+HRESULT LinkedUserSid(const LinkedUser& user, std::wstring& sid);
 // 匿名ログインの記録も消す（アンインストール）
 void ForgetDevice();
 

@@ -1,4 +1,6 @@
-// 「SK Hub でサインイン」のタイル
+// 「SK Hub でサインイン」のタイル（V2。ICredentialProviderCredential2）
+//   つないだ Windows のユーザーごとに 1 つ（そのユーザーのタイルの「サインイン オプション」に出る）と、
+//   「他のユーザー」用に 1 つ（SID なし）。ユーザーのタイルでは、そのユーザーにつないだアカウントの承認だけを受け付ける。
 //   選ぶと、別のスレッドでコードを発行し（Firestore の windowsLogons/{コード}）、スマートフォンで承認されるのを待つ。
 //   承認されたら、つないだ Windows のユーザーとパスワードを読み出し、プロバイダーに知らせて自動でサインインする。
 //   別のスレッドからは画面を直接さわらず、UI のスレッドに作ったメッセージ用のウィンドウに知らせる
@@ -21,14 +23,16 @@ struct Flow {
   std::wstring status;
   bool ready = false;
   std::wstring user, domain, password;
+  std::wstring expectedSid;  // ユーザーのタイルのとき、そのユーザーの SID（スレッドを始める前に決め、あとは変えない）
   ~Flow();
 };
 
-class CCredential : public ICredentialProviderCredential {
+class CCredential : public ICredentialProviderCredential2 {
  public:
   CCredential();
 
-  HRESULT Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, CProvider* provider);
+  // sid … 結びつける Windows のユーザー（空 = 「他のユーザー」）
+  HRESULT Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, CProvider* provider, const std::wstring& sid);
   // プロバイダーが先に消えるとき
   void DetachProvider() { _provider = nullptr; }
   bool IsReady() const { return _ready; }
@@ -63,6 +67,9 @@ class CCredential : public ICredentialProviderCredential {
   IFACEMETHODIMP ReportResult(NTSTATUS ntsStatus, NTSTATUS ntsSubstatus, PWSTR* ppwszOptionalStatusText,
                               CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon);
 
+  // ICredentialProviderCredential2
+  IFACEMETHODIMP GetUserSid(PWSTR* ppszSid);
+
  private:
   ~CCredential();
   static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -79,6 +86,7 @@ class CCredential : public ICredentialProviderCredential {
 
   LONG _cRef;
   CREDENTIAL_PROVIDER_USAGE_SCENARIO _cpus;
+  std::wstring _sid;  // 空 = 「他のユーザー」
   CProvider* _provider;
   ICredentialProviderCredentialEvents* _events;
   std::wstring _text[SFI_NUM_FIELDS];
