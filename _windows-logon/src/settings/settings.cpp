@@ -118,11 +118,11 @@ void CenterOn(HWND hwnd, HWND parent) {
 }
 
 bool Confirm(HWND owner, const wchar_t* text) {
-  return MessageBoxW(owner, text, L"SK Hub でサインイン", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == IDYES;
+  return MessageBoxW(owner, text, L"Sign in with SK Hub", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) == IDYES;
 }
 
 void Alert(HWND owner, const std::wstring& text) {
-  MessageBoxW(owner, text.c_str(), L"SK Hub でサインイン", MB_OK | MB_ICONWARNING);
+  MessageBoxW(owner, text.c_str(), L"Sign in with SK Hub", MB_OK | MB_ICONWARNING);
 }
 
 // ---------- 最初の画面 ----------
@@ -155,7 +155,7 @@ void RefreshMain(HWND hwnd) {
   MainState* st = MainOf(hwnd);
   st->installed = skhub::IsProviderInstalled();
   SetDlgItemTextW(hwnd, IDC_SCREEN_STATUS,
-                  st->installed ? L"●  サインイン画面に「SK Hub でサインイン」が出ています" : L"サインイン画面には、まだ追加されていません");
+                  st->installed ? L"●  サインイン画面に「Sign in with SK Hub」が出ています" : L"サインイン画面には、まだ追加されていません");
   SetDlgItemTextW(hwnd, IDC_SCREEN_BUTTON, st->installed ? L"サインイン画面から外す" : L"サインイン画面に追加");
   InvalidateRect(GetDlgItem(hwnd, IDC_SCREEN_STATUS), nullptr, TRUE);
 
@@ -236,7 +236,7 @@ void OnScreenButton(HWND hwnd) {
   MainState* st = MainOf(hwnd);
   std::wstring error;
   if (st->installed) {
-    if (!Confirm(hwnd, L"サインイン画面から「SK Hub でサインイン」を外しますか？\n\nつないだアカウントと、保存した Windows のパスワードも消えます。")) return;
+    if (!Confirm(hwnd, L"サインイン画面から「Sign in with SK Hub」を外しますか？\n\nつないだアカウントと、保存した Windows のパスワードも消えます。")) return;
     if (FAILED(skhub::UninstallProvider(error))) Alert(hwnd, error);
   } else {
     std::wstring path;
@@ -267,7 +267,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       st = new MainState();
       SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(st));
       st->fonts.Create(GetDpiForWindow(hwnd));
-      Control(hwnd, L"STATIC", L"SK Hub でサインイン", SS_NOPREFIX, IDC_TITLE);
+      Control(hwnd, L"STATIC", L"Sign in with SK Hub", SS_NOPREFIX, IDC_TITLE);
       Control(hwnd, L"STATIC",
               L"スマートフォンで承認するだけで、Windows にサインインできるようにします。",
               SS_NOPREFIX, IDC_LEAD);
@@ -657,7 +657,7 @@ void OnLinkUpdate(HWND hwnd, UINT id) {
     RelayoutLink(hwnd);
     return;
   }
-  std::wstring text = L"サインイン画面の「SK Hub でサインイン」から\n" + skhub::DisplayUser(st->domain, st->user) +
+  std::wstring text = L"サインイン画面の「Sign in with SK Hub」から\n" + skhub::DisplayUser(st->domain, st->user) +
                       L" にサインインできます。\n\nWindows のパスワードを変えたら、もう一度つなぎ直してください。";
   if (relinked && (_wcsicmp(before.userName.c_str(), st->user.c_str()) != 0 || before.domain != st->domain))
     text += L"\n\nこのアカウントは " + skhub::DisplayUser(before.domain, before.userName) + L" につながっていたので、つなぎ直しました。";
@@ -864,7 +864,7 @@ void Snapshot(const std::wstring& dir) {
   ShowLinkPage(g_link, 2);
   Pump();
   SaveWindow(g_link, dir + L"\\settings-link2.bmp");
-  ShowLinkPage(g_link, 3, L"サインイン画面の「SK Hub でサインイン」から\n" + skhub::CurrentUser() +
+  ShowLinkPage(g_link, 3, L"サインイン画面の「Sign in with SK Hub」から\n" + skhub::CurrentUser() +
                               L" にサインインできます。\n\nWindows のパスワードを変えたら、もう一度つなぎ直してください。");
   Pump();
   SaveWindow(g_link, dir + L"\\settings-link3.bmp");
@@ -883,12 +883,12 @@ int WINAPI wWinMain(HINSTANCE hinst, HINSTANCE, PWSTR, int nCmdShow) {
 #ifndef SKHUB_PREVIEW
   // マニフェストで管理者を求めているので、ふつうはここに来ない
   if (!skhub::IsElevated()) {
-    MessageBoxW(nullptr, L"管理者として実行してください。", L"SK Hub でサインイン", MB_OK | MB_ICONWARNING);
+    MessageBoxW(nullptr, L"管理者として実行してください。", L"Sign in with SK Hub", MB_OK | MB_ICONWARNING);
     return 1;
   }
 #endif
   RegisterClasses();
-  g_main = CreateWindowExW(0, kMainClass, L"SK Hub でサインイン — 設定", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT,
+  g_main = CreateWindowExW(0, kMainClass, L"Sign in with SK Hub — 設定", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT,
                            CW_USEDEFAULT, 100, 100, nullptr, nullptr, hinst, nullptr);
   if (!g_main) return 1;
   CenterOn(g_main, nullptr);

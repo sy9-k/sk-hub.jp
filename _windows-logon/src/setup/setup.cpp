@@ -1,5 +1,5 @@
 // SK Hub で Windows にサインイン — 設定ツール（管理者として実行する）
-//   skhub-logon-setup install          サインイン画面に「SK Hub でサインイン」を出す
+//   skhub-logon-setup install          サインイン画面に「Sign in with SK Hub」を出す
 //   skhub-logon-setup add [ユーザー名]  SK Hub Systems アカウントと Windows のユーザーをつなぐ
 //   skhub-logon-setup list             つないだアカウントの一覧
 //   skhub-logon-setup remove <UID か ユーザー名>
@@ -60,7 +60,7 @@ int Install() {
     PrintLine(error);
     return 1;
   }
-  PrintLine(L"サインイン画面に「SK Hub でサインイン」を追加しました。");
+  PrintLine(L"サインイン画面に「Sign in with SK Hub」を追加しました。");
   PrintLine(L"  " + target);
   PrintLine();
   PrintLine(L"次に、使う人ごとに次のコマンドで SK Hub Systems アカウントをつないでください。");
@@ -75,7 +75,7 @@ int Uninstall() {
     PrintLine(error);
     return 1;
   }
-  PrintLine(L"サインイン画面から「SK Hub でサインイン」を外し、つないだアカウントと保存したパスワードを消しました。");
+  PrintLine(L"サインイン画面から「Sign in with SK Hub」を外し、つないだアカウントと保存したパスワードを消しました。");
   return 0;
 }
 
@@ -184,7 +184,7 @@ int Add(const std::wstring& input) {
       if (FAILED(hr)) {
         PrintLine(L"保存できませんでした: " + skhub::ErrorText(hr));
       } else {
-        PrintLine(L"つなぎました。サインイン画面の「SK Hub でサインイン」から " + shown + L" にサインインできます。");
+        PrintLine(L"つなぎました。サインイン画面の「Sign in with SK Hub」から " + shown + L" にサインインできます。");
         PrintLine(L"  SK Hub Systems アカウントの UID: " + uid);
         PrintLine(L"Windows のパスワードを変えたら、もう一度 add でつなぎ直してください。");
         result = 0;
@@ -235,7 +235,7 @@ int Remove(const std::wstring& target) {
 void Usage() {
   PrintLine(L"SK Hub で Windows にサインイン — 設定ツール");
   PrintLine();
-  PrintLine(L"  skhub-logon-setup install          サインイン画面に「SK Hub でサインイン」を追加する");
+  PrintLine(L"  skhub-logon-setup install          サインイン画面に「Sign in with SK Hub」を追加する");
   PrintLine(L"  skhub-logon-setup add [ユーザー名]  SK Hub Systems アカウントと Windows のユーザーをつなぐ");
   PrintLine(L"  skhub-logon-setup list             つないだアカウントの一覧");
   PrintLine(L"  skhub-logon-setup remove <UID か ユーザー名>");

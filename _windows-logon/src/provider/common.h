@@ -24,7 +24,7 @@ extern const CLSID CLSID_SKHubProvider;
 // サインイン画面の項目（タイルを選ぶと出る）。説明は短く、リンクは使えるときだけ出す
 enum FIELD_ID {
   SFI_TILEIMAGE = 0,  // アイコン（暗い四角に白い丸）
-  SFI_TITLE,          // 「SK Hub でサインイン」
+  SFI_TITLE,          // 「Sign in with SK Hub」
   SFI_CODE,           // コード（ABCD-EFGH）
   SFI_STATUS,         // sk-hub.jp/pc で承認（残り 9:30）など
   SFI_QR,             // QR コードを表示（コードがあるときだけ。qrwindow.cpp）
@@ -49,7 +49,7 @@ static const FIELD_STATE_PAIR s_rgFieldStatePairs[SFI_NUM_FIELDS] = {
 
 static const CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR s_rgFieldDescriptors[SFI_NUM_FIELDS] = {
   { SFI_TILEIMAGE, CPFT_TILE_IMAGE, const_cast<LPWSTR>(L"Image"), CPFG_CREDENTIAL_PROVIDER_LOGO },
-  { SFI_TITLE, CPFT_LARGE_TEXT, const_cast<LPWSTR>(L"SK Hub でサインイン"), CPFG_CREDENTIAL_PROVIDER_LABEL },
+  { SFI_TITLE, CPFT_LARGE_TEXT, const_cast<LPWSTR>(L"Sign in with SK Hub"), CPFG_CREDENTIAL_PROVIDER_LABEL },
   { SFI_CODE, CPFT_LARGE_TEXT, const_cast<LPWSTR>(L"コード") },
   { SFI_STATUS, CPFT_SMALL_TEXT, const_cast<LPWSTR>(L"状態") },
   { SFI_QR, CPFT_COMMAND_LINK, const_cast<LPWSTR>(L"QR コードを表示") },

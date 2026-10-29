@@ -1,5 +1,5 @@
 // PC へのサインインを承認する（/pc/?code=コード）
-//   Windows のサインイン画面の「SK Hub でサインイン」と、設定ツール（skhub-logon-setup add）が出すコードを入力して承認する。
+//   Windows のサインイン画面の「Sign in with SK Hub」と、設定ツール（skhub-logon-setup add）が出すコードを入力して承認する。
 //   1. SK Hub Systems アカウントでログイン（アカウントの作成・規約の同意がまだなら /account/ で済ませて戻ってくる）
 //   2. コードの依頼（windowsLogons/{コード}）を読んで、PC の名前と、サインインかアカウントをつなぐのかを見せる
 //   3. 承認 → status: approved・uid: 自分の UID。PC は、その UID がつないだアカウントならサインインする
@@ -86,7 +86,7 @@ async function lookup(code) {
     $("[data-pc-name]").textContent = data.pcName || "名前のない PC";
     $("[data-pc-code]").textContent = `コード ${formatCode(code)}`;
     $("[data-pc-desc]").textContent = register
-      ? "承認すると、この PC の Windows のサインイン画面で「SK Hub でサインイン」を選び、このアカウントで承認するだけでサインインできるようになります。"
+      ? "承認すると、この PC の Windows のサインイン画面で「Sign in with SK Hub」を選び、このアカウントで承認するだけでサインインできるようになります。"
       : "承認すると、この PC の Windows に、このアカウントにつながっているユーザーでサインインします。";
     message("");
     showView("confirm");

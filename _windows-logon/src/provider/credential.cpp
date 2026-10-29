@@ -146,7 +146,7 @@ CCredential::~CCredential() {
 HRESULT CCredential::Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, CProvider* provider) {
   _cpus = cpus;
   _provider = provider;
-  _text[SFI_TITLE] = L"SK Hub でサインイン";
+  _text[SFI_TITLE] = L"Sign in with SK Hub";
   _text[SFI_QR] = L"QR コードを表示";
   _text[SFI_NEWCODE] = L"新しいコードを表示";
   for (int i = 0; i < SFI_NUM_FIELDS; i++) _fieldState[i] = s_rgFieldStatePairs[i].cpfs;
