@@ -1,20 +1,19 @@
 #include "provider.h"
 
 #include <new>
-#include <set>
 
-#include "../common/skhub.h"
 #include "credential.h"
 #include "helpers.h"
 
-CProvider::CProvider()
-    : _cRef(1), _cpus(CPUS_INVALID), _users(nullptr), _enumerated(false), _events(nullptr), _adviseContext(0) {
+CProvider::CProvider() : _cRef(1), _credential(nullptr), _events(nullptr), _adviseContext(0) {
   DllAddRef();
 }
 
 CProvider::~CProvider() {
-  ReleaseCredentials();
-  if (_users) _users->Release();
+  if (_credential) {
+    _credential->DetachProvider();
+    _credential->Release();
+  }
   if (_events) _events->Release();
   DllRelease();
 }
@@ -23,14 +22,11 @@ IFACEMETHODIMP CProvider::QueryInterface(REFIID riid, void** ppv) {
   if (!ppv) return E_POINTER;
   if (riid == IID_IUnknown || riid == IID_ICredentialProvider) {
     *ppv = static_cast<ICredentialProvider*>(this);
-  } else if (riid == IID_ICredentialProviderSetUserArray) {
-    *ppv = static_cast<ICredentialProviderSetUserArray*>(this);
-  } else {
-    *ppv = nullptr;
-    return E_NOINTERFACE;
+    AddRef();
+    return S_OK;
   }
-  AddRef();
-  return S_OK;
+  *ppv = nullptr;
+  return E_NOINTERFACE;
 }
 
 void CProvider::OnCredentialReady() {
@@ -42,7 +38,16 @@ IFACEMETHODIMP CProvider::SetUsageScenario(CREDENTIAL_PROVIDER_USAGE_SCENARIO cp
   switch (cpus) {
     case CPUS_LOGON:
     case CPUS_UNLOCK_WORKSTATION:
-      _cpus = cpus;
+      if (!_credential) {
+        _credential = new (std::nothrow) CCredential();
+        if (!_credential) return E_OUTOFMEMORY;
+        HRESULT hr = _credential->Initialize(cpus, this);
+        if (FAILED(hr)) {
+          _credential->Release();
+          _credential = nullptr;
+          return hr;
+        }
+      }
       return S_OK;
     case CPUS_CHANGE_PASSWORD:
     case CPUS_CREDUI:
@@ -54,67 +59,6 @@ IFACEMETHODIMP CProvider::SetUsageScenario(CREDENTIAL_PROVIDER_USAGE_SCENARIO cp
 
 IFACEMETHODIMP CProvider::SetSerialization(const CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*) {
   return E_NOTIMPL;
-}
-
-IFACEMETHODIMP CProvider::SetUserArray(ICredentialProviderUserArray* users) {
-  if (_users) _users->Release();
-  _users = users;
-  if (_users) _users->AddRef();
-  return S_OK;
-}
-
-void CProvider::AddCredential(const std::wstring& sid) {
-  auto* credential = new (std::nothrow) CCredential();
-  if (!credential) return;
-  if (FAILED(credential->Initialize(_cpus, this, sid))) {
-    credential->Release();
-    return;
-  }
-  _credentials.push_back(credential);
-}
-
-// タイルを作る（1 回だけ。CredentialsChanged のあとで作り直すと、承認を待っている流れが消えてしまう）
-void CProvider::EnsureCredentials() {
-  if (_enumerated || _cpus == CPUS_INVALID) return;
-  _enumerated = true;
-  if (_users) {
-    // つないだ Windows のユーザーの SID（同じユーザーに複数のアカウントをつないでいても 1 つ）
-    std::vector<skhub::LinkedUser> linked;
-    skhub::ListLinkedUsers(linked);
-    std::set<std::wstring> sids;
-    for (const skhub::LinkedUser& user : linked) {
-      std::wstring sid;
-      if (SUCCEEDED(skhub::LinkedUserSid(user, sid))) {
-        CharUpperW(&sid[0]);
-        sids.insert(sid);
-      }
-    }
-    DWORD count = 0;
-    if (!sids.empty() && SUCCEEDED(_users->GetCount(&count))) {
-      for (DWORD i = 0; i < count; i++) {
-        ICredentialProviderUser* user = nullptr;
-        if (FAILED(_users->GetAt(i, &user))) continue;
-        PWSTR sid = nullptr;
-        if (SUCCEEDED(user->GetSid(&sid)) && sid) {
-          std::wstring key = sid;
-          CharUpperW(&key[0]);
-          if (sids.count(key)) AddCredential(sid);
-          CoTaskMemFree(sid);
-        }
-        user->Release();
-      }
-    }
-  }
-  // 「他のユーザー」（承認したアカウントにつないだユーザーでサインインする）
-  AddCredential(L"");
-}
-
-void CProvider::ReleaseCredentials() {
-  for (CCredential* credential : _credentials) {
-    credential->DetachProvider();
-    credential->Release();
-  }
-  _credentials.clear();
 }
 
 IFACEMETHODIMP CProvider::Advise(ICredentialProviderEvents* pcpe, UINT_PTR upAdviseContext) {
@@ -145,17 +89,13 @@ IFACEMETHODIMP CProvider::GetFieldDescriptorAt(DWORD dwIndex, CREDENTIAL_PROVIDE
 }
 
 IFACEMETHODIMP CProvider::GetCredentialCount(DWORD* pdwCount, DWORD* pdwDefault, BOOL* pbAutoLogonWithDefault) {
-  EnsureCredentials();
-  *pdwCount = (DWORD)_credentials.size();
+  *pdwCount = _credential ? 1 : 0;
   *pdwDefault = CREDENTIAL_PROVIDER_NO_DEFAULT;
   *pbAutoLogonWithDefault = FALSE;
-  // 承認が済んだタイルで、自動でサインインする
-  for (DWORD i = 0; i < _credentials.size(); i++) {
-    if (_credentials[i]->IsReady()) {
-      *pdwDefault = i;
-      *pbAutoLogonWithDefault = TRUE;
-      break;
-    }
+  // 承認が済んでいれば、このタイルで自動でサインインする
+  if (_credential && _credential->IsReady()) {
+    *pdwDefault = 0;
+    *pbAutoLogonWithDefault = TRUE;
   }
   return S_OK;
 }
@@ -163,8 +103,8 @@ IFACEMETHODIMP CProvider::GetCredentialCount(DWORD* pdwCount, DWORD* pdwDefault,
 IFACEMETHODIMP CProvider::GetCredentialAt(DWORD dwIndex, ICredentialProviderCredential** ppcpc) {
   if (!ppcpc) return E_INVALIDARG;
   *ppcpc = nullptr;
-  if (dwIndex >= _credentials.size()) return E_INVALIDARG;
-  return _credentials[dwIndex]->QueryInterface(IID_PPV_ARGS(ppcpc));
+  if (dwIndex != 0 || !_credential) return E_INVALIDARG;
+  return _credential->QueryInterface(IID_PPV_ARGS(ppcpc));
 }
 
 HRESULT CProvider_CreateInstance(REFIID riid, void** ppv) {

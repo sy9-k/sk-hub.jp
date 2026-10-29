@@ -83,12 +83,6 @@ void RunFlow(Flow& f) {
       Update(f, &none, L"承認したアカウントは、この PC につながっていません。PC の管理者が設定ツールでつないでください。");
       break;
     }
-    // ユーザーのタイルから使ったときは、そのユーザーにつないだアカウントだけ
-    std::wstring sid;
-    if (!f.expectedSid.empty() && (FAILED(skhub::LinkedUserSid(user, sid)) || _wcsicmp(sid.c_str(), f.expectedSid.c_str()) != 0)) {
-      Update(f, &none, L"承認したアカウントは、このユーザーにつながっていません。つないだアカウントで承認するか、「他のユーザー」から使ってください。");
-      break;
-    }
     std::wstring password;
     if (FAILED(skhub::ReadLinkedPassword(uid, password))) {
       Update(f, &none, L"Windows のパスワードを読み出せませんでした。設定ツールでつなぎ直してください。");
@@ -148,12 +142,10 @@ CCredential::~CCredential() {
   DllRelease();
 }
 
-HRESULT CCredential::Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, CProvider* provider, const std::wstring& sid) {
+HRESULT CCredential::Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, CProvider* provider) {
   _cpus = cpus;
   _provider = provider;
-  _sid = sid;
   _text[SFI_TITLE] = L"SK Hub でサインイン";
-  _text[SFI_LABEL] = L"SK Hub でサインイン";
   _text[SFI_INSTRUCTION] = L"スマートフォンなどで " SKHUB_APPROVE_URL L" を開き、SK Hub Systems アカウントでログインして、次のコードを入力してください。「QR コードで承認」から読み取ることもできます。";
   _text[SFI_QR] = L"QR コードで承認";
   _text[SFI_NEWCODE] = L"新しいコードを表示";
@@ -163,8 +155,8 @@ HRESULT CCredential::Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, CProvid
 
 IFACEMETHODIMP CCredential::QueryInterface(REFIID riid, void** ppv) {
   if (!ppv) return E_POINTER;
-  if (riid == IID_IUnknown || riid == IID_ICredentialProviderCredential || riid == IID_ICredentialProviderCredential2) {
-    *ppv = static_cast<ICredentialProviderCredential2*>(this);
+  if (riid == IID_IUnknown || riid == IID_ICredentialProviderCredential) {
+    *ppv = static_cast<ICredentialProviderCredential*>(this);
     AddRef();
     return S_OK;
   }
@@ -203,7 +195,6 @@ void CCredential::StartFlow() {
   auto flow = std::make_shared<Flow>();
   flow->id = _nextFlowId++;
   flow->hwnd = _hwnd;
-  flow->expectedSid = _sid;
   flow->stop = CreateEventW(nullptr, TRUE, FALSE, nullptr);
   HMODULE module = nullptr;
   if (!flow->stop || !GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCWSTR>(&FlowThread), &module)) {
@@ -406,13 +397,6 @@ IFACEMETHODIMP CCredential::GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATI
   pcpcs->clsidCredentialProvider = CLSID_SKHubProvider;
   *pcpgsr = CPGSR_RETURN_CREDENTIAL_FINISHED;
   return S_OK;
-}
-
-// 結びつけたユーザーの SID。「他のユーザー」は S_FALSE と空の SID
-IFACEMETHODIMP CCredential::GetUserSid(PWSTR* ppszSid) {
-  *ppszSid = nullptr;
-  if (_sid.empty()) return S_FALSE;
-  return SHStrDupW(_sid.c_str(), ppszSid);
 }
 
 IFACEMETHODIMP CCredential::ReportResult(NTSTATUS ntsStatus, NTSTATUS ntsSubstatus, PWSTR* ppwszOptionalStatusText,

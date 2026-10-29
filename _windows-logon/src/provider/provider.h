@@ -1,17 +1,12 @@
-// SK Hub の Credential Provider（V2）
-//   サインイン画面のユーザーの一覧（SetUserArray）のうち、SK Hub Systems アカウントをつないだユーザーのタイルに
-//   「SK Hub でサインイン」を出し、「他のユーザー」用にも 1 つ出す。
+// SK Hub の Credential Provider（サインイン画面に「SK Hub でサインイン」のタイルを 1 つ出す）
 //   使うのはサインイン（CPUS_LOGON）とロックの解除（CPUS_UNLOCK_WORKSTATION）だけ
 #pragma once
-
-#include <string>
-#include <vector>
 
 #include "common.h"
 
 class CCredential;
 
-class CProvider : public ICredentialProvider, public ICredentialProviderSetUserArray {
+class CProvider : public ICredentialProvider {
  public:
   CProvider();
 
@@ -37,20 +32,11 @@ class CProvider : public ICredentialProvider, public ICredentialProviderSetUserA
   IFACEMETHODIMP GetCredentialCount(DWORD* pdwCount, DWORD* pdwDefault, BOOL* pbAutoLogonWithDefault);
   IFACEMETHODIMP GetCredentialAt(DWORD dwIndex, ICredentialProviderCredential** ppcpc);
 
-  // ICredentialProviderSetUserArray（GetCredentialCount より先に呼ばれる）
-  IFACEMETHODIMP SetUserArray(ICredentialProviderUserArray* users);
-
  private:
   ~CProvider();
-  void EnsureCredentials();
-  void AddCredential(const std::wstring& sid);
-  void ReleaseCredentials();
 
   LONG _cRef;
-  CREDENTIAL_PROVIDER_USAGE_SCENARIO _cpus;
-  ICredentialProviderUserArray* _users;
-  std::vector<CCredential*> _credentials;
-  bool _enumerated;
+  CCredential* _credential;
   ICredentialProviderEvents* _events;
   UINT_PTR _adviseContext;
 };

@@ -3,7 +3,6 @@
 #undef WIN32_NO_STATUS
 #include <ntstatus.h>
 #include <ntsecapi.h>
-#include <sddl.h>
 #include <winhttp.h>
 #include <bcrypt.h>
 #include <cctype>
@@ -547,25 +546,6 @@ HRESULT RemoveLinkedUser(const std::wstring& uid) {
 HRESULT ReadLinkedPassword(const std::wstring& uid, std::wstring& password) {
   if (!ValidUid(uid)) return E_INVALIDARG;
   return ReadSecret(SKHUB_SECRET_PASSWORD_PREFIX + uid, password);
-}
-
-HRESULT LinkedUserSid(const LinkedUser& user, std::wstring& sid) {
-  sid.clear();
-  // ドメインがなければこの PC のユーザー（user@example.com の形はそのまま）
-  std::wstring name = user.userName;
-  if (!user.domain.empty()) name = user.domain + L"\\" + user.userName;
-  else if (user.userName.find(L'@') == std::wstring::npos) name = ComputerName() + L"\\" + user.userName;
-  BYTE buffer[SECURITY_MAX_SID_SIZE];
-  DWORD sidSize = sizeof(buffer);
-  wchar_t domain[256];
-  DWORD domainSize = ARRAYSIZE(domain);
-  SID_NAME_USE use;
-  if (!LookupAccountNameW(nullptr, name.c_str(), buffer, &sidSize, domain, &domainSize, &use)) return HRESULT_FROM_WIN32(GetLastError());
-  LPWSTR text = nullptr;
-  if (!ConvertSidToStringSidW(buffer, &text)) return HRESULT_FROM_WIN32(GetLastError());
-  sid = text;
-  LocalFree(text);
-  return S_OK;
 }
 
 void ForgetDevice() {
