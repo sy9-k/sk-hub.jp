@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <script src="/assets/coming-soon.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>PC へのサインインを承認 | SK Hub Systems</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap"></script>
+  <link rel="stylesheet" href="/assets/header.css">
+  <link rel="stylesheet" href="/y-filter/shared/admin.css">
+  <link rel="stylesheet" href="/y-filter/console.css">
+</head>
+<body>
+  <!-- SK Hub で Windows にサインインする（_windows-logon）。Windows のサインイン画面・設定ツールに出たコードを入力して承認する。
+       短い URL（sk-hub.jp/pc）はサインイン画面にそのまま出すので変えない。権限は y-filter リポジトリの systems/firestore.rules の windowsLogons -->
+  <header class="site-header console-header">
+    <a class="hd-logo" href="/" aria-label="ホーム">
+      <span class="hd-logo-image" aria-hidden="true"><img src="/assets/logo.svg" alt="" width="26" height="26"></span>
+      <span class="hd-logo-back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+    <a class="hd-item hd-console-name" href="/pc/">PC へのサインイン</a>
+    <a class="hd-item hd-account" href="/account/" data-menu="account" data-account-link>アカウント</a>
+    <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
+  </header>
+  <div class="hd-menu" id="hd-menu"><div class="hd-menu-inner"><div class="hd-menu-content"></div></div></div>
+  <div class="hd-backdrop" id="hd-backdrop"></div>
+
+  <div class="gate">
+    <div class="gate-card" style="max-width:520px;">
+      <div class="brand">
+        <img class="brand-mark" src="/account/icon-192.png" alt="">
+        <div><div class="brand-name">PC へのサインイン</div><div class="brand-sub">SK Hub Systems アカウント</div></div>
+      </div>
+
+      <div data-pc-view="loading"><p class="hint">読み込み中…</p></div>
+
+      <!-- コードの入力 -->
+      <div data-pc-view="code" hidden>
+        <h1>PC に表示されたコードを入力</h1>
+        <p>Windows のサインイン画面（または設定ツール）に表示されている 8 文字のコードを入力してください。</p>
+        <div class="pc-user" data-pc-user></div>
+        <form id="pc-form" autocomplete="off">
+          <label class="field-label" for="pc-code">コード</label>
+          <input type="text" id="pc-code" maxlength="9" placeholder="ABCD-EFGH" autocapitalize="characters" spellcheck="false" inputmode="text">
+          <div class="inline" style="margin-top:18px;">
+            <button class="btn btn-primary" type="submit">次へ</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 承認するかの確認 -->
+      <div data-pc-view="confirm" hidden>
+        <h1 data-pc-title></h1>
+        <div class="pc-target">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+          <div><strong data-pc-name></strong><small data-pc-code></small></div>
+        </div>
+        <p data-pc-desc></p>
+        <div class="pc-user" data-pc-user></div>
+        <p class="pc-warn">いま自分で操作している PC でなければ、承認しないでください。ほかの人に頼まれてコードを入力した場合は「拒否」を押してください。</p>
+        <div class="inline" style="margin-top:18px;">
+          <button id="pc-approve" class="btn btn-primary" type="button">承認</button>
+          <button id="pc-deny" class="btn btn-tonal" type="button">拒否</button>
+        </div>
+      </div>
+
+      <!-- 終わり -->
+      <div data-pc-view="done" hidden>
+        <h1 data-pc-done-title></h1>
+        <p data-pc-done-text></p>
+        <div class="inline" style="margin-top:18px;">
+          <a class="btn btn-tonal" href="/pc/">別のコードを入力</a>
+        </div>
+      </div>
+
+      <div id="pc-msg" class="gate-msg" role="alert"></div>
+    </div>
+  </div>
+
+  <style>
+    #pc-code { width: 100%; font-size: 22px; letter-spacing: .12em; text-transform: uppercase; font-family: "Inter", monospace; }
+    .pc-user { display: flex; align-items: center; gap: 10px; margin: 14px 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 14px; }
+    .pc-user:empty { display: none; }
+    .pc-user img, .pc-user .pc-letter { width: 32px; height: 32px; border-radius: 50%; flex: none; }
+    .pc-user .pc-letter { display: grid; place-items: center; color: #fff; font-weight: 700; }
+    .pc-user small, .pc-target small { display: block; color: var(--muted); font-size: 12px; }
+    .pc-target { display: flex; align-items: center; gap: 12px; margin: 14px 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, rgba(127,127,127,.25)); }
+    .pc-target svg { width: 28px; height: 28px; flex: none; }
+    .pc-target strong { font-size: 16px; overflow-wrap: anywhere; }
+    .pc-warn { font-size: 13px; line-height: 1.7; color: var(--muted); }
+  </style>
+
+  <script type="module" src="pc.js"></script>
+  <script src="/assets/site.js" defer></script>
+  <script src="/assets/maintenance.js" defer></script>
+  <!-- SK Hub Systems のアクセスチェック（利用規約の同意・アクセス制限） -->
+  <script src="/frameworks/check.js" defer></script>
+</body>
+</html>
