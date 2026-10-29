@@ -28,6 +28,7 @@ enum FIELD_ID {
   SFI_INSTRUCTION,    // sk-hub.jp/pc を開いてコードを入力する、という説明
   SFI_CODE,           // コード（ABCD-EFGH）
   SFI_STATUS,         // 承認を待っています（残り 9:30）など
+  SFI_QR,             // QR コードで承認（QR コードのウィンドウを開く。qrwindow.cpp）
   SFI_NEWCODE,        // 新しいコードを表示
   SFI_SUBMIT,         // サインイン（承認されると自動でサインインするので、押さなくてもよい）
   SFI_NUM_FIELDS
@@ -44,6 +45,7 @@ static const FIELD_STATE_PAIR s_rgFieldStatePairs[SFI_NUM_FIELDS] = {
   { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_INSTRUCTION
   { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_CODE
   { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_STATUS
+  { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_QR
   { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_NEWCODE
   { CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },  // SFI_SUBMIT
 };
@@ -54,6 +56,7 @@ static const CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR s_rgFieldDescriptors[SFI_NUM_F
   { SFI_INSTRUCTION, CPFT_SMALL_TEXT, const_cast<LPWSTR>(L"説明") },
   { SFI_CODE, CPFT_LARGE_TEXT, const_cast<LPWSTR>(L"コード") },
   { SFI_STATUS, CPFT_SMALL_TEXT, const_cast<LPWSTR>(L"状態") },
+  { SFI_QR, CPFT_COMMAND_LINK, const_cast<LPWSTR>(L"QR コードで承認") },
   { SFI_NEWCODE, CPFT_COMMAND_LINK, const_cast<LPWSTR>(L"新しいコードを表示") },
   { SFI_SUBMIT, CPFT_SUBMIT_BUTTON, const_cast<LPWSTR>(L"サインイン") },
 };

@@ -4,20 +4,16 @@
 //   skhub-logon-setup list             つないだアカウントの一覧
 //   skhub-logon-setup remove <UID か ユーザー名>
 //   skhub-logon-setup uninstall        サインイン画面から外し、つないだアカウントもすべて消す
-#define SECURITY_WIN32
 #include <windows.h>
-#include <security.h>
-#include <shlobj.h>
 #include <string>
 #include <vector>
 
+#include "../common/admin.h"
 #include "../common/config.h"
+#include "../common/qr.h"
 #include "../common/skhub.h"
 
 namespace {
-
-const wchar_t kClsidKey[] = L"SOFTWARE\\Classes\\CLSID\\" SKHUB_CLSID_STRING;
-const wchar_t kProviderKey[] = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Authentication\\Credential Providers\\" SKHUB_CLSID_STRING;
 
 void Print(const std::wstring& s) {
   HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -32,79 +28,36 @@ void Print(const std::wstring& s) {
 
 void PrintLine(const std::wstring& s = L"") { Print(s + L"\n"); }
 
-std::wstring ErrorText(HRESULT hr) {
-  wchar_t* text = nullptr;
-  FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, hr, 0, (LPWSTR)&text, 0, nullptr);
-  wchar_t code[16];
-  swprintf_s(code, L"0x%08X", (unsigned)hr);
-  std::wstring out = text ? std::wstring(text) + L"（" + code + L"）" : code;
-  if (text) LocalFree(text);
-  while (!out.empty() && (out.back() == L'\n' || out.back() == L'\r')) out.pop_back();
-  return out;
-}
-
-bool IsElevated() {
-  HANDLE token;
-  if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) return false;
-  TOKEN_ELEVATION elevation = {};
-  DWORD size = sizeof(elevation);
-  BOOL ok = GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size);
-  CloseHandle(token);
-  return ok && elevation.TokenIsElevated;
-}
-
-std::wstring ExeDir() {
-  wchar_t path[MAX_PATH];
-  DWORD n = GetModuleFileNameW(nullptr, path, MAX_PATH);
-  std::wstring dir(path, n);
-  return dir.substr(0, dir.find_last_of(L'\\'));
-}
-
-std::wstring InstallDir() {
-  PWSTR programFiles = nullptr;
-  std::wstring dir;
-  if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_ProgramFiles, 0, nullptr, &programFiles))) dir = std::wstring(programFiles) + L"\\" SKHUB_INSTALL_DIR;
-  CoTaskMemFree(programFiles);
-  return dir;
-}
-
-LSTATUS SetString(const wchar_t* key, const wchar_t* name, const std::wstring& value) {
-  return RegSetKeyValueW(HKEY_LOCAL_MACHINE, key, name, REG_SZ, value.c_str(), (DWORD)((value.size() + 1) * sizeof(wchar_t)));
-}
-
-// 使用中（サインイン画面が読み込んでいる）で消せないファイルは、名前を変えて再起動のときに消す
-void RemoveFile(const std::wstring& path) {
-  if (DeleteFileW(path.c_str()) || GetLastError() == ERROR_FILE_NOT_FOUND) return;
-  std::wstring old = path + L".old-" + std::to_wstring(GetTickCount64());
-  if (MoveFileExW(path.c_str(), old.c_str(), MOVEFILE_REPLACE_EXISTING)) MoveFileExW(old.c_str(), nullptr, MOVEFILE_DELAY_UNTIL_REBOOT);
+// QR コードをコンソールに出す。1 モジュール = 空白 2 つで、背景の色を白・黒に塗る
+//   （█ などの記号は、日本語のフォントでは幅が 2 文字分になって崩れるので使わない）。コンソールでなければ出さない
+bool PrintQr(const std::wstring& text) {
+  HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+  CONSOLE_SCREEN_BUFFER_INFO info;
+  if (!GetConsoleScreenBufferInfo(out, &info)) return false;
+  const qr::Code code = qr::Encode(skhub::ToUtf8(text));
+  if (!code.size) return false;
+  const WORD light = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+  const WORD dark = 0;
+  const int quiet = 3;
+  DWORD written;
+  for (int y = -quiet; y < code.size + quiet; y++) {
+    Print(L"  ");
+    for (int x = -quiet; x < code.size + quiet; x++) {
+      SetConsoleTextAttribute(out, code.Dark(x, y) ? dark : light);
+      WriteConsoleW(out, L"  ", 2, &written, nullptr);
+    }
+    SetConsoleTextAttribute(out, info.wAttributes);
+    Print(L"\n");
+  }
+  return true;
 }
 
 // ---------- install / uninstall ----------
 
 int Install() {
-  const std::wstring source = ExeDir() + L"\\" SKHUB_DLL_NAME;
-  if (GetFileAttributesW(source.c_str()) == INVALID_FILE_ATTRIBUTES) {
-    PrintLine(L"この設定ツールと同じフォルダーに " SKHUB_DLL_NAME L" が見つかりません。");
-    return 1;
-  }
-  const std::wstring dir = InstallDir();
-  const std::wstring target = dir + L"\\" SKHUB_DLL_NAME;
-  int created = SHCreateDirectoryExW(nullptr, dir.c_str(), nullptr);
-  if (created != ERROR_SUCCESS && created != ERROR_ALREADY_EXISTS) {
-    PrintLine(L"フォルダーを作れませんでした: " + dir);
-    return 1;
-  }
-  RemoveFile(target);
-  if (!CopyFileW(source.c_str(), target.c_str(), FALSE)) {
-    PrintLine(L"コピーできませんでした: " + ErrorText(HRESULT_FROM_WIN32(GetLastError())));
-    return 1;
-  }
-  LSTATUS st = SetString(kClsidKey, nullptr, L"SK Hub Credential Provider");
-  if (st == ERROR_SUCCESS) st = SetString((std::wstring(kClsidKey) + L"\\InprocServer32").c_str(), nullptr, target);
-  if (st == ERROR_SUCCESS) st = SetString((std::wstring(kClsidKey) + L"\\InprocServer32").c_str(), L"ThreadingModel", L"Apartment");
-  if (st == ERROR_SUCCESS) st = SetString(kProviderKey, nullptr, L"SKHubCredentialProvider");
-  if (st != ERROR_SUCCESS) {
-    PrintLine(L"レジストリに書けませんでした: " + ErrorText(HRESULT_FROM_WIN32(st)));
+  std::wstring target, error;
+  if (FAILED(skhub::InstallProvider(skhub::ExeDir(), target, error))) {
+    PrintLine(error);
     return 1;
   }
   PrintLine(L"サインイン画面に「SK Hub でサインイン」を追加しました。");
@@ -117,15 +70,9 @@ int Install() {
 }
 
 int Uninstall() {
-  LSTATUS a = RegDeleteTreeW(HKEY_LOCAL_MACHINE, kProviderKey);
-  LSTATUS b = RegDeleteTreeW(HKEY_LOCAL_MACHINE, kClsidKey);
-  skhub::ForgetDevice();
-  const std::wstring dir = InstallDir();
-  RemoveFile(dir + L"\\" SKHUB_DLL_NAME);
-  RemoveDirectoryW(dir.c_str());
-  RemoveDirectoryW(dir.substr(0, dir.find_last_of(L'\\')).c_str());
-  if ((a != ERROR_SUCCESS && a != ERROR_FILE_NOT_FOUND) || (b != ERROR_SUCCESS && b != ERROR_FILE_NOT_FOUND)) {
-    PrintLine(L"レジストリから消せませんでした: " + ErrorText(HRESULT_FROM_WIN32(a != ERROR_SUCCESS ? a : b)));
+  std::wstring error;
+  if (FAILED(skhub::UninstallProvider(error))) {
+    PrintLine(error);
     return 1;
   }
   PrintLine(L"サインイン画面から「SK Hub でサインイン」を外し、つないだアカウントと保存したパスワードを消しました。");
@@ -133,25 +80,6 @@ int Uninstall() {
 }
 
 // ---------- add ----------
-
-std::wstring CurrentUser() {
-  wchar_t name[512];
-  ULONG size = ARRAYSIZE(name);
-  return GetUserNameExW(NameSamCompatible, name, &size) ? std::wstring(name, size) : std::wstring();
-}
-
-// 「PC名\ユーザー」「.\ユーザー」「ユーザー」はこの PC のユーザー（Domain は空）。「ドメイン\ユーザー」「user@example.com」もそのまま使う
-void SplitUser(const std::wstring& input, std::wstring& domain, std::wstring& user) {
-  size_t slash = input.find(L'\\');
-  if (slash == std::wstring::npos) {
-    domain.clear();
-    user = input;
-    return;
-  }
-  domain = input.substr(0, slash);
-  user = input.substr(slash + 1);
-  if (domain == L"." || _wcsicmp(domain.c_str(), skhub::ComputerName().c_str()) == 0) domain.clear();
-}
 
 bool ReadPassword(std::wstring& password) {
   password.clear();
@@ -172,14 +100,14 @@ bool ReadPassword(std::wstring& password) {
 }
 
 int Add(const std::wstring& input) {
-  std::wstring account = input.empty() ? CurrentUser() : input;
+  std::wstring account = input.empty() ? skhub::CurrentUser() : input;
   std::wstring domain, user;
-  SplitUser(account, domain, user);
+  skhub::SplitUser(account, domain, user);
   if (user.empty()) {
     PrintLine(L"Windows のユーザー名を指定してください。");
     return 1;
   }
-  const std::wstring shown = (domain.empty() ? skhub::ComputerName() : domain) + L"\\" + user;
+  const std::wstring shown = skhub::DisplayUser(domain, user);
   PrintLine(L"Windows のユーザー: " + shown);
   if (input.empty()) PrintLine(L"（別のユーザーをつなぐときは skhub-logon-setup add <ユーザー名>）");
   Print(L"このユーザーの Windows のパスワード（PIN ではなく）: ");
@@ -190,31 +118,29 @@ int Add(const std::wstring& input) {
   }
 
   // パスワードが合っているか、Windows に確かめてもらう
-  HANDLE token = nullptr;
-  const bool upn = domain.empty() && user.find(L'@') != std::wstring::npos;
-  if (!LogonUserW(user.c_str(), upn ? nullptr : (domain.empty() ? L"." : domain.c_str()), password.c_str(), LOGON32_LOGON_INTERACTIVE,
-                  LOGON32_PROVIDER_DEFAULT, &token)) {
-    DWORD e = GetLastError();
+  std::wstring error;
+  if (FAILED(skhub::VerifyWindowsPassword(domain, user, password, error))) {
     skhub::Wipe(password);
-    if (e == ERROR_LOGON_FAILURE) PrintLine(L"ユーザー名かパスワードが違います。");
-    else if (e == ERROR_ACCOUNT_RESTRICTION) PrintLine(L"パスワードが空のユーザーはつなげません。先にパスワードを設定してください。");
-    else PrintLine(L"パスワードを確かめられませんでした: " + ErrorText(HRESULT_FROM_WIN32(e)));
+    PrintLine(error);
     return 1;
   }
-  CloseHandle(token);
 
   // SK Hub Systems アカウントで承認してもらう
   PrintLine(L"コードを発行しています…");
   skhub::DeviceToken device;
-  std::wstring code, error;
+  std::wstring code;
   if (FAILED(skhub::CreateRequest(device, skhub::Purpose::Register, code, error))) {
     skhub::Wipe(password);
     PrintLine(error);
     return 1;
   }
+  const std::wstring url = L"https://" SKHUB_APPROVE_URL L"/?code=" + code;
   PrintLine();
-  PrintLine(L"スマートフォンなどで次のページを開き、つなぐ SK Hub Systems アカウントで承認してください。");
-  PrintLine(L"  https://" SKHUB_APPROVE_URL L"/?code=" + code);
+  PrintLine(L"スマートフォンのカメラで QR コードを読み取るか、次のページを開いて、つなぐ SK Hub Systems アカウントで承認してください。");
+  PrintLine();
+  PrintQr(url);
+  PrintLine();
+  PrintLine(L"  " + url);
   PrintLine(L"  コード: " + skhub::FormatCode(code));
   PrintLine();
 
@@ -256,7 +182,7 @@ int Add(const std::wstring& input) {
       skhub::LinkedUser linked{ uid, user, domain };
       HRESULT hr = skhub::SaveLinkedUser(linked, password);
       if (FAILED(hr)) {
-        PrintLine(L"保存できませんでした: " + ErrorText(hr));
+        PrintLine(L"保存できませんでした: " + skhub::ErrorText(hr));
       } else {
         PrintLine(L"つなぎました。サインイン画面の「SK Hub でサインイン」から " + shown + L" にサインインできます。");
         PrintLine(L"  SK Hub Systems アカウントの UID: " + uid);
@@ -280,7 +206,7 @@ int List() {
     PrintLine(L"つないだアカウントはありません。");
     return 0;
   }
-  for (const auto& u : users) PrintLine(u.uid + L"  →  " + (u.domain.empty() ? skhub::ComputerName() : u.domain) + L"\\" + u.userName);
+  for (const auto& u : users) PrintLine(u.uid + L"  →  " + skhub::DisplayUser(u.domain, u.userName));
   return 0;
 }
 
@@ -292,7 +218,7 @@ int Remove(const std::wstring& target) {
     if (u.uid == target || _wcsicmp(u.userName.c_str(), target.c_str()) == 0) {
       HRESULT hr = skhub::RemoveLinkedUser(u.uid);
       if (FAILED(hr)) {
-        PrintLine(L"消せませんでした（" + u.uid + L"）: " + ErrorText(hr));
+        PrintLine(L"消せませんでした（" + u.uid + L"）: " + skhub::ErrorText(hr));
         return 1;
       }
       PrintLine(L"外しました: " + u.uid + L"  →  " + u.userName);
@@ -330,7 +256,9 @@ int wmain(int argc, wchar_t** argv) {
     Usage();
     return 0;
   }
-  if (!IsElevated()) {
+  // 確かめ用（QR コードの出かただけを見る。管理者でなくてよい）
+  if (command == L"qr" && argc >= 3) return PrintQr(argv[2]) ? 0 : 1;
+  if (!skhub::IsElevated()) {
     PrintLine(L"管理者として実行してください（スタートメニューで「ターミナル」を右クリック →「管理者として実行」）。");
     return 1;
   }

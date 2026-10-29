@@ -23,17 +23,20 @@ uid → つないだ Windows のユーザー（レジストリ）
 自動でサインイン、依頼を消す
 ```
 
-- **つなぐ**のは PC の管理者が設定ツール（`skhub-logon-setup add`）で行います。Windows のパスワードを 1 回入力して Windows に確かめてもらい、同じコードの流れで SK Hub Systems アカウントの承認を受けて、`UID → Windows のユーザー` を保存します。
+- **つなぐ**のは PC の管理者が設定アプリ（`SKHubLogonSettings.exe` の「アカウントをつなぐ」）で行います。Windows のパスワードを 1 回入力して Windows に確かめてもらい、同じコードの流れで SK Hub Systems アカウントの承認を受けて、`UID → Windows のユーザー` を保存します。
 - Windows のパスワードは **LSA の秘密の領域**（`L$SKHubLogon_Pw_<UID>`。SYSTEM と管理者だけが読める）に保存し、サインインのときだけ読み出して `CredProtect` してから LogonUI に渡します。
 - PC は自分が作った依頼（`pcUid` が自分の匿名ログイン）しか読めず、承認は**本人の UID でしか書けません**（`systems/firestore.rules` の `windowsLogons`）。ほかの人がコードを承認しても、その人のアカウントがこの PC につながっていなければサインインしません。
 - コードは 8 文字（`0・1・I・O` を除いた 32 文字）、有効期限は 10 分。使い終わった依頼は PC が消します。
+- タイルの「**QR コードで承認**」を押すと、`https://sk-hub.jp/pc/?code=…` の QR コードを大きく出すウィンドウが開きます（タイルの画像は丸く切り抜かれるので、QR コードは別のウィンドウにしている）。承認されると自動で閉じます。設定アプリの「アカウントをつなぐ」とコマンド版の `add` も、同じ QR コードを出します。
 - **パスワード・PIN・Windows Hello でのサインインはそのまま残ります**（ほかのサインイン方法を隠すことはしません）。
 
 | ファイル | 中身 |
 |---|---|
 | `src/provider/` | Credential Provider（`ICredentialProvider`・`ICredentialProviderCredential`）。承認を待つのは別のスレッドで、画面の更新はメッセージ用のウィンドウで UI のスレッドに戻してから行う |
-| `src/common/` | 匿名ログイン・Firestore の REST（WinHTTP）・レジストリ・LSA。設定ツールと共通 |
-| `src/setup/` | 設定ツール `skhub-logon-setup.exe` |
+| `src/common/` | 匿名ログイン・Firestore の REST（WinHTTP）・レジストリ・LSA・QR コード（`qr.cpp`。バイトモード・誤り訂正 M・型番 1〜6）。入れる・外す・パスワードの確認（`admin.cpp`）。設定アプリ・コマンド版と共通 |
+| `src/provider/qrwindow.cpp` | サインイン画面の QR コードのウィンドウ |
+| `src/settings/` | 設定アプリ `SKHubLogonSettings.exe`（Win32 のウィンドウ。起動すると管理者の確認が出る） |
+| `src/setup/` | コマンド版 `skhub-logon-setup.exe`（同じことをコマンドで。スクリプトから使うとき） |
 | `src/test/harness.cpp` | LogonUI の代わりに DLL を読み込んで呼ぶ確かめ |
 | `res/tile.bmp` | タイルの画像（`/account/icon-192.png` を白地の BMP にしたもの） |
 | `/pc/`（サイト） | 承認するページ。サインイン画面にそのまま `sk-hub.jp/pc` と出すので、URL は変えない |
@@ -46,7 +49,11 @@ Visual Studio 2022（または Build Tools）の「C++ によるデスクトッ�
 build.cmd test
 ```
 
-`out\` に `SKHubCredentialProvider.dll`・`skhub-logon-setup.exe`・`harness.exe` ができ、通信しない確かめ（項目・タイルの画像・承認前にサインインしないこと・KERB の詰め方）が動きます。
+`out\` に `SKHubCredentialProvider.dll`・`SKHubLogonSettings.exe`・`skhub-logon-setup.exe`・`harness.exe` ができ、通信しない確かめ（項目・タイルの画像・承認前にサインインしないこと・KERB の詰め方）が動きます。
+
+- `harness.exe --qr <フォルダー>` … QR コード（型番 1・3・5・6）と QR コードのウィンドウの絵を BMP に書き出す。読み取れるかは別の道具（スマートフォン・jsQR など）で確かめる
+- `out\obj\preview\SKHubLogonSettings-preview.exe --snapshot <フォルダー>` … 設定アプリの画面を BMP に書き出す（見た目の確かめ用。管理者でなくてよく、何も変えない）
+- `skhub-logon-setup.exe qr <文字列>` … ターミナルに QR コードを出す（管理者でなくてよい）
 
 ## 使い始める前に（1 回だけ）
 
@@ -59,14 +66,15 @@ build.cmd test
 
 > ⚠️ Credential Provider はサインイン画面（LogonUI）の中で動きます。最初は**仮想マシン（Hyper-V など）で試す**のがおすすめです。パスワードでのサインインは残るので、ふつうは入れなくなることはありませんが、念のため下の「戻せなくなったとき」を読んでおいてください。
 
-`out\` の `SKHubCredentialProvider.dll` と `skhub-logon-setup.exe` を同じフォルダーに置き、**管理者として開いたターミナル**で:
+`out\` の `SKHubCredentialProvider.dll` と `SKHubLogonSettings.exe` を同じフォルダーに置き、`SKHubLogonSettings.exe` をダブルクリックします（管理者の確認が出ます）。
 
-```bat
-skhub-logon-setup install
-skhub-logon-setup add
-```
+1. 「**サインイン画面に追加**」… DLL を `C:\Program Files\SK Hub\Windows Logon\` にコピーして、サインイン画面に登録します
+2. 「**アカウントをつなぐ…**」… Windows のユーザーを選んでパスワードを入力 → 出てきた QR コードをスマートフォンで読み取って承認 →「つなぎました」
+3. 一覧から選んで「外す」でつながりを外せます。「サインイン画面から外す」で、つないだアカウント・保存したパスワード・この PC の匿名ログインの記録もまとめて消えます
 
-- `install` … DLL を `C:\Program Files\SK Hub\Windows Logon\` にコピーして、サインイン画面に登録します
+コマンド版（`skhub-logon-setup.exe`。管理者として開いたターミナルで）も同じことができます:
+
+- `install` … サインイン画面に追加
 - `add [ユーザー名]` … ユーザー名を省くと、いまのユーザー。パスワードを入力すると、コードと `https://sk-hub.jp/pc/?code=…` が出るので、スマートフォンで承認します
 - `list` … つないだアカウントの一覧 / `remove <UID か ユーザー名>` … 外す
 - `uninstall` … サインイン画面から外し、つないだアカウント・保存したパスワード・この PC の匿名ログインの記録を消します
@@ -75,7 +83,7 @@ Win+L でロックすると、「サインイン オプション」に SK Hub �
 
 ## 気をつけること
 
-- **Windows のパスワードを変えたら、`add` でつなぎ直す**必要があります（サインイン画面に「パスワードが変わったため…」と出ます）。
+- **Windows のパスワードを変えたら、設定アプリの「アカウントをつなぐ」でつなぎ直す**必要があります（サインイン画面に「パスワードが変わったため…」と出ます）。
 - Microsoft アカウントでサインインしているユーザー・ドメイン（Active Directory）のユーザーは、まだ試していません。まずはローカルアカウントで使ってください。
 - サインイン画面がインターネットにつながっていないと使えません（Wi-Fi はサインイン画面の右下からつなげます）。
 - リモート デスクトップの資格情報の画面（CredUI）とパスワードの変更には対応していません。

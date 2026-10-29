@@ -72,6 +72,10 @@ class CCredential : public ICredentialProviderCredential {
   void OnFlowUpdate(UINT id);
   void SetText(FIELD_ID id, const std::wstring& text);
   void ClearSecret();
+  void OpenQrWindow();
+  void CloseQrWindow();
+  void UpdateQr();
+  static void OnQrWindowClosed(void* context);
 
   LONG _cRef;
   CREDENTIAL_PROVIDER_USAGE_SCENARIO _cpus;
@@ -79,6 +83,8 @@ class CCredential : public ICredentialProviderCredential {
   ICredentialProviderCredentialEvents* _events;
   std::wstring _text[SFI_NUM_FIELDS];
   HWND _hwnd;
+  HWND _qrWnd;        // QR コードのウィンドウ（開いているときだけ）
+  std::wstring _code;  // いまのコード（8 文字。ハイフンなし）
   std::shared_ptr<Flow> _flow;
   UINT _nextFlowId;
   bool _ready;

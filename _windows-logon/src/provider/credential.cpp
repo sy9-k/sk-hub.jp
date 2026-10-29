@@ -3,6 +3,7 @@
 #include "../common/skhub.h"
 #include "helpers.h"
 #include "provider.h"
+#include "qrwindow.h"
 #include "resource.h"
 
 namespace {
@@ -45,9 +46,8 @@ void RunFlow(Flow& f) {
     Update(f, nullptr, error + L"。「新しいコードを表示」でやり直せます。");
     return;
   }
-  const std::wstring display = skhub::FormatCode(code);
   const ULONGLONG deadline = GetTickCount64() + SKHUB_CODE_TTL_SECONDS * 1000ULL;
-  Update(f, &display, Waiting(deadline));
+  Update(f, &code, Waiting(deadline));
 
   int failures = 0;
   while (!Stopped(f, 2000)) {
@@ -125,11 +125,13 @@ Flow::~Flow() {
 }
 
 CCredential::CCredential()
-    : _cRef(1), _cpus(CPUS_INVALID), _provider(nullptr), _events(nullptr), _hwnd(nullptr), _nextFlowId(1), _ready(false) {
+    : _cRef(1), _cpus(CPUS_INVALID), _provider(nullptr), _events(nullptr), _hwnd(nullptr), _qrWnd(nullptr), _nextFlowId(1), _ready(false) {
   DllAddRef();
 }
 
 CCredential::~CCredential() {
+  CloseQrWindow();
+  UnregisterQrWindowClass(g_hinst);
   StopFlow();
   ClearSecret();
   if (_events) _events->Release();
@@ -144,7 +146,8 @@ HRESULT CCredential::Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, CProvid
   _cpus = cpus;
   _provider = provider;
   _text[SFI_TITLE] = L"SK Hub でサインイン";
-  _text[SFI_INSTRUCTION] = L"スマートフォンなどで " SKHUB_APPROVE_URL L" を開き、SK Hub Systems アカウントでログインして、次のコードを入力してください。";
+  _text[SFI_INSTRUCTION] = L"スマートフォンなどで " SKHUB_APPROVE_URL L" を開き、SK Hub Systems アカウントでログインして、次のコードを入力してください。「QR コードで承認」から読み取ることもできます。";
+  _text[SFI_QR] = L"QR コードで承認";
   _text[SFI_NEWCODE] = L"新しいコードを表示";
   _text[SFI_SUBMIT] = L"サインイン";
   return S_OK;
@@ -233,12 +236,43 @@ void CCredential::OnFlowUpdate(UINT id) {
     skhub::Wipe(_flow->password);
   }
   ReleaseSRWLockExclusive(&_flow->lock);
-  SetText(SFI_CODE, code);
+  _code = code;
+  SetText(SFI_CODE, code.empty() ? L"" : skhub::FormatCode(code));
   SetText(SFI_STATUS, status);
+  UpdateQr();
   if (ready) {
+    // QR コードのウィンドウを閉じてから、サインインしてもらう
+    CloseQrWindow();
     _ready = true;
     if (_provider) _provider->OnCredentialReady();
   }
+}
+
+// ---------- QR コードのウィンドウ ----------
+
+void CCredential::OpenQrWindow() {
+  if (_qrWnd) {
+    SetForegroundWindow(_qrWnd);
+    return;
+  }
+  // サインイン画面の上に出すための親（LogonUI のウィンドウ）
+  HWND owner = nullptr;
+  if (_events) _events->OnCreatingWindow(&owner);
+  _qrWnd = CreateQrWindow(g_hinst, owner, &CCredential::OnQrWindowClosed, this);
+  UpdateQr();
+}
+
+void CCredential::CloseQrWindow() {
+  if (_qrWnd) DestroyWindow(_qrWnd);  // OnQrWindowClosed で _qrWnd が空になる
+  _qrWnd = nullptr;
+}
+
+void CCredential::UpdateQr() {
+  if (_qrWnd) UpdateQrWindow(_qrWnd, { _code, _text[SFI_STATUS] });
+}
+
+void CCredential::OnQrWindowClosed(void* context) {
+  static_cast<CCredential*>(context)->_qrWnd = nullptr;
 }
 
 void CCredential::SetText(FIELD_ID id, const std::wstring& text) {
@@ -274,8 +308,10 @@ IFACEMETHODIMP CCredential::SetSelected(BOOL* pbAutoLogon) {
 }
 
 IFACEMETHODIMP CCredential::SetDeselected() {
+  CloseQrWindow();
   StopFlow();
   ClearSecret();
+  _code.clear();
   SetText(SFI_CODE, L"");
   SetText(SFI_STATUS, L"");
   return S_OK;
@@ -318,9 +354,16 @@ IFACEMETHODIMP CCredential::SetCheckboxValue(DWORD, BOOL) { return E_INVALIDARG;
 IFACEMETHODIMP CCredential::SetComboBoxSelectedValue(DWORD, DWORD) { return E_INVALIDARG; }
 
 IFACEMETHODIMP CCredential::CommandLinkClicked(DWORD dwFieldID) {
+  if (dwFieldID == SFI_QR) {
+    if (!_ready && !_flow) StartFlow();
+    OpenQrWindow();
+    return S_OK;
+  }
   if (dwFieldID != SFI_NEWCODE) return E_INVALIDARG;
+  // QR コードのウィンドウが開いていれば、新しいコードに描き変わる
   StopFlow();
   ClearSecret();
+  _code.clear();
   StartFlow();
   return S_OK;
 }
