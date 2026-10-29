@@ -1,100 +1,122 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <script src="/assets/coming-soon.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="robots" content="noindex" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <!-- 表示（ライト・ダーク・テーマカラー）。ちらつかないよう、CSS より先に <html> に付ける（選ぶのはヘッダーのアカウントのメニューの「表示」。assets/site.js） -->
+  <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}"),d=document.documentElement;if(t.mode==="light"||t.mode==="dark")d.setAttribute("data-theme",t.mode);if(/^[a-z]{2,12}$/.test(t.accent||"")&&t.accent!=="blue")d.setAttribute("data-accent",t.accent);}catch(e){}})();</script>
   <title>PC へのサインインを承認 | SK Hub Systems</title>
+  <meta name="theme-color" content="#ffffff" data-theme-color>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap"></script>
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"></script>
   <link rel="stylesheet" href="/assets/header.css">
-  <link rel="stylesheet" href="/y-filter/shared/admin.css">
-  <link rel="stylesheet" href="/y-filter/console.css">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script type="module" src="pc.js"></script>
 </head>
 <body>
   <!-- SK Hub で Windows にサインインする（_windows-logon）。Windows のサインイン画面・設定ツールに出たコードを入力して承認する。
-       短い URL（sk-hub.jp/pc）はサインイン画面にそのまま出すので変えない。権限は y-filter リポジトリの systems/firestore.rules の windowsLogons -->
-  <header class="site-header console-header">
+       短い URL（sk-hub.jp/pc）はサインイン画面にそのまま出すので変えない。見た目はアカウントのページ（/account/）と同じ acct-。
+       権限は y-filter リポジトリの systems/firestore.rules の windowsLogons -->
+  <a class="skip" href="#main">本文へ移動</a>
+  <header class="site-header">
     <a class="hd-logo" href="/" aria-label="ホーム">
       <span class="hd-logo-image" aria-hidden="true"><img src="/assets/logo.svg" alt="" width="26" height="26"></span>
       <span class="hd-logo-back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </a>
-    <a class="hd-item hd-console-name" href="/pc/">PC へのサインイン</a>
+    <a class="hd-item" href="/about/">私について</a>
+    <a class="hd-item" href="/products/" data-menu="products">プロダクト</a>
+    <a class="hd-item" href="https://support.sk-hub.jp/" data-menu="support" data-no-navigation="true">サポートと情報</a>
     <a class="hd-item hd-account" href="/account/" data-menu="account" data-account-link>アカウント</a>
+    <a class="hd-item hd-lang" href="/lang/" data-lang-link><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg><span class="hd-lang-label">言語</span></a>
     <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
   </header>
   <div class="hd-menu" id="hd-menu"><div class="hd-menu-inner"><div class="hd-menu-content"></div></div></div>
   <div class="hd-backdrop" id="hd-backdrop"></div>
 
-  <div class="gate">
-    <div class="gate-card" style="max-width:520px;">
-      <div class="brand">
-        <img class="brand-mark" src="/account/icon-192.png" alt="">
-        <div><div class="brand-name">PC へのサインイン</div><div class="brand-sub">SK Hub Systems アカウント</div></div>
-      </div>
+  <main id="main">
+    <section class="acct">
+      <div class="wrap">
+        <div class="acct-loading" data-pc-view="loading" aria-live="polite">
+          <span class="acct-spinner" aria-hidden="true"></span>読み込み中…
+        </div>
 
-      <div data-pc-view="loading"><p class="hint">読み込み中…</p></div>
+        <!-- コードの入力 -->
+        <div class="acct-center pc-center" data-pc-view="code" hidden>
+          <span class="pc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+          <p class="acct-center-eyebrow">SK Hub Systems アカウント</p>
+          <h1 class="acct-center-title">PC へのサインイン</h1>
+          <p class="acct-center-lead">Windows のサインイン画面（または設定ツール）に表示されている 8 文字のコードを入力してください。</p>
+          <form id="pc-form" class="pc-form" autocomplete="off">
+            <label class="pc-label" for="pc-code">コード</label>
+            <input type="text" id="pc-code" maxlength="9" placeholder="ABCD-EFGH" autocapitalize="characters" spellcheck="false">
+            <button class="btn btn-primary pc-wide" type="submit">次へ</button>
+          </form>
+          <div class="pc-user" data-pc-user></div>
+        </div>
 
-      <!-- コードの入力 -->
-      <div data-pc-view="code" hidden>
-        <h1>PC に表示されたコードを入力</h1>
-        <p>Windows のサインイン画面（または設定ツール）に表示されている 8 文字のコードを入力してください。</p>
-        <div class="pc-user" data-pc-user></div>
-        <form id="pc-form" autocomplete="off">
-          <label class="field-label" for="pc-code">コード</label>
-          <input type="text" id="pc-code" maxlength="9" placeholder="ABCD-EFGH" autocapitalize="characters" spellcheck="false" inputmode="text">
-          <div class="inline" style="margin-top:18px;">
-            <button class="btn btn-primary" type="submit">次へ</button>
+        <!-- 承認するかの確認 -->
+        <div class="acct-center pc-center" data-pc-view="confirm" hidden>
+          <span class="pc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+          <h1 class="acct-center-title pc-title" data-pc-title></h1>
+          <div class="pc-target">
+            <strong data-pc-name></strong>
+            <small data-pc-code></small>
           </div>
-        </form>
-      </div>
-
-      <!-- 承認するかの確認 -->
-      <div data-pc-view="confirm" hidden>
-        <h1 data-pc-title></h1>
-        <div class="pc-target">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
-          <div><strong data-pc-name></strong><small data-pc-code></small></div>
+          <p class="acct-center-lead" data-pc-desc></p>
+          <div class="pc-user" data-pc-user></div>
+          <div class="pc-actions">
+            <button id="pc-approve" class="btn btn-primary pc-wide" type="button">承認</button>
+            <button id="pc-deny" class="btn btn-tonal pc-wide" type="button">拒否</button>
+          </div>
+          <p class="acct-center-note">いま自分で操作している PC でなければ、承認しないでください。ほかの人に頼まれてコードを入力した場合は「拒否」を押してください。</p>
         </div>
-        <p data-pc-desc></p>
-        <div class="pc-user" data-pc-user></div>
-        <p class="pc-warn">いま自分で操作している PC でなければ、承認しないでください。ほかの人に頼まれてコードを入力した場合は「拒否」を押してください。</p>
-        <div class="inline" style="margin-top:18px;">
-          <button id="pc-approve" class="btn btn-primary" type="button">承認</button>
-          <button id="pc-deny" class="btn btn-tonal" type="button">拒否</button>
-        </div>
-      </div>
 
-      <!-- 終わり -->
-      <div data-pc-view="done" hidden>
-        <h1 data-pc-done-title></h1>
-        <p data-pc-done-text></p>
-        <div class="inline" style="margin-top:18px;">
-          <a class="btn btn-tonal" href="/pc/">別のコードを入力</a>
+        <!-- 終わり -->
+        <div class="acct-center pc-center" data-pc-view="done" hidden>
+          <span class="pc-icon pc-icon--done" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <h1 class="acct-center-title pc-title" data-pc-done-title></h1>
+          <p class="acct-center-lead" data-pc-done-text></p>
+          <div class="acct-center-actions">
+            <a class="btn btn-tonal" href="/pc/">別のコードを入力</a>
+          </div>
         </div>
-      </div>
 
-      <div id="pc-msg" class="gate-msg" role="alert"></div>
-    </div>
-  </div>
+        <p id="pc-msg" class="acct-msg pc-msg" role="alert"></p>
+      </div>
+    </section>
+  </main>
 
   <style>
-    #pc-code { width: 100%; font-size: 22px; letter-spacing: .12em; text-transform: uppercase; font-family: "Inter", monospace; }
-    .pc-user { display: flex; align-items: center; gap: 10px; margin: 14px 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 14px; }
+    [data-pc-view][hidden] { display: none !important; }
+    .pc-center { padding-top: 64px; }
+    .pc-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 0 auto; border-radius: 22px; background: var(--surface); color: var(--accent); box-shadow: var(--shadow), inset 0 0 0 1px var(--line); }
+    .pc-icon svg { width: 36px; height: 36px; }
+    .pc-icon--done { background: var(--accent); color: var(--accent-ink, #fff); box-shadow: none; }
+    .pc-title { font-size: clamp(26px, 4.4vw, 38px); margin-top: 22px; text-wrap: balance; }
+    .pc-form { display: grid; gap: 12px; max-width: 340px; margin: 32px auto 0; text-align: left; }
+    .pc-label { font-size: 13px; font-weight: 700; color: var(--muted); }
+    #pc-code { width: 100%; height: 60px; padding: 0 16px; border: 0; border-radius: 16px; background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); font: inherit; font-family: "Inter", ui-monospace, monospace; font-size: 26px; font-weight: 700; letter-spacing: .14em; text-align: center; text-transform: uppercase; }
+    #pc-code:focus { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+    #pc-code::placeholder { color: var(--muted); opacity: .45; }
+    .pc-wide { width: 100%; justify-content: center; min-height: 50px; }
+    .pc-target { display: inline-flex; flex-direction: column; gap: 4px; margin-top: 18px; padding: 14px 22px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+    .pc-target strong { font-size: 18px; overflow-wrap: anywhere; }
+    .pc-target small { color: var(--muted); font-size: 13px; font-family: "Inter", ui-monospace, monospace; letter-spacing: .06em; }
+    .pc-user { display: inline-flex; align-items: center; gap: 10px; margin: 22px auto 0; padding: 8px 16px 8px 8px; border-radius: 999px; background: var(--surface-2); font-size: 14px; text-align: left; }
     .pc-user:empty { display: none; }
     .pc-user img, .pc-user .pc-letter { width: 32px; height: 32px; border-radius: 50%; flex: none; }
     .pc-user .pc-letter { display: grid; place-items: center; color: #fff; font-weight: 700; }
-    .pc-user small, .pc-target small { display: block; color: var(--muted); font-size: 12px; }
-    .pc-target { display: flex; align-items: center; gap: 12px; margin: 14px 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, rgba(127,127,127,.25)); }
-    .pc-target svg { width: 28px; height: 28px; flex: none; }
-    .pc-target strong { font-size: 16px; overflow-wrap: anywhere; }
-    .pc-warn { font-size: 13px; line-height: 1.7; color: var(--muted); }
+    .pc-user small { display: block; color: var(--muted); font-size: 12px; }
+    .pc-actions { display: grid; gap: 10px; max-width: 340px; margin: 26px auto 0; }
+    .pc-msg { text-align: center; }
   </style>
 
-  <script type="module" src="pc.js"></script>
   <script src="/assets/site.js" defer></script>
   <script src="/assets/maintenance.js" defer></script>
+  <script src="/assets/hub/sync-loader.js" defer></script>
   <!-- SK Hub Systems のアクセスチェック（利用規約の同意・アクセス制限） -->
   <script src="/frameworks/check.js" defer></script>
 </body>

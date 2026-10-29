@@ -5,6 +5,11 @@
 #define SKHUB_PROJECT_ID L"y-filter-systems"
 #define SKHUB_API_KEY L"AIzaSyB4gqzPEPyP0NrEJw33-OTAxUrF48MmiuI"
 
+// 0F8 アカウント（Search3958 の 0F8。Firebase の couud-dashboard にメールとパスワードでログインする）。
+//   サインイン画面ではポップアップ（0F8 の SDK）が使えないので、Firebase の REST で直接確かめる（0F8 側の了承ずみ）。
+//   値は search3958.github.io の accounts/login/ と同じ（公開してよい値）
+#define SKHUB_OF8_API_KEY L"AIzaSyAYSzOAmqY_IJCEUNb-cJNQfp4AKt93a_A"
+
 // サインインの依頼（Firestore）。権限は y-filter リポジトリの systems/firestore.rules の windowsLogons
 #define SKHUB_LOGIN_COLLECTION L"windowsLogons"
 // 承認するページ（sk-hub.jp/pc/）。サインイン画面にこのまま出すので、打ちやすい短い URL にしている

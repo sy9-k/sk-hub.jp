@@ -3,6 +3,7 @@
 #include "../common/skhub.h"
 #include "helpers.h"
 #include "provider.h"
+#include "qrwindow.h"
 #include "resource.h"
 
 namespace {
@@ -16,10 +17,11 @@ void Notify(Flow& f) {
   PostMessageW(f.hwnd, WM_SKHUB_UPDATE, f.id, 0);
 }
 
-void Update(Flow& f, const std::wstring* code, const std::wstring& status) {
+void Update(Flow& f, const std::wstring* code, const std::wstring& status, int phase) {
   AcquireSRWLockExclusive(&f.lock);
   if (code) f.code = *code;
   f.status = status;
+  f.phase = phase;
   ReleaseSRWLockExclusive(&f.lock);
   Notify(f);
 }
@@ -31,8 +33,8 @@ bool Stopped(Flow& f, DWORD waitMs = 0) {
 std::wstring Waiting(ULONGLONG deadline) {
   ULONGLONG now = GetTickCount64();
   ULONGLONG left = deadline > now ? (deadline - now + 999) / 1000 : 0;
-  wchar_t buf[128];
-  StringCchPrintfW(buf, ARRAYSIZE(buf), L"スマートフォンで承認されるのを待っています（残り %llu:%02llu）", left / 60, left % 60);
+  wchar_t buf[96];
+  StringCchPrintfW(buf, ARRAYSIZE(buf), SKHUB_APPROVE_URL L" で承認（残り %llu:%02llu）", left / 60, left % 60);
   return buf;
 }
 
@@ -40,19 +42,18 @@ void RunFlow(Flow& f) {
   skhub::DeviceToken token;
   std::wstring code, error;
   const std::wstring none;
-  Update(f, &none, L"コードを用意しています…");
+  Update(f, &none, L"コードを用意しています…", 0);
   if (FAILED(skhub::CreateRequest(token, skhub::Purpose::SignIn, code, error))) {
-    Update(f, nullptr, error + L"。「新しいコードを表示」でやり直せます。");
+    Update(f, nullptr, error, 2);
     return;
   }
-  const std::wstring display = skhub::FormatCode(code);
   const ULONGLONG deadline = GetTickCount64() + SKHUB_CODE_TTL_SECONDS * 1000ULL;
-  Update(f, &display, Waiting(deadline));
+  Update(f, &code, Waiting(deadline), 1);
 
   int failures = 0;
   while (!Stopped(f, 2000)) {
     if (GetTickCount64() >= deadline) {
-      Update(f, &none, L"コードの有効期限が切れました。「新しいコードを表示」を押してください。");
+      Update(f, &none, L"コードの有効期限が切れました", 2);
       break;
     }
     skhub::RequestState state;
@@ -60,32 +61,33 @@ void RunFlow(Flow& f) {
     if (FAILED(skhub::CheckRequest(token, code, state, uid, error))) {
       // 少しのあいだの通信の失敗は待つ
       if (++failures >= 5) {
-        Update(f, nullptr, error + L"。「新しいコードを表示」でやり直せます。");
+        Update(f, &none, error, 2);
         break;
       }
       continue;
     }
     failures = 0;
     if (state == skhub::RequestState::Pending) {
-      Update(f, nullptr, Waiting(deadline));
+      Update(f, nullptr, Waiting(deadline), 1);
       continue;
     }
     if (state == skhub::RequestState::Denied) {
-      Update(f, &none, L"スマートフォンで拒否されました。サインインする場合は「新しいコードを表示」を押してください。");
+      Update(f, &none, L"スマートフォンで拒否されました", 2);
       break;
     }
     if (state != skhub::RequestState::Approved) {
-      Update(f, &none, L"コードが見つかりませんでした。「新しいコードを表示」を押してください。");
+      Update(f, &none, L"コードが見つかりませんでした", 2);
       break;
     }
+    // 0F8 でつないだもの（of8_…）は、0F8 の ID とパスワードのときだけ使う
     skhub::LinkedUser user;
-    if (FAILED(skhub::FindLinkedUser(uid, user))) {
-      Update(f, &none, L"承認したアカウントは、この PC につながっていません。PC の管理者が設定ツールでつないでください。");
+    if (skhub::IsOf8LinkId(uid) || FAILED(skhub::FindLinkedUser(uid, user))) {
+      Update(f, &none, L"このアカウントは、この PC につながっていません", 2);
       break;
     }
     std::wstring password;
     if (FAILED(skhub::ReadLinkedPassword(uid, password))) {
-      Update(f, &none, L"Windows のパスワードを読み出せませんでした。設定ツールでつなぎ直してください。");
+      Update(f, &none, L"パスワードを読み出せませんでした。設定アプリでつなぎ直してください", 2);
       break;
     }
     AcquireSRWLockExclusive(&f.lock);
@@ -125,13 +127,17 @@ Flow::~Flow() {
 }
 
 CCredential::CCredential()
-    : _cRef(1), _cpus(CPUS_INVALID), _provider(nullptr), _events(nullptr), _hwnd(nullptr), _nextFlowId(1), _ready(false) {
+    : _cRef(1), _cpus(CPUS_INVALID), _provider(nullptr), _events(nullptr), _hwnd(nullptr), _qrWnd(nullptr), _phase(0), _hasOf8(false),
+      _of8Mode(false), _nextFlowId(1), _ready(false) {
   DllAddRef();
 }
 
 CCredential::~CCredential() {
+  CloseQrWindow();
+  UnregisterQrWindowClass(g_hinst);
   StopFlow();
   ClearSecret();
+  skhub::Wipe(_text[SFI_OF8_PASSWORD]);
   if (_events) _events->Release();
   if (_hwnd) {
     DestroyWindow(_hwnd);
@@ -143,10 +149,14 @@ CCredential::~CCredential() {
 HRESULT CCredential::Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, CProvider* provider) {
   _cpus = cpus;
   _provider = provider;
-  _text[SFI_TITLE] = L"SK Hub でサインイン";
-  _text[SFI_INSTRUCTION] = L"スマートフォンなどで " SKHUB_APPROVE_URL L" を開き、SK Hub Systems アカウントでログインして、次のコードを入力してください。";
+  _text[SFI_TITLE] = L"Sign in with SK Hub";
+  _text[SFI_QR] = L"QR コードを表示";
   _text[SFI_NEWCODE] = L"新しいコードを表示";
   _text[SFI_SUBMIT] = L"サインイン";
+  for (int i = 0; i < SFI_NUM_FIELDS; i++) _fieldState[i] = s_rgFieldStatePairs[i].cpfs;
+  // 0F8 アカウントをつないでいるときだけ、0F8 の ID とパスワードに切りかえられる
+  _hasOf8 = skhub::HasOf8Links();
+  ApplyMode();
   return S_OK;
 }
 
@@ -224,6 +234,7 @@ void CCredential::OnFlowUpdate(UINT id) {
   AcquireSRWLockExclusive(&_flow->lock);
   code = _flow->code;
   status = _flow->status;
+  const int phase = _flow->phase;
   if (_flow->ready) {
     ready = true;
     _flow->ready = false;
@@ -233,17 +244,123 @@ void CCredential::OnFlowUpdate(UINT id) {
     skhub::Wipe(_flow->password);
   }
   ReleaseSRWLockExclusive(&_flow->lock);
-  SetText(SFI_CODE, code);
+  _code = code;
+  _phase = ready ? 0 : phase;
+  SetText(SFI_CODE, code.empty() ? L"" : skhub::FormatCode(code));
   SetText(SFI_STATUS, status);
+  ApplyMode();
+  UpdateQr();
   if (ready) {
+    // QR コードのウィンドウを閉じてから、サインインしてもらう
+    CloseQrWindow();
     _ready = true;
     if (_provider) _provider->OnCredentialReady();
   }
 }
 
+// ---------- QR コードのウィンドウ ----------
+
+void CCredential::OpenQrWindow() {
+  if (_qrWnd) {
+    SetForegroundWindow(_qrWnd);
+    return;
+  }
+  // サインイン画面の上に出すための親（LogonUI のウィンドウ）
+  HWND owner = nullptr;
+  if (_events) _events->OnCreatingWindow(&owner);
+  _qrWnd = CreateQrWindow(g_hinst, owner, &CCredential::OnQrWindowClosed, this);
+  UpdateQr();
+}
+
+void CCredential::CloseQrWindow() {
+  if (_qrWnd) DestroyWindow(_qrWnd);  // OnQrWindowClosed で _qrWnd が空になる
+  _qrWnd = nullptr;
+}
+
+void CCredential::UpdateQr() {
+  if (_qrWnd) UpdateQrWindow(_qrWnd, { _code, _text[SFI_STATUS] });
+}
+
+void CCredential::OnQrWindowClosed(void* context) {
+  static_cast<CCredential*>(context)->_qrWnd = nullptr;
+}
+
 void CCredential::SetText(FIELD_ID id, const std::wstring& text) {
   _text[id] = text;
   if (_events) _events->SetFieldString(this, id, _text[id].c_str());
+}
+
+void CCredential::SetVisible(FIELD_ID id, bool visible) {
+  const CREDENTIAL_PROVIDER_FIELD_STATE state = visible ? CPFS_DISPLAY_IN_SELECTED_TILE : CPFS_HIDDEN;
+  if (_fieldState[id] == state) return;
+  _fieldState[id] = state;
+  if (_events) _events->SetFieldState(this, id, state);
+}
+
+void CCredential::ApplyMode() {
+  const bool of8 = _of8Mode;
+  SetVisible(SFI_CODE, !of8);
+  SetVisible(SFI_STATUS, true);
+  // QR コードはコードがあるとき、新しいコードは終わったときだけ
+  SetVisible(SFI_QR, !of8 && _phase == 1);
+  SetVisible(SFI_NEWCODE, !of8 && _phase == 2);
+  SetVisible(SFI_OF8_EMAIL, of8);
+  SetVisible(SFI_OF8_PASSWORD, of8);
+  SetVisible(SFI_SUBMIT, of8);
+  SetVisible(SFI_SWITCH, _hasOf8);
+  SetText(SFI_SWITCH, of8 ? L"QR コードでサインイン" : L"0F8 の ID とパスワードでサインイン");
+}
+
+void CCredential::SwitchMode() {
+  _of8Mode = !_of8Mode;
+  ClearSecret();
+  ClearOf8Password();
+  if (_of8Mode) {
+    // QR コードの流れは止める（戻ったら新しいコードを出す）
+    CloseQrWindow();
+    StopFlow();
+    _code.clear();
+    _phase = 0;
+    SetText(SFI_CODE, L"");
+    SetText(SFI_STATUS, L"0F8 アカウントのメールアドレスとパスワードを入力してください");
+    ApplyMode();
+    if (_events) _events->SetFieldInteractiveState(this, _text[SFI_OF8_EMAIL].empty() ? SFI_OF8_EMAIL : SFI_OF8_PASSWORD, CPFIS_FOCUSED);
+  } else {
+    SetText(SFI_STATUS, L"");
+    ApplyMode();
+    StartFlow();
+  }
+}
+
+void CCredential::ClearOf8Password() {
+  skhub::Wipe(_text[SFI_OF8_PASSWORD]);
+  if (_events) _events->SetFieldString(this, SFI_OF8_PASSWORD, L"");
+}
+
+bool CCredential::PrepareOf8(std::wstring& error) {
+  std::wstring of8Uid;
+  const std::wstring email = _text[SFI_OF8_EMAIL];
+  HRESULT hr = skhub::Of8SignIn(email, _text[SFI_OF8_PASSWORD], of8Uid, error);
+  // 0F8 のパスワードは、確かめたらすぐ消す
+  ClearOf8Password();
+  if (FAILED(hr)) return false;
+  const std::wstring id = skhub::Of8LinkId(of8Uid);
+  skhub::LinkedUser user;
+  if (FAILED(skhub::FindLinkedUser(id, user))) {
+    error = L"この 0F8 アカウントは、この PC につながっていません。設定アプリでつないでください";
+    return false;
+  }
+  std::wstring password;
+  if (FAILED(skhub::ReadLinkedPassword(id, password))) {
+    error = L"パスワードを読み出せませんでした。設定アプリでつなぎ直してください";
+    return false;
+  }
+  _user = user.userName;
+  _domain = user.domain;
+  _password = password;
+  skhub::Wipe(password);
+  _ready = true;
+  return true;
 }
 
 void CCredential::ClearSecret() {
@@ -269,21 +386,26 @@ IFACEMETHODIMP CCredential::UnAdvise() {
 
 IFACEMETHODIMP CCredential::SetSelected(BOOL* pbAutoLogon) {
   *pbAutoLogon = FALSE;
-  if (!_ready && !_flow) StartFlow();
+  if (!_of8Mode && !_ready && !_flow) StartFlow();
   return S_OK;
 }
 
 IFACEMETHODIMP CCredential::SetDeselected() {
+  CloseQrWindow();
   StopFlow();
   ClearSecret();
+  ClearOf8Password();
+  _code.clear();
+  _phase = 0;
   SetText(SFI_CODE, L"");
   SetText(SFI_STATUS, L"");
+  ApplyMode();
   return S_OK;
 }
 
 IFACEMETHODIMP CCredential::GetFieldState(DWORD dwFieldID, CREDENTIAL_PROVIDER_FIELD_STATE* pcpfs, CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE* pcpfis) {
   if (dwFieldID >= SFI_NUM_FIELDS || !pcpfs || !pcpfis) return E_INVALIDARG;
-  *pcpfs = s_rgFieldStatePairs[dwFieldID].cpfs;
+  *pcpfs = _fieldState[dwFieldID];
   *pcpfis = s_rgFieldStatePairs[dwFieldID].cpfis;
   return S_OK;
 }
@@ -297,7 +419,7 @@ IFACEMETHODIMP CCredential::GetStringValue(DWORD dwFieldID, PWSTR* ppwsz) {
 IFACEMETHODIMP CCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp) {
   *phbmp = nullptr;
   if (dwFieldID != SFI_TILEIMAGE) return E_INVALIDARG;
-  HBITMAP bmp = LoadBitmapW(g_hinst, MAKEINTRESOURCEW(IDB_TILE_IMAGE));
+  HBITMAP bmp = static_cast<HBITMAP>(LoadImageW(g_hinst, MAKEINTRESOURCEW(IDB_TILE_IMAGE), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
   if (!bmp) return HRESULT_FROM_WIN32(GetLastError());
   *phbmp = bmp;
   return S_OK;
@@ -305,22 +427,41 @@ IFACEMETHODIMP CCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp) {
 
 IFACEMETHODIMP CCredential::GetCheckboxValue(DWORD, BOOL*, PWSTR*) { return E_INVALIDARG; }
 
+// 「サインイン」のボタンは 0F8 のときだけ（QR コードは承認されると自動でサインインする）
 IFACEMETHODIMP CCredential::GetSubmitButtonValue(DWORD dwFieldID, DWORD* pdwAdjacentTo) {
   if (dwFieldID != SFI_SUBMIT) return E_INVALIDARG;
-  *pdwAdjacentTo = SFI_CODE;
+  *pdwAdjacentTo = SFI_OF8_PASSWORD;
   return S_OK;
 }
 
 IFACEMETHODIMP CCredential::GetComboBoxValueCount(DWORD, DWORD*, DWORD*) { return E_INVALIDARG; }
 IFACEMETHODIMP CCredential::GetComboBoxValueAt(DWORD, DWORD, PWSTR*) { return E_INVALIDARG; }
-IFACEMETHODIMP CCredential::SetStringValue(DWORD, PCWSTR) { return E_INVALIDARG; }
+
+IFACEMETHODIMP CCredential::SetStringValue(DWORD dwFieldID, PCWSTR pwz) {
+  if (dwFieldID != SFI_OF8_EMAIL && dwFieldID != SFI_OF8_PASSWORD) return E_INVALIDARG;
+  if (dwFieldID == SFI_OF8_PASSWORD) skhub::Wipe(_text[SFI_OF8_PASSWORD]);
+  _text[dwFieldID] = pwz ? pwz : L"";
+  return S_OK;
+}
+
 IFACEMETHODIMP CCredential::SetCheckboxValue(DWORD, BOOL) { return E_INVALIDARG; }
 IFACEMETHODIMP CCredential::SetComboBoxSelectedValue(DWORD, DWORD) { return E_INVALIDARG; }
 
 IFACEMETHODIMP CCredential::CommandLinkClicked(DWORD dwFieldID) {
+  if (dwFieldID == SFI_SWITCH) {
+    SwitchMode();
+    return S_OK;
+  }
+  if (dwFieldID == SFI_QR) {
+    if (!_ready && !_flow) StartFlow();
+    OpenQrWindow();
+    return S_OK;
+  }
   if (dwFieldID != SFI_NEWCODE) return E_INVALIDARG;
+  // QR コードのウィンドウが開いていれば、新しいコードに描き変わる
   StopFlow();
   ClearSecret();
+  _code.clear();
   StartFlow();
   return S_OK;
 }
@@ -332,6 +473,17 @@ IFACEMETHODIMP CCredential::GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATI
   *pcpsiOptionalStatusIcon = CPSI_NONE;
   ZeroMemory(pcpcs, sizeof(*pcpcs));
 
+  // 0F8: ここでメールアドレスとパスワードを確かめる（サインイン画面は待っているあいだ「お待ちください」を出す）
+  if (!_ready && _of8Mode) {
+    std::wstring error;
+    if (!PrepareOf8(error)) {
+      SetText(SFI_STATUS, error);
+      SHStrDupW(error.c_str(), ppwszOptionalStatusText);
+      *pcpsiOptionalStatusIcon = CPSI_ERROR;
+      if (_events) _events->SetFieldInteractiveState(this, SFI_OF8_PASSWORD, CPFIS_FOCUSED);
+      return S_OK;
+    }
+  }
   if (!_ready) {
     SHStrDupW(L"スマートフォンで承認すると、自動でサインインします。", ppwszOptionalStatusText);
     *pcpsiOptionalStatusIcon = CPSI_WARNING;
@@ -346,7 +498,7 @@ IFACEMETHODIMP CCredential::GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATI
   // パスワードは 1 回だけ使う（失敗したら、新しいコードで承認し直す）
   ClearSecret();
   if (FAILED(hr)) {
-    SHStrDupW(L"サインインの準備ができませんでした。「新しいコードを表示」でやり直してください。", ppwszOptionalStatusText);
+    SHStrDupW(L"サインインの準備ができませんでした。もう一度お試しください。", ppwszOptionalStatusText);
     *pcpsiOptionalStatusIcon = CPSI_ERROR;
     return hr;
   }
@@ -373,6 +525,9 @@ IFACEMETHODIMP CCredential::ReportResult(NTSTATUS ntsStatus, NTSTATUS ntsSubstat
   }
   SetText(SFI_CODE, L"");
   SetText(SFI_STATUS, text);
+  // QR コードなら新しいコードでやり直す（0F8 ならそのまま入力し直せる）
+  if (!_of8Mode) _phase = 2;
+  ApplyMode();
   SHStrDupW(text, ppwszOptionalStatusText);
   *pcpsiOptionalStatusIcon = CPSI_ERROR;
   return S_OK;

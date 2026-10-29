@@ -1,4 +1,4 @@
-// 「SK Hub でサインイン」のタイル
+// 「Sign in with SK Hub」のタイル
 //   選ぶと、別のスレッドでコードを発行し（Firestore の windowsLogons/{コード}）、スマートフォンで承認されるのを待つ。
 //   承認されたら、つないだ Windows のユーザーとパスワードを読み出し、プロバイダーに知らせて自動でサインインする。
 //   別のスレッドからは画面を直接さわらず、UI のスレッドに作ったメッセージ用のウィンドウに知らせる
@@ -19,6 +19,7 @@ struct Flow {
   SRWLOCK lock = SRWLOCK_INIT;
   std::wstring code;
   std::wstring status;
+  int phase = 0;  // 0 = コードを用意している、1 = 承認を待っている、2 = 終わった（期限切れ・失敗。新しいコードでやり直す）
   bool ready = false;
   std::wstring user, domain, password;
   ~Flow();
@@ -71,14 +72,32 @@ class CCredential : public ICredentialProviderCredential {
   void StopFlow();
   void OnFlowUpdate(UINT id);
   void SetText(FIELD_ID id, const std::wstring& text);
+  // 項目を出し入れする
+  void SetVisible(FIELD_ID id, bool visible);
+  // QR コード / 0F8 のどちらでサインインするかに合わせて、項目を出し入れする
+  void ApplyMode();
+  void SwitchMode();
+  // 0F8 のメールアドレスとパスワードを確かめて、つないだ Windows のユーザーとパスワードを用意する
+  bool PrepareOf8(std::wstring& error);
+  void ClearOf8Password();
   void ClearSecret();
+  void OpenQrWindow();
+  void CloseQrWindow();
+  void UpdateQr();
+  static void OnQrWindowClosed(void* context);
 
   LONG _cRef;
   CREDENTIAL_PROVIDER_USAGE_SCENARIO _cpus;
   CProvider* _provider;
   ICredentialProviderCredentialEvents* _events;
   std::wstring _text[SFI_NUM_FIELDS];
+  CREDENTIAL_PROVIDER_FIELD_STATE _fieldState[SFI_NUM_FIELDS];
   HWND _hwnd;
+  HWND _qrWnd;        // QR コードのウィンドウ（開いているときだけ）
+  std::wstring _code;  // いまのコード（8 文字。ハイフンなし）
+  int _phase;          // いまの流れの Flow::phase（リンクを出すかに使う）
+  bool _hasOf8;        // 0F8 アカウントをつないでいる（切りかえのリンクを出す）
+  bool _of8Mode;       // 0F8 の ID とパスワードでサインインする
   std::shared_ptr<Flow> _flow;
   UINT _nextFlowId;
   bool _ready;

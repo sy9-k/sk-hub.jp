@@ -1,4 +1,4 @@
-// SK Hub の Credential Provider（サインイン画面に「SK Hub でサインイン」のタイルを 1 つ出す）
+// SK Hub の Credential Provider（サインイン画面に「Sign in with SK Hub」のタイルを 1 つ出す）
 //   使うのはサインイン（CPUS_LOGON）とロックの解除（CPUS_UNLOCK_WORKSTATION）だけ
 #pragma once
 
