@@ -9,6 +9,7 @@
 #include "../provider/common.h"
 #include "../provider/helpers.h"
 #include "../common/qr.h"
+#include "../common/skhub.h"
 #include "../provider/qrwindow.h"
 
 HINSTANCE g_hinst = nullptr;
@@ -260,7 +261,19 @@ int wmain(int argc, wchar_t** argv) {
     DeleteObject(bmp);
   }
   DWORD adjacent = 0;
-  Check(cred->GetSubmitButtonValue(SFI_CODE, &adjacent) == E_INVALIDARG, "no submit button");
+  Check(cred->GetSubmitButtonValue(SFI_CODE, &adjacent) == E_INVALIDARG, "only SFI_SUBMIT is a submit button");
+  Check(SUCCEEDED(cred->GetSubmitButtonValue(SFI_SUBMIT, &adjacent)) && adjacent == SFI_OF8_PASSWORD, "0F8 submit button next to the password");
+  // 0F8 の入力欄は、0F8 に切りかえるまで出さない（切りかえのリンクは、0F8 アカウントをつないでいるときだけ）
+  {
+    CREDENTIAL_PROVIDER_FIELD_STATE s;
+    CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE i;
+    cred->GetFieldState(SFI_OF8_EMAIL, &s, &i);
+    Check(s == CPFS_HIDDEN, "0F8 fields hidden in QR mode");
+    cred->GetFieldState(SFI_SWITCH, &s, &i);
+    Check((s != CPFS_HIDDEN) == skhub::HasOf8Links(), "0F8 switch link only when a 0F8 account is linked");
+    Check(SUCCEEDED(cred->SetStringValue(SFI_OF8_EMAIL, L"user@example.com")) && cred->SetStringValue(SFI_CODE, L"x") == E_INVALIDARG,
+          "only the 0F8 fields are editable");
+  }
   // リンクは、コードがないうちは出さない
   CREDENTIAL_PROVIDER_FIELD_STATE fs;
   CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE fis;

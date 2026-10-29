@@ -78,6 +78,11 @@ void Show(HWND parent, int id, bool visible) {
   ShowWindow(GetDlgItem(parent, id), visible ? SW_SHOWNA : SW_HIDE);
 }
 
+// 出すことにしているか（IsWindowVisible は、親のウィンドウがまだ出ていないと false になるので使わない）
+bool Shown(HWND parent, int id) {
+  return (GetWindowLongW(GetDlgItem(parent, id), GWL_STYLE) & WS_VISIBLE) != 0;
+}
+
 std::wstring Text(HWND parent, int id) {
   HWND h = GetDlgItem(parent, id);
   std::wstring s(GetWindowTextLengthW(h) + 1, L'\0');
@@ -136,6 +141,7 @@ enum MainId {
   IDC_H_ACCOUNTS,
   IDC_LIST,
   IDC_ADD,
+  IDC_ADD_OF8,
   IDC_REMOVE,
   IDC_NOTE,
 };
@@ -149,7 +155,13 @@ struct MainState {
 
 MainState* MainOf(HWND hwnd) { return reinterpret_cast<MainState*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA)); }
 
-void OpenLinkWindow(HWND owner);
+void OpenLinkWindow(HWND owner, bool of8);
+
+// 一覧の「アカウント」の列（0F8 はメールアドレス、SK Hub Systems アカウントは UID）
+std::wstring AccountText(const skhub::LinkedUser& user) {
+  if (skhub::IsOf8LinkId(user.uid)) return L"0F8: " + (user.label.empty() ? user.uid.substr(4) : user.label);
+  return L"SK Hub: " + user.uid;
+}
 
 void RefreshMain(HWND hwnd) {
   MainState* st = MainOf(hwnd);
@@ -170,7 +182,8 @@ void RefreshMain(HWND hwnd) {
     item.pszText = &user[0];
     item.lParam = i;
     ListView_InsertItem(list, &item);
-    ListView_SetItemText(list, i, 1, &st->users[i].uid[0]);
+    std::wstring account = AccountText(st->users[i]);
+    ListView_SetItemText(list, i, 1, &account[0]);
   }
   EnableWindow(GetDlgItem(hwnd, IDC_REMOVE), FALSE);
 }
@@ -208,8 +221,9 @@ int LayoutMain(HWND hwnd) {
   ListView_SetColumnWidth(list, 0, f.S(230));
   ListView_SetColumnWidth(list, 1, w - f.S(230) - GetSystemMetricsForDpi(SM_CXVSCROLL, f.dpi) - f.S(4));
   y += listH + f.S(12);
-  Place(hwnd, IDC_ADD, m, y, f.S(200), buttonH);
-  Place(hwnd, IDC_REMOVE, m + f.S(212), y, f.S(110), buttonH);
+  Place(hwnd, IDC_ADD, m, y, f.S(190), buttonH);
+  Place(hwnd, IDC_ADD_OF8, m + f.S(200), y, f.S(220), buttonH);
+  Place(hwnd, IDC_REMOVE, m + w - f.S(100), y, f.S(100), buttonH);
   y += buttonH + f.S(22);
   h = TextHeight(hwnd, f.note, Text(hwnd, IDC_NOTE), w);
   Place(hwnd, IDC_NOTE, m, y, w, h);
@@ -228,6 +242,7 @@ void ApplyMainFonts(HWND hwnd) {
   SetFont(hwnd, IDC_H_ACCOUNTS, f.heading);
   SetFont(hwnd, IDC_LIST, f.body);
   SetFont(hwnd, IDC_ADD, f.body);
+  SetFont(hwnd, IDC_ADD_OF8, f.body);
   SetFont(hwnd, IDC_REMOVE, f.body);
   SetFont(hwnd, IDC_NOTE, f.note);
 }
@@ -284,9 +299,10 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       col.pszText = const_cast<LPWSTR>(L"Windows のユーザー");
       col.cx = 200;
       ListView_InsertColumn(list, 0, &col);
-      col.pszText = const_cast<LPWSTR>(L"SK Hub Systems アカウント（UID）");
+      col.pszText = const_cast<LPWSTR>(L"アカウント");
       ListView_InsertColumn(list, 1, &col);
       Control(hwnd, L"BUTTON", L"アカウントをつなぐ…", BS_DEFPUSHBUTTON | WS_TABSTOP, IDC_ADD);
+      Control(hwnd, L"BUTTON", L"0F8 アカウントをつなぐ…", BS_PUSHBUTTON | WS_TABSTOP, IDC_ADD_OF8);
       Control(hwnd, L"BUTTON", L"外す", BS_PUSHBUTTON | WS_TABSTOP, IDC_REMOVE);
       Control(hwnd, L"STATIC",
               L"パスワード・PIN・Windows Hello でのサインインは、これまでどおり使えます。Windows のパスワードを変えたら、アカウントをつなぎ直してください。",
@@ -332,7 +348,8 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case WM_COMMAND:
       switch (LOWORD(wParam)) {
         case IDC_SCREEN_BUTTON: OnScreenButton(hwnd); break;
-        case IDC_ADD: OpenLinkWindow(hwnd); break;
+        case IDC_ADD: OpenLinkWindow(hwnd, false); break;
+        case IDC_ADD_OF8: OpenLinkWindow(hwnd, true); break;
         case IDC_REMOVE: OnRemove(hwnd); break;
       }
       return 0;
@@ -374,6 +391,10 @@ enum LinkId {
   IDL_CODE,
   IDL_STATUS,
   IDL_RETRY,
+  IDL_OF8_EMAIL_LABEL,  // 0F8 アカウントをつなぐときだけ
+  IDL_OF8_EMAIL,
+  IDL_OF8_PASSWORD_LABEL,
+  IDL_OF8_PASSWORD,
 };
 
 // 承認を待つスレッドと、画面のあいだで共有するもの（lock で守る）
@@ -389,6 +410,7 @@ struct LinkFlow {
 
 struct LinkState {
   Fonts fonts;
+  bool of8 = false;  // 0F8 アカウントをつなぐ（QR コードの代わりに、0F8 のメールアドレスとパスワードを確かめる）
   int page = 1;  // 1 = ユーザーとパスワード、2 = QR コード、3 = つなぎました
   std::wstring domain, user, password;
   std::shared_ptr<LinkFlow> flow;
@@ -501,6 +523,17 @@ int LayoutLink(HWND hwnd) {
     y += f.S(24);
     Place(hwnd, IDL_PASSWORD, m, y, w, f.S(32));
     y += f.S(32) + f.S(10);
+    if (st->of8) {
+      y += f.S(6);
+      Place(hwnd, IDL_OF8_EMAIL_LABEL, m, y, w, f.S(22));
+      y += f.S(24);
+      Place(hwnd, IDL_OF8_EMAIL, m, y, w, f.S(32));
+      y += f.S(32) + f.S(16);
+      Place(hwnd, IDL_OF8_PASSWORD_LABEL, m, y, w, f.S(22));
+      y += f.S(24);
+      Place(hwnd, IDL_OF8_PASSWORD, m, y, w, f.S(32));
+      y += f.S(32) + f.S(10);
+    }
     h = TextHeight(hwnd, f.note, Text(hwnd, IDL_ERROR), w);
     Place(hwnd, IDL_ERROR, m, y, w, h);
     y += h + f.S(16);
@@ -518,17 +551,17 @@ int LayoutLink(HWND hwnd) {
   // ボタン（右下）
   const int bw = f.S(120), gap = f.S(10);
   int x = width - m;
-  if (IsWindowVisible(GetDlgItem(hwnd, IDL_CANCEL))) {
+  if (Shown(hwnd, IDL_CANCEL)) {
     x -= bw;
     Place(hwnd, IDL_CANCEL, x, y, bw, buttonH);
     x -= gap;
   }
-  if (IsWindowVisible(GetDlgItem(hwnd, IDL_NEXT))) {
+  if (Shown(hwnd, IDL_NEXT)) {
     x -= bw;
     Place(hwnd, IDL_NEXT, x, y, bw, buttonH);
     x -= gap;
   }
-  if (IsWindowVisible(GetDlgItem(hwnd, IDL_RETRY))) {
+  if (Shown(hwnd, IDL_RETRY)) {
     const int rw = f.S(170);
     x -= rw;
     Place(hwnd, IDL_RETRY, x, y, rw, buttonH);
@@ -557,20 +590,26 @@ void ApplyLinkFonts(HWND hwnd) {
   SetFont(hwnd, IDL_NEXT, f.body);
   SetFont(hwnd, IDL_CANCEL, f.body);
   SetFont(hwnd, IDL_RETRY, f.body);
+  SetFont(hwnd, IDL_OF8_EMAIL_LABEL, f.heading);
+  SetFont(hwnd, IDL_OF8_EMAIL, f.body);
+  SetFont(hwnd, IDL_OF8_PASSWORD_LABEL, f.heading);
+  SetFont(hwnd, IDL_OF8_PASSWORD, f.body);
 }
 
 void ShowLinkPage(HWND hwnd, int page, const std::wstring& doneText = L"") {
   LinkState* st = LinkOf(hwnd);
   st->page = page;
   for (int id : { IDL_USER_LABEL, IDL_USER, IDL_PASSWORD_LABEL, IDL_PASSWORD, IDL_ERROR }) Show(hwnd, id, page == 1);
+  for (int id : { IDL_OF8_EMAIL_LABEL, IDL_OF8_EMAIL, IDL_OF8_PASSWORD_LABEL, IDL_OF8_PASSWORD }) Show(hwnd, id, page == 1 && st->of8);
   for (int id : { IDL_CODE, IDL_STATUS }) Show(hwnd, id, page == 2);
   Show(hwnd, IDL_RETRY, page == 2 && st->failed);
   Show(hwnd, IDL_NEXT, page != 2);
   Show(hwnd, IDL_CANCEL, page != 3);
   if (page == 1) {
-    SetDlgItemTextW(hwnd, IDL_TITLE, L"アカウントをつなぐ");
-    SetDlgItemTextW(hwnd, IDL_LEAD, L"つなぐ Windows のユーザーを選んで、そのユーザーの Windows のパスワードを入力してください。");
-    SetDlgItemTextW(hwnd, IDL_NEXT, L"次へ");
+    SetDlgItemTextW(hwnd, IDL_TITLE, st->of8 ? L"0F8 アカウントをつなぐ" : L"アカウントをつなぐ");
+    SetDlgItemTextW(hwnd, IDL_LEAD, st->of8 ? L"つなぐ Windows のユーザーとパスワード、0F8 アカウントのメールアドレスとパスワードを入力してください。"
+                                            : L"つなぐ Windows のユーザーを選んで、そのユーザーの Windows のパスワードを入力してください。");
+    SetDlgItemTextW(hwnd, IDL_NEXT, st->of8 ? L"つなぐ" : L"次へ");
     SetDlgItemTextW(hwnd, IDL_CANCEL, L"キャンセル");
   } else if (page == 2) {
     SetDlgItemTextW(hwnd, IDL_TITLE, L"スマートフォンで承認してください");
@@ -611,6 +650,34 @@ void OnLinkNext(HWND hwnd) {
     SendDlgItemMessageW(hwnd, IDL_PASSWORD, EM_SETSEL, 0, -1);
     return;
   }
+  if (st->of8) {
+    // 0F8: その場でメールアドレスとパスワードを確かめて、つなぐ（QR コードは使わない）
+    const std::wstring email = Text(hwnd, IDL_OF8_EMAIL);
+    std::wstring of8Password = Text(hwnd, IDL_OF8_PASSWORD);
+    std::wstring of8Uid;
+    HCURSOR old = SetCursor(LoadCursorW(nullptr, IDC_WAIT));
+    HRESULT hr = skhub::Of8SignIn(email, of8Password, of8Uid, error);
+    SetCursor(old);
+    skhub::Wipe(of8Password);
+    SetDlgItemTextW(hwnd, IDL_OF8_PASSWORD, L"");
+    if (SUCCEEDED(hr)) {
+      hr = skhub::SaveLinkedUser({ skhub::Of8LinkId(of8Uid), user, domain, email }, password);
+      if (FAILED(hr)) error = L"保存できませんでした: " + skhub::ErrorText(hr);
+    }
+    skhub::Wipe(password);
+    if (FAILED(hr)) {
+      SetDlgItemTextW(hwnd, IDL_ERROR, error.c_str());
+      RelayoutLink(hwnd);
+      SetFocus(GetDlgItem(hwnd, IDL_OF8_PASSWORD));
+      return;
+    }
+    SetDlgItemTextW(hwnd, IDL_PASSWORD, L"");
+    std::wstring text = L"サインイン画面の「Sign in with SK Hub」で「0F8 の ID とパスワードでサインイン」を選ぶと、" + email + L" で " +
+                        skhub::DisplayUser(domain, user) + L" にサインインできます。\n\nWindows のパスワードを変えたら、もう一度つなぎ直してください。";
+    if (!skhub::IsProviderInstalled()) text += L"\n\nサインイン画面にはまだ追加されていません。最初の画面で「サインイン画面に追加」を押してください。";
+    ShowLinkPage(hwnd, 3, text);
+    return;
+  }
   st->domain = domain;
   st->user = user;
   st->password = password;
@@ -646,6 +713,13 @@ void OnLinkUpdate(HWND hwnd, UINT id) {
 
   // 承認された: つないで保存する
   st->flow.reset();
+  if (skhub::IsOf8LinkId(uid)) {
+    // 0F8 でつないだものと同じ名前にはしない（ありえないはずだが、念のため）
+    st->failed = true;
+    SetDlgItemTextW(hwnd, IDL_STATUS, L"このアカウントはつなげません。");
+    RelayoutLink(hwnd);
+    return;
+  }
   skhub::LinkedUser before;
   const bool relinked = SUCCEEDED(skhub::FindLinkedUser(uid, before));
   HRESULT hr = skhub::SaveLinkedUser({ uid, st->user, st->domain }, st->password);
@@ -690,6 +764,7 @@ LRESULT CALLBACK LinkProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   switch (msg) {
     case WM_CREATE: {
       st = new LinkState();
+      st->of8 = reinterpret_cast<CREATESTRUCTW*>(lParam)->lpCreateParams != nullptr;
       SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(st));
       st->fonts.Create(GetDpiForWindow(hwnd));
       Control(hwnd, L"STATIC", L"", SS_NOPREFIX, IDL_TITLE);
@@ -701,6 +776,10 @@ LRESULT CALLBACK LinkProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       Control(hwnd, L"STATIC", L"", SS_NOPREFIX, IDL_ERROR);
       Control(hwnd, L"STATIC", L"", SS_NOPREFIX | SS_CENTER, IDL_CODE);
       Control(hwnd, L"STATIC", L"", SS_NOPREFIX | SS_CENTER, IDL_STATUS);
+      Control(hwnd, L"STATIC", L"0F8 のメールアドレス", SS_NOPREFIX, IDL_OF8_EMAIL_LABEL);
+      Control(hwnd, L"EDIT", L"", ES_AUTOHSCROLL | WS_TABSTOP, IDL_OF8_EMAIL, WS_EX_CLIENTEDGE);
+      Control(hwnd, L"STATIC", L"0F8 のパスワード", SS_NOPREFIX, IDL_OF8_PASSWORD_LABEL);
+      Control(hwnd, L"EDIT", L"", ES_PASSWORD | ES_AUTOHSCROLL | WS_TABSTOP, IDL_OF8_PASSWORD, WS_EX_CLIENTEDGE);
       Control(hwnd, L"BUTTON", L"新しいコードを表示", BS_PUSHBUTTON | WS_TABSTOP, IDL_RETRY);
       Control(hwnd, L"BUTTON", L"次へ", BS_DEFPUSHBUTTON | WS_TABSTOP, IDL_NEXT);
       Control(hwnd, L"BUTTON", L"キャンセル", BS_PUSHBUTTON | WS_TABSTOP, IDL_CANCEL);
@@ -781,13 +860,14 @@ LRESULT CALLBACK LinkProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
-void OpenLinkWindow(HWND owner) {
+void OpenLinkWindow(HWND owner, bool of8) {
   if (g_link) {
     SetForegroundWindow(g_link);
     return;
   }
-  g_link = CreateWindowExW(WS_EX_DLGMODALFRAME, kLinkClass, L"アカウントをつなぐ", WS_POPUP | WS_CAPTION | WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT,
-                           100, 100, owner, nullptr, g_hinst, nullptr);
+  // lpCreateParams が空でなければ 0F8 アカウントをつなぐ
+  g_link = CreateWindowExW(WS_EX_DLGMODALFRAME, kLinkClass, of8 ? L"0F8 アカウントをつなぐ" : L"アカウントをつなぐ", WS_POPUP | WS_CAPTION | WS_SYSMENU,
+                           CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, owner, nullptr, g_hinst, of8 ? reinterpret_cast<LPVOID>(1) : nullptr);
   if (!g_link) return;
   CenterOn(g_link, owner);
   EnableWindow(owner, FALSE);
@@ -850,7 +930,12 @@ void Pump() {
 void Snapshot(const std::wstring& dir) {
   Pump();
   SaveWindow(g_main, dir + L"\\settings-main.bmp");
-  OpenLinkWindow(g_main);
+  OpenLinkWindow(g_main, true);
+  Pump();
+  SaveWindow(g_link, dir + L"\\settings-of8.bmp");
+  DestroyWindow(g_link);
+  Pump();
+  OpenLinkWindow(g_main, false);
   Pump();
   SaveWindow(g_link, dir + L"\\settings-link1.bmp");
   SetDlgItemTextW(g_link, IDL_ERROR, L"ユーザー名かパスワードが違います。");

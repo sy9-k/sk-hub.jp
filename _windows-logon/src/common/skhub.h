@@ -44,9 +44,10 @@ void DeleteRequest(DeviceToken& token, const std::wstring& code);
 
 // ---------- つないだアカウント ----------
 struct LinkedUser {
-  std::wstring uid;
+  std::wstring uid;       // SK Hub Systems アカウントの UID、または 0F8 アカウント（of8_<0F8 の UID>）
   std::wstring userName;
   std::wstring domain;  // 空 = この PC
+  std::wstring label;   // 一覧に出す名前（0F8 はメールアドレス。なければ空）
 };
 HRESULT FindLinkedUser(const std::wstring& uid, LinkedUser& out);
 HRESULT ListLinkedUsers(std::vector<LinkedUser>& out);
@@ -55,5 +56,13 @@ HRESULT RemoveLinkedUser(const std::wstring& uid);
 HRESULT ReadLinkedPassword(const std::wstring& uid, std::wstring& password);
 // 匿名ログインの記録も消す（アンインストール）
 void ForgetDevice();
+
+// ---------- 0F8 アカウント（メールとパスワードでサインイン） ----------
+// 0F8 のアカウントをつなぐときの名前（レジストリ・LSA）。SK Hub Systems アカウントの UID とまざらないよう of8_ を付ける
+std::wstring Of8LinkId(const std::wstring& of8Uid);
+bool IsOf8LinkId(const std::wstring& id);
+bool HasOf8Links();
+// 0F8 にメールとパスワードでログインして、0F8 の UID を返す（パスワードはどこにも残さない）
+HRESULT Of8SignIn(const std::wstring& email, const std::wstring& password, std::wstring& of8Uid, std::wstring& error);
 
 }  // namespace skhub

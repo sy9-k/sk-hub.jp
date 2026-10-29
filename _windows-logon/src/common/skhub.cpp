@@ -358,7 +358,10 @@ HRESULT ReadLinkedUserKey(HKEY users, const std::wstring& uid, LinkedUser& out) 
   if (st != ERROR_SUCCESS) return HRESULT_FROM_WIN32(st);
   out.uid = uid;
   HRESULT hr = ReadRegString(key, L"UserName", out.userName);
-  if (SUCCEEDED(hr)) ReadRegString(key, L"Domain", out.domain);
+  if (SUCCEEDED(hr)) {
+    ReadRegString(key, L"Domain", out.domain);
+    ReadRegString(key, L"Label", out.label);
+  }
   RegCloseKey(key);
   return hr;
 }
@@ -531,6 +534,8 @@ HRESULT SaveLinkedUser(const LinkedUser& user, const std::wstring& password) {
   st = RegSetValueExW(key, L"UserName", 0, REG_SZ, (const BYTE*)user.userName.c_str(), (DWORD)((user.userName.size() + 1) * sizeof(wchar_t)));
   if (st == ERROR_SUCCESS)
     st = RegSetValueExW(key, L"Domain", 0, REG_SZ, (const BYTE*)user.domain.c_str(), (DWORD)((user.domain.size() + 1) * sizeof(wchar_t)));
+  if (st == ERROR_SUCCESS)
+    st = RegSetValueExW(key, L"Label", 0, REG_SZ, (const BYTE*)user.label.c_str(), (DWORD)((user.label.size() + 1) * sizeof(wchar_t)));
   RegCloseKey(key);
   return HRESULT_FROM_WIN32(st);
 }
@@ -555,6 +560,56 @@ void ForgetDevice() {
   StoreSecret(SKHUB_SECRET_DEVICE, nullptr);
   RegDeleteTreeW(HKEY_LOCAL_MACHINE, SKHUB_REG_ROOT);
   RegDeleteKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\SK Hub");  // ほかに何もなければ
+}
+
+// ---------- 0F8 アカウント ----------
+
+std::wstring Of8LinkId(const std::wstring& of8Uid) {
+  return L"of8_" + of8Uid;
+}
+
+bool IsOf8LinkId(const std::wstring& id) {
+  return id.compare(0, 4, L"of8_") == 0;
+}
+
+bool HasOf8Links() {
+  std::vector<LinkedUser> users;
+  ListLinkedUsers(users);
+  for (const LinkedUser& user : users)
+    if (IsOf8LinkId(user.uid)) return true;
+  return false;
+}
+
+HRESULT Of8SignIn(const std::wstring& email, const std::wstring& password, std::wstring& of8Uid, std::wstring& error) {
+  of8Uid.clear();
+  if (email.empty() || password.empty()) {
+    error = L"0F8 のメールアドレスとパスワードを入力してください";
+    return E_INVALIDARG;
+  }
+  std::string secret = ToUtf8(password);
+  std::string body = "{\"email\":\"" + JsonEscape(ToUtf8(email)) + "\",\"password\":\"" + JsonEscape(secret) + "\",\"returnSecureToken\":false}";
+  Wipe(secret);
+  Response r;
+  HRESULT hr = Http(L"POST", L"identitytoolkit.googleapis.com", std::wstring(L"/v1/accounts:signInWithPassword?key=") + SKHUB_OF8_API_KEY, body,
+                    L"application/json", "", r, error);
+  Wipe(body);
+  if (FAILED(hr)) return hr;
+  std::string uid;
+  if (r.status == 200 && JsonString(r.body, "localId", uid) && ValidUid(Of8LinkId(FromUtf8(uid)))) {
+    of8Uid = FromUtf8(uid);
+    return S_OK;
+  }
+  std::string message;
+  JsonString(r.body, "message", message);
+  if (message == "INVALID_LOGIN_CREDENTIALS" || message == "EMAIL_NOT_FOUND" || message == "INVALID_PASSWORD" || message == "INVALID_EMAIL")
+    error = L"0F8 のメールアドレスかパスワードが違います";
+  else if (message == "USER_DISABLED")
+    error = L"この 0F8 アカウントは使えなくなっています";
+  else if (message.compare(0, 27, "TOO_MANY_ATTEMPTS_TRY_LATER") == 0)
+    error = L"何度も間違えたため、しばらく 0F8 にログインできません。時間をおいてお試しください";
+  else
+    error = L"0F8 にログインできませんでした（" + Describe(r) + L"）";
+  return E_ACCESSDENIED;
 }
 
 }  // namespace skhub

@@ -72,8 +72,14 @@ class CCredential : public ICredentialProviderCredential {
   void StopFlow();
   void OnFlowUpdate(UINT id);
   void SetText(FIELD_ID id, const std::wstring& text);
-  // リンク（SFI_QR・SFI_NEWCODE）を出し入れする
+  // 項目を出し入れする
   void SetVisible(FIELD_ID id, bool visible);
+  // QR コード / 0F8 のどちらでサインインするかに合わせて、項目を出し入れする
+  void ApplyMode();
+  void SwitchMode();
+  // 0F8 のメールアドレスとパスワードを確かめて、つないだ Windows のユーザーとパスワードを用意する
+  bool PrepareOf8(std::wstring& error);
+  void ClearOf8Password();
   void ClearSecret();
   void OpenQrWindow();
   void CloseQrWindow();
@@ -89,6 +95,9 @@ class CCredential : public ICredentialProviderCredential {
   HWND _hwnd;
   HWND _qrWnd;        // QR コードのウィンドウ（開いているときだけ）
   std::wstring _code;  // いまのコード（8 文字。ハイフンなし）
+  int _phase;          // いまの流れの Flow::phase（リンクを出すかに使う）
+  bool _hasOf8;        // 0F8 アカウントをつないでいる（切りかえのリンクを出す）
+  bool _of8Mode;       // 0F8 の ID とパスワードでサインインする
   std::shared_ptr<Flow> _flow;
   UINT _nextFlowId;
   bool _ready;

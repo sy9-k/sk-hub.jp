@@ -1,6 +1,7 @@
 // SK Hub で Windows にサインイン — 設定ツール（管理者として実行する）
 //   skhub-logon-setup install          サインイン画面に「Sign in with SK Hub」を出す
 //   skhub-logon-setup add [ユーザー名]  SK Hub Systems アカウントと Windows のユーザーをつなぐ
+//   skhub-logon-setup add-0f8 [ユーザー名]  0F8 アカウント（メールアドレスとパスワード）と Windows のユーザーをつなぐ
 //   skhub-logon-setup list             つないだアカウントの一覧
 //   skhub-logon-setup remove <UID か ユーザー名>
 //   skhub-logon-setup uninstall        サインイン画面から外し、つないだアカウントもすべて消す
@@ -81,49 +82,81 @@ int Uninstall() {
 
 // ---------- add ----------
 
-bool ReadPassword(std::wstring& password) {
-  password.clear();
+// 1 行読む（echo = false ならパスワードとして、入力を画面に出さない）
+bool ReadLine(std::wstring& line, bool echo) {
+  line.clear();
   HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
   DWORD mode;
   if (!GetConsoleMode(in, &mode)) return false;
-  SetConsoleMode(in, (mode & ~ENABLE_ECHO_INPUT) | ENABLE_LINE_INPUT);
+  if (!echo) SetConsoleMode(in, (mode & ~ENABLE_ECHO_INPUT) | ENABLE_LINE_INPUT);
   wchar_t buf[512];
   DWORD read = 0;
   BOOL ok = ReadConsoleW(in, buf, ARRAYSIZE(buf) - 1, &read, nullptr);
   SetConsoleMode(in, mode);
-  PrintLine();
+  if (!echo) PrintLine();
   if (!ok) return false;
-  password.assign(buf, read);
+  line.assign(buf, read);
   SecureZeroMemory(buf, sizeof(buf));
-  while (!password.empty() && (password.back() == L'\n' || password.back() == L'\r')) password.pop_back();
+  while (!line.empty() && (line.back() == L'\n' || line.back() == L'\r')) line.pop_back();
   return true;
 }
 
-int Add(const std::wstring& input) {
+bool ReadPassword(std::wstring& password) { return ReadLine(password, false); }
+
+// つなぐ Windows のユーザーを決めて、パスワードを入力してもらい、Windows に確かめてもらう
+bool AskWindowsUser(const std::wstring& input, const wchar_t* command, std::wstring& domain, std::wstring& user, std::wstring& password) {
   std::wstring account = input.empty() ? skhub::CurrentUser() : input;
-  std::wstring domain, user;
   skhub::SplitUser(account, domain, user);
   if (user.empty()) {
     PrintLine(L"Windows のユーザー名を指定してください。");
-    return 1;
+    return false;
   }
-  const std::wstring shown = skhub::DisplayUser(domain, user);
-  PrintLine(L"Windows のユーザー: " + shown);
-  if (input.empty()) PrintLine(L"（別のユーザーをつなぐときは skhub-logon-setup add <ユーザー名>）");
+  PrintLine(L"Windows のユーザー: " + skhub::DisplayUser(domain, user));
+  if (input.empty()) PrintLine(std::wstring(L"（別のユーザーをつなぐときは skhub-logon-setup ") + command + L" <ユーザー名>）");
   Print(L"このユーザーの Windows のパスワード（PIN ではなく）: ");
-  std::wstring password;
   if (!ReadPassword(password)) {
     PrintLine(L"パスワードを読めませんでした。コマンドプロンプトなどから直接実行してください。");
-    return 1;
+    return false;
   }
-
-  // パスワードが合っているか、Windows に確かめてもらう
   std::wstring error;
   if (FAILED(skhub::VerifyWindowsPassword(domain, user, password, error))) {
     skhub::Wipe(password);
     PrintLine(error);
+    return false;
+  }
+  return true;
+}
+
+// 0F8 アカウントをつなぐ（メールアドレスとパスワードを、その場で 0F8 に確かめる）
+int AddOf8(const std::wstring& input) {
+  std::wstring domain, user, password;
+  if (!AskWindowsUser(input, L"add-0f8", domain, user, password)) return 1;
+  std::wstring email, of8Password, of8Uid, error;
+  Print(L"0F8 のメールアドレス: ");
+  ReadLine(email, true);
+  Print(L"0F8 のパスワード: ");
+  ReadPassword(of8Password);
+  HRESULT hr = skhub::Of8SignIn(email, of8Password, of8Uid, error);
+  skhub::Wipe(of8Password);
+  if (SUCCEEDED(hr)) {
+    hr = skhub::SaveLinkedUser({ skhub::Of8LinkId(of8Uid), user, domain, email }, password);
+    if (FAILED(hr)) error = L"保存できませんでした: " + skhub::ErrorText(hr);
+  }
+  skhub::Wipe(password);
+  if (FAILED(hr)) {
+    PrintLine(error);
     return 1;
   }
+  PrintLine(L"つなぎました。サインイン画面の「Sign in with SK Hub」で「0F8 の ID とパスワードでサインイン」を選ぶと、" + email + L" で " +
+            skhub::DisplayUser(domain, user) + L" にサインインできます。");
+  return 0;
+}
+
+int Add(const std::wstring& input) {
+  std::wstring domain, user, password;
+  if (!AskWindowsUser(input, L"add", domain, user, password)) return 1;
+  const std::wstring shown = skhub::DisplayUser(domain, user);
+  std::wstring error;
 
   // SK Hub Systems アカウントで承認してもらう
   PrintLine(L"コードを発行しています…");
@@ -175,6 +208,8 @@ int Add(const std::wstring& input) {
       PrintLine(L"拒否されました。");
     } else if (state != skhub::RequestState::Approved) {
       PrintLine(L"コードが見つからなくなりました。もう一度 add からやり直してください。");
+    } else if (skhub::IsOf8LinkId(uid)) {
+      PrintLine(L"このアカウントはつなげません。");
     } else {
       skhub::LinkedUser before;
       if (SUCCEEDED(skhub::FindLinkedUser(uid, before)))
@@ -206,7 +241,8 @@ int List() {
     PrintLine(L"つないだアカウントはありません。");
     return 0;
   }
-  for (const auto& u : users) PrintLine(u.uid + L"  →  " + skhub::DisplayUser(u.domain, u.userName));
+  for (const auto& u : users)
+    PrintLine((u.label.empty() ? u.uid : u.uid + L"（" + u.label + L"）") + L"  →  " + skhub::DisplayUser(u.domain, u.userName));
   return 0;
 }
 
@@ -237,6 +273,7 @@ void Usage() {
   PrintLine();
   PrintLine(L"  skhub-logon-setup install          サインイン画面に「Sign in with SK Hub」を追加する");
   PrintLine(L"  skhub-logon-setup add [ユーザー名]  SK Hub Systems アカウントと Windows のユーザーをつなぐ");
+  PrintLine(L"  skhub-logon-setup add-0f8 [ユーザー名]  0F8 アカウント（メールアドレスとパスワード）をつなぐ");
   PrintLine(L"  skhub-logon-setup list             つないだアカウントの一覧");
   PrintLine(L"  skhub-logon-setup remove <UID か ユーザー名>");
   PrintLine(L"  skhub-logon-setup uninstall        外して、つないだアカウントと保存したパスワードを消す");
@@ -265,6 +302,7 @@ int wmain(int argc, wchar_t** argv) {
   if (command == L"install") return Install();
   if (command == L"uninstall") return Uninstall();
   if (command == L"add") return Add(argc >= 3 ? argv[2] : L"");
+  if (command == L"add-0f8") return AddOf8(argc >= 3 ? argv[2] : L"");
   if (command == L"list") return List();
   if (command == L"remove" && argc >= 3) return Remove(argv[2]);
   Usage();
