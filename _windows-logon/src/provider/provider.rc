@@ -1,7 +1,8 @@
 #include <winres.h>
 #include "resource.h"
 
-// タイルの画像（account/icon-192.png を白地の 24 ビット BMP にしたもの）
+// タイルの画像（account/icon-192.png を白い丸に入れ、まわりを暗い色 #181A1F にした BMP。
+// サインイン画面はこの画像の透明（アルファ）を使わず黒く出すので、まわりは色で塗る）
 IDB_TILE_IMAGE BITMAP "..\\..\\res\\tile.bmp"
 
 VS_VERSION_INFO VERSIONINFO

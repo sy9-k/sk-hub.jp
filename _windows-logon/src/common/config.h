@@ -5,12 +5,23 @@
 #define SKHUB_PROJECT_ID L"y-filter-systems"
 #define SKHUB_API_KEY L"AIzaSyB4gqzPEPyP0NrEJw33-OTAxUrF48MmiuI"
 
+// 0F8 アカウント（Search3958 の 0F8。ID とパスワードでログインする）。
+//   サインイン画面ではポップアップ（0F8 の SDK。https://search3958.github.io/frameworks/client-service.js）が使えないので、
+//   0F8 のアカウントサービスの /v1/auth/login で直接確かめる（0F8 側の了承ずみ）。送り先は SDK の apiBase と同じ。
+//   サービスは Origin ヘッダーを求めるので、sk-hub.jp から使うときと同じ https://sk-hub.jp を送る
+#define SKHUB_OF8_HOST L"sentaro-0f8-accounts.takesen2278.workers.dev"
+#define SKHUB_OF8_ORIGIN "https://sk-hub.jp"
+
 // サインインの依頼（Firestore）。権限は y-filter リポジトリの systems/firestore.rules の windowsLogons
 #define SKHUB_LOGIN_COLLECTION L"windowsLogons"
 // 承認するページ（sk-hub.jp/pc/）。サインイン画面にこのまま出すので、打ちやすい短い URL にしている
 #define SKHUB_APPROVE_URL L"sk-hub.jp/pc"
 // コードの有効期限（ルールの duration.value(10, 'm') と同じにする）
 #define SKHUB_CODE_TTL_SECONDS 600
+// この PC の鍵（マシンの NCrypt の鍵の名前）。依頼に署名するのに使う（devicekey.cpp）
+#define SKHUB_DEVICE_KEY_NAME L"SKHubLogonDevice"
+// 署名するメッセージの先頭（sk-hub.jp/pc/pc.js の SIGN_TAG と同じにする）
+#define SKHUB_SIGN_TAG "skhub-logon-v1"
 
 // Credential Provider の CLSID（変えると、入れ直しが必要）
 #define SKHUB_CLSID_STRING L"{17ED1991-2E40-4BA4-9807-C1BAD45211AE}"

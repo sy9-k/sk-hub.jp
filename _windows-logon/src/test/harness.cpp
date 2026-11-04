@@ -1,11 +1,20 @@
 // サインイン画面に入れる前の確かめ（LogonUI の代わりに DLL を読み込んで呼ぶ）
 //   harness <DLL のパス>          通信しない確かめ（項目・タイルの画像・承認前の GetSerialization・KERB の詰め方）
 //   harness <DLL のパス> --live   タイルを選んだときの流れ（本番の Firebase に匿名ログインし、コードを発行する。管理者として実行）
+//   harness --qr <フォルダー>      QR コードとウィンドウの絵を BMP に書き出す（読み取れるかを別の道具で確かめる）
 #include <cstdio>
+#include <cstring>
 #include <string>
+#include <vector>
 
+// common.h を先に（windows.h より前に WIN32_NO_STATUS を決める）
 #include "../provider/common.h"
 #include "../provider/helpers.h"
+#include "../common/qr.h"
+#include "../common/skhub.h"
+#include "../common/devicekey.h"
+#include "../provider/qrwindow.h"
+#include <bcrypt.h>
 
 HINSTANCE g_hinst = nullptr;
 void DllAddRef() {}
@@ -110,15 +119,160 @@ static void TestPack() {
   Check(SUCCEEDED(RetrieveNegotiateAuthPackage(&package)), "Negotiate auth package");
 }
 
+// 32 ビットの DIB に描いて BMP に保存する
+template <typename PaintFn>
+static bool SaveBmp(const std::wstring& path, int width, int height, PaintFn paint) {
+  BITMAPINFO bi = {};
+  bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
+  bi.bmiHeader.biWidth = width;
+  bi.bmiHeader.biHeight = -height;
+  bi.bmiHeader.biPlanes = 1;
+  bi.bmiHeader.biBitCount = 32;
+  void* bits = nullptr;
+  HDC dc = CreateCompatibleDC(nullptr);
+  HBITMAP bmp = CreateDIBSection(dc, &bi, DIB_RGB_COLORS, &bits, nullptr, 0);
+  if (!bmp) return false;
+  HGDIOBJ old = SelectObject(dc, bmp);
+  RECT rc = { 0, 0, width, height };
+  paint(dc, rc);
+  GdiFlush();
+  BITMAPFILEHEADER fh = {};
+  fh.bfType = 0x4D42;
+  fh.bfOffBits = sizeof(fh) + sizeof(bi.bmiHeader);
+  fh.bfSize = fh.bfOffBits + width * height * 4;
+  BITMAPINFOHEADER ih = bi.bmiHeader;
+  ih.biHeight = height;  // ファイルは下から
+  bool ok = false;
+  HANDLE file = CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, 0, nullptr);
+  if (file != INVALID_HANDLE_VALUE) {
+    DWORD written;
+    ok = WriteFile(file, &fh, sizeof(fh), &written, nullptr) && WriteFile(file, &ih, sizeof(ih), &written, nullptr);
+    for (int y = height - 1; ok && y >= 0; y--) ok = WriteFile(file, static_cast<BYTE*>(bits) + y * width * 4, width * 4, &written, nullptr);
+    CloseHandle(file);
+  }
+  SelectObject(dc, old);
+  DeleteObject(bmp);
+  DeleteDC(dc);
+  return ok;
+}
+
+static int ExportQr(const std::wstring& dir) {
+  // 型番 1（HELLO）・3（いつもの URL）・5・6（ブロックが 2 つ・4 つ）
+  struct Sample { const wchar_t* name; std::string text; } samples[] = {
+    { L"qr-v1.bmp", "HELLO" },
+    { L"qr-url.bmp", "https://sk-hub.jp/pc/?code=ABCD2345" },
+    { L"qr-v5.bmp", "https://sk-hub.jp/pc/?code=ABCD2345&padding=0123456789abcdefghijklmnopqrstuvwxyz0123" },
+    { L"qr-v6.bmp", std::string(100, 'x') + "END" },
+  };
+  for (const Sample& s : samples) {
+    qr::Code code = qr::Encode(s.text);
+    printf("  %ls: size %d (version %d)\n", s.name, code.size, (code.size - 17) / 4);
+    Check(code.size > 0 && SaveBmp(dir + L"\\" + s.name, 360, 360, [&](HDC dc, const RECT& rc) { qr::Paint(dc, rc, code); }), "export QR");
+  }
+  Check(qr::Encode(std::string(200, 'x')).size == 0, "too long text is rejected");
+  for (int i = 0; i < 2; i++) {
+    QrWindowContent content;
+    if (i == 0) {
+      content.code = L"ABCD2345";
+      content.status = L"sk-hub.jp/pc で承認（残り 9:41）";
+    }
+    SIZE size = QrWindowSize(1.0);
+    Check(SaveBmp(dir + (i == 0 ? L"\\qr-window.bmp" : L"\\qr-window-empty.bmp"), size.cx, size.cy,
+                  [&](HDC dc, const RECT& rc) { PaintQrWindow(dc, rc, 1.0, content); }),
+          "export window");
+  }
+  printf("%s (%d failures)\n", g_failures ? "FAILED" : "PASSED", g_failures);
+  return g_failures ? 1 : 0;
+}
+
+static bool IsElevated() {
+  HANDLE token = nullptr;
+  TOKEN_ELEVATION elevation = {};
+  DWORD size = 0;
+  bool elevated = false;
+  if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
+    elevated = GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size) && elevation.TokenIsElevated;
+    CloseHandle(token);
+  }
+  return elevated;
+}
+
+// この PC の鍵（オフライン）: 公開鍵の形と指紋、依頼への署名を、BCrypt の検証で確かめる。マシンの鍵を作るので管理者で動かす
+static void TestDeviceKey() {
+  // base64url（RFC 4648 の例。パディングなし）と、依頼の乱数
+  Check(skhub::Base64Url("f") == "Zg" && skhub::Base64Url("fo") == "Zm8" && skhub::Base64Url("foo") == "Zm9v", "base64url padding");
+  Check(skhub::Base64Url(std::string("\xfb\xff", 2)) == "-_8", "base64url uses - and _");
+  Check(skhub::Base64Url(std::string(64, '\0')).size() == 86 && skhub::RandomHex(16).size() == 32, "base64url of a 64-byte key, 16-byte nonce");
+
+  if (!IsElevated()) {
+    printf("  [skip] device key: 管理者として実行すると、この PC の鍵の確かめもします\n");
+    return;
+  }
+  std::string publicXY, keyId;
+  HRESULT hr = skhub::DeviceKeyPublic(publicXY, keyId);
+  Check(SUCCEEDED(hr) && publicXY.size() == 64 && keyId.size() == 16, "device key: public key and fingerprint");
+  if (FAILED(hr)) return;
+
+  const std::string message = skhub::LogonMessage("ABCD2345", skhub::RandomHex(16), "pc-uid-1");
+  std::string signature;
+  Check(SUCCEEDED(skhub::SignWithDeviceKey(message, signature)) && signature.size() == 64, "device key: sign");
+
+  // 公開鍵を BCrypt に読ませて、署名が正しいメッセージにだけ合うこと
+  auto digestOf = [](const std::string& text) {
+    std::vector<BYTE> out(32);
+    BCRYPT_ALG_HANDLE sha = nullptr;
+    if (BCRYPT_SUCCESS(BCryptOpenAlgorithmProvider(&sha, BCRYPT_SHA256_ALGORITHM, nullptr, 0))) {
+      BCryptHash(sha, nullptr, 0, reinterpret_cast<PUCHAR>(const_cast<char*>(text.data())), static_cast<ULONG>(text.size()), out.data(), 32);
+      BCryptCloseAlgorithmProvider(sha, 0);
+    }
+    return out;
+  };
+  std::vector<BYTE> blob(sizeof(BCRYPT_ECCKEY_BLOB) + 64);
+  auto* header = reinterpret_cast<BCRYPT_ECCKEY_BLOB*>(blob.data());
+  header->dwMagic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
+  header->cbKey = 32;
+  memcpy(blob.data() + sizeof(BCRYPT_ECCKEY_BLOB), publicXY.data(), 64);
+
+  BCRYPT_ALG_HANDLE alg = nullptr;
+  BCRYPT_KEY_HANDLE key = nullptr;
+  bool imported = BCRYPT_SUCCESS(BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, nullptr, 0))
+                  && BCRYPT_SUCCESS(BCryptImportKeyPair(alg, nullptr, BCRYPT_ECCPUBLIC_BLOB, &key, blob.data(), static_cast<ULONG>(blob.size()), 0));
+  std::vector<BYTE> digest = digestOf(message);
+  std::vector<BYTE> other = digestOf(message + "x");
+  Check(imported, "device key: public key imports");
+  if (imported) {
+    Check(BCRYPT_SUCCESS(BCryptVerifySignature(key, nullptr, digest.data(), 32, reinterpret_cast<PUCHAR>(&signature[0]), 64, 0)), "device key: signature verifies");
+    Check(!BCRYPT_SUCCESS(BCryptVerifySignature(key, nullptr, other.data(), 32, reinterpret_cast<PUCHAR>(&signature[0]), 64, 0)), "device key: other message does not verify");
+  }
+  if (key) BCryptDestroyKey(key);
+  if (alg) BCryptCloseAlgorithmProvider(alg, 0);
+}
+
+// 0F8 のアカウントサービスに、存在しない ID で問い合わせる（通信する。ID かパスワードが違う、と返ってくれば正しく届いている）
+static int CheckOf8() {
+  std::wstring id, error;
+  HRESULT hr = skhub::Of8SignIn(L"skhubnoexist1", L"invalid-pass-1", id, error);
+  PrintW(L"  0F8: ", error.c_str());
+  Check(hr == E_ACCESSDENIED && error == L"0F8 の ID かパスワードが違います", "0F8 login API rejects a nonexistent ID");
+  std::wstring empty;
+  Check(skhub::Of8SignIn(L"", L"x", id, empty) == E_INVALIDARG, "0F8 needs an ID");
+  Check(skhub::Of8LinkId(L"sk_user-1") == L"of8_sk_user-1" && skhub::Of8LinkId(L"あ") == L"of8_xe38182", "0F8 link names");
+  printf("%s (%d failures)\n", g_failures ? "FAILED" : "PASSED", g_failures);
+  return g_failures ? 1 : 0;
+}
+
 int wmain(int argc, wchar_t** argv) {
+  if (argc >= 3 && wcscmp(argv[1], L"--qr") == 0) return ExportQr(argv[2]);
+  if (argc >= 2 && wcscmp(argv[1], L"--of8-check") == 0) return CheckOf8();
   if (argc < 2) {
-    printf("usage: harness <dll> [--live]\n");
+    printf("usage: harness <dll> [--live] | harness --qr <dir>\n");
     return 2;
   }
   const bool live = argc >= 3 && wcscmp(argv[2], L"--live") == 0;
   CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   TestPack();
+  TestDeviceKey();
 
   HMODULE dll = LoadLibraryW(argv[1]);
   Check(dll != nullptr, "LoadLibrary");
@@ -178,11 +332,37 @@ int wmain(int argc, wchar_t** argv) {
   if (bmp) {
     BITMAP info = {};
     GetObjectW(bmp, sizeof(info), &info);
-    printf("  tile image %ldx%ld\n", info.bmWidth, info.bmHeight);
+    printf("  tile image %ldx%ld %dbpp\n", info.bmWidth, info.bmHeight, info.bmBitsPixel);
+    // 角は暗い色 #181A1F（透明にすると、サインイン画面では黒く出る）
+    HDC dc = CreateCompatibleDC(nullptr);
+    HGDIOBJ old = SelectObject(dc, bmp);
+    const COLORREF corner = GetPixel(dc, 0, 0), center = GetPixel(dc, info.bmWidth / 2, 24);
+    SelectObject(dc, old);
+    DeleteDC(dc);
+    Check(corner == RGB(24, 26, 31) && center == RGB(255, 255, 255), "tile image: dark corners and a white circle");
     DeleteObject(bmp);
   }
   DWORD adjacent = 0;
-  Check(SUCCEEDED(cred->GetSubmitButtonValue(SFI_SUBMIT, &adjacent)) && adjacent == SFI_CODE, "submit button");
+  Check(cred->GetSubmitButtonValue(SFI_CODE, &adjacent) == E_INVALIDARG, "only SFI_SUBMIT is a submit button");
+  Check(SUCCEEDED(cred->GetSubmitButtonValue(SFI_SUBMIT, &adjacent)) && adjacent == SFI_OF8_PASSWORD, "0F8 submit button next to the password");
+  // 0F8 の入力欄は、0F8 に切りかえるまで出さない（切りかえのリンクは、0F8 アカウントをつないでいるときだけ）
+  {
+    CREDENTIAL_PROVIDER_FIELD_STATE s;
+    CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE i;
+    cred->GetFieldState(SFI_OF8_ID, &s, &i);
+    Check(s == CPFS_HIDDEN, "0F8 fields hidden in QR mode");
+    cred->GetFieldState(SFI_SWITCH, &s, &i);
+    Check((s != CPFS_HIDDEN) == skhub::HasOf8Links(), "0F8 switch link only when a 0F8 account is linked");
+    Check(SUCCEEDED(cred->SetStringValue(SFI_OF8_ID, L"user@example.com")) && cred->SetStringValue(SFI_CODE, L"x") == E_INVALIDARG,
+          "only the 0F8 fields are editable");
+  }
+  // リンクは、コードがないうちは出さない
+  CREDENTIAL_PROVIDER_FIELD_STATE fs;
+  CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE fis;
+  cred->GetFieldState(SFI_QR, &fs, &fis);
+  Check(fs == CPFS_HIDDEN, "QR link hidden before a code exists");
+  cred->GetFieldState(SFI_NEWCODE, &fs, &fis);
+  Check(fs == CPFS_HIDDEN, "new code link hidden while nothing failed");
 
   CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE response;
   CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION serialization;
@@ -199,6 +379,8 @@ int wmain(int argc, wchar_t** argv) {
     // タイルを選んで、承認されるまで（最大 10 分）メッセージを回す
     BOOL autoLogonSelected = TRUE;
     cred->SetSelected(&autoLogonSelected);
+    // QR コードのウィンドウも開く（画面のQRをスマートフォンで読み取って確かめられる）
+    Check(SUCCEEDED(cred->CommandLinkClicked(SFI_QR)), "open QR window");
     printf("waiting... (approve at https://sk-hub.jp/pc/ , Ctrl+C to stop)\n");
     ULONGLONG until = GetTickCount64() + 11 * 60 * 1000;
     while (GetTickCount64() < until && providerEvents.changed == 0) {
