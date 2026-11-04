@@ -23,8 +23,8 @@ for %%d in (provider setup settings preview test) do if not exist "%OUT%\obj\%%d
 
 rem /MT: link the C runtime statically so LogonUI does not need the VC++ redistributable
 set CFLAGS=/nologo /utf-8 /W4 /WX /O2 /MT /EHsc /std:c++17 /permissive- /Zi /DUNICODE /D_UNICODE /DNOMINMAX /D_WIN32_WINNT=0x0A00
-set COMMON=src\common\skhub.cpp src\common\qr.cpp
-set LIBS=advapi32.lib secur32.lib winhttp.lib bcrypt.lib shell32.lib shlwapi.lib ole32.lib uuid.lib user32.lib gdi32.lib netapi32.lib
+set COMMON=src\common\skhub.cpp src\common\qr.cpp src\common\devicekey.cpp
+set LIBS=advapi32.lib secur32.lib winhttp.lib bcrypt.lib ncrypt.lib shell32.lib shlwapi.lib ole32.lib uuid.lib user32.lib gdi32.lib netapi32.lib
 set COMCTL6=/MANIFESTDEPENDENCY:"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'"
 
 rem Credential Provider (loaded by the sign-in screen)

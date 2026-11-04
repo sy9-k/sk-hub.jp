@@ -77,7 +77,7 @@ class CCredential : public ICredentialProviderCredential {
   // QR コード / 0F8 のどちらでサインインするかに合わせて、項目を出し入れする
   void ApplyMode();
   void SwitchMode();
-  // 0F8 のメールアドレスとパスワードを確かめて、つないだ Windows のユーザーとパスワードを用意する
+  // 0F8 の IDとパスワードを確かめて、つないだ Windows のユーザーとパスワードを用意する
   bool PrepareOf8(std::wstring& error);
   void ClearOf8Password();
   void ClearSecret();

@@ -1,7 +1,7 @@
 // SK Hub で Windows にサインイン — 設定ツール（管理者として実行する）
 //   skhub-logon-setup install          サインイン画面に「Sign in with SK Hub」を出す
 //   skhub-logon-setup add [ユーザー名]  SK Hub Systems アカウントと Windows のユーザーをつなぐ
-//   skhub-logon-setup add-0f8 [ユーザー名]  0F8 アカウント（メールアドレスとパスワード）と Windows のユーザーをつなぐ
+//   skhub-logon-setup add-0f8 [ユーザー名]  0F8 アカウント（ID とパスワード）と Windows のユーザーをつなぐ
 //   skhub-logon-setup list             つないだアカウントの一覧
 //   skhub-logon-setup remove <UID か ユーザー名>
 //   skhub-logon-setup uninstall        サインイン画面から外し、つないだアカウントもすべて消す
@@ -127,19 +127,19 @@ bool AskWindowsUser(const std::wstring& input, const wchar_t* command, std::wstr
   return true;
 }
 
-// 0F8 アカウントをつなぐ（メールアドレスとパスワードを、その場で 0F8 に確かめる）
+// 0F8 アカウントをつなぐ（ID とパスワードを、その場で 0F8 に確かめる）
 int AddOf8(const std::wstring& input) {
   std::wstring domain, user, password;
   if (!AskWindowsUser(input, L"add-0f8", domain, user, password)) return 1;
-  std::wstring email, of8Password, of8Uid, error;
-  Print(L"0F8 のメールアドレス: ");
-  ReadLine(email, true);
+  std::wstring loginId, of8Password, of8Id, error;
+  Print(L"0F8 の ID: ");
+  ReadLine(loginId, true);
   Print(L"0F8 のパスワード: ");
   ReadPassword(of8Password);
-  HRESULT hr = skhub::Of8SignIn(email, of8Password, of8Uid, error);
+  HRESULT hr = skhub::Of8SignIn(loginId, of8Password, of8Id, error);
   skhub::Wipe(of8Password);
   if (SUCCEEDED(hr)) {
-    hr = skhub::SaveLinkedUser({ skhub::Of8LinkId(of8Uid), user, domain, email }, password);
+    hr = skhub::SaveLinkedUser({ skhub::Of8LinkId(of8Id), user, domain, of8Id }, password);
     if (FAILED(hr)) error = L"保存できませんでした: " + skhub::ErrorText(hr);
   }
   skhub::Wipe(password);
@@ -147,7 +147,7 @@ int AddOf8(const std::wstring& input) {
     PrintLine(error);
     return 1;
   }
-  PrintLine(L"つなぎました。サインイン画面の「Sign in with SK Hub」で「0F8 の ID とパスワードでサインイン」を選ぶと、" + email + L" で " +
+  PrintLine(L"つなぎました。サインイン画面の「Sign in with SK Hub」で「0F8 の ID とパスワードでサインイン」を選ぶと、0F8 の ID「" + of8Id + L"」で " +
             skhub::DisplayUser(domain, user) + L" にサインインできます。");
   return 0;
 }
@@ -273,7 +273,7 @@ void Usage() {
   PrintLine();
   PrintLine(L"  skhub-logon-setup install          サインイン画面に「Sign in with SK Hub」を追加する");
   PrintLine(L"  skhub-logon-setup add [ユーザー名]  SK Hub Systems アカウントと Windows のユーザーをつなぐ");
-  PrintLine(L"  skhub-logon-setup add-0f8 [ユーザー名]  0F8 アカウント（メールアドレスとパスワード）をつなぐ");
+  PrintLine(L"  skhub-logon-setup add-0f8 [ユーザー名]  0F8 アカウント（ID とパスワード）をつなぐ");
   PrintLine(L"  skhub-logon-setup list             つないだアカウントの一覧");
   PrintLine(L"  skhub-logon-setup remove <UID か ユーザー名>");
   PrintLine(L"  skhub-logon-setup uninstall        外して、つないだアカウントと保存したパスワードを消す");

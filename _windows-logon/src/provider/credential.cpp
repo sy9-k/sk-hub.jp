@@ -304,11 +304,12 @@ void CCredential::ApplyMode() {
   // QR コードはコードがあるとき、新しいコードは終わったときだけ
   SetVisible(SFI_QR, !of8 && _phase == 1);
   SetVisible(SFI_NEWCODE, !of8 && _phase == 2);
-  SetVisible(SFI_OF8_EMAIL, of8);
+  SetVisible(SFI_OF8_ID, of8);
   SetVisible(SFI_OF8_PASSWORD, of8);
   SetVisible(SFI_SUBMIT, of8);
   SetVisible(SFI_SWITCH, _hasOf8);
   SetText(SFI_SWITCH, of8 ? L"QR コードでサインイン" : L"0F8 の ID とパスワードでサインイン");
+  SetText(SFI_SUBTITLE, of8 ? L"0F8 アカウントでサインイン" : L"スマートフォンで承認してサインイン");
 }
 
 void CCredential::SwitchMode() {
@@ -322,9 +323,9 @@ void CCredential::SwitchMode() {
     _code.clear();
     _phase = 0;
     SetText(SFI_CODE, L"");
-    SetText(SFI_STATUS, L"0F8 アカウントのメールアドレスとパスワードを入力してください");
+    SetText(SFI_STATUS, L"0F8 の ID とパスワードを入力してください");
     ApplyMode();
-    if (_events) _events->SetFieldInteractiveState(this, _text[SFI_OF8_EMAIL].empty() ? SFI_OF8_EMAIL : SFI_OF8_PASSWORD, CPFIS_FOCUSED);
+    if (_events) _events->SetFieldInteractiveState(this, _text[SFI_OF8_ID].empty() ? SFI_OF8_ID : SFI_OF8_PASSWORD, CPFIS_FOCUSED);
   } else {
     SetText(SFI_STATUS, L"");
     ApplyMode();
@@ -338,13 +339,12 @@ void CCredential::ClearOf8Password() {
 }
 
 bool CCredential::PrepareOf8(std::wstring& error) {
-  std::wstring of8Uid;
-  const std::wstring email = _text[SFI_OF8_EMAIL];
-  HRESULT hr = skhub::Of8SignIn(email, _text[SFI_OF8_PASSWORD], of8Uid, error);
+  std::wstring of8Id;
+  HRESULT hr = skhub::Of8SignIn(_text[SFI_OF8_ID], _text[SFI_OF8_PASSWORD], of8Id, error);
   // 0F8 のパスワードは、確かめたらすぐ消す
   ClearOf8Password();
   if (FAILED(hr)) return false;
-  const std::wstring id = skhub::Of8LinkId(of8Uid);
+  const std::wstring id = skhub::Of8LinkId(of8Id);
   skhub::LinkedUser user;
   if (FAILED(skhub::FindLinkedUser(id, user))) {
     error = L"この 0F8 アカウントは、この PC につながっていません。設定アプリでつないでください";
@@ -438,7 +438,7 @@ IFACEMETHODIMP CCredential::GetComboBoxValueCount(DWORD, DWORD*, DWORD*) { retur
 IFACEMETHODIMP CCredential::GetComboBoxValueAt(DWORD, DWORD, PWSTR*) { return E_INVALIDARG; }
 
 IFACEMETHODIMP CCredential::SetStringValue(DWORD dwFieldID, PCWSTR pwz) {
-  if (dwFieldID != SFI_OF8_EMAIL && dwFieldID != SFI_OF8_PASSWORD) return E_INVALIDARG;
+  if (dwFieldID != SFI_OF8_ID && dwFieldID != SFI_OF8_PASSWORD) return E_INVALIDARG;
   if (dwFieldID == SFI_OF8_PASSWORD) skhub::Wipe(_text[SFI_OF8_PASSWORD]);
   _text[dwFieldID] = pwz ? pwz : L"";
   return S_OK;
@@ -473,7 +473,7 @@ IFACEMETHODIMP CCredential::GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATI
   *pcpsiOptionalStatusIcon = CPSI_NONE;
   ZeroMemory(pcpcs, sizeof(*pcpcs));
 
-  // 0F8: ここでメールアドレスとパスワードを確かめる（サインイン画面は待っているあいだ「お待ちください」を出す）
+  // 0F8: ここでID とパスワードを確かめる（サインイン画面は待っているあいだ「お待ちください」を出す）
   if (!_ready && _of8Mode) {
     std::wstring error;
     if (!PrepareOf8(error)) {

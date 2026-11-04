@@ -3,14 +3,18 @@
 //   harness <DLL のパス> --live   タイルを選んだときの流れ（本番の Firebase に匿名ログインし、コードを発行する。管理者として実行）
 //   harness --qr <フォルダー>      QR コードとウィンドウの絵を BMP に書き出す（読み取れるかを別の道具で確かめる）
 #include <cstdio>
+#include <cstring>
 #include <string>
+#include <vector>
 
 // common.h を先に（windows.h より前に WIN32_NO_STATUS を決める）
 #include "../provider/common.h"
 #include "../provider/helpers.h"
 #include "../common/qr.h"
 #include "../common/skhub.h"
+#include "../common/devicekey.h"
 #include "../provider/qrwindow.h"
+#include <bcrypt.h>
 
 HINSTANCE g_hinst = nullptr;
 void DllAddRef() {}
@@ -181,8 +185,85 @@ static int ExportQr(const std::wstring& dir) {
   return g_failures ? 1 : 0;
 }
 
+static bool IsElevated() {
+  HANDLE token = nullptr;
+  TOKEN_ELEVATION elevation = {};
+  DWORD size = 0;
+  bool elevated = false;
+  if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) {
+    elevated = GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size) && elevation.TokenIsElevated;
+    CloseHandle(token);
+  }
+  return elevated;
+}
+
+// この PC の鍵（オフライン）: 公開鍵の形と指紋、依頼への署名を、BCrypt の検証で確かめる。マシンの鍵を作るので管理者で動かす
+static void TestDeviceKey() {
+  // base64url（RFC 4648 の例。パディングなし）と、依頼の乱数
+  Check(skhub::Base64Url("f") == "Zg" && skhub::Base64Url("fo") == "Zm8" && skhub::Base64Url("foo") == "Zm9v", "base64url padding");
+  Check(skhub::Base64Url(std::string("\xfb\xff", 2)) == "-_8", "base64url uses - and _");
+  Check(skhub::Base64Url(std::string(64, '\0')).size() == 86 && skhub::RandomHex(16).size() == 32, "base64url of a 64-byte key, 16-byte nonce");
+
+  if (!IsElevated()) {
+    printf("  [skip] device key: 管理者として実行すると、この PC の鍵の確かめもします\n");
+    return;
+  }
+  std::string publicXY, keyId;
+  HRESULT hr = skhub::DeviceKeyPublic(publicXY, keyId);
+  Check(SUCCEEDED(hr) && publicXY.size() == 64 && keyId.size() == 16, "device key: public key and fingerprint");
+  if (FAILED(hr)) return;
+
+  const std::string message = skhub::LogonMessage("ABCD2345", skhub::RandomHex(16), "pc-uid-1");
+  std::string signature;
+  Check(SUCCEEDED(skhub::SignWithDeviceKey(message, signature)) && signature.size() == 64, "device key: sign");
+
+  // 公開鍵を BCrypt に読ませて、署名が正しいメッセージにだけ合うこと
+  auto digestOf = [](const std::string& text) {
+    std::vector<BYTE> out(32);
+    BCRYPT_ALG_HANDLE sha = nullptr;
+    if (BCRYPT_SUCCESS(BCryptOpenAlgorithmProvider(&sha, BCRYPT_SHA256_ALGORITHM, nullptr, 0))) {
+      BCryptHash(sha, nullptr, 0, reinterpret_cast<PUCHAR>(const_cast<char*>(text.data())), static_cast<ULONG>(text.size()), out.data(), 32);
+      BCryptCloseAlgorithmProvider(sha, 0);
+    }
+    return out;
+  };
+  std::vector<BYTE> blob(sizeof(BCRYPT_ECCKEY_BLOB) + 64);
+  auto* header = reinterpret_cast<BCRYPT_ECCKEY_BLOB*>(blob.data());
+  header->dwMagic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
+  header->cbKey = 32;
+  memcpy(blob.data() + sizeof(BCRYPT_ECCKEY_BLOB), publicXY.data(), 64);
+
+  BCRYPT_ALG_HANDLE alg = nullptr;
+  BCRYPT_KEY_HANDLE key = nullptr;
+  bool imported = BCRYPT_SUCCESS(BCryptOpenAlgorithmProvider(&alg, BCRYPT_ECDSA_P256_ALGORITHM, nullptr, 0))
+                  && BCRYPT_SUCCESS(BCryptImportKeyPair(alg, nullptr, BCRYPT_ECCPUBLIC_BLOB, &key, blob.data(), static_cast<ULONG>(blob.size()), 0));
+  std::vector<BYTE> digest = digestOf(message);
+  std::vector<BYTE> other = digestOf(message + "x");
+  Check(imported, "device key: public key imports");
+  if (imported) {
+    Check(BCRYPT_SUCCESS(BCryptVerifySignature(key, nullptr, digest.data(), 32, reinterpret_cast<PUCHAR>(&signature[0]), 64, 0)), "device key: signature verifies");
+    Check(!BCRYPT_SUCCESS(BCryptVerifySignature(key, nullptr, other.data(), 32, reinterpret_cast<PUCHAR>(&signature[0]), 64, 0)), "device key: other message does not verify");
+  }
+  if (key) BCryptDestroyKey(key);
+  if (alg) BCryptCloseAlgorithmProvider(alg, 0);
+}
+
+// 0F8 のアカウントサービスに、存在しない ID で問い合わせる（通信する。ID かパスワードが違う、と返ってくれば正しく届いている）
+static int CheckOf8() {
+  std::wstring id, error;
+  HRESULT hr = skhub::Of8SignIn(L"skhubnoexist1", L"invalid-pass-1", id, error);
+  PrintW(L"  0F8: ", error.c_str());
+  Check(hr == E_ACCESSDENIED && error == L"0F8 の ID かパスワードが違います", "0F8 login API rejects a nonexistent ID");
+  std::wstring empty;
+  Check(skhub::Of8SignIn(L"", L"x", id, empty) == E_INVALIDARG, "0F8 needs an ID");
+  Check(skhub::Of8LinkId(L"sk_user-1") == L"of8_sk_user-1" && skhub::Of8LinkId(L"あ") == L"of8_xe38182", "0F8 link names");
+  printf("%s (%d failures)\n", g_failures ? "FAILED" : "PASSED", g_failures);
+  return g_failures ? 1 : 0;
+}
+
 int wmain(int argc, wchar_t** argv) {
   if (argc >= 3 && wcscmp(argv[1], L"--qr") == 0) return ExportQr(argv[2]);
+  if (argc >= 2 && wcscmp(argv[1], L"--of8-check") == 0) return CheckOf8();
   if (argc < 2) {
     printf("usage: harness <dll> [--live] | harness --qr <dir>\n");
     return 2;
@@ -191,6 +272,7 @@ int wmain(int argc, wchar_t** argv) {
   CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   TestPack();
+  TestDeviceKey();
 
   HMODULE dll = LoadLibraryW(argv[1]);
   Check(dll != nullptr, "LoadLibrary");
@@ -267,11 +349,11 @@ int wmain(int argc, wchar_t** argv) {
   {
     CREDENTIAL_PROVIDER_FIELD_STATE s;
     CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE i;
-    cred->GetFieldState(SFI_OF8_EMAIL, &s, &i);
+    cred->GetFieldState(SFI_OF8_ID, &s, &i);
     Check(s == CPFS_HIDDEN, "0F8 fields hidden in QR mode");
     cred->GetFieldState(SFI_SWITCH, &s, &i);
     Check((s != CPFS_HIDDEN) == skhub::HasOf8Links(), "0F8 switch link only when a 0F8 account is linked");
-    Check(SUCCEEDED(cred->SetStringValue(SFI_OF8_EMAIL, L"user@example.com")) && cred->SetStringValue(SFI_CODE, L"x") == E_INVALIDARG,
+    Check(SUCCEEDED(cred->SetStringValue(SFI_OF8_ID, L"user@example.com")) && cred->SetStringValue(SFI_CODE, L"x") == E_INVALIDARG,
           "only the 0F8 fields are editable");
   }
   // リンクは、コードがないうちは出さない

@@ -10,6 +10,7 @@
 
 #include "skhub.h"
 #include "config.h"
+#include "devicekey.h"
 
 namespace skhub {
 
@@ -55,8 +56,9 @@ struct Response {
   std::string body;
 };
 
+// extraHeaders … ほかに付けるヘッダー（1 行ずつ "\r\n" で終える）
 HRESULT Http(const wchar_t* method, const wchar_t* host, const std::wstring& path, const std::string& body,
-             const wchar_t* contentType, const std::string& bearer, Response& out, std::wstring& error) {
+             const wchar_t* contentType, const std::string& bearer, Response& out, std::wstring& error, const std::wstring& extraHeaders = L"") {
   out = Response();
   Handle session, connect, request;
   session.h = WinHttpOpen(L"SKHubWindowsLogon/1.0", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
@@ -76,6 +78,7 @@ HRESULT Http(const wchar_t* method, const wchar_t* host, const std::wstring& pat
     std::wstring headers;
     if (contentType) headers += std::wstring(L"Content-Type: ") + contentType + L"\r\n";
     if (!bearer.empty()) headers += L"Authorization: Bearer " + FromUtf8(bearer) + L"\r\n";
+    headers += extraHeaders;
     ok = WinHttpSendRequest(request.h, headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str(), (DWORD)-1L,
                             body.empty() ? WINHTTP_NO_REQUEST_DATA : (LPVOID)body.data(), (DWORD)body.size(), (DWORD)body.size(), 0)
          && WinHttpReceiveResponse(request.h, nullptr);
@@ -419,6 +422,15 @@ HRESULT CreateRequest(DeviceToken& token, Purpose purpose, std::wstring& code, s
     HRESULT hr = EnsureDeviceToken(token, error);
     if (FAILED(hr)) return hr;
     code = NewCode();
+    // この PC の鍵で、依頼の内容に署名する（承認のページが、依頼を作ったのが鍵を持つ PC だと確かめられるように）
+    std::string publicXY, keyId, signature;
+    const std::string nonce = RandomHex(16);
+    hr = DeviceKeyPublic(publicXY, keyId);
+    if (SUCCEEDED(hr)) hr = SignWithDeviceKey(LogonMessage(ToUtf8(code), nonce, token.uid), signature);
+    if (FAILED(hr)) {
+      error = L"この PC の鍵を用意できませんでした。管理者として実行してください";
+      return hr;
+    }
     // createdAt はサーバーの時刻（ルールで request.time と同じか確かめる）。同じコードがすでにあれば作らない
     const std::string name = ToUtf8(L"projects/" SKHUB_PROJECT_ID L"/databases/(default)/documents/" SKHUB_LOGIN_COLLECTION L"/" + code);
     const std::string body =
@@ -426,6 +438,10 @@ HRESULT CreateRequest(DeviceToken& token, Purpose purpose, std::wstring& code, s
         "\"pcUid\":{\"stringValue\":\"" + JsonEscape(token.uid) + "\"},"
         "\"pcName\":{\"stringValue\":\"" + JsonEscape(ToUtf8(ComputerName().substr(0, 64))) + "\"},"
         "\"purpose\":{\"stringValue\":\"" + (purpose == Purpose::Register ? "register" : "signin") + "\"},"
+        "\"pcKey\":{\"stringValue\":\"" + Base64Url(publicXY) + "\"},"
+        "\"pcKeyId\":{\"stringValue\":\"" + keyId + "\"},"
+        "\"nonce\":{\"stringValue\":\"" + nonce + "\"},"
+        "\"signature\":{\"stringValue\":\"" + Base64Url(signature) + "\"},"
         "\"status\":{\"stringValue\":\"pending\"}}},"
         "\"updateTransforms\":[{\"fieldPath\":\"createdAt\",\"setToServerValue\":\"REQUEST_TIME\"}],"
         "\"currentDocument\":{\"exists\":false}}]}";
@@ -474,6 +490,12 @@ HRESULT CheckRequest(DeviceToken& token, const std::wstring& code, RequestState&
       return S_OK;
     }
     if (status == "approved" && FirestoreString(r.body, "uid", approver) && ValidUid(FromUtf8(approver))) {
+      // 承認は、この PC の鍵の依頼に対するものだけ使う（ほかの PC の鍵に向けた承認では、サインインしない）
+      std::string publicXY, keyId, approvedKeyId;
+      if (FAILED(DeviceKeyPublic(publicXY, keyId)) || !FirestoreString(r.body, "keyId", approvedKeyId) || approvedKeyId != keyId) {
+        state = RequestState::Missing;
+        return S_OK;
+      }
       uid = FromUtf8(approver);
       state = RequestState::Approved;
     } else if (status == "denied") {
@@ -564,8 +586,16 @@ void ForgetDevice() {
 
 // ---------- 0F8 アカウント ----------
 
-std::wstring Of8LinkId(const std::wstring& of8Uid) {
-  return L"of8_" + of8Uid;
+// ID がそのまま名前に使えなければ、UTF-8 の 16 進にする（of8_x…）
+std::wstring Of8LinkId(const std::wstring& of8Id) {
+  if (ValidUid(L"of8_" + of8Id)) return L"of8_" + of8Id;
+  static const wchar_t hex[] = L"0123456789abcdef";
+  std::wstring out = L"of8_x";
+  for (unsigned char c : ToUtf8(of8Id)) {
+    out += hex[c >> 4];
+    out += hex[c & 15];
+  }
+  return out;
 }
 
 bool IsOf8LinkId(const std::wstring& id) {
@@ -580,36 +610,53 @@ bool HasOf8Links() {
   return false;
 }
 
-HRESULT Of8SignIn(const std::wstring& email, const std::wstring& password, std::wstring& of8Uid, std::wstring& error) {
-  of8Uid.clear();
-  if (email.empty() || password.empty()) {
-    error = L"0F8 のメールアドレスとパスワードを入力してください";
+HRESULT Of8SignIn(const std::wstring& id, const std::wstring& password, std::wstring& of8Id, std::wstring& error) {
+  of8Id.clear();
+  if (id.empty() || password.empty()) {
+    error = L"0F8 の ID とパスワードを入力してください";
     return E_INVALIDARG;
   }
+  const std::wstring origin = L"Origin: " + FromUtf8(SKHUB_OF8_ORIGIN) + L"\r\nAccept: application/json\r\n";
   std::string secret = ToUtf8(password);
-  std::string body = "{\"email\":\"" + JsonEscape(ToUtf8(email)) + "\",\"password\":\"" + JsonEscape(secret) + "\",\"returnSecureToken\":false}";
+  std::string body = "{\"id\":\"" + JsonEscape(ToUtf8(id)) + "\",\"password\":\"" + JsonEscape(secret) + "\",\"origin\":\"" SKHUB_OF8_ORIGIN "\"}";
   Wipe(secret);
   Response r;
-  HRESULT hr = Http(L"POST", L"identitytoolkit.googleapis.com", std::wstring(L"/v1/accounts:signInWithPassword?key=") + SKHUB_OF8_API_KEY, body,
-                    L"application/json", "", r, error);
+  HRESULT hr = Http(L"POST", SKHUB_OF8_HOST, L"/v1/auth/login", body, L"application/json", "", r, error, origin);
   Wipe(body);
   if (FAILED(hr)) return hr;
-  std::string uid;
-  if (r.status == 200 && JsonString(r.body, "localId", uid) && ValidUid(Of8LinkId(FromUtf8(uid)))) {
-    of8Uid = FromUtf8(uid);
-    return S_OK;
+
+  // 成功: { ok: true, token, signature, dataAccessKey, account: { id, … } }
+  std::string accountId, token, signature;
+  const size_t account = FindKey(r.body, "account");
+  const size_t okValue = FindKey(r.body, "ok");
+  const bool ok = r.status == 200 && okValue != std::string::npos && r.body.compare(okValue, 4, "true") == 0 && account != std::string::npos
+                  && ParseString(r.body, FindKey(r.body, "id", account), accountId) && !accountId.empty();
+  if (!ok) {
+    // 失敗: { ok: false, error: { code, message } }
+    std::string code;
+    JsonString(r.body, "code", code);
+    if (code == "invalid_credentials" || r.status == 401)
+      error = L"0F8 の ID かパスワードが違います";
+    else if (r.status == 429 || code.find("rate") != std::string::npos || code.find("too_many") != std::string::npos)
+      error = L"何度も間違えたため、しばらく 0F8 にログインできません。時間をおいてお試しください";
+    else
+      error = L"0F8 にログインできませんでした（" + Describe(r) + L"）";
+    return E_ACCESSDENIED;
   }
-  std::string message;
-  JsonString(r.body, "message", message);
-  if (message == "INVALID_LOGIN_CREDENTIALS" || message == "EMAIL_NOT_FOUND" || message == "INVALID_PASSWORD" || message == "INVALID_EMAIL")
-    error = L"0F8 のメールアドレスかパスワードが違います";
-  else if (message == "USER_DISABLED")
-    error = L"この 0F8 アカウントは使えなくなっています";
-  else if (message.compare(0, 27, "TOO_MANY_ATTEMPTS_TRY_LATER") == 0)
-    error = L"何度も間違えたため、しばらく 0F8 にログインできません。時間をおいてお試しください";
-  else
-    error = L"0F8 にログインできませんでした（" + Describe(r) + L"）";
-  return E_ACCESSDENIED;
+  JsonString(r.body, "token", token);
+  JsonString(r.body, "signature", signature);
+  Wipe(r.body);  // データ鍵（dataAccessKey）も入っているので消す
+  of8Id = FromUtf8(accountId);
+  // 確かめるだけなので、0F8 のセッションはすぐ終える（失敗しても気にしない）
+  if (!token.empty()) {
+    Response out;
+    std::wstring ignored;
+    Http(L"POST", SKHUB_OF8_HOST, L"/v1/auth/logout", "{}", L"application/json", token, out, ignored,
+         origin + L"X-OF8-Signature: " + FromUtf8(signature) + L"\r\n");
+  }
+  Wipe(token);
+  Wipe(signature);
+  return S_OK;
 }
 
 }  // namespace skhub
