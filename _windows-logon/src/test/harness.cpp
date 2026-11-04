@@ -184,6 +184,18 @@ static int ExportQr(const std::wstring& dir) {
                   [&](HDC dc, const RECT& rc) { PaintQrWindow(dc, rc, 1.0, content); }),
           "export window");
   }
+  // ID とパスワードの入力（エラーの出かたも）
+  {
+    QrWindowContent form;
+    form.pcName = L"MYPC";
+    form.seal = 3;
+    form.formAvailable = true;
+    form.form = true;
+    form.error = L"ID かパスワードが違います";
+    SIZE size = QrWindowSize(1.0);
+    Check(SaveBmp(dir + L"\\qr-window-form.bmp", size.cx, size.cy, [&](HDC dc, const RECT& rc) { PaintQrWindow(dc, rc, 1.0, form); }),
+          "export form window");
+  }
   // 合言葉の 8 通り（並べて見る）
   Check(SaveBmp(dir + L"\\qr-seals.bmp", 8 * 80, 80, [&](HDC dc, const RECT&) {
           for (int i = 0; i < 8; i++) PaintSeal(dc, { i * 80 + 10, 10, i * 80 + 70, 70 }, i);
