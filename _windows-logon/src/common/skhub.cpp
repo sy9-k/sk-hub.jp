@@ -584,6 +584,20 @@ void ForgetDevice() {
   RegDeleteKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\SK Hub");  // ほかに何もなければ
 }
 
+// ---------- 合言葉 ----------
+
+int DeviceSeal() {
+  DWORD value = 0, size = sizeof(value);
+  if (RegGetValueW(HKEY_LOCAL_MACHINE, SKHUB_REG_ROOT, L"Seal", RRF_RT_REG_DWORD, nullptr, &value, &size) != ERROR_SUCCESS || value > 7) return 0;
+  return static_cast<int>(value);
+}
+
+HRESULT SetDeviceSeal(int seal) {
+  if (seal < 0 || seal > 7) return E_INVALIDARG;
+  DWORD value = static_cast<DWORD>(seal);
+  return HRESULT_FROM_WIN32(RegSetKeyValueW(HKEY_LOCAL_MACHINE, SKHUB_REG_ROOT, L"Seal", REG_DWORD, &value, sizeof(value)));
+}
+
 // ---------- 0F8 アカウント ----------
 
 // ID がそのまま名前に使えなければ、UTF-8 の 16 進にする（of8_x…）

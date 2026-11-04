@@ -57,6 +57,11 @@ HRESULT ReadLinkedPassword(const std::wstring& uid, std::wstring& password);
 // 匿名ログインの記録も消す（アンインストール）
 void ForgetDevice();
 
+// ---------- 合言葉（この PC の印。サインインのウィンドウに出す） ----------
+// 0〜7。設定がなければ 0。HKLM\SOFTWARE\SK Hub\Windows Logon の Seal（DWORD）
+int DeviceSeal();
+HRESULT SetDeviceSeal(int seal);
+
 // ---------- 0F8 アカウント（ID とパスワードでサインイン） ----------
 // 0F8 のアカウントをつなぐときの名前（レジストリ・LSA）。SK Hub Systems アカウントの UID とまざらないよう of8_ を付ける
 std::wstring Of8LinkId(const std::wstring& of8Id);
