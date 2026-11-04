@@ -175,12 +175,20 @@ static int ExportQr(const std::wstring& dir) {
     if (i == 0) {
       content.code = L"ABCD2345";
       content.status = L"sk-hub.jp/pc で承認（残り 9:41）";
+      content.pcName = L"MYPC";
+      content.seal = 3;
+      content.deadline = GetTickCount64() + 581 * 1000ULL;
     }
     SIZE size = QrWindowSize(1.0);
     Check(SaveBmp(dir + (i == 0 ? L"\\qr-window.bmp" : L"\\qr-window-empty.bmp"), size.cx, size.cy,
                   [&](HDC dc, const RECT& rc) { PaintQrWindow(dc, rc, 1.0, content); }),
           "export window");
   }
+  // 合言葉の 8 通り（並べて見る）
+  Check(SaveBmp(dir + L"\\qr-seals.bmp", 8 * 80, 80, [&](HDC dc, const RECT&) {
+          for (int i = 0; i < 8; i++) PaintSeal(dc, { i * 80 + 10, 10, i * 80 + 70, 70 }, i);
+        }),
+        "export seals");
   printf("%s (%d failures)\n", g_failures ? "FAILED" : "PASSED", g_failures);
   return g_failures ? 1 : 0;
 }

@@ -1,6 +1,9 @@
 #include "qrwindow.h"
 
 #include <algorithm>
+#include <cmath>
+#include <cwchar>
+#include <vector>
 
 #include "../common/config.h"
 #include "../common/qr.h"
@@ -11,10 +14,20 @@ namespace {
 const wchar_t kClass[] = L"SKHubQrWindow";
 const wchar_t kJapaneseFont[] = L"Yu Gothic UI";
 const int kCloseId = 1;
+const UINT_PTR kTickId = 2;
+const int kTickMs = 1000;
+// コードの期限が切れてから、この秒数たったらウィンドウを閉じる（そのあいだに「期限切れ」を読めるように）
+const int kCloseAfterExpiredSeconds = 10;
 const COLORREF kInk = RGB(17, 17, 17);
 const COLORREF kMuted = RGB(90, 99, 113);
 const COLORREF kAccent = RGB(37, 99, 235);
 const COLORREF kLine = RGB(225, 228, 233);
+const COLORREF kBand = RGB(243, 245, 248);
+
+// 合言葉: 色と図形の組み合わせ（8 通り）。この PC の設定（HKLM）に 0〜7 で入る
+const COLORREF kSealColors[8] = { RGB(220, 38, 38), RGB(37, 99, 235), RGB(22, 163, 74), RGB(234, 179, 8),
+                                  RGB(147, 51, 234), RGB(234, 88, 12), RGB(8, 145, 178), RGB(219, 39, 119) };
+const wchar_t* const kSealNames[8] = { L"赤い丸", L"青い四角", L"緑の三角", L"黄色のひし形", L"紫の五角形", L"橙の六角形", L"水色の十字", L"桃色の星" };
 
 struct State {
   QrWindowContent content;
@@ -22,6 +35,9 @@ struct State {
   void (*onClosed)(void* context);
   void* context;
   HFONT buttonFont;
+  ULONGLONG deadline;       // コードの期限（GetTickCount64）。コードが出ている間だけ
+  bool hadCode;             // コードが出たことがある（そのあと消えたら、期限切れ）
+  int expiredSeconds;       // 期限切れになってから数えた秒数
 };
 
 int S(double scale, int v) { return (int)(v * scale + 0.5); }
@@ -44,6 +60,21 @@ int DrawBlock(HDC dc, const std::wstring& text, HFONT font, COLORREF color, int 
   return height;
 }
 
+// 左そろえで 1 行描く
+void DrawLine(HDC dc, const std::wstring& text, HFONT font, COLORREF color, int left, int right, int top) {
+  HGDIOBJ old = SelectObject(dc, font);
+  SetTextColor(dc, color);
+  RECT rc = { left, top, right, top + 200 };
+  DrawTextW(dc, text.c_str(), -1, &rc, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
+  SelectObject(dc, old);
+}
+
+// 残り時間（分:秒）。期限が過ぎていれば 0
+ULONGLONG SecondsLeft(ULONGLONG deadline) {
+  const ULONGLONG now = GetTickCount64();
+  return deadline > now ? (deadline - now + 999) / 1000 : 0;
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   auto* st = reinterpret_cast<State*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
   switch (msg) {
@@ -61,8 +92,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         SendMessageW(button, WM_SETFONT, reinterpret_cast<WPARAM>(st->buttonFont), TRUE);
         SetFocus(button);
       }
+      // 残り時間を 1 秒ごとに描き直す
+      SetTimer(hwnd, kTickId, kTickMs, nullptr);
       return 0;
     }
+    case WM_TIMER:
+      if (st && wParam == kTickId) {
+        // 期限が切れたあと、しばらくして閉じる（コードがなくなったのに、まだ開いているのを防ぐ）
+        if (st->content.code.empty() && st->hadCode && ++st->expiredSeconds >= kCloseAfterExpiredSeconds) {
+          DestroyWindow(hwnd);
+          return 0;
+        }
+        InvalidateRect(hwnd, nullptr, FALSE);
+      }
+      return 0;
     case WM_COMMAND:
       if (LOWORD(wParam) == kCloseId) DestroyWindow(hwnd);
       return 0;
@@ -104,7 +147,50 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }  // namespace
 
 SIZE QrWindowSize(double scale) {
-  return { S(scale, 400), S(scale, 590) };
+  return { S(scale, 400), S(scale, 690) };
+}
+
+const wchar_t* SealName(int seal) {
+  return kSealNames[((seal % 8) + 8) % 8];
+}
+
+void PaintSeal(HDC dc, const RECT& box, int seal) {
+  const int i = ((seal % 8) + 8) % 8;
+  HBRUSH brush = CreateSolidBrush(kSealColors[i]);
+  HGDIOBJ oldBrush = SelectObject(dc, brush);
+  HGDIOBJ oldPen = SelectObject(dc, GetStockObject(NULL_PEN));
+  const double cx = (box.left + box.right) / 2.0, cy = (box.top + box.bottom) / 2.0;
+  const double r = (box.right - box.left) / 2.0;
+  const double pi = 3.14159265358979323846;
+
+  if (i == 0) {
+    Ellipse(dc, box.left, box.top, box.right, box.bottom);
+  } else if (i == 1) {
+    const int inset = (int)(r * 0.2);
+    Rectangle(dc, box.left + inset, box.top + inset, box.right - inset, box.bottom - inset);
+  } else if (i == 6) {
+    // 十字: 腕の幅は半径の 0.4 倍
+    const double w = r * 0.4;
+    const double pts[12][2] = { { -w, -r }, { w, -r }, { w, -w }, { r, -w }, { r, w }, { w, w }, { w, r }, { -w, r }, { -w, w }, { -r, w }, { -r, -w }, { -w, -w } };
+    std::vector<POINT> poly;
+    for (auto& p : pts) poly.push_back({ (LONG)std::lround(cx + p[0]), (LONG)std::lround(cy + p[1]) });
+    Polygon(dc, poly.data(), (int)poly.size());
+  } else {
+    // 三角（3）・ひし形（4）・五角形（5）・六角形（6）・星（10 点、外と内の半径を交互に）
+    int n = i == 2 ? 3 : i == 3 ? 4 : i == 4 ? 5 : i == 5 ? 6 : 10;
+    std::vector<POINT> poly;
+    for (int k = 0; k < n; k++) {
+      double radius = r;
+      if (i == 7) radius = (k % 2 == 0) ? r : r * 0.45;
+      const double angle = -pi / 2 + 2 * pi * k / n;
+      poly.push_back({ (LONG)std::lround(cx + radius * std::cos(angle)), (LONG)std::lround(cy + radius * std::sin(angle)) });
+    }
+    Polygon(dc, poly.data(), (int)poly.size());
+  }
+
+  SelectObject(dc, oldPen);
+  SelectObject(dc, oldBrush);
+  DeleteObject(brush);
 }
 
 void PaintQrWindow(HDC dc, const RECT& rc, double scale, const QrWindowContent& content) {
@@ -112,12 +198,29 @@ void PaintQrWindow(HDC dc, const RECT& rc, double scale, const QrWindowContent& 
   SetBkMode(dc, TRANSPARENT);
   HFONT title = MakeFont(scale, 21, FW_BOLD, kJapaneseFont);
   HFONT body = MakeFont(scale, 14, FW_NORMAL, kJapaneseFont);
+  HFONT bodyBold = MakeFont(scale, 15, FW_BOLD, kJapaneseFont);
   HFONT note = MakeFont(scale, 12, FW_NORMAL, kJapaneseFont);
   HFONT codeFont = MakeFont(scale, 30, FW_BOLD, L"Segoe UI");
 
   const int pad = S(scale, 28);
   const int left = rc.left + pad, right = rc.right - pad;
-  int y = rc.top + S(scale, 26);
+
+  // 上の帯: 要求元（この PC）と、合言葉。本物のウィンドウなら、いつも同じ合言葉が出る
+  const int bandH = S(scale, 84);
+  RECT band = { rc.left, rc.top, rc.right, rc.top + bandH };
+  HBRUSH bandBrush = CreateSolidBrush(kBand);
+  FillRect(dc, &band, bandBrush);
+  DeleteObject(bandBrush);
+  const int sealSize = S(scale, 52);
+  const int sealLeft = rc.left + S(scale, 24);
+  const int sealTop = band.top + (bandH - sealSize) / 2;
+  PaintSeal(dc, { sealLeft, sealTop, sealLeft + sealSize, sealTop + sealSize }, content.seal);
+  const int textLeft = sealLeft + sealSize + S(scale, 14);
+  DrawLine(dc, L"合言葉: " + std::wstring(SealName(content.seal)), bodyBold, kInk, textLeft, right, band.top + S(scale, 20));
+  DrawLine(dc, L"要求元: この PC（" + (content.pcName.empty() ? std::wstring(L"名前のない PC") : content.pcName) + L"）", note, kMuted, textLeft,
+           right, band.top + S(scale, 48));
+
+  int y = band.bottom + S(scale, 22);
   y += DrawBlock(dc, L"スマートフォンで読み取ってください", title, kInk, left, right, y) + S(scale, 6);
   y += DrawBlock(dc, L"カメラで QR コードを読み取ると、承認のページが開きます。", body, kMuted, left, right, y) + S(scale, 16);
 
@@ -146,10 +249,18 @@ void PaintQrWindow(HDC dc, const RECT& rc, double scale, const QrWindowContent& 
 
   y += DrawBlock(dc, content.code.empty() ? L"----" : skhub::FormatCode(content.code), codeFont, kInk, left, right, y) + S(scale, 4);
   y += DrawBlock(dc, L"読み取れないときは " SKHUB_APPROVE_URL L" を開いて\nこのコードを入力してください。", note, kMuted, left, right, y) + S(scale, 10);
-  if (!content.code.empty() && !content.status.empty()) DrawBlock(dc, content.status, note, kAccent, left, right, y);
+  if (!content.code.empty()) {
+    // 残り時間は、ウィンドウが数える（1 秒ごとに描き直す）
+    const ULONGLONG remaining = SecondsLeft(content.deadline);
+    wchar_t line[96];
+    if (remaining > 0) swprintf_s(line, L"承認を待っています（残り %llu:%02llu）", remaining / 60, remaining % 60);
+    else wcscpy_s(line, L"有効期限が切れました");
+    DrawBlock(dc, line, note, kAccent, left, right, y);
+  }
 
   DeleteObject(title);
   DeleteObject(body);
+  DeleteObject(bodyBold);
   DeleteObject(note);
   DeleteObject(codeFont);
 }
@@ -166,7 +277,7 @@ HWND CreateQrWindow(HINSTANCE hinst, HWND owner, void (*onClosed)(void* context)
   if (!dpi) dpi = GetDpiForSystem();
   if (!dpi) dpi = 96;
   const double scale = dpi / 96.0;
-  auto* st = new State{ {}, scale, onClosed, context, MakeFont(scale, 14, FW_NORMAL, kJapaneseFont) };
+  auto* st = new State{ {}, scale, onClosed, context, MakeFont(scale, 14, FW_NORMAL, kJapaneseFont), 0, false, 0 };
 
   const DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU;
   const DWORD exStyle = WS_EX_TOPMOST | WS_EX_DLGMODALFRAME;
@@ -180,7 +291,7 @@ HWND CreateQrWindow(HINSTANCE hinst, HWND owner, void (*onClosed)(void* context)
   const int y = mi.rcWork.top + std::max(0L, (mi.rcWork.bottom - mi.rcWork.top - h) / 2);
 
   // st はウィンドウが持ち、WM_NCDESTROY で消す（作るのに失敗したときも、そこで消えていることがあるので、ここでは消さない）
-  HWND hwnd = CreateWindowExW(exStyle, kClass, L"QR コードで承認", style, x, y, w, h, owner, nullptr, hinst, st);
+  HWND hwnd = CreateWindowExW(exStyle, kClass, L"SK Hub でサインイン", style, x, y, w, h, owner, nullptr, hinst, st);
   if (!hwnd) return nullptr;
   ShowWindow(hwnd, SW_SHOW);
   SetForegroundWindow(hwnd);
@@ -190,7 +301,16 @@ HWND CreateQrWindow(HINSTANCE hinst, HWND owner, void (*onClosed)(void* context)
 void UpdateQrWindow(HWND hwnd, const QrWindowContent& content) {
   auto* st = reinterpret_cast<State*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
   if (!st) return;
+  // コードが出た時点から期限を数える（コードが変わったら、数え直す）
+  if (content.code.empty()) {
+    st->deadline = 0;
+  } else if (content.code != st->content.code || st->deadline == 0) {
+    st->deadline = GetTickCount64() + SKHUB_CODE_TTL_SECONDS * 1000ULL;
+    st->expiredSeconds = 0;
+  }
+  if (!content.code.empty()) st->hadCode = true;
   st->content = content;
+  st->content.deadline = st->deadline;
   InvalidateRect(hwnd, nullptr, FALSE);
 }
 

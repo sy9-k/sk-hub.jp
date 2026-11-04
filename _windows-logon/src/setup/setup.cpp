@@ -268,6 +268,26 @@ int Remove(const std::wstring& target) {
   return 0;
 }
 
+// 合言葉（この PC の印）を見る・変える。0〜7（色と図形の組み合わせ。何番がどれかは、サインイン画面の帯に出る）
+int Seal(const std::wstring& input) {
+  if (input.empty()) {
+    PrintLine(L"いまの合言葉: " + std::to_wstring(skhub::DeviceSeal()));
+    return 0;
+  }
+  wchar_t* end = nullptr;
+  const long n = wcstol(input.c_str(), &end, 10);
+  if (end == input.c_str() || *end != 0 || n < 0 || n > 7) {
+    PrintLine(L"合言葉の番号は 0〜7 で指定してください。");
+    return 1;
+  }
+  if (FAILED(skhub::SetDeviceSeal(static_cast<int>(n)))) {
+    PrintLine(L"合言葉を変えられませんでした。管理者として実行してください。");
+    return 1;
+  }
+  PrintLine(L"合言葉を " + std::to_wstring(n) + L" にしました。次にサインイン画面の「Sign in with SK Hub」を開いたときから出ます。");
+  return 0;
+}
+
 void Usage() {
   PrintLine(L"SK Hub で Windows にサインイン — 設定ツール");
   PrintLine();
@@ -276,6 +296,7 @@ void Usage() {
   PrintLine(L"  skhub-logon-setup add-0f8 [ユーザー名]  0F8 アカウント（ID とパスワード）をつなぐ");
   PrintLine(L"  skhub-logon-setup list             つないだアカウントの一覧");
   PrintLine(L"  skhub-logon-setup remove <UID か ユーザー名>");
+  PrintLine(L"  skhub-logon-setup seal [0-7]       この PC の合言葉を見る・変える（省くと、いまの番号を表示）");
   PrintLine(L"  skhub-logon-setup uninstall        外して、つないだアカウントと保存したパスワードを消す");
   PrintLine();
   PrintLine(L"管理者として実行してください。");
@@ -305,6 +326,7 @@ int wmain(int argc, wchar_t** argv) {
   if (command == L"add-0f8") return AddOf8(argc >= 3 ? argv[2] : L"");
   if (command == L"list") return List();
   if (command == L"remove" && argc >= 3) return Remove(argv[2]);
+  if (command == L"seal") return Seal(argc >= 3 ? argv[2] : L"");
   Usage();
   return 1;
 }

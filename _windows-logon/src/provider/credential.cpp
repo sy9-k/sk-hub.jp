@@ -278,7 +278,7 @@ void CCredential::CloseQrWindow() {
 }
 
 void CCredential::UpdateQr() {
-  if (_qrWnd) UpdateQrWindow(_qrWnd, { _code, _text[SFI_STATUS] });
+  if (_qrWnd) UpdateQrWindow(_qrWnd, { _code, _text[SFI_STATUS], skhub::ComputerName(), skhub::DeviceSeal() });
 }
 
 void CCredential::OnQrWindowClosed(void* context) {
