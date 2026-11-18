@@ -1,7 +1,10 @@
-const CACHE_NAME = 'dictionary-v17';
+const CACHE_NAME = 'dictionary-v19';
 const urlsToCache = [
   '/dictionary/',
   '/dictionary/index.html',
+  '/dictionary/result/',
+  '/dictionary/result/result.css',
+  '/dictionary/result/result.js',
   '/dictionary/styles.css',
   '/dictionary/script.js',
   '/dictionary/account.js',

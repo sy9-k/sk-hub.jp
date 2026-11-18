@@ -1,0 +1,57 @@
+/* MALU の検索結果ページ（API から取り込んだ結果を、辞書ごとのカードで並べる） */
+
+/* 配色は API モードのホームと同じ SK's Blue（#2563eb）。ホーム（script.js の createColorScheme）が作る値をそのまま置いている */
+html[data-theme="light"]{
+  --md-primary:#3556c0;--md-on-primary:#ffffff;--md-primary-container:#e1e0ff;--md-on-primary-container:#001849;--md-inverse-primary:#c1c1ff;
+  --md-secondary-container:#e1e0ff;--md-on-secondary-container:#171932;
+  --md-surface:#f9f9ff;--md-surface-container-lowest:#ffffff;--md-surface-container-low:#f3f3fb;--md-surface-container:#eeedf5;--md-surface-container-high:#e8e7ef;--md-surface-container-highest:#e2e2e9;
+  --md-on-surface:#1b1b20;--md-on-surface-variant:#464553;--md-outline:#767685;--md-outline-variant:#c6c5d6;
+  --md-inverse-surface:#303036;--md-inverse-on-surface:#f0f0f8;
+}
+html[data-theme="dark"]{
+  --md-primary:#c1c1ff;--md-on-primary:#002b74;--md-primary-container:#003fa3;--md-on-primary-container:#e1e0ff;--md-inverse-primary:#3556c0;
+  --md-secondary-container:#444460;--md-on-secondary-container:#e1e0ff;
+  --md-surface:#131318;--md-surface-container-lowest:#0e0d14;--md-surface-container-low:#1b1b20;--md-surface-container:#1f1f25;--md-surface-container-high:#2a292f;--md-surface-container-highest:#34343a;
+  --md-on-surface:#e2e2e9;--md-on-surface-variant:#c6c5d6;--md-outline:#908f9f;--md-outline-variant:#464553;
+  --md-inverse-surface:#e2e2e9;--md-inverse-on-surface:#303036;
+}
+.result{gap:16px}
+
+/* 結果ページに入ったとき、検索ボックス → 見出し → カードの順に現れる。カードは取得できた順に（--i は result.js が入れる） */
+.result-form,.result-meta{animation:fadeUp .45s var(--md-easing-emphasized-decelerate) both}
+.result-meta{animation-delay:.06s}
+.result-card{animation:fadeUp .5s var(--md-easing-emphasized-decelerate) calc(.1s + var(--i,0) * 80ms) both}
+.result-card__body > *{animation:fadeIn .35s var(--md-easing-standard) both}
+.result-card--loading .result-card__body{animation:resultPulse 1.4s ease-in-out infinite}
+@keyframes resultPulse{0%,100%{opacity:.55}50%{opacity:1}}
+.result-note{animation:fadeIn .6s var(--md-easing-standard) .3s both}
+.result-form .search-bar{margin:0}
+.result-meta{margin:0;color:var(--md-on-surface-variant);font-size:.875rem}
+.result-meta strong{color:var(--md-on-surface);font-size:1.25rem;font-weight:700}
+.result-list{display:flex;flex-direction:column;gap:16px}
+
+.result-card{padding:16px 20px 20px;border-radius:var(--md-shape-lg);background:var(--md-surface-container-low);color:var(--md-on-surface)}
+.result-card__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 8px}
+.result-card__title{margin:0;font-size:1rem;font-weight:700}
+.result-card__link{font-size:.8125rem;color:var(--md-primary);white-space:nowrap}
+.result-card__link:hover{text-decoration:underline}
+.result-card__body h3{margin:16px 0 4px;font-size:.9375rem;font-weight:700;color:var(--md-primary)}
+.result-card__body h3:first-child{margin-top:4px}
+.result-card__body p{margin:2px 0;line-height:1.7;overflow-wrap:anywhere}
+.result-card__body .pos{display:inline-block;margin:12px 0 2px;padding:0 10px;border-radius:var(--md-shape-full);background:var(--md-secondary-container);color:var(--md-on-secondary-container);font-size:.8125rem}
+.result-card__body ol{margin:4px 0 4px 1.4em;padding:0}
+.result-card__body li{margin:2px 0;line-height:1.7}
+.result-card__body .example{color:var(--md-on-surface-variant);font-size:.875rem}
+.result-card__body .phonetic{color:var(--md-on-surface-variant)}
+.result-card__credit{margin:12px 0 0;color:var(--md-on-surface-variant);font-size:.75rem}
+.result-card--empty .result-card__body{color:var(--md-on-surface-variant)}
+.result-card--loading .result-card__body{color:var(--md-on-surface-variant)}
+
+.result-suggest{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.result-suggest a{padding:4px 14px;border-radius:var(--md-shape-full);border:1px solid var(--md-outline);color:var(--md-on-surface);font-size:.875rem}
+.result-suggest a:hover{background:var(--md-secondary-container)}
+
+.result-external{margin:0;text-align:center}
+.result-external a{display:inline-block;padding:10px 20px;border-radius:var(--md-shape-full);border:1px solid var(--md-outline);color:var(--md-primary);font-weight:500}
+.result-external a:hover{background:var(--md-secondary-container)}
+.result-note{margin:8px 0 0;color:var(--md-on-surface-variant);font-size:.75rem;line-height:1.6}

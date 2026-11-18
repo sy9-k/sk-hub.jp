@@ -1,0 +1,223 @@
+/* 私について（/about/）。色・影は assets/site.css のトークン（:root の変数）を使うので、ライト・ダークどちらにも合う。
+   動きは prefers-reduced-motion のときは止める */
+
+:root { --ab-grad: linear-gradient(120deg, var(--a) 0%, var(--malu) 45%, var(--nagi) 100%); }
+
+/* ---------- ヒーロー ---------- */
+.ab-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: min(92vh, 820px);
+  display: flex;
+  align-items: center;
+  padding: 96px 0 72px;
+  background: var(--bg);
+}
+.ab-hero-inner { position: relative; z-index: 2; }
+.ab-grid-bg {
+  position: absolute; inset: 0; z-index: -1;
+  background-image: radial-gradient(var(--dots) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 75%);
+}
+.ab-orb {
+  position: absolute; z-index: -1; border-radius: 50%;
+  filter: blur(60px); opacity: .55; pointer-events: none;
+  animation: ab-float 14s ease-in-out infinite alternate;
+}
+.ab-orb-a { width: 46vw; height: 46vw; max-width: 560px; max-height: 560px; right: -8%; top: -12%; background: radial-gradient(circle, var(--a) 0%, transparent 70%); }
+.ab-orb-b { width: 36vw; height: 36vw; max-width: 440px; max-height: 440px; left: -10%; bottom: -10%; background: radial-gradient(circle, var(--malu) 0%, transparent 70%); animation-duration: 18s; animation-delay: -6s; }
+@keyframes ab-float { from { transform: translate(0, 0) scale(1); } to { transform: translate(40px, -30px) scale(1.08); } }
+
+.ab-pill {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 16px; border-radius: 999px;
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--line), var(--shadow);
+  font-size: 13px; font-weight: 700;
+}
+.ab-pulse { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--nagi); }
+.ab-pulse::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid var(--nagi); animation: ab-ping 2s ease-out infinite;
+}
+@keyframes ab-ping { from { transform: scale(.6); opacity: .9; } to { transform: scale(2.2); opacity: 0; } }
+
+.ab-title {
+  margin-top: 24px;
+  font-size: clamp(96px, 20vw, 220px);
+  font-weight: 800;
+  letter-spacing: -.06em;
+  line-height: .9;
+}
+.ab-grad {
+  background: var(--ab-grad);
+  background-size: 200% 200%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: ab-shift 8s ease-in-out infinite alternate;
+}
+@keyframes ab-shift { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+
+.ab-lead { margin-top: 20px; max-width: 560px; font-size: clamp(18px, 2.4vw, 24px); line-height: 1.6; }
+.ab-actions { margin-top: 32px; }
+.ab-scroll {
+  position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
+  width: 26px; height: 42px; border-radius: 14px; box-shadow: inset 0 0 0 2px var(--line-strong);
+}
+.ab-scroll span {
+  position: absolute; left: 50%; top: 8px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px;
+  background: var(--ink); animation: ab-wheel 1.8s ease-in-out infinite;
+}
+@keyframes ab-wheel { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px); } }
+
+/* ---------- 入場（スクロールで出す） ---------- */
+.ab-reveal { transition: opacity .8s ease var(--d, 0s), transform .8s cubic-bezier(.2, .7, .2, 1) var(--d, 0s); }
+.js .ab-hero .ab-reveal { animation: ab-in .9s cubic-bezier(.2, .7, .2, 1) var(--d, 0s) both; }
+@keyframes ab-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+/* ---------- プロフィール（ガラス風） ---------- */
+.ab-profile {
+  position: relative;
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: center;
+  padding: 36px; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 0 1px var(--line), var(--shadow);
+  overflow: hidden;
+}
+.ab-profile::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--ab-grad); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: .5;
+}
+.ab-profile-id { display: flex; align-items: center; gap: 22px; }
+.ab-avatar { width: 96px; height: 96px; border-radius: 30px; box-shadow: 0 16px 36px color-mix(in srgb, var(--a) 35%, transparent); flex: none; }
+.ab-profile h2 { font-size: 44px; font-weight: 800; letter-spacing: -.03em; margin-top: 6px; }
+.ab-handle { color: var(--link); font-weight: 700; text-decoration: none; }
+.ab-handle:hover { text-decoration: underline; }
+.ab-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0; }
+.ab-stats > div { padding: 16px; border-radius: 18px; background: var(--surface-2); }
+.ab-stats dt { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+.ab-stats dd { margin: 6px 0 0; font-size: 17px; font-weight: 800; }
+.ab-count { font-variant-numeric: tabular-nums; }
+
+/* ---------- つくっているもの（ベントー） ---------- */
+.ab-bento {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(190px, auto);
+  gap: 16px;
+}
+.ab-tile {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 26px; border-radius: 24px;
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--line), var(--shadow);
+  color: inherit; text-decoration: none;
+  transition: transform .35s cubic-bezier(.2, .7, .2, 1), box-shadow .35s ease;
+}
+.ab-tile:hover { transform: translateY(-3px); box-shadow: inset 0 0 0 1px var(--line-strong), var(--shadow); }
+.ab-t-malu { --tc: var(--malu); }
+.ab-t-yf { --tc: var(--yf); }
+.ab-t-nagi { --tc: var(--nagi); }
+.ab-t-office { --tc: var(--a); }
+.ab-t-tb { --tc: #d9467a; }
+.ab-t-hub { --tc: var(--ink); }
+.ab-tile-big { grid-column: span 2; grid-row: span 2; padding: 34px; justify-content: flex-end; }
+.ab-tile-big h3 { font-size: clamp(40px, 6vw, 64px); }
+.ab-tile-big p { font-size: 17px; max-width: 420px; }
+.ab-tile-wide { grid-column: span 3; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 28px; }
+.ab-tile-wide .ab-tile-top { width: 100%; }
+.ab-tile-wide p { max-width: 560px; }
+.ab-tile-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ab-arrow {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; font-weight: 800;
+  background: var(--surface-2); transition: transform .35s ease, background .35s ease, color .35s ease;
+}
+.ab-tile:hover .ab-arrow { transform: rotate(45deg); background: var(--tc, var(--a)); color: #fff; }
+.ab-tile h3 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; margin-top: auto; }
+.ab-tile .kind { color: var(--muted); font-size: 13px; font-weight: 700; }
+.ab-tile p { color: var(--muted); font-size: 15px; }
+
+/* ---------- 技術のマーキー ---------- */
+.ab-marquee {
+  overflow: hidden;
+  padding: 18px 0;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ab-track { display: flex; gap: 14px; width: max-content; animation: ab-marq 28s linear infinite; }
+.ab-track span {
+  padding: 10px 20px; border-radius: 999px; white-space: nowrap;
+  background: var(--surface-2); font-weight: 800; font-size: 15px;
+}
+.ab-track span:nth-child(3n+1) { color: var(--a-strong); }
+.ab-track span:nth-child(3n+2) { color: var(--malu); }
+.ab-track span:nth-child(3n) { color: var(--nagi); }
+@keyframes ab-marq { to { transform: translateX(-50%); } }
+
+/* ---------- リンク ---------- */
+.ab-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.ab-link {
+  position: relative; display: grid; grid-template-columns: 48px 1fr; column-gap: 16px; align-items: center;
+  padding: 22px 24px; border-radius: 22px;
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--line), var(--shadow);
+  color: inherit; text-decoration: none;
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+.ab-link:hover { transform: translateX(4px); box-shadow: inset 0 0 0 1px var(--a-line), var(--shadow); }
+.ab-link-ico {
+  grid-row: span 2; width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center;
+  background: var(--a-soft); color: var(--link); font-size: 20px; font-weight: 800;
+}
+.ab-link strong { font-size: 16px; }
+.ab-link span:not(.ab-link-ico) { color: var(--muted); font-size: 14px; }
+
+/* ---------- 連絡 ---------- */
+.ab-contact {
+  position: relative; overflow: hidden; isolation: isolate;
+  padding: clamp(32px, 5vw, 56px); border-radius: 32px;
+  display: flex; align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap;
+  background: var(--night); color: #fff;
+}
+.ab-contact::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: .55;
+  background: radial-gradient(600px 300px at 0% 0%, color-mix(in srgb, var(--a) 60%, transparent), transparent 70%),
+              radial-gradient(500px 280px at 100% 100%, color-mix(in srgb, var(--malu) 55%, transparent), transparent 70%);
+}
+.ab-contact .eyebrow { color: rgba(255, 255, 255, .8); }
+.ab-contact h2 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 800; letter-spacing: -.03em; margin-top: 10px; }
+.ab-contact p { color: rgba(255, 255, 255, .78); margin-top: 12px; max-width: 480px; }
+.ab-contact .btn-tonal { background: rgba(255, 255, 255, .12); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3); }
+.ab-contact .btn-ink { background: #fff; color: var(--night); }
+
+/* ---------- 入る前の表示（JS が動かないときも見える） ---------- */
+.js .ab-reveal { opacity: 0; transform: translateY(18px); }
+.js .ab-reveal.is-in { opacity: 1; transform: none; }
+.js .ab-hero .ab-reveal { opacity: 0; }
+
+/* ---------- スマホ ---------- */
+@media (max-width: 900px) {
+  .ab-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ab-tile-big { grid-column: span 2; grid-row: span 1; }
+  .ab-tile-wide { grid-column: span 2; }
+  .ab-profile { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .ab-hero { min-height: auto; padding: 72px 0 80px; }
+  .ab-bento, .ab-links { grid-template-columns: 1fr; }
+  .ab-tile-big, .ab-tile-wide { grid-column: auto; }
+  .ab-tile-wide { flex-direction: column; align-items: flex-start; }
+  .ab-profile { padding: 24px; }
+  .ab-profile h2 { font-size: 36px; }
+  .ab-stats { grid-template-columns: 1fr; }
+  .ab-contact { padding: 28px; border-radius: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .ab-reveal, .js .ab-reveal { opacity: 1; transform: none; }
+}

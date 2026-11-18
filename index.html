@@ -47,38 +47,23 @@
   <div class="hd-backdrop" id="hd-backdrop"></div>
 
   <main id="main">
-    <section class="hero band">
-      <div class="wrap hero-inner">
-        <div class="hero-text">
-          <a class="hero-pill news-pill" href="https://support.sk-hub.jp/?type=news" data-news-latest hidden><span class="news-pill-tag">お知らせ</span><span class="news-pill-text" data-news-latest-text></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-          <h1><span class="hl">毎日のネットを、</span><span class="hl">もう少し<span class="mark">安心</span>で</span><span class="hl"><span class="mark">便利</span>に。</span></h1>
-          <p class="lead">フィルタ「Y-FILTER.」、辞書検索「MALU」、集中タイマー「Nagi」、オフィスアプリ「SK Hub Office」を開発しています。プロダクトの情報とサポートは、このサイトにまとめています。</p>
-          <div class="btn-row">
-            <a class="btn btn-ink" href="#products">プロダクトを見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-            <a class="btn btn-tonal" href="/about/">私について</a>
-          </div>
+    <link rel="stylesheet" href="/assets/home.css">
+    <section class="hm-hero band">
+      <div class="wrap">
+        <a class="hero-pill news-pill" href="https://support.sk-hub.jp/?type=news" data-news-latest hidden><span class="news-pill-tag">お知らせ</span><span class="news-pill-text" data-news-latest-text></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <h1><span class="hl">毎日のネットを、</span><span class="hl">もう少し<span class="mark">安心</span>で<span class="mark">便利</span>に。</span></h1>
+        <p class="lead">高校生の SK が、フィルタ・辞書・集中タイマー・オフィスアプリなど、毎日使う道具をつくっています。プロダクトの情報とサポートは、このサイトにまとめています。</p>
+        <div class="btn-row">
+          <a class="btn btn-ink" href="#products">プロダクトを見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-tonal" href="/about/">私について</a>
         </div>
-        <div class="hero-visual" aria-hidden="true">
-          <div class="window">
-            <div class="window-bar"><i></i><i></i><i></i><span class="window-url">sk-hub.jp/dictionary</span></div>
-            <img src="/assets/screenshots/malu.webp" alt="" width="2400" height="1240">
-          </div>
-          <div class="float-card float-yf">
-            <div class="head">
-              <img class="yf-tile" src="/y-filter/shared/icon.svg" alt="">
-              <div><strong>Y-FILTER.</strong><small data-yf-when="missing">開発中のフィルタ拡張機能</small><small class="float-yf-live" data-yf-when="installed">このブラウザで使用中</small></div>
-            </div>
-            <ul>
-              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>カテゴリでブロック</li>
-              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>1日の利用時間の上限</li>
-              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>複数の端末を遠隔管理</li>
-            </ul>
-          </div>
-          <div class="float-card float-chip">
-            <span class="tile-ico ti-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h13"/></svg></span>
-            6 つの辞書カテゴリ
-          </div>
-        </div>
+        <nav class="hm-dock" aria-label="プロダクト">
+          <a href="/products/y-filter/" aria-label="Y-FILTER."><img class="yf-tile" src="/y-filter/shared/icon.svg" alt=""></a>
+          <a href="/products/malu/" aria-label="MALU"><img src="/dictionary/ico/icon-192.png" alt=""></a>
+          <a href="/products/nagi/" aria-label="Nagi"><img src="/nagi/ico/icon-192.png" alt=""></a>
+          <a href="/products/toolbox/" aria-label="SK's Toolbox"><img src="/toolbox/icon-192.png" alt=""></a>
+          <a href="/products/office/" aria-label="SK Hub Office"><img src="/products/office/icon.png" alt=""></a>
+        </nav>
       </div>
     </section>
 
@@ -89,72 +74,32 @@
           <h2>プロダクト</h2>
           <p>毎日のネットを、安心で便利にするためのプロダクトをつくっています。</p>
         </div>
-        <div class="grid-2 product-grid">
-          <a class="card product-card pc-yf" href="/products/y-filter/">
-            <div class="cover">
-              <img class="icon yf-tile" src="/y-filter/shared/icon.svg" alt="">
-              <div><h3>Y-FILTER.</h3><div class="kind">ブラウザ拡張機能</div></div>
-              <span class="badge badge-dev" data-yf-when="missing"><span class="dot"></span>開発中</span>
-              <!-- このブラウザに Y-FILTER. が入っているとき（拡張機能が <html data-yfilter-version> を付ける） -->
-              <span class="badge badge-live" data-yf-when="installed"><span class="dot"></span>このブラウザで使用中</span>
-            </div>
-            <div class="body">
-              <p>有害なサイトのブロックや利用時間の管理ができるフィルタリング拡張機能。保護者や学校が、管理コンソールから複数の端末をまとめて管理できます。</p>
-              <ul class="checks">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>カテゴリ・キーワードでブロック</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>1日の利用時間の上限</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>管理コンソールで遠隔管理</li>
-              </ul>
-              <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-            </div>
+        <div class="hm-bento">
+          <a class="hm-tile pc-yf is-wide" href="/products/y-filter/">
+            <div class="hm-tile-top"><img class="yf-tile" src="/y-filter/shared/icon.svg" alt=""><div><h3>Y-FILTER.</h3><div class="kind">ブラウザ拡張機能</div></div><span class="badge badge-dev" data-yf-when="missing"><span class="dot"></span>開発中</span><span class="badge badge-live" data-yf-when="installed"><span class="dot"></span>このブラウザで使用中</span></div>
+            <p>有害なサイトのブロックや利用時間の管理ができるフィルタリング拡張機能。保護者や学校が、管理コンソールから複数の端末をまとめて管理できます。</p>
+            <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
           </a>
-          <a class="card product-card pc-malu" href="/products/malu/">
-            <div class="cover">
-              <img class="icon" src="/dictionary/ico/icon-192.png" alt="">
-              <div><h3>MALU</h3><div class="kind">辞書検索アプリ（Web）</div></div>
-              <span class="badge badge-live"><span class="dot"></span>公開中</span>
-            </div>
-            <div class="body">
-              <p>国語・英語・韓国語・中国語などの辞書を、ひとつの検索ボックスから引けるアプリ。ホーム画面に追加して、アプリのように使えます。</p>
-              <ul class="checks">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>6 つのカテゴリの辞書と翻訳サイト</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>ホーム画面に追加できる</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>検索履歴はブラウザの中だけに保存</li>
-              </ul>
-              <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-            </div>
+          <a class="hm-tile pc-malu is-wide" href="/products/malu/">
+            <div class="hm-tile-top"><img src="/dictionary/ico/icon-192.png" alt=""><div><h3>MALU</h3><div class="kind">辞書検索アプリ（Web）</div></div><span class="badge badge-live"><span class="dot"></span>公開中</span></div>
+            <p>国語・英語・韓国語・中国語などの辞書を、ひとつの検索ボックスから引けるアプリ。ホーム画面に追加して、アプリのように使えます。</p>
+            <div class="hm-shot"><img src="/assets/screenshots/malu.webp" alt="" width="2400" height="1240" loading="lazy"></div>
+            <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
           </a>
-          <a class="card product-card pc-nagi" href="/products/nagi/">
-            <div class="cover">
-              <img class="icon" src="/nagi/ico/icon-192.png" alt="">
-              <div><h3>Nagi</h3><div class="kind">集中タイマー（Web）</div></div>
-              <span class="badge badge-live"><span class="dot"></span>公開中</span>
-            </div>
-            <div class="body">
-              <p>集中と休憩をくり返して、勉強や作業の時間を記録する集中タイマー。1 日の目標と、達成した日が続いている日数が見えます。</p>
-              <ul class="checks">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>集中と休憩を自動でくり返す</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>1日の目標と連続日数</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>アカウントで端末のあいだを同期</li>
-              </ul>
-              <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-            </div>
+          <a class="hm-tile pc-nagi" href="/products/nagi/">
+            <div class="hm-tile-top"><img src="/nagi/ico/icon-192.png" alt=""><div><h3>Nagi</h3><div class="kind">集中タイマー（Web）</div></div><span class="badge badge-live"><span class="dot"></span>公開中</span></div>
+            <p>集中と休憩をくり返して、勉強や作業の時間を記録。1 日の目標と連続日数が見えます。</p>
+            <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
           </a>
-          <a class="card product-card pc-office" href="/products/office/">
-            <div class="cover">
-              <img class="icon" src="/products/office/icon.png" alt="">
-              <div><h3>SK Hub Office</h3><div class="kind">文書・表・スライド（Web）</div></div>
-              <span class="badge badge-dev"><span class="dot"></span>開発中</span>
-            </div>
-            <div class="body">
-              <p>文書の Doc、表計算の Sheet、スライドの Slide を、ブラウザだけで使えるオフィスアプリ。Office の形式で書き出せて、端末のあいだで同期できます。</p>
-              <ul class="checks">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>Doc・Sheet・Slide の 3 つのアプリ</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>Office の形式で書き出し</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>端末のあいだの同期</li>
-              </ul>
-              <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-            </div>
+          <a class="hm-tile pc-toolbox" href="/products/toolbox/">
+            <div class="hm-tile-top"><img src="/toolbox/icon-192.png" alt=""><div><h3>SK's Toolbox</h3><div class="kind">小さなアプリの道具箱</div></div><span class="badge badge-live"><span class="dot"></span>公開中</span></div>
+            <p>Clock・Calc・Memo・Todo・Countdown・Timetable・Roulette。毎日ちょっと使う 7 つのアプリが入っています。</p>
+            <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </a>
+          <a class="hm-tile pc-office" href="/products/office/">
+            <div class="hm-tile-top"><img src="/products/office/icon.png" alt=""><div><h3>SK Hub Office</h3><div class="kind">文書・表・スライド（Web）</div></div><span class="badge badge-dev"><span class="dot"></span>開発中</span></div>
+            <p>Doc・Sheet・Slide を、ブラウザだけで。Office の形式で書き出せて、端末のあいだで同期できます。</p>
+            <span class="more">詳しく見る<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
           </a>
         </div>
 
@@ -206,6 +151,19 @@
             </div>
           </div>
         </a>
+      </div>
+    </section>
+
+    <section class="section" id="news">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">News</span>
+          <h2>お知らせ</h2>
+          <p>サービスや規約などの大切なお知らせです。</p>
+        </div>
+        <div class="card hm-news" data-home-news aria-live="polite">
+          <p class="hm-news-empty">読み込み中…</p>
+        </div>
       </div>
     </section>
 
@@ -288,6 +246,31 @@
         </div>
       </div>
     </section>
+  <script>
+  // トップのお知らせ（最新 5 件）。記事の読み込みは support/articles.js
+  document.addEventListener("DOMContentLoaded", function () {
+    var box = document.querySelector("[data-home-news]");
+    if (!box || !window.SKArticles) return;
+    var lp = function (u) { return window.SKI18N && u.charAt(0) === "/" ? window.SKI18N.path(u) : u; };
+    window.SKArticles.load().then(function (data) {
+      var list = (data.articles || []).filter(function (a) { return a.type === "news"; }).sort(function (a, b) { return b.date.localeCompare(a.date); }).slice(0, 5);
+      if (!list.length) return;
+      box.textContent = "";
+      list.forEach(function (a) {
+        var el = document.createElement("a");
+        el.href = "https://support.sk-hub.jp/?a=" + encodeURIComponent(a.id);
+        var t = document.createElement("time"); t.dateTime = a.date; t.textContent = a.date.replace(/-/g, "/");
+        var g = document.createElement("span"); g.className = "news-tag" + (a.important ? " is-important" : ""); g.textContent = a.important ? "重要" : a.category;
+        var s = document.createElement("strong"); s.textContent = a.title;
+        el.append(t, g, s);
+        el.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>');
+        box.appendChild(el);
+      });
+      var more = document.createElement("a"); more.className = "hm-news-more"; more.href = "https://support.sk-hub.jp/?type=news";
+      more.innerHTML = 'お知らせをすべて見る' + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'; box.appendChild(more);
+    }).catch(function () { box.innerHTML = '<a class="hm-news-more" href="https://support.sk-hub.jp/?type=news">お知らせを見る</a>'; });
+  });
+  </script>
   </main>
 
   <footer class="site-footer">
