@@ -72,6 +72,24 @@
       </section>
 
       <section class="search-history" id="search-history" aria-live="polite"></section>
+
+      <!-- 「検索結果の取得元」が「MALU の画面」のときだけ出る、API 専用のホーム（script.js の applyApiMode） -->
+      <section class="api-home" id="api-home" aria-label="API で引く">
+        <h2 class="search-area-title">ことばをまとめて引こう</h2>
+        <form id="api-form" action="#" method="get">
+          <div class="dictionary-panel">
+            <div class="search-bar">
+              <svg class="search-bar__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <input id="api-query" type="text" maxlength="2048" class="search-bar__input" placeholder="日本語・英語・韓国語・中国語など、どの言語でも" autocomplete="off" aria-label="検索語">
+              <button class="btn-search" type="submit" aria-label="検索"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
+            </div>
+          </div>
+        </form>
+        <p class="api-home__label">引く先</p>
+        <div class="dictionary-select api-sources" id="api-source-row" role="group" aria-label="引く先"></div>
+        <p class="api-home__hint" id="api-source-hint"></p>
+        <section class="api-history" id="api-history" aria-live="polite"></section>
+      </section>
     </main>
   </div>
 
@@ -122,6 +140,16 @@
               <div class="settings-mode" role="radiogroup" aria-label="結果表示">
                 <label><input type="radio" name="open-mode" value="new" /> 新しいタブ</label>
                 <label><input type="radio" name="open-mode" value="same" /> 同じタブ</label>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div>
+                <p class="settings-item__title">検索結果の取得元</p>
+                <p class="settings-item__description">「外部の辞書サイト」は、選んだ辞書のサイトをそのまま開きます。「MALU の画面」は、公開 API（ウィクショナリーなど）から取り込んで、MALU の結果ページに表示します（収録の辞書サイトの数は減りません。いつでも戻せます）。</p>
+              </div>
+              <div class="settings-mode" role="radiogroup" aria-label="検索結果の取得元">
+                <label><input type="radio" name="result-source" value="external" /> 外部の辞書サイト</label>
+                <label><input type="radio" name="result-source" value="api" /> MALU の画面</label>
               </div>
             </div>
             <div class="settings-item">

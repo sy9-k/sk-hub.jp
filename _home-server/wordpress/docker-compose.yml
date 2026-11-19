@@ -1,0 +1,48 @@
+# WordPress（Docker Compose）
+#
+# - 待ち受けは 127.0.0.1 だけ。外（LAN・インターネット）からは直接届きません。
+# - 入口は home-server の転送（wordpress.private.sk-hub.jp → 127.0.0.1:8080）。
+#   そこで Tailscale からの接続だけを通します（server.py の DEFAULT_PROXIES）。
+# - パスワードなどは同じフォルダの .env に入れます（.env は git に入れません）。
+#
+# 起動:   docker compose up -d
+# 停止:   docker compose down        （データは残ります）
+
+name: sk-wordpress
+
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?.env に DB_ROOT_PASSWORD を入れてください}
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: ${DB_PASSWORD:?.env に DB_PASSWORD を入れてください}
+    volumes:
+      - db:/var/lib/mysql
+
+  wordpress:
+    image: wordpress:php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "127.0.0.1:8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:?}
+      # サイトの住所（WP_HOME）。.env の WP_SITE_URL を使う。管理画面の URL もこれで決まる
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', '${WP_SITE_URL:?}');
+        define('WP_SITEURL', '${WP_SITE_URL:?}');
+        define('DISALLOW_FILE_EDIT', true);
+    volumes:
+      - ./php-uploads.ini:/usr/local/etc/php/conf.d/zz-uploads.ini:ro
+      - wp:/var/www/html
+
+volumes:
+  db:
+  wp:

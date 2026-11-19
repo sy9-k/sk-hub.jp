@@ -119,6 +119,7 @@ EXTRA = {
         '  <script src="/products/office/office.js" defer></script>\n',
         "of-page",
     ),
+    "about.html": ('  <link rel="stylesheet" href="/about/about.css">\n  <script src="/about/about.js" defer></script>\n', None),
     "partner-sentaro.html": ('  <link rel="stylesheet" href="/assets/partner/partner.css">\n', "partner-page"),
     "credits.html": ('  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap"></script>\n', None),
     "y-filter.html": (

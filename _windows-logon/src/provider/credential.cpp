@@ -268,7 +268,7 @@ void CCredential::OpenQrWindow() {
   // サインイン画面の上に出すための親（LogonUI のウィンドウ）
   HWND owner = nullptr;
   if (_events) _events->OnCreatingWindow(&owner);
-  _qrWnd = CreateQrWindow(g_hinst, owner, &CCredential::OnQrWindowClosed, this);
+  _qrWnd = CreateQrWindow(g_hinst, owner, &CCredential::OnQrWindowClosed, this, &CCredential::OnQrWindowSubmit);
   UpdateQr();
 }
 
@@ -278,11 +278,34 @@ void CCredential::CloseQrWindow() {
 }
 
 void CCredential::UpdateQr() {
-  if (_qrWnd) UpdateQrWindow(_qrWnd, { _code, _text[SFI_STATUS], skhub::ComputerName(), skhub::DeviceSeal() });
+  if (!_qrWnd) return;
+  QrWindowContent content;
+  content.code = _code;
+  content.status = _text[SFI_STATUS];
+  content.pcName = skhub::ComputerName();
+  content.seal = skhub::DeviceSeal();
+  content.formAvailable = _hasOf8;
+  UpdateQrWindow(_qrWnd, content);
 }
 
 void CCredential::OnQrWindowClosed(void* context) {
   static_cast<CCredential*>(context)->_qrWnd = nullptr;
+}
+
+bool CCredential::OnQrWindowSubmit(void* context, const std::wstring& id, std::wstring& password, std::wstring& error) {
+  return static_cast<CCredential*>(context)->SubmitFromWindow(id, password, error);
+}
+
+// 窓で入力された ID とパスワードを確かめる。合えば、QR の承認が済んだときと同じようにサインインの準備をして、窓を閉じる
+bool CCredential::SubmitFromWindow(const std::wstring& id, std::wstring& password, std::wstring& error) {
+  _text[SFI_OF8_ID] = id;
+  _text[SFI_OF8_PASSWORD] = password;
+  skhub::Wipe(password);
+  if (!PrepareOf8(error)) return false;
+  CloseQrWindow();
+  _ready = true;
+  if (_provider) _provider->OnCredentialReady();
+  return true;
 }
 
 void CCredential::SetText(FIELD_ID id, const std::wstring& text) {

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#f8f9ff" />
+<title>検索結果 | MALU</title>
+<script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700;800&display=swap"></script>
+<link rel="stylesheet" href="/dictionary/styles.css" />
+<link rel="stylesheet" href="/dictionary/result/result.css" />
+<link rel="manifest" href="/dictionary/manifest.json" />
+<link rel="icon" type="image/png" href="/dictionary/ico/icon-192.png" />
+<script src="/assets/i18n.js"></script>
+</head>
+<body>
+  <div class="wrapper">
+    <header class="top-app-bar" id="top-app-bar">
+      <div class="top-app-bar__row">
+        <a class="icon-button" id="result-back" href="/dictionary/" aria-label="戻る"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></a>
+        <h1 class="top-app-bar__title">MALU</h1>
+      </div>
+    </header>
+
+    <main class="content result">
+      <form id="result-form" class="result-form" action="#" method="get">
+        <div class="search-bar">
+          <svg class="search-bar__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input id="result-query" type="text" maxlength="2048" class="search-bar__input" placeholder="言葉を入力して検索" autocomplete="off" aria-label="検索語">
+          <button class="btn-search" type="submit" aria-label="検索"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
+        </div>
+      </form>
+
+      <p class="result-meta" id="result-meta"></p>
+      <div id="result-list" class="result-list" aria-live="polite"></div>
+      <p class="result-note">この画面の内容は、Wiktionary・Wikipedia・Free Dictionary API から取得しています。設定の「検索結果の取得元」で、これまでどおり外部の辞書サイトを開く方法にも戻せます。</p>
+    </main>
+  </div>
+
+  <script>window.SKI18N && SKI18N.translatePage();</script>
+  <script src="/dictionary/result/result.js"></script>
+</body>
+</html>

@@ -14,6 +14,267 @@
   ],
   "articles": [
     {
+      "id": "office-preview",
+      "type": "news",
+      "date": "2026-10-25",
+      "category": "SK Hub Office",
+      "title": "SK Hub Office を開発中です（Doc・Sheet・Slide）",
+      "summary": "文書・表計算・スライドを、ブラウザで使えるオフィスアプリです。",
+      "body": [
+        {
+          "p": "文書の Doc、表計算の Sheet、スライドの Slide をまとめた「SK Hub Office」を開発しています。ブラウザだけで使え、アプリとして入れることもできます。"
+        },
+        {
+          "list": [
+            "Office のファイル（.docx・.xlsx・.pptx）の読み込みと書き出し",
+            "SK Hub Systems アカウントでのログイン",
+            "Doc・Sheet・Slide をそれぞれ別のアプリとして入れられる"
+          ]
+        },
+        {
+          "p": "まだ開発中のため、機能や見た目はこれから変わります。くわしくは [プロダクトのページ](/products/office/) をご覧ください。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "SK Hub Office is in development (Doc, Sheet, Slide)",
+          "summary": "An office app for documents, spreadsheets, and slides in your browser.",
+          "body": [
+            {
+              "p": "We're building SK Hub Office, which brings together Doc for documents, Sheet for spreadsheets, and Slide for presentations. It works right in the browser and can also be installed as an app."
+            },
+            {
+              "list": [
+                "Open and export Office files (.docx, .xlsx, .pptx)",
+                "Sign in with your SK Hub Systems account",
+                "Install Doc, Sheet, and Slide as separate apps"
+              ]
+            },
+            {
+              "p": "It's still in development, so features and looks will change. See the [product page](/products/office/) for details."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "saetab-partnership",
+      "type": "news",
+      "date": "2026-10-16",
+      "category": "SK's Toolbox",
+      "title": "Search3958 の SaeTab 7 を、プロダクトのページに加えました",
+      "summary": "SK's Toolbox のホームから、SaeTab を新しいタブに設定できます。",
+      "body": [
+        {
+          "p": "Search3958 の新しいタブ画面「SaeTab 7」をトップページで紹介するようになりました。SK's Toolbox のホームからボタン 1 つで、SaeTab をブラウザの新しいタブに設定できます。"
+        },
+        {
+          "p": "SaeTab の拡張機能のページから来たときは、連携の確認がすぐに出るようにもしました。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "Added Search3958's SaeTab 7 to our product pages",
+          "summary": "Set SaeTab as your new tab from the SK's Toolbox home.",
+          "body": [
+            {
+              "p": "The home page now introduces SaeTab 7, the new tab page from Search3958. From the SK's Toolbox home you can set SaeTab as your browser's new tab with one button."
+            },
+            {
+              "p": "When you arrive from the SaeTab extension page, the connection prompt now appears right away."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "login-methods-added",
+      "type": "news",
+      "date": "2026-10-14",
+      "category": "アカウント",
+      "title": "LINE・Kakao・パスキーでもログインできるようになりました",
+      "summary": "SK Hub Systems アカウントのログイン方法が増えました。",
+      "body": [
+        {
+          "p": "SK Hub Systems アカウントに、Google・GitHub に加えて、LINE・Kakao・パスキーでもログインできるようになりました。ログイン前の画面は「ログイン」と「新規登録」に分けています。"
+        },
+        {
+          "p": "あわせて、SK Hub Systems アカウント規約と SK プライバシーポリシーを改定しました（2026 年 10 月 14 日版）。内容は [利用規約とプライバシーポリシー](/policies/) でご覧いただけます。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "You can now sign in with LINE, Kakao, and passkeys",
+          "summary": "More ways to sign in to your SK Hub Systems account.",
+          "body": [
+            {
+              "p": "In addition to Google and GitHub, you can now sign in to your SK Hub Systems account with LINE, Kakao, and passkeys. The pre-login screen is split into \"Sign in\" and \"Sign up\"."
+            },
+            {
+              "p": "We also revised the SK Hub Systems Account Terms and the SK Privacy Policy (October 14, 2026 version). Read them on the [Terms of Service and Privacy Policy](/policies/) page."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "status-sk-hub-online",
+      "type": "news",
+      "date": "2026-10-14",
+      "category": "SK Hub Systems",
+      "title": "システム稼働状況を sk-hub.online に移しました",
+      "summary": "sk-hub.jp に障害があるときでも、稼働状況を見られます。",
+      "body": [
+        {
+          "p": "システム稼働状況は、sk-hub.jp とは別の場所で動く [sk-hub.online](https://sk-hub.online/) になりました。"
+        },
+        {
+          "list": [
+            "5 分ごとに各システムを確かめて、いまの状態を表示",
+            "過去 90 日の記録を確認できる",
+            "メンテナンス・障害のお知らせも掲載"
+          ]
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "System status has moved to sk-hub.online",
+          "summary": "You can check the status even when sk-hub.jp is having problems.",
+          "body": [
+            {
+              "p": "System status now lives on [sk-hub.online](https://sk-hub.online/), which runs separately from sk-hub.jp."
+            },
+            {
+              "list": [
+                "Checks each system every 5 minutes and shows the current state",
+                "Shows the past 90 days of records",
+                "Also lists maintenance and incident notices"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "support-site-launch",
+      "type": "news",
+      "date": "2026-10-14",
+      "category": "このサイト",
+      "title": "サポートとお問い合わせが SK Hub Support になりました",
+      "summary": "サポート記事・お知らせ・お問い合わせを support.sk-hub.jp にまとめました。",
+      "body": [
+        {
+          "p": "サポート記事・お知らせ・お問い合わせを、新しいサポートサイト [support.sk-hub.jp](https://support.sk-hub.jp/) にまとめました。大きな検索ボックスとトピックから、記事を探せます。"
+        },
+        {
+          "p": "言語や表示の設定、ログインは sk-hub.jp と同じものがそのまま使えます。これまでのサポートのページのアドレスを開くと、新しいページに移ります。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "Support and contact are now SK Hub Support",
+          "summary": "Articles, news, and contact are now on support.sk-hub.jp.",
+          "body": [
+            {
+              "p": "We've gathered support articles, news, and contact into a new support site, [support.sk-hub.jp](https://support.sk-hub.jp/). Find articles with the large search box and topics."
+            },
+            {
+              "p": "Your language, display settings, and sign-in carry over from sk-hub.jp. Opening the old support page addresses takes you to the new pages."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "domain-moved-sk-hub-jp",
+      "type": "news",
+      "important": true,
+      "date": "2026-10-14",
+      "category": "このサイト",
+      "title": "SK のアドレスが sk-hub.jp になりました",
+      "summary": "sy9-k.github.io から sk-hub.jp に変わりました。古いアドレスのデータは移せます。",
+      "body": [
+        {
+          "p": "SK のサイトとプロダクトのアドレスが、sy9-k.github.io から sk-hub.jp に変わりました。"
+        },
+        {
+          "p": "古いアドレスで使っていたデータ（SK's Toolbox・Nagi・MALU など）は、古いアドレスに出るお知らせから、新しいアドレスに移せます。ブックマークやホーム画面に追加したアプリは、新しいアドレスで追加し直してください。"
+        },
+        {
+          "p": "くわしくは [引っ越しのお知らせ](/domain/) をご覧ください。"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "SK's address is now sk-hub.jp",
+          "summary": "We've moved from sy9-k.github.io to sk-hub.jp. Data from the old address can be moved over.",
+          "body": [
+            {
+              "p": "The address of the SK site and products has changed from sy9-k.github.io to sk-hub.jp."
+            },
+            {
+              "p": "Data you used at the old address (SK's Toolbox, Nagi, MALU, and more) can be moved to the new address from the notice shown at the old address. Please re-add any bookmarks or home screen apps at the new address."
+            },
+            {
+              "p": "See the [moving notice](/domain/) for details."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "toolbox-launch",
+      "type": "news",
+      "date": "2026-10-07",
+      "category": "SK's Toolbox",
+      "title": "小さなアプリを集めた「SK's Toolbox」を公開しました",
+      "summary": "Clock・Calc・Memo・Todo・Countdown などを、ひとつのホームから使えます。",
+      "body": [
+        {
+          "p": "毎日ちょっと使う小さなアプリを集めた「SK's Toolbox」を公開しました。"
+        },
+        {
+          "list": [
+            "Clock：時計とアラーム",
+            "Calc：関数電卓にもなる電卓",
+            "Memo：画像も入るメモ帳",
+            "Todo：リマインダー",
+            "Countdown：あと何日を数える",
+            "Timetable：時間割と、クラスへの連絡の配信",
+            "Roulette：回して決める"
+          ]
+        },
+        {
+          "p": "SK Hub Systems アカウントに接続すると、データを端末のあいだで同期できます（任意・暗号化）。ホーム画面やパソコンにアプリとして入れることもできます。[SK's Toolbox を開く](/toolbox/)"
+        }
+      ],
+      "i18n": {
+        "en": {
+          "title": "SK's Toolbox, a collection of small apps, is now live",
+          "summary": "Use Clock, Calc, Memo, Todo, Countdown, and more from one home.",
+          "body": [
+            {
+              "p": "We've launched SK's Toolbox, a collection of small apps for everyday use."
+            },
+            {
+              "list": [
+                "Clock: clock and alarms",
+                "Calc: a calculator that doubles as a scientific one",
+                "Memo: a notepad that can hold images",
+                "Todo: reminders",
+                "Countdown: count the days left",
+                "Timetable: class schedules and announcements to your class",
+                "Roulette: spin to decide"
+              ]
+            },
+            {
+              "p": "Connect your SK Hub Systems account to sync data between devices (optional, encrypted). You can also install it as an app on your home screen or computer. [Open SK's Toolbox](/toolbox/)"
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "policies-revised-2026-09-27",
       "type": "news",
       "date": "2026-09-27",

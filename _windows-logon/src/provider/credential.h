@@ -85,6 +85,9 @@ class CCredential : public ICredentialProviderCredential {
   void CloseQrWindow();
   void UpdateQr();
   static void OnQrWindowClosed(void* context);
+  // 独自ウィンドウの ID とパスワードの入力（タイルの 0F8 と同じ確かめ）
+  static bool OnQrWindowSubmit(void* context, const std::wstring& id, std::wstring& password, std::wstring& error);
+  bool SubmitFromWindow(const std::wstring& id, std::wstring& password, std::wstring& error);
 
   LONG _cRef;
   CREDENTIAL_PROVIDER_USAGE_SCENARIO _cpus;

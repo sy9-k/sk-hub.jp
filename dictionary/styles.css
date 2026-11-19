@@ -52,6 +52,19 @@ html[data-theme="dark"]{
 }
 
 /* ==========================================================================
+   API モード専用のホーム（設定の「検索結果の取得元」＝「MALU の画面」）
+   ========================================================================== */
+.api-home{display:none}
+.api-mode .api-home{display:flex;flex-direction:column;gap:16px}
+.api-mode .tabs,.api-mode .search-area,.api-mode .search-history{display:none}
+.api-home .search-area-title{margin:0}
+.api-home .dictionary-panel{margin:0}
+.api-home__label{margin:8px 0 -8px;color:var(--md-on-surface-variant);font-size:.8125rem;line-height:1.25rem;font-weight:500;letter-spacing:.04em}
+.api-home__hint{margin:0;padding:0 4px;color:var(--md-on-surface-variant);font-size:.8125rem;line-height:1.6}
+.api-history{margin-top:8px}
+.api-mode .api-home{animation:fadeUp .5s var(--md-easing-emphasized-decelerate) .05s both}
+
+/* ==========================================================================
    ベース
    ========================================================================== */
 *,*::before,*::after{box-sizing:border-box}
@@ -285,7 +298,19 @@ p,h1,h2,h3{margin:0}
   .about-status .settings-action{grid-column:1 / -1}
 }
 
+/* 取得元（外部の辞書サイト ⇄ MALU の画面）を切り替えたとき、ホームの中身が順に入れ替わる */
+@keyframes modeSwitch{0%{opacity:0;transform:translateY(20px) scale(.97)}60%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1)}}
+.content > .mode-switch{animation:modeSwitch .55s var(--md-easing-emphasized-decelerate) calc(var(--i,0) * 70ms) both}
+
+/* ページ間の移動（ホーム ⇄ 結果ページ）。対応ブラウザでは、前のページが薄れて、次のページが下から浮かび上がる */
+@view-transition{navigation:auto}
+@keyframes pageOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-8px)}}
+@keyframes pageIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+::view-transition-old(root){animation:pageOut .22s var(--md-easing-emphasized-accelerate) both}
+::view-transition-new(root){animation:pageIn .42s var(--md-easing-emphasized-decelerate) .08s both}
+
 @media (prefers-reduced-motion:reduce){
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation-duration:.001ms!important;animation-delay:0s!important}
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}
 }
 

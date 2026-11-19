@@ -36,7 +36,8 @@ const installDismiss = document.getElementById('install-dismiss');
 const currentTime = document.getElementById('current-time');
 const CACHE_NAME = 'dictionary-v2';
 const APP_VERSION = '1.0.0';
-const DEFAULT_SETTINGS = { defaultDictionary: 'weblio', openMode: 'new', theme: 'auto' };
+const DEFAULT_SETTINGS = { defaultDictionary: 'weblio', openMode: 'new', theme: 'auto', resultSource: 'external', apiSources: ['auto'] };
+const resultSourceInputs = document.querySelectorAll('input[name="result-source"]');
 const topAppBar = document.getElementById('top-app-bar');
 const RIPPLE_SELECTOR = '.icon-button, .tab, .btn-search, .dict-pill, .history-item, .settings-nav__item, .settings-action, .settings-mode label, .install-banner__button, .install-banner__dismiss';
 const DICTIONARY_THEME_COLORS = {
@@ -272,6 +273,12 @@ function updateOpenModeInputs() {
   });
 }
 
+function updateResultSourceInputs() {
+  resultSourceInputs.forEach((input) => {
+    input.checked = input.value === settings.resultSource;
+  });
+}
+
 function updateThemeModeInputs() {
   if (!themeModeInputs) return;
   themeModeInputs.forEach((input) => {
@@ -334,6 +341,15 @@ function bindSettingsEvents() {
       });
     });
   }
+
+  resultSourceInputs.forEach((input) => {
+    input.addEventListener('change', (event) => {
+      settings.resultSource = event.target.value === 'api' ? 'api' : 'external';
+      saveSettings();
+      applyApiMode();
+      modeSwitchPending = true;
+    });
+  });
 
   if (themeModeInputs) {
     themeModeInputs.forEach((input) => {
@@ -553,7 +569,155 @@ const dictionaryUrls = {
   papago_zh: (term) => `https://papago.naver.com/?sk=ja&tk=zh-CN&st=${encodeURIComponent(term)}`
 };
 
+// ---- API モード専用のホーム ----
+// 設定の「検索結果の取得元」が「MALU の画面」のとき、外部辞書のタブ・ボタンのかわりに、取得元（API）を選ぶ画面になる
+const API_ACCENT = '#2563eb'; // SK's Blue
+const API_SOURCES = [
+  { key: 'auto', label: t('おまかせ'), hint: t('入力した文字に合わせて、ふさわしい取得元を自動で選びます。') },
+  { key: 'wikt', label: t('ウィクショナリー（日本語版）'), hint: t('ほとんどの言語の語を、日本語の意味で引けます。') },
+  { key: 'wp', label: t('ウィキペディア'), hint: t('人名・地名・用語などの要約を引けます。') },
+  { key: 'en', label: t('英語の定義'), hint: t('英単語の発音・品詞・英語での定義と用例を引けます。') },
+  { key: 'enwikt', label: t('Wiktionary（英語版）'), hint: t('英語で書かれた語義です。語源や活用までくわしく引けます。') }
+];
+const API_HISTORY_KEY = 'maluApiHistory';
+const apiForm = document.getElementById('api-form');
+const apiQuery = document.getElementById('api-query');
+const apiSourceRow = document.getElementById('api-source-row');
+const apiSourceHint = document.getElementById('api-source-hint');
+const apiHistoryBox = document.getElementById('api-history');
+
+function isApiMode() {
+  return settings.resultSource === 'api';
+}
+
+function getApiSources() {
+  const known = API_SOURCES.map((s) => s.key);
+  const list = Array.isArray(settings.apiSources) ? settings.apiSources.filter((k) => known.includes(k)) : [];
+  return list.length ? list : ['auto'];
+}
+
+function renderApiSources() {
+  if (!apiSourceRow) return;
+  const active = getApiSources();
+  apiSourceRow.innerHTML = '';
+  API_SOURCES.forEach((source) => {
+    const on = active.includes(source.key);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `dict-pill${on ? ' active' : ''}`;
+    button.setAttribute('aria-pressed', String(on));
+    const label = document.createElement('span');
+    label.textContent = source.label;
+    button.appendChild(label);
+    button.addEventListener('click', () => {
+      let next;
+      if (source.key === 'auto') {
+        next = ['auto'];
+      } else {
+        const without = active.filter((k) => k !== 'auto' && k !== source.key);
+        next = on ? without : without.concat(source.key);
+      }
+      settings.apiSources = next.length ? next : ['auto'];
+      saveSettings();
+      renderApiSources();
+    });
+    apiSourceRow.appendChild(button);
+  });
+  if (apiSourceHint) {
+    const hints = active.map((k) => (API_SOURCES.find((s) => s.key === k) || {}).hint).filter(Boolean);
+    apiSourceHint.textContent = hints.join(' ');
+  }
+}
+
+function loadApiHistory() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(API_HISTORY_KEY));
+    return Array.isArray(stored) ? stored : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function addApiHistory(term) {
+  const list = loadApiHistory().filter((w) => w !== term);
+  list.unshift(term);
+  try { localStorage.setItem(API_HISTORY_KEY, JSON.stringify(list.slice(0, 30))); } catch (error) { /* 保存できなくても検索はできる */ }
+}
+
+function renderApiHistory() {
+  if (!apiHistoryBox) return;
+  apiHistoryBox.innerHTML = '';
+  const title = document.createElement('p');
+  title.className = 'search-history-title';
+  title.textContent = t('検索履歴');
+  apiHistoryBox.appendChild(title);
+  const words = loadApiHistory().slice(0, 8);
+  if (!words.length) {
+    const empty = document.createElement('p');
+    empty.className = 'history-empty';
+    empty.textContent = t('検索履歴はまだありません。');
+    apiHistoryBox.appendChild(empty);
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'history-list';
+  words.forEach((word) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'history-item';
+    const span = document.createElement('span');
+    span.className = 'history-item-term';
+    span.textContent = word;
+    button.appendChild(span);
+    button.addEventListener('click', () => {
+      apiQuery.value = word;
+      apiQuery.focus();
+    });
+    list.appendChild(button);
+  });
+  apiHistoryBox.appendChild(list);
+}
+
+// ホームの中身を、上から順に入れ替わる動きで出す（切り替えは設定の裏で起きるので、設定を閉じたときに見せる）
+let modeSwitchPending = false;
+function playModeSwitch() {
+  modeSwitchPending = false;
+  const blocks = Array.from(document.querySelectorAll('.content > *')).filter((node) => node.offsetParent !== null);
+  blocks.forEach((node, index) => {
+    node.classList.remove('mode-switch');
+    node.style.setProperty('--i', String(index));
+  });
+  void document.body.offsetWidth; // アニメーションを最初からやり直す
+  blocks.forEach((node) => {
+    node.classList.add('mode-switch');
+    node.addEventListener('animationend', () => node.classList.remove('mode-switch'), { once: true });
+  });
+}
+
+function applyApiMode() {
+  document.body.classList.toggle('api-mode', isApiMode());
+  if (isApiMode()) {
+    renderApiSources();
+    renderApiHistory();
+  }
+  applyColorScheme();
+}
+
+if (apiForm) {
+  apiForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (isOffline) return;
+    const text = apiQuery.value.trim();
+    if (!text) { apiQuery.focus(); return; }
+    addApiHistory(text);
+    renderApiHistory();
+    const query = new URLSearchParams({ q: text, src: getApiSources().join(',') });
+    window.open('/dictionary/result/?' + query.toString(), getResultTarget());
+  });
+}
+
 function getSelectedAccentColor() {
+  if (isApiMode()) return API_ACCENT;
   return DICTIONARY_THEME_COLORS[selectedDictionary] || categories[selectedCategory].color;
 }
 
@@ -668,6 +832,7 @@ function closeSettings() {
     if (settingsOverlay) settingsOverlay.classList.add('hide');
     if (mainView) mainView.classList.remove('hide');
     if (settingsButton) settingsButton.focus();
+    if (modeSwitchPending) playModeSwitch();
     return;
   }
 
@@ -682,6 +847,7 @@ function closeSettings() {
     if (mainView) {
       mainView.classList.remove('hide');
       animateElement(mainView, 'view-enter', 320);
+      if (modeSwitchPending) playModeSwitch();
     }
     if (settingsButton) {
       settingsButton.focus();
@@ -1077,8 +1243,10 @@ window.addEventListener('DOMContentLoaded', () => {
   applyTheme();
   populateDefaultDictionarySelect();
   updateOpenModeInputs();
+  updateResultSourceInputs();
   updateThemeModeInputs();
   bindSettingsEvents();
+  applyApiMode();
   updateClearHistoryState();
   if (appVersion) {
     appVersion.textContent = APP_VERSION;

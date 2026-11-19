@@ -1,0 +1,161 @@
+/* SK Material（家庭サーバー用）。
+   色と文字は brand/material/material.css と同じ M3 の役割（--md-*）と値。
+   ログイン・ホーム・右下のメニュー・サンプルページは、この1枚を読み込んで使う。
+   ダークの値は、OS の設定（prefers-color-scheme）か data-theme="dark" で切り替わる。 */
+
+:root {
+  --md-primary: #004ac6; --md-on-primary: #ffffff;
+  --md-primary-container: #2563eb; --md-on-primary-container: #eeefff;
+  --md-secondary-container: #acbfff; --md-on-secondary-container: #394c84;
+  --md-error: #ba1a1a; --md-error-container: #ffdad6; --md-on-error-container: #93000a;
+  --md-surface: #faf8ff; --md-on-surface: #191b23; --md-on-surface-variant: #434655;
+  --md-surface-container-low: #f3f3fe; --md-surface-container: #ededf9;
+  --md-surface-container-high: #e7e7f3; --md-surface-container-highest: #e1e2ed;
+  --md-outline: #737686; --md-outline-variant: #c3c6d7;
+  --md-font: "M PLUS 1", "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+  --md-spring: cubic-bezier(.34, 1.4, .64, 1);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --md-primary: #b4c5ff; --md-on-primary: #002a78;
+    --md-primary-container: #2563eb; --md-on-primary-container: #eeefff;
+    --md-secondary-container: #33467e; --md-on-secondary-container: #a4b6f5;
+    --md-error: #ffb4ab; --md-error-container: #93000a; --md-on-error-container: #ffdad6;
+    --md-surface: #11131b; --md-on-surface: #e1e2ed; --md-on-surface-variant: #c3c6d7;
+    --md-surface-container-low: #191b23; --md-surface-container: #1d1f27;
+    --md-surface-container-high: #282a32; --md-surface-container-highest: #32343d;
+    --md-outline: #8d90a0; --md-outline-variant: #434655;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --md-primary: #b4c5ff; --md-on-primary: #002a78;
+  --md-primary-container: #2563eb; --md-on-primary-container: #eeefff;
+  --md-secondary-container: #33467e; --md-on-secondary-container: #a4b6f5;
+  --md-error: #ffb4ab; --md-error-container: #93000a; --md-on-error-container: #ffdad6;
+  --md-surface: #11131b; --md-on-surface: #e1e2ed; --md-on-surface-variant: #c3c6d7;
+  --md-surface-container-low: #191b23; --md-surface-container: #1d1f27;
+  --md-surface-container-high: #282a32; --md-surface-container-highest: #32343d;
+  --md-outline: #8d90a0; --md-outline-variant: #434655;
+  color-scheme: dark;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100dvh; background: var(--md-surface); color: var(--md-on-surface);
+  font-family: var(--md-font); -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+
+/* アイコン（Material Symbols Rounded） */
+.msr {
+  font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1;
+  letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; display: inline-block; flex: none;
+  -webkit-font-feature-settings: "liga"; font-feature-settings: "liga"; -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+/* 上のバー */
+.sm-top {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px; min-height: 64px;
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  background: var(--md-surface);
+}
+.sm-brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 500; letter-spacing: .01em; }
+.sm-top__end { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.sm-chip {
+  font-size: 12px; font-weight: 500; line-height: 16px; padding: 4px 12px; border-radius: 8px;
+  background: var(--md-secondary-container); color: var(--md-on-secondary-container);
+}
+
+/* 本文 */
+.sm-main {
+  max-width: 1100px; margin: 0 auto;
+  padding: 16px max(16px, env(safe-area-inset-right)) calc(96px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.sm-main--narrow { max-width: 440px; padding-top: 40px; }
+.sm-title { margin: 0; font-size: 28px; line-height: 36px; font-weight: 400; }
+.sm-lead { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: var(--md-on-surface-variant); }
+.sm-head { margin: 8px 0 24px; }
+
+/* カード（M3） */
+.md-card { border-radius: 12px; }
+.md-card--filled { background: var(--md-surface-container-highest); }
+.md-card--tonal { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.md-card--outlined { background: var(--md-surface); box-shadow: inset 0 0 0 1px var(--md-outline-variant); }
+
+.sm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.sm-card {
+  display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 20px; text-decoration: none;
+  color: var(--md-on-surface); transition: background-color .2s linear;
+}
+.sm-card:hover, .sm-card:focus-visible { background: var(--md-surface-container-high); outline: none; }
+.sm-card__title {
+  display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; line-height: 24px; font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.sm-card__title .msr { color: var(--md-primary); }
+.sm-card__sub { margin: 0; font-size: 12px; line-height: 16px; color: var(--md-on-surface-variant); overflow-wrap: anywhere; }
+.sm-empty {
+  display: flex; gap: 12px; align-items: flex-start; padding: 20px; font-size: 14px; line-height: 20px;
+  color: var(--md-on-surface-variant);
+}
+.sm-empty .msr { color: var(--md-primary); }
+
+/* ログイン */
+.sm-login { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
+.sm-error { margin: 0; font-size: 13px; line-height: 18px; color: var(--md-error); }
+
+/* 入力欄（M3 のアウトラインつき） */
+.md-field { display: flex; flex-direction: column; gap: 6px; }
+.md-field > span { padding-left: 4px; font-size: 12px; line-height: 16px; color: var(--md-on-surface-variant); }
+.md-field input {
+  height: 56px; box-sizing: border-box; padding: 0 16px; border: 1px solid var(--md-outline); border-radius: 4px;
+  background: transparent; color: var(--md-on-surface); font: 400 16px/24px var(--md-font);
+}
+.md-field input:focus { outline: none; border: 2px solid var(--md-primary); padding: 0 15px; }
+
+/* ボタン（M3） */
+.md-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 24px;
+  border: 0; border-radius: 20px; background: var(--md-primary); color: var(--md-on-primary);
+  font: 500 14px/1 var(--md-font); letter-spacing: .01em; text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: transform .18s var(--md-spring), background-color .2s linear;
+}
+.md-btn .msr { font-size: 18px; }
+.md-btn:active { transform: scale(.95); }
+.md-btn:disabled { opacity: .5; cursor: default; transform: none; }
+.md-btn--tonal { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.md-btn--text { background: none; color: var(--md-primary); padding: 0 12px; }
+.sm-login .md-btn { height: 48px; width: 100%; }
+.md-btn:focus-visible, .sm-card:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+
+@media (max-width: 600px) {
+  .sm-card { padding: 16px; }
+  .sm-title { font-size: 24px; line-height: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-btn, .sm-card { transition: none; }
+}
+
+/* ページの管理（/manage） */
+.sm-h2 { margin: 0 0 12px; font-size: 16px; line-height: 24px; font-weight: 500; }
+.sm-h2--list { margin: 32px 0 12px; }
+.sm-form { display: flex; flex-direction: column; gap: 16px; padding: 20px; margin-bottom: 8px; }
+.sm-actions { display: flex; justify-content: flex-end; }
+.sm-msg { margin: 0; font-size: 13px; line-height: 18px; color: var(--md-on-surface-variant); }
+.sm-msg.is-error { color: var(--md-error); }
+.md-field input[type="file"] { height: auto; padding: 12px 16px; border-style: dashed; font: 400 14px/20px var(--md-font); }
+.md-field input[type="file"]:focus { border-width: 1px; padding: 12px 16px; }
+.sm-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sm-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+.sm-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sm-row__title { font-size: 15px; line-height: 22px; font-weight: 500; overflow-wrap: anywhere; color: var(--md-on-surface); }
+.sm-row .md-btn { flex: none; }
+.sm-row .md-btn:disabled { opacity: .5; }
+@media (max-width: 600px) {
+  .sm-row { flex-wrap: wrap; }
+  .sm-row .md-btn { width: 100%; }
+}
