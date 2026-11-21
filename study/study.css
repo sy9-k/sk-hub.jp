@@ -1063,7 +1063,7 @@ body[data-view="teach"] .page { --page-w: 1120px; }
   background: var(--surface-container-lowest); color: var(--on-surface); box-shadow: var(--z5);
   font-size: 14px; letter-spacing: .25px;
 }
-.dialog[open] { animation: dialog-in .35s var(--ease-emph); }
+.dialog[open] { animation: dialog-in .25s var(--ease-emph); }
 @keyframes dialog-in { from { opacity: 0; transform: scale(.9); } }
 .dialog::backdrop { background: rgba(0, 0, 0, .5); }
 .dialog h2 { font-size: 20px; line-height: 28px; font-weight: 500; margin-bottom: 16px; }
@@ -1164,3 +1164,123 @@ body[data-view="learn"] .install, body[data-view="print"] .install, body[data-vi
 .radio-row input:checked { border-color: var(--primary); }
 .radio-row input:checked::before { transform: scale(1); }
 .radio-row input:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+/* ---------- 動き（画面の切りかえ・一覧・問題・ダイアログ） ---------- */
+/* 画面の切りかえ（app.js の route。View Transitions API）。Android のアクティビティの動きにそろえる
+   上の帯・横のメニュー・FAB は動かさず、本文だけ入れかえる
+   forward: 新しい画面が右の端から上にかぶさる（影つき）。前の画面は 25% だけ左へずれて暗くなる
+   back   : いまの画面が右へ抜ける（上に重ねたまま）。前の画面が左から戻って明るくなる
+   fade   : fade through（前の画面がすっと消え、新しい画面が 92% の大きさから広がって出る） */
+:root { --ease-android: cubic-bezier(.2, 0, 0, 1); }   /* Material の emphasized（Android の fast_out_extra_slow_in に近い） */
+.top-bar { view-transition-name: app-bar; }
+.drawer { view-transition-name: drawer; }
+.fab { view-transition-name: fab; }
+::view-transition-group(*) { animation-duration: .4s; animation-timing-function: var(--ease-android); }
+::view-transition-old(root), ::view-transition-new(root) { mix-blend-mode: normal; }
+:root[data-motion="forward"]::view-transition-old(root) { animation: mo-push-out .4s var(--ease-android) both; }
+:root[data-motion="forward"]::view-transition-new(root) { animation: mo-slide-in .4s var(--ease-android) both; box-shadow: -8px 0 32px rgba(0, 0, 0, .28); }
+:root[data-motion="back"]::view-transition-old(root) { z-index: 1; animation: mo-slide-out .36s var(--ease-android) both; box-shadow: -8px 0 32px rgba(0, 0, 0, .28); }
+:root[data-motion="back"]::view-transition-new(root) { animation: mo-pull-in .36s var(--ease-android) both; }
+:root[data-motion="fade"]::view-transition-old(root) { animation: mo-fade-out .09s linear both; }
+:root[data-motion="fade"]::view-transition-new(root) { animation: mo-through-in .21s cubic-bezier(0, 0, .2, 1) .09s both; }
+/* View Transitions API がないブラウザは、新しい画面だけ動かす（残る transform を作らないよう backwards） */
+.enter-forward { animation: mo-in-right .32s var(--ease-android) backwards; }
+.enter-back { animation: mo-in-left .32s var(--ease-android) backwards; }
+.enter-fade { animation: mo-through-in .25s cubic-bezier(0, 0, .2, 1) backwards; }
+@keyframes mo-slide-in { from { transform: translateX(100%); } }
+@keyframes mo-slide-out { to { transform: translateX(100%); } }
+@keyframes mo-push-out { to { transform: translateX(-25%); filter: brightness(.7); } }
+@keyframes mo-pull-in { from { transform: translateX(-25%); filter: brightness(.7); } }
+@keyframes mo-in-right { from { opacity: 0; transform: translateX(64px); } }
+@keyframes mo-in-left { from { opacity: 0; transform: translateX(-64px); } }
+@keyframes mo-fade-out { to { opacity: 0; } }
+@keyframes mo-fade-in { from { opacity: 0; } }
+@keyframes mo-through-in { from { opacity: 0; transform: scale(.92); } }
+
+/* 一覧・カードは、上から順に浮かんでくる（MD1 の stagger） */
+.home-head, .home-top > *, .page-head, .gate-card,
+:is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > * { animation: mo-item .4s var(--ease-emph) backwards; }
+.home-top > :nth-child(2) { animation-delay: .06s; }
+:is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > :nth-child(2) { animation-delay: .03s; }
+:is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > :nth-child(3) { animation-delay: .06s; }
+:is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > :nth-child(4) { animation-delay: .09s; }
+:is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > :nth-child(5) { animation-delay: .12s; }
+:is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > :nth-child(6) { animation-delay: .15s; }
+:is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > :nth-child(7) { animation-delay: .18s; }
+:is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > :nth-child(n+8) { animation-delay: .21s; }
+.word-list > :nth-child(n+13) { animation: none; } /* 長い単語の一覧は、見えるところだけ */
+@keyframes mo-item { from { opacity: 0; transform: translateY(16px); } }
+
+/* 学習: 問題が変わるたびに、右から入る。選択肢は上から順に。まちがえた選択肢は横にゆれる */
+.q-area > :not(.judge) { animation: mo-q .32s var(--ease-emph) backwards; }
+.choices > .choice { animation: mo-item .3s var(--ease-emph) backwards; }
+.choices > .choice:nth-child(2) { animation-delay: .04s; }
+.choices > .choice:nth-child(3) { animation-delay: .08s; }
+.choices > .choice:nth-child(4) { animation-delay: .12s; }
+.choices > .choice:nth-child(n+5) { animation-delay: .16s; }
+.choice.is-wrong { animation: mo-shake .4s var(--ease); }
+.choice.is-correct { animation: mo-pop .3s var(--ease-emph); }
+.card-area > .flashcard { animation: mo-q .35s var(--ease-emph) backwards; }
+.result > * { animation: mo-item .4s var(--ease-emph) backwards; }
+.result > :nth-child(2) { animation-delay: .06s; }
+.result > :nth-child(3) { animation-delay: .12s; }
+.result > :nth-child(n+4) { animation-delay: .18s; }
+@keyframes mo-q { from { opacity: 0; transform: translateX(32px); } }
+@keyframes mo-shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes mo-pop { 50% { transform: scale(1.02); } }
+
+/* ダイアログ: 開くときは広がり、閉じるときは縮んで消える（app.js の openDialog） */
+.dialog[open]::backdrop { animation: mo-fade-in .25s var(--ease); }
+.dialog.is-closing { animation: mo-dialog-out .18s cubic-bezier(.4, 0, 1, 1) forwards; }
+.dialog.is-closing::backdrop { animation: mo-fade-out .18s linear forwards; }
+@keyframes mo-dialog-out { to { opacity: 0; transform: scale(.94); } }
+
+/* 動きを減らす設定のときは、どれも動かさない */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .enter-forward, .enter-back, .enter-fade,
+  .home-head, .home-top > *, .page-head, .gate-card,
+  :is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > *,
+  .q-area > :not(.judge), .choices > .choice, .choice.is-wrong, .choice.is-correct, .card-area > .flashcard, .result > *,
+  .dialog[open], .dialog[open]::backdrop, .dialog.is-closing, .dialog.is-closing::backdrop { animation: none !important; }
+}
+
+/* 横に入れかわったページでは、一覧が下から浮かぶ動きはしない（app.js の route が is-sliding を付ける） */
+#app.is-sliding :is(.card-grid, .tile-grid, .stat-grid, .set-list, .word-list) > *,
+#app.is-sliding :is(.home-head, .page-head), #app.is-sliding .home-top > * { animation: none; }
+
+/* ---------- 答え合わせのシート（Android の bottom sheet。app.js の openSheet） ---------- */
+/* 答えると、問題の場所を小さくして選択肢を上に残し、結果は下から出るシートに出す */
+.learn .q-area { transition: min-height .3s var(--ease-android, var(--ease)), padding .3s var(--ease-android, var(--ease)); }
+.learn.is-answered .q-area { min-height: 0; flex: 0 0 auto; padding: 12px 0 16px; }
+.learn.is-answered .q-text { font-size: clamp(26px, 6vw, 34px); transition: font-size .3s var(--ease-android, var(--ease)); }
+.learn.is-answered .q-reading, .learn.is-answered .q-tag { display: none; }
+.learn.is-answered .a-area { padding-bottom: 0; }
+.result-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0 auto; max-width: 632px;
+  display: flex; flex-direction: column; gap: 12px; max-height: min(70vh, 70dvh); overflow-y: auto; overscroll-behavior: contain;
+  padding: 20px 20px calc(16px + env(safe-area-inset-bottom)); border-radius: 16px 16px 0 0;
+  background: var(--surface-container-lowest); color: var(--on-surface); box-shadow: 0 -4px 24px rgba(0, 0, 0, .18), 0 -1px 4px rgba(0, 0, 0, .08);
+  animation: mo-sheet-up .35s var(--ease-android, var(--ease)) both;
+}
+.result-sheet.is-ok { background: color-mix(in srgb, var(--good-container) 55%, var(--surface-container-lowest)); }
+.result-sheet.is-ng { background: color-mix(in srgb, var(--error-container) 55%, var(--surface-container-lowest)); }
+.sheet-verdict { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 22px; line-height: 28px; font-weight: 500; }
+.sheet-verdict .ms { font-size: 30px; }
+.result-sheet.is-ok .sheet-verdict { color: var(--good); }
+.result-sheet.is-ng .sheet-verdict { color: var(--error); }
+.sheet-verdict .ms { animation: mo-verdict .4s var(--ease-android, var(--ease)) .1s backwards; }
+.sheet-body { display: flex; flex-direction: column; gap: 8px; }
+.sheet-body .detail { padding: 12px 14px; background: color-mix(in srgb, var(--surface-container-lowest) 70%, transparent); box-shadow: none; }
+.sheet-body .your-answer, .sheet-body .fix-row { margin: 0; }
+.result-sheet .next-btn { width: 100%; min-height: 48px; font-size: 15px; box-shadow: var(--z1); }
+.result-sheet.is-ok .next-btn { background: var(--good); color: var(--on-good); }
+.result-sheet.is-ng .next-btn { background: var(--error); color: var(--on-error); }
+@keyframes mo-sheet-up { from { transform: translateY(100%); } }
+@keyframes mo-verdict { from { transform: scale(.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .result-sheet, .sheet-verdict .ms { animation: none; }
+  .learn .q-area, .learn.is-answered .q-text { transition: none; }
+}
+/* 答えると問題の場所が小さくなるので、○・× は画面に対して出す（選択肢の上あたり） */
+.learn.is-answered .judge { position: fixed; top: 38%; top: 38dvh; }

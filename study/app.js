@@ -232,6 +232,20 @@ function openSpeechSettings() {
 function openDialog(title, body, actions) {
   const d = h("dialog", { class: "dialog" }, h("h2", null, title), body, h("div", { class: "dialog-actions" }, actions));
   document.body.append(d);
+  // 閉じるときも動かす（縮みながら消える）。呼ぶ側はいつもどおり d.close() でよい
+  const closeNow = HTMLDialogElement.prototype.close.bind(d);
+  let closing = false;
+  d.close = (value) => {
+    if (closing || !d.open) return;
+    if (motionOff.matches) { closeNow(value); return; }
+    closing = true;
+    d.classList.add("is-closing");
+    let finished = false;
+    const done = () => { if (finished) return; finished = true; clearTimeout(timer); closeNow(value); };
+    const timer = setTimeout(done, 300); // 動きが終わった知らせが来ないときも閉じる
+    d.addEventListener("animationend", (e) => { if (e.target === d) done(); }); // ボタンの波紋など、中の動きの知らせは見ない
+  };
+  d.addEventListener("cancel", (e) => { e.preventDefault(); d.close(); }); // Esc でも動かして閉じる
   d.addEventListener("close", () => d.remove());
   d.addEventListener("click", (e) => { if (e.target === d) d.close(); }); // 外側を押したら閉じる
   d.showModal();
@@ -263,14 +277,59 @@ function go(path, replace = false) {
 const SECTION_OF = { "": "home", sets: "sets", mine: "mine", edit: "mine", import: "mine", prints: "prints", print: "prints", maker: "maker", classes: "classes", class: "classes", task: "classes", teach: "teach", settings: "settings" };
 const TITLES = { home: "ホーム", sets: "単語セット", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定" };
 
+// ---------- 画面の切りかえの動き（Android と同じ） ----------
+//   深さ: 0 = メニューの画面（ホーム・単語セット…）、1 = 中の画面（単語セットの中・編集・クラス…）、2 = 全面の画面（学習・プリント）
+//   深くなる（forward）… 新しい画面が右の端から上にかぶさって入り、前の画面は少し左へずれて暗くなる（Android のアクティビティを開く動き）
+//   浅くなる（back）  … いまの画面が右へ抜けて、下から前の画面が戻ってくる
+//   メニューで移る（fade）… 前の画面が消えてから、新しい画面が少し小さい大きさから広がって出る（Android の fade through）
+//   View Transitions API があれば前の画面も動かして入れかえる（上の帯と横のメニューは動かさない）。なければ新しい画面だけ動かす
+const motionOff = window.matchMedia("(prefers-reduced-motion: reduce)");
+let lastNav = null;
+
+function depthOf(view, parts) {
+  if (view === "learn" || view === "print") return 2;
+  if (["set", "edit", "import", "class", "task"].includes(view)) return 1;
+  if (view === "teach" && parts.length > 1) return 1;
+  return 0;
+}
+
+function motionFor(prev, nav) {
+  if (!prev) return "none";
+  if (prev.gate !== nav.gate) return "fade";
+  if (prev.key === nav.key) return "none";
+  if (nav.depth > prev.depth) return "forward";
+  if (nav.depth < prev.depth) return "back";
+  return "fade";
+}
+
 function route() {
-  keyHandler = null;
-  tts.stop();
-  closeDrawer();
   const raw = location.hash.replace(/^#/, "") || "/";
   const [path, qs = ""] = raw.split("?");
   const parts = path.split("/").filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch (e) { return p; } });
-  const q = new URLSearchParams(qs);
+  const nav = { key: path, parts, q: new URLSearchParams(qs), depth: depthOf(parts[0], parts), gate: !allowed(auth) };
+  const motion = motionOff.matches ? "none" : motionFor(lastNav, nav);
+  lastNav = nav;
+  // 横に入れかわるときは、一覧が下から浮かぶ動きを止める（動きが重ならないように）
+  app.classList.toggle("is-sliding", motion === "forward" || motion === "back");
+  if (motion === "none") { renderRoute(nav); return; }
+  const root = document.documentElement;
+  if (document.startViewTransition) {
+    root.dataset.motion = motion;
+    const vt = document.startViewTransition(() => renderRoute(nav));
+    vt.finished.finally(() => { if (root.dataset.motion === motion) delete root.dataset.motion; });
+  } else {
+    renderRoute(nav);
+    app.classList.remove("enter-forward", "enter-back", "enter-fade");
+    void app.offsetWidth; // 動きを最初からやり直す
+    app.classList.add(`enter-${motion}`);
+  }
+}
+
+function renderRoute(nav) {
+  keyHandler = null;
+  tts.stop();
+  closeDrawer();
+  const { parts, q } = nav;
   const [view, id] = parts;
   app.replaceChildren();
   window.scrollTo(0, 0);
@@ -1008,6 +1067,36 @@ function runSession(cfg) {
 
   const keyOf = (item) => `${item.set.id}\n${item.word.w}`;
 
+  // 答え合わせ: 下から出るシート（Android の bottom sheet）。問題と選択肢は上に残し、問題の場所を小さくして見えるようにする
+  const learnEl = body.parentElement;
+  let sheetHost = null;
+  function newSheetHost() {
+    sheetHost = h("div", { class: "sheet-host", "aria-live": "polite" });
+    return sheetHost;
+  }
+  function setVerdict(sheet, ok, title) {
+    sheet.classList.toggle("is-ok", ok);
+    sheet.classList.toggle("is-ng", !ok);
+    sheet.querySelector(".sheet-verdict").replaceChildren(icon(ok ? "check_circle" : "cancel"), h("span", null, title));
+  }
+  function openSheet(ok, title, children, nextBtn) {
+    const sheet = h("section", { class: "result-sheet", "aria-label": "答え合わせ" },
+      h("p", { class: "sheet-verdict" }),
+      h("div", { class: "sheet-body" }, children),
+      nextBtn);
+    setVerdict(sheet, ok, title);
+    nextBtn.hidden = false;
+    sheetHost.replaceChildren(sheet);
+    learnEl.classList.add("is-answered");
+    body.style.paddingBottom = `${sheet.offsetHeight + 16}px`; // シートの下にかくれないように
+    requestAnimationFrame(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: motionOff.matches ? "auto" : "smooth" }));
+    return sheet;
+  }
+  function closeSheet() {
+    learnEl.classList.remove("is-answered");
+    body.style.paddingBottom = "";
+  }
+
   // ○・× を問題の上に出す
   function showJudge(ok) {
     const area = body.querySelector(".q-area");
@@ -1019,6 +1108,7 @@ function runSession(cfg) {
 
   function next() {
     clearTimeout(autoNext);
+    closeSheet();
     judge.className = "judge";
     if (pending !== null) {
       const { item, retry } = queue[pos];
@@ -1087,7 +1177,7 @@ function runSession(cfg) {
   function showChoice(item, qn) {
     const lang = store.langOf(item.set);
     const answerLang = qn.dir === "fw" ? "ja" : langAttr(lang);
-    const feedback = h("div", { class: "feedback", "aria-live": "polite" });
+    const host = newSheetHost();
     const nextBtn = button("filled", "次へ", "arrow_forward", next, { class: "filled-btn next-btn", hidden: true });
     let answered = false;
     const optionEls = qn.options.map((text, i) => h("button", {
@@ -1112,16 +1202,13 @@ function runSession(cfg) {
         else if (j === i) el.classList.add("is-wrong");
       });
       showJudge(ok);
-      feedback.replaceChildren(
-        h("p", { class: ok ? "verdict ok" : "verdict ng" }, ok ? "正解！" : qn.answer === NONE ? "正解は「この中にはない」でした" : "ざんねん…"),
-        detail(item));
-      if (qn.dir === "bw") autoSpeak(item.word.w, lang.speech, feedback);
-      nextBtn.hidden = false;
+      const sheet = openSheet(ok, ok ? "正解！" : qn.answer === NONE ? "正解は「この中にはない」でした" : "ざんねん…", detail(item), nextBtn);
+      if (qn.dir === "bw") autoSpeak(item.word.w, lang.speech, sheet);
       nextBtn.focus({ preventScroll: true });
       if (ok) autoNext = setTimeout(next, 1100);
     }
     body.append(questionArea(item, qn.dir),
-      h("div", { class: "a-area" }, h("div", { class: "choices" }, optionEls), feedback, nextBtn));
+      h("div", { class: "a-area" }, h("div", { class: "choices" }, optionEls)), host);
     keyHandler = (e) => {
       if (isTyping(e)) return;
       const n = Number(e.key);
@@ -1142,7 +1229,7 @@ function runSession(cfg) {
       placeholder: fw ? "日本語で答える" : reading ? `${lang.name}で（ピンインでも OK）` : `${lang.name}で答える`
     });
     const hintEl = h("p", { class: "hint", hidden: true });
-    const feedback = h("div", { class: "feedback", "aria-live": "polite" });
+    const host = newSheetHost();
     const submitBtn = h("button", { type: "submit", class: "filled-btn" }, h("span", null, "確定"));
     const helpers = h("div", { class: "write-helpers" },
       isTest ? null : button("text", "ヒント", "lightbulb", () => { hintEl.textContent = hint(target); hintEl.hidden = false; input.focus(); }),
@@ -1158,23 +1245,19 @@ function runSession(cfg) {
       submitBtn.hidden = true;
       helpers.hidden = true;
       if (typed) showJudge(ok);
+      let sheet = null;
       const fix = !ok && typed ? button("text", "正解にする", "done", () => {
         pending = true;
-        verdict.textContent = "正解にしました";
-        verdict.className = "verdict ok";
-        fix.remove();
+        setVerdict(sheet, true, "正解にしました");
+        fix.closest(".fix-row").remove();
         nextBtn.focus({ preventScroll: true });
       }) : null;
-      const verdict = h("p", { class: ok ? "verdict ok" : "verdict ng" },
-        ok ? "正解！" : close ? "おしい！" : typed ? "ざんねん…" : "答え");
-      feedback.replaceChildren(...[
-        verdict,
+      sheet = openSheet(ok, ok ? "正解！" : close ? "おしい！" : typed ? "ざんねん…" : "答え", [
         !ok && typed ? h("p", { class: "your-answer" }, "あなたの答え: ", h("span", { lang: input.lang }, typed)) : null,
         detail(item),
         fix ? h("p", { class: "fix-row" }, fix, h("span", { class: "muted small" }, "打ちまちがい・同じ意味の言葉のとき")) : null
-      ].filter(Boolean));
-      if (!fw) autoSpeak(item.word.w, lang.speech, feedback);
-      nextBtn.hidden = false;
+      ], nextBtn);
+      if (!fw) autoSpeak(item.word.w, lang.speech, sheet);
       nextBtn.focus({ preventScroll: true });
       if (ok) autoNext = setTimeout(next, 1100);
     }
@@ -1190,7 +1273,7 @@ function runSession(cfg) {
 
     const q = questionArea(item, qn.dir);
     q.append(form, hintEl, helpers);
-    body.append(q, h("div", { class: "a-area" }, feedback, nextBtn));
+    body.append(q, host);
     keyHandler = (e) => {
       if (answered && e.key === "Enter" && !isControl(e)) { e.preventDefault(); next(); }
     };
