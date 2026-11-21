@@ -36,15 +36,15 @@ export function inviteMail(email, products) {
   const names = items.map((x) => x.name).join("・");
   const subject = `${names} に招待されました`;
   const text = [
-    `${names} に招待されました。`,
+    `${names} に、招待されました。`,
     "",
-    "使いはじめるには、下のページを開いて「SK Hub Systems アカウント」に、",
-    `このメールアドレス（${email}）の Google アカウントでログインしてください。`,
-    "Google 以外の方法（GitHub・LINE など）でログインすると開けません。",
+    "いまは、招待した人だけが使えます。下のページを開いて、ログインするとはじめられます。",
     "",
-    ...items.flatMap((x) => [`■ ${x.name} … ${x.what}`, `  ${x.url}`, ""]),
-    "アカウントをまだ持っていない方も、ログインの画面から無料で作れます。",
-    "心当たりのない方は、このメールを破棄してください。",
+    ...items.flatMap((x) => [`${x.name}（${x.what}）`, x.url, ""]),
+    `ログインは、このメールアドレス（${email}）の Google アカウントで行ってください。GitHub や LINE など、Google 以外のログインでは開けません。`,
+    "SK Hub Systems のアカウントがまだない場合も、ログインの画面から無料で作れます。",
+    "",
+    "心当たりがない場合は、このメールを破棄してください。",
     "",
     "---",
     `You have been invited to ${names}. Open the link above and sign in to your SK Hub Systems account with the Google account for ${email}.`,
@@ -52,88 +52,66 @@ export function inviteMail(email, products) {
     "SK Hub Systems",
     "https://sk-hub.jp/"
   ].join("\n");
-  // SK らしい見た目: SK's Blue・やさしいことば・静かな余白。メールは Web フォントが使えないので、日本語の標準のフォントにする
-  //   画像は sk-hub.jp に置いてある PNG（SVG はメールで出ないことがある）。ダークモードは prefers-color-scheme で色を入れかえる
-  const ACCENT = { study: "#2563eb", office: "#d97706" };
-  const STEPS = [
-    ["上のボタンを開く", "SK Hub Systems アカウントのログインの画面が開きます。"],
-    ["このメールアドレスの Google でログイン", `<strong style="font-weight:700">${esc(email)}</strong> の Google アカウントで。アカウントがなくても、その画面から無料で作れます。`],
-    ["はじめる", "ログインできたら、そのまま使いはじめられます。"]
-  ];
-  const step = ([title, body], i) => `
-        <tr>
-          <td width="36" valign="top" style="padding:0 0 14px"><div class="sk-num" style="width:28px;height:28px;border-radius:14px;background:#e6efff;color:#2563eb;font-size:14px;font-weight:700;line-height:28px;text-align:center">${i + 1}</div></td>
-          <td valign="top" style="padding:0 0 14px"><p class="sk-ink" style="margin:0;font-size:15px;font-weight:700;line-height:1.6;color:#0d1014">${esc(title)}</p><p class="sk-muted" style="margin:2px 0 0;font-size:13px;line-height:1.7;color:#5a6371">${body}</p></td>
-        </tr>`;
-  const card = (p) => {
+  // 見た目は SK のトップページ・SK's Brand にそろえる（飾りは足さない）
+  //   ・文字: 見出し 800・本文 400（行間 1.75）・ラベル 12/800 字間 .14em。メールは Web フォントが使えないので、日本語の標準のフォントにする
+  //   ・色: 黒（#0d1014）・灰（#5a6371）・線（#e1e4e9）・地（#f5f6f8）。青は小さなラベルとリンクだけ
+  //   ・形: カード 28・アイコン 12・ボタンは丸（トップページの「プロダクトを見る」と同じ黒い丸ボタン）
+  //   ・ことば: です・ます、短く、やさしく、次にすることを伝える（SK's Brand「ことば」）。日本語と英数字のあいだは半角スペース
+  //   ・画像は sk-hub.jp に置いてある PNG（SVG はメールで出ないことがある）。ダークモードは prefers-color-scheme で色を入れかえる
+  const ICONS = { study: "https://sk-hub.jp/study/ico/icon-192.png", office: "https://office.sk-hub.jp/icons/office-logo.png" };
+  const row = (p, last) => {
     const x = PRODUCTS[p];
-    const c = ACCENT[p] || ACCENT.study;
     return `
-        <tr><td style="padding:0 0 12px">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="sk-panel" style="border-radius:20px;background:#f3f6ff;border:1px solid #dbe5ff">
-            <tr><td style="padding:18px 20px 20px">
-              <p class="sk-ink" style="margin:0 0 2px;font-size:17px;font-weight:700;line-height:1.5;color:#0d1014"><span style="display:inline-block;width:8px;height:8px;border-radius:4px;background:${c};margin-right:8px"></span>${esc(x.name)}</p>
-              <p class="sk-muted" style="margin:0 0 16px;font-size:13px;line-height:1.7;color:#5a6371">${esc(x.what)}</p>
-              <a href="${esc(x.url)}" style="display:inline-block;padding:13px 26px;border-radius:999px;background:${c};color:#ffffff;font-size:15px;font-weight:700;line-height:1;text-decoration:none">${esc(x.name)} を開く&nbsp;&rarr;</a>
-            </td></tr>
-          </table>
-        </td></tr>`;
+          <tr><td class="sk-line" style="padding:20px 0;${last ? "" : "border-bottom:1px solid #e1e4e9"}">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td width="52" valign="top"><img src="${esc(ICONS[p])}" width="40" height="40" alt="" style="display:block;border:0;border-radius:12px"></td>
+              <td valign="top">
+                <p class="sk-ink" style="margin:0;font-size:17px;font-weight:800;line-height:1.5;color:#0d1014">${esc(x.name)}</p>
+                <p class="sk-muted" style="margin:2px 0 14px;font-size:13px;line-height:1.7;color:#5a6371">${esc(x.what)}</p>
+                <a class="sk-btn" href="${esc(x.url)}" style="display:inline-block;padding:13px 24px;border-radius:999px;background:#0d1014;color:#f5f6f8;font-size:14px;font-weight:800;line-height:1;text-decoration:none">${esc(x.name)} を開く&nbsp;&rarr;</a>
+              </td>
+            </tr></table>
+          </td></tr>`;
   };
   const html = `<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${esc(subject)}</title>
 <style>
   @media (prefers-color-scheme: dark) {
     .sk-bg { background:#0d1014 !important }
-    .sk-card { background:#161a21 !important }
+    .sk-card { background:#161a21 !important; border-color:#2a303b !important }
     .sk-ink { color:#f1f3f7 !important }
     .sk-muted { color:#a3acba !important }
-    .sk-panel { background:#1b2434 !important; border-color:#2f4a7a !important }
-    .sk-num { background:#1c2c4d !important; color:#8fb0ff !important }
-    .sk-note { background:#1f2530 !important }
     .sk-line { border-color:#2a303b !important }
+    .sk-btn { background:#f1f3f7 !important; color:#0d1014 !important }
     .sk-foot, .sk-foot a { color:#7d8696 !important }
   }
-  @media (max-width: 480px) { .sk-pad { padding-left:22px !important; padding-right:22px !important } }
+  @media (max-width: 480px) { .sk-pad { padding-left:22px !important; padding-right:22px !important } .sk-h1 { font-size:22px !important } }
 </style></head>
-<body class="sk-bg" style="margin:0;padding:0;background:#f5f6f8;font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic UI','Yu Gothic','Noto Sans JP',Meiryo,sans-serif;color:#0d1014">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px">${esc(names)} を使えるようになりました。下のボタンから、はじめられます。</div>
+<body class="sk-bg" style="margin:0;padding:0;background:#f5f6f8;font-family:'Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic UI','Yu Gothic',Meiryo,sans-serif;color:#0d1014">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px">${esc(names)} を使えるようになりました。</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="sk-bg" style="background:#f5f6f8"><tr><td align="center" style="padding:32px 16px">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px">
-      <tr><td style="padding:0 4px 16px">
+      <tr><td style="padding:0 4px 18px">
         <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-          <td valign="middle"><img src="https://sk-hub.jp/assets/apple-touch-icon.png" width="36" height="36" alt="" style="display:block;border:0;border-radius:9px"></td>
-          <td valign="middle" style="padding-left:10px"><span class="sk-ink" style="font-size:15px;font-weight:700;color:#0d1014">SK Hub Systems</span></td>
+          <td valign="middle"><img src="https://sk-hub.jp/assets/apple-touch-icon.png" width="32" height="32" alt="SK" style="display:block;border:0;border-radius:8px"></td>
+          <td valign="middle" style="padding-left:10px"><span class="sk-ink" style="font-size:16px;font-weight:800;letter-spacing:-.01em;color:#0d1014">SK</span></td>
         </tr></table>
       </td></tr>
-      <tr><td class="sk-card" style="background:#ffffff;border-radius:28px;overflow:hidden">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-          <tr><td style="height:6px;line-height:6px;font-size:0;background:#2563eb;background-image:linear-gradient(90deg,#2563eb,#5a5fe0)">&nbsp;</td></tr>
-          <tr><td class="sk-pad" style="padding:32px 32px 4px">
-            <p style="margin:0 0 10px"><span style="display:inline-block;padding:4px 12px;border-radius:999px;background:#e6efff;color:#2563eb;font-size:12px;font-weight:700;letter-spacing:.06em">ご招待</span></p>
-            <h1 class="sk-ink" style="margin:0 0 12px;font-size:24px;line-height:1.45;font-weight:800;color:#0d1014">${esc(names)} に<br>招待されました</h1>
-            <p class="sk-muted" style="margin:0 0 24px;font-size:15px;line-height:1.9;color:#5a6371">いまは、招待した方だけに公開しています。お待たせしました。下のボタンから、すぐにはじめられます。</p>
-          </td></tr>
-          <tr><td class="sk-pad" style="padding:0 32px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${items.map((_, i) => card(products[i])).join("")}
-          </table></td></tr>
-          <tr><td class="sk-pad" style="padding:12px 32px 0">
-            <p class="sk-ink" style="margin:0 0 14px;font-size:14px;font-weight:700;color:#0d1014">はじめかた</p>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${STEPS.map(step).join("")}
-            </table>
-          </td></tr>
-          <tr><td class="sk-pad" style="padding:4px 32px 0">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="sk-note" style="border-radius:16px;background:#f5f6f8"><tr><td style="padding:14px 18px">
-              <p class="sk-muted" style="margin:0;font-size:13px;line-height:1.8;color:#5a6371"><strong class="sk-ink" style="color:#0d1014">ご注意</strong><br>Google 以外の方法（GitHub・LINE など）でログインすると、開けません。かならず、このメールアドレスの Google アカウントでログインしてください。</p>
-            </td></tr></table>
-          </td></tr>
-          <tr><td class="sk-pad" style="padding:24px 32px 32px">
-            <p class="sk-muted" style="margin:0;font-size:12px;line-height:1.8;color:#5a6371">心当たりのない方は、このメールを破棄してください。</p>
-            <p class="sk-muted" lang="en" style="margin:12px 0 0;padding-top:12px;border-top:1px solid #e1e4e9;font-size:12px;line-height:1.7;color:#8a93a3">You have been invited to ${esc(names)}. Open a button above and sign in to your SK Hub Systems account with the Google account for ${esc(email)}.</p>
-          </td></tr>
+      <tr><td class="sk-card sk-pad" style="background:#ffffff;border:1px solid #e1e4e9;border-radius:28px;padding:36px 36px 12px">
+        <p style="margin:0 0 14px;font-size:12px;font-weight:800;letter-spacing:.14em;color:#2563eb">&mdash;&nbsp; 招待</p>
+        <h1 class="sk-ink sk-h1" style="margin:0 0 16px;font-size:26px;line-height:1.5;font-weight:800;letter-spacing:-.01em;color:#0d1014">${esc(names)} に、<br>招待されました。</h1>
+        <p class="sk-muted" style="margin:0 0 8px;font-size:15px;line-height:1.75;color:#5a6371">いまは、招待した人だけが使えます。下のボタンを開いて、ログインするとはじめられます。</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 0">${items.map((_, i) => row(products[i], i === items.length - 1)).join("")}
         </table>
       </td></tr>
-      <tr><td align="center" class="sk-foot" style="padding:20px 8px 0;font-size:12px;line-height:1.8;color:#8a93a3">
-        毎日のネットを、もう少し安心で便利に。<br>
+      <tr><td style="padding:24px 8px 0">
+        <p class="sk-muted" style="margin:0 0 10px;font-size:13px;line-height:1.8;color:#5a6371">ログインは、このメールアドレス（<strong class="sk-ink" style="color:#0d1014">${esc(email)}</strong>）の Google アカウントで行ってください。GitHub や LINE など、Google 以外のログインでは開けません。</p>
+        <p class="sk-muted" style="margin:0;font-size:13px;line-height:1.8;color:#5a6371">SK Hub Systems のアカウントがまだない場合も、ログインの画面から無料で作れます。</p>
+      </td></tr>
+      <tr><td class="sk-foot" style="padding:28px 8px 0;font-size:12px;line-height:1.8;color:#8a93a3">
+        心当たりがない場合は、このメールを破棄してください。<br>
         <a href="https://sk-hub.jp/" style="color:#8a93a3;text-decoration:underline">sk-hub.jp</a>
+        <p lang="en" style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#8a93a3">You have been invited to ${esc(names)}. Open a button above and sign in to your SK Hub Systems account with the Google account for ${esc(email)}.</p>
       </td></tr>
     </table>
   </td></tr></table>
