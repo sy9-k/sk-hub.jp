@@ -36,15 +36,15 @@ export function inviteMail(email, products) {
   const names = items.map((x) => x.name).join("・");
   const subject = `${names} に招待されました`;
   const text = [
-    `${names} に招待されました。`,
+    `${names} に、招待されました。`,
     "",
-    "使いはじめるには、下のページを開いて「SK Hub Systems アカウント」に、",
-    `このメールアドレス（${email}）の Google アカウントでログインしてください。`,
-    "Google 以外の方法（GitHub・LINE など）でログインすると開けません。",
+    "いまは、招待した人だけが使えます。下のページを開いて、ログインするとはじめられます。",
     "",
-    ...items.flatMap((x) => [`■ ${x.name} … ${x.what}`, `  ${x.url}`, ""]),
-    "アカウントをまだ持っていない方も、ログインの画面から無料で作れます。",
-    "心当たりのない方は、このメールを破棄してください。",
+    ...items.flatMap((x) => [`${x.name}（${x.what}）`, x.url, ""]),
+    `ログインは、このメールアドレス（${email}）の Google アカウントで行ってください。GitHub や LINE など、Google 以外のログインでは開けません。`,
+    "SK Hub Systems のアカウントがまだない場合も、ログインの画面から無料で作れます。",
+    "",
+    "心当たりがない場合は、このメールを破棄してください。",
     "",
     "---",
     `You have been invited to ${names}. Open the link above and sign in to your SK Hub Systems account with the Google account for ${email}.`,
@@ -52,33 +52,68 @@ export function inviteMail(email, products) {
     "SK Hub Systems",
     "https://sk-hub.jp/"
   ].join("\n");
-  const button = (x) => `
-        <tr><td style="padding:0 0 16px">
-          <a href="${esc(x.url)}" style="display:block;padding:16px 20px;border-radius:16px;background:#eef0ff;color:#1b1f3b;text-decoration:none">
-            <strong style="font-size:17px">${esc(x.name)}</strong><br>
-            <span style="font-size:13px;color:#4a4f6a">${esc(x.what)}</span><br>
-            <span style="font-size:13px;color:#3d5afe">${esc(x.url)}</span>
-          </a>
-        </td></tr>`;
+  // 見た目は SK のトップページ・SK's Brand にそろえる（飾りは足さない）
+  //   ・文字: 見出し 800・本文 400（行間 1.75）・ラベル 12/800 字間 .14em。メールは Web フォントが使えないので、日本語の標準のフォントにする
+  //   ・色: 黒（#0d1014）・灰（#5a6371）・線（#e1e4e9）・地（#f5f6f8）。青は小さなラベルとリンクだけ
+  //   ・形: カード 28・アイコン 12・ボタンは丸（トップページの「プロダクトを見る」と同じ黒い丸ボタン）
+  //   ・ことば: です・ます、短く、やさしく、次にすることを伝える（SK's Brand「ことば」）。日本語と英数字のあいだは半角スペース
+  //   ・画像は sk-hub.jp に置いてある PNG（SVG はメールで出ないことがある）。ダークモードは prefers-color-scheme で色を入れかえる
+  const ICONS = { study: "https://sk-hub.jp/study/ico/icon-192.png", office: "https://office.sk-hub.jp/icons/office-logo.png" };
+  const row = (p, last) => {
+    const x = PRODUCTS[p];
+    return `
+          <tr><td class="sk-line" style="padding:20px 0;${last ? "" : "border-bottom:1px solid #e1e4e9"}">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td width="52" valign="top"><img src="${esc(ICONS[p])}" width="40" height="40" alt="" style="display:block;border:0;border-radius:12px"></td>
+              <td valign="top">
+                <p class="sk-ink" style="margin:0;font-size:17px;font-weight:800;line-height:1.5;color:#0d1014">${esc(x.name)}</p>
+                <p class="sk-muted" style="margin:2px 0 14px;font-size:13px;line-height:1.7;color:#5a6371">${esc(x.what)}</p>
+                <a class="sk-btn" href="${esc(x.url)}" style="display:inline-block;padding:13px 24px;border-radius:999px;background:#0d1014;color:#f5f6f8;font-size:14px;font-weight:800;line-height:1;text-decoration:none">${esc(x.name)} を開く&nbsp;&rarr;</a>
+              </td>
+            </tr></table>
+          </td></tr>`;
+  };
   const html = `<!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
-<body style="margin:0;padding:0;background:#f6f6fb;font-family:'Hiragino Sans','Yu Gothic',Meiryo,sans-serif;color:#1b1f3b">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f6fb"><tr><td align="center" style="padding:32px 16px">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:24px">
-      <tr><td style="padding:32px 28px 8px">
-        <p style="margin:0 0 4px;font-size:13px;color:#4a4f6a">SK Hub Systems</p>
-        <h1 style="margin:0 0 16px;font-size:22px;line-height:1.4">${esc(names)} に招待されました</h1>
-        <p style="margin:0 0 20px;font-size:15px;line-height:1.8">下のページを開いて、<strong>このメールアドレス（${esc(email)}）の Google アカウント</strong>で SK Hub Systems アカウントにログインすると使えます。Google 以外の方法（GitHub・LINE など）でログインすると開けません。</p>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><title>${esc(subject)}</title>
+<style>
+  @media (prefers-color-scheme: dark) {
+    .sk-bg { background:#0d1014 !important }
+    .sk-card { background:#161a21 !important; border-color:#2a303b !important }
+    .sk-ink { color:#f1f3f7 !important }
+    .sk-muted { color:#a3acba !important }
+    .sk-line { border-color:#2a303b !important }
+    .sk-btn { background:#f1f3f7 !important; color:#0d1014 !important }
+    .sk-foot, .sk-foot a { color:#7d8696 !important }
+  }
+  @media (max-width: 480px) { .sk-pad { padding-left:22px !important; padding-right:22px !important } .sk-h1 { font-size:22px !important } }
+</style></head>
+<body class="sk-bg" style="margin:0;padding:0;background:#f5f6f8;font-family:'Inter','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic UI','Yu Gothic',Meiryo,sans-serif;color:#0d1014">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px">${esc(names)} を使えるようになりました。</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="sk-bg" style="background:#f5f6f8"><tr><td align="center" style="padding:32px 16px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px">
+      <tr><td style="padding:0 4px 18px">
+        <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+          <td valign="middle"><img src="https://sk-hub.jp/assets/apple-touch-icon.png" width="32" height="32" alt="SK" style="display:block;border:0;border-radius:8px"></td>
+          <td valign="middle" style="padding-left:10px"><span class="sk-ink" style="font-size:16px;font-weight:800;letter-spacing:-.01em;color:#0d1014">SK</span></td>
+        </tr></table>
       </td></tr>
-      <tr><td style="padding:0 28px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${items.map(button).join("")}
-      </table></td></tr>
-      <tr><td style="padding:4px 28px 28px;font-size:13px;line-height:1.8;color:#4a4f6a">
-        アカウントをまだ持っていない方も、ログインの画面から無料で作れます。<br>
-        心当たりのない方は、このメールを破棄してください。
-        <p style="margin:16px 0 0;font-size:12px;color:#6b7090" lang="en">You have been invited to ${esc(names)}. Open the link above and sign in to your SK Hub Systems account with the Google account for ${esc(email)}.</p>
+      <tr><td class="sk-card sk-pad" style="background:#ffffff;border:1px solid #e1e4e9;border-radius:28px;padding:36px 36px 12px">
+        <p style="margin:0 0 14px;font-size:12px;font-weight:800;letter-spacing:.14em;color:#2563eb">&mdash;&nbsp; 招待</p>
+        <h1 class="sk-ink sk-h1" style="margin:0 0 16px;font-size:26px;line-height:1.5;font-weight:800;letter-spacing:-.01em;color:#0d1014">${esc(names)} に、<br>招待されました。</h1>
+        <p class="sk-muted" style="margin:0 0 8px;font-size:15px;line-height:1.75;color:#5a6371">いまは、招待した人だけが使えます。下のボタンを開いて、ログインするとはじめられます。</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 0">${items.map((_, i) => row(products[i], i === items.length - 1)).join("")}
+        </table>
+      </td></tr>
+      <tr><td style="padding:24px 8px 0">
+        <p class="sk-muted" style="margin:0 0 10px;font-size:13px;line-height:1.8;color:#5a6371">ログインは、このメールアドレス（<strong class="sk-ink" style="color:#0d1014">${esc(email)}</strong>）の Google アカウントで行ってください。GitHub や LINE など、Google 以外のログインでは開けません。</p>
+        <p class="sk-muted" style="margin:0;font-size:13px;line-height:1.8;color:#5a6371">SK Hub Systems のアカウントがまだない場合も、ログインの画面から無料で作れます。</p>
+      </td></tr>
+      <tr><td class="sk-foot" style="padding:28px 8px 0;font-size:12px;line-height:1.8;color:#8a93a3">
+        心当たりがない場合は、このメールを破棄してください。<br>
+        <a href="https://sk-hub.jp/" style="color:#8a93a3;text-decoration:underline">sk-hub.jp</a>
+        <p lang="en" style="margin:14px 0 0;font-size:11px;line-height:1.7;color:#8a93a3">You have been invited to ${esc(names)}. Open a button above and sign in to your SK Hub Systems account with the Google account for ${esc(email)}.</p>
       </td></tr>
     </table>
-    <p style="margin:16px 0 0;font-size:12px;color:#6b7090"><a href="https://sk-hub.jp/" style="color:#6b7090">sk-hub.jp</a></p>
   </td></tr></table>
 </body></html>`;
   return { subject, text, html };

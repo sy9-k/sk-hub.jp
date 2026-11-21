@@ -1,24 +1,65 @@
-/* 順番待ち（/waiting/）。色はサイトのもの（/assets/site.css）を使う */
-.wt { min-height: calc(100vh - 52px - 80px); display: grid; place-items: center; }
-.wt-card { max-width: 520px; margin: 0 auto; padding: 32px 28px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; corner-shape: superellipse(1.5); }
-.wt-icon { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--a-soft); color: var(--accent); }
-.wt-icon svg { width: 30px; height: 30px; }
-.wt-card h1 { margin-top: 16px; font-size: clamp(24px, 3.4vw, 30px); font-weight: 800; }
-.wt-lead { margin-top: 10px; color: var(--muted); }
-.wt-form { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; text-align: left; }
-.wt-products { display: flex; gap: 8px; margin: 0; padding: 0; border: 0; }
-.wt-chip { flex: 1; cursor: pointer; }
-.wt-chip input { position: absolute; opacity: 0; pointer-events: none; }
-.wt-chip span { display: block; padding: 10px 12px; text-align: center; font-weight: 700; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); transition: background .15s, border-color .15s, color .15s; }
-.wt-chip input:checked + span { background: var(--a-soft); border-color: var(--accent); color: var(--accent); }
-.wt-chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* 順番待ち（/waiting/）。色・形はサイトのもの（/assets/site.css）を使う。SK らしく、やさしく・静かに */
+.wt-br { display: none; }
+@media (min-width: 640px) { .wt-br { display: inline; } }
+.wt-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 32px; align-items: start; }
+@media (max-width: 860px) { .wt-grid { grid-template-columns: 1fr; gap: 28px; } }
+
+.wt-card { padding: 32px; }
+.wt-card h2 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+.wt-sub { margin-top: 6px; color: var(--muted); font-size: 14px; }
+@media (max-width: 520px) { .wt-card { padding: 24px 20px; } }
+
+.wt-form { display: flex; flex-direction: column; gap: 18px; margin-top: 22px; }
+
+/* プロダクトの選択（カードにチェック） */
+.wt-products { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; padding: 0; border: 0; min-width: 0; }
+@media (max-width: 520px) { .wt-products { grid-template-columns: 1fr; } }
+.wt-prod { cursor: pointer; display: block; }
+.wt-prod input { position: absolute; opacity: 0; pointer-events: none; }
+.wt-prod-box {
+  position: relative; display: flex; align-items: center; gap: 12px; height: 100%; padding: 14px 40px 14px 14px;
+  border: 1.5px solid var(--line-strong); border-radius: 18px; corner-shape: superellipse(1.5); background: transparent;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.wt-prod-box img { width: 40px; height: 40px; border-radius: 11px; flex: none; object-fit: contain; }
+.wt-prod-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.4; }
+.wt-prod-text strong { font-size: 15px; font-weight: 800; }
+.wt-prod-text small { font-size: 12px; color: var(--muted); }
+.wt-check { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; padding: 4px; border-radius: 50%; color: transparent; background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); transition: all .15s; }
+.wt-prod:hover .wt-prod-box { border-color: var(--accent-line); }
+.wt-prod input:checked + .wt-prod-box { border-color: var(--accent); background: var(--a-soft); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
+.wt-prod input:checked + .wt-prod-box .wt-check { color: var(--accent-ink); background: var(--accent); box-shadow: none; }
+.wt-prod input:focus-visible + .wt-prod-box { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 .wt-field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
-.wt-field input { min-height: 46px; padding: 8px 14px; font: inherit; font-size: 16px; font-weight: 400; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; }
-.wt-field input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
-.wt-form .btn { align-self: stretch; justify-content: center; }
-.wt-form .btn[disabled] { opacity: .6; cursor: default; }
-.wt-note, .wt-have { margin: 0; font-size: 13px; color: var(--muted); }
-.wt-have { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); text-align: left; }
-.wt-msg { margin: 0; padding: 10px 14px; border-radius: 12px; font-size: 14px; background: var(--a-soft); color: var(--ink); }
-.wt-msg.is-error { background: color-mix(in srgb, #ba1a1a 14%, transparent); }
-.wt-msg[hidden] { display: none; }
+.wt-field input { min-height: 50px; padding: 8px 16px; font: inherit; font-size: 16px; font-weight: 400; color: var(--ink); background: transparent; border: 1.5px solid var(--line-strong); border-radius: 14px; corner-shape: superellipse(1.5); transition: border-color .15s, box-shadow .15s; }
+.wt-field input:hover { border-color: var(--accent-line); }
+.wt-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+.wt-form .btn { justify-content: center; min-height: 50px; font-size: 16px; }
+.wt-form .btn[disabled] { opacity: .6; cursor: default; transform: none; }
+.wt-note { margin: 0; font-size: 12.5px; color: var(--muted); }
+.wt-msg { margin: 0; padding: 12px 16px; border-radius: 14px; font-size: 14px; background: var(--a-soft); color: var(--ink); }
+.wt-msg.is-error { background: color-mix(in srgb, #ba1a1a 12%, transparent); }
+.wt-msg[hidden], .wt-done[hidden], #wt-form-wrap[hidden] { display: none; }
+
+/* 登録できたとき */
+.wt-done { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 12px 0; animation: wt-in .3s var(--ease-out, ease-out); }
+.wt-done-ico { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 35%, transparent); }
+.wt-done-ico svg { width: 30px; height: 30px; }
+.wt-done h2 { margin-top: 8px; }
+.wt-done p { color: var(--muted); max-width: 30em; }
+.wt-done .btn-row { justify-content: center; margin-top: 12px; }
+@keyframes wt-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .wt-done { animation: none; } }
+
+/* 招待までの流れ */
+.wt-side h2 { font-size: 20px; font-weight: 800; }
+.wt-steps { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; position: relative; }
+.wt-steps li { display: flex; gap: 14px; align-items: flex-start; position: relative; }
+.wt-steps li + li::before { content: ""; position: absolute; left: 15px; top: -14px; height: 14px; width: 2px; background: var(--accent-line); }
+.wt-num { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--a-soft); color: var(--accent); font-weight: 800; font-size: 14px; }
+.wt-steps strong { font-size: 15px; font-weight: 800; }
+.wt-steps p { margin-top: 2px; font-size: 13.5px; color: var(--muted); }
+.wt-have { margin-top: 26px; padding: 16px 18px; border-radius: 18px; corner-shape: superellipse(1.5); background: var(--surface-2); font-size: 13.5px; }
+.wt-have strong { font-size: 14px; font-weight: 800; }
+.wt-have p { margin-top: 4px; color: var(--muted); }
