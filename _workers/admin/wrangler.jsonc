@@ -8,5 +8,9 @@
     { "pattern": "admin.sk-hub.jp", "custom_domain": true }
   ],
   "workers_dev": false,
+  // 招待のメール（src/invite-mail.js）。Resend の API キーはシークレット RESEND_API_KEY（npx wrangler secret put RESEND_API_KEY）
+  "vars": {
+    "MAIL_FROM": "SK Hub Systems <noreply@sk-hub.jp>"
+  },
   "observability": { "enabled": true }
 }

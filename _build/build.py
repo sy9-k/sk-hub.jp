@@ -41,6 +41,7 @@ pages = [
     ("privacy.html", "policies/privacy/index.html", "SK プライバシーポリシー | SK", "SK のサービス（サイト・MALU・Nagi・SK's Toolbox・Y-FILTER.・SK Hub Systems アカウント）での情報の取り扱い。Google アカウントでログインしたときの情報（Google のユーザーデータ）の取り扱いを含みます。", True, True),
     ("policies.html", "policies/index.html", "利用規約・プライバシーポリシー | SK", "SK 利用規約・SK プライバシーポリシーと、SK Hub Systems アカウント・Y-FILTER. の利用規約。", True, True),
     ("lang.html", "lang/index.html", "Language | SK", "Choose your language / 言語を選択", True, False),
+    ("waiting.html", "waiting/index.html", "順番待ち | SK", "SK Study・SK Office は、いまは招待制です。順番待ちに登録すると、順番がきたときにお知らせします。", True, False),
     ("404.html", "404.html", "ページが見つかりません | SK", "お探しのページは見つかりませんでした。", True, False),
 ]
 # フッターを出さないページ（SK's Toolbox のホーム画面。下にドックがある）
@@ -71,6 +72,8 @@ EXTRA = {
         '  <script src="/lang/lang.js" defer></script>\n',
         "lang-page",
     ),
+    # 順番待ち（招待制の SK Study・SK Office。登録は assets/hub/invite.js）
+    "waiting.html": ('  <link rel="stylesheet" href="/waiting/waiting.css">\n  <script type="module" src="/waiting/waiting.js"></script>\n', None),
     # 隠しコマンド（assets/nf-secret.js）
     "404.html": ('  <script src="/assets/nf-secret.js" defer></script>\n', None),
     # SK Hub Systems の紹介ページ（スクロールで見せる。/sk-hub-systems/hub.js）

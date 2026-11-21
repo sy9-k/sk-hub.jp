@@ -7,7 +7,11 @@
 //   admin.sk-hub.jp/assets/…      → sk-hub.jp/assets/…（サイトと共通の部品は同じパスのまま。SHARED）
 //   admin.sk-hub.jp/admin/…       → /… に移す（前の sy9-k.github.io/admin/… の形のリンク）
 //
+//   admin.sk-hub.jp/api/invite-mail（POST）→ 招待のメールを送る（invite-mail.js。中継ではなく、この Worker が答える）
+//
 // sk-hub.jp とは別の場所なので、ログイン・このブラウザの設定（表示・並べかえ・返事の定型文）はサイトと分かれる。
+import { handleInviteMail } from "./invite-mail.js";
+
 const ORIGIN = "https://sk-hub.jp";
 const SHARED = [
   /^\/assets\//, /^\/toolbox\/shared\//, /^\/y-filter\/firebase-config\.js$/,
@@ -16,8 +20,14 @@ const SHARED = [
 const CACHE_SECONDS = 60; // GitHub Pages から取ったものを Cloudflare に置いておく時間（直してから出るまで最大これだけかかる）
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/invite-mail") {
+      try { return await handleInviteMail(request, env); } catch (e) {
+        console.error(e);
+        return new Response(JSON.stringify({ error: "server" }), { status: 500, headers: { "Content-Type": "application/json; charset=utf-8" } });
+      }
+    }
     if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method Not Allowed", { status: 405, headers: { Allow: "GET, HEAD" } });
 
     const path = url.pathname;
