@@ -144,7 +144,7 @@ export async function renderClass(cid, ui) {
       h("h1", null, "このクラスは開けません"),
       h("p", null, "クラスから外れたか、クラスが削除されたようです。"),
       h("div", { class: "result-actions" },
-        button("filled", "一覧から消す", "delete", async () => { await cloud.leaveClass(cid).catch(() => {}); go("/", true); }),
+        button("filled", "一覧から消す", "delete", async () => { await cloud.leaveClass(cid).catch(() => {}); go("/classes", true); }),
         ui.linkButton("text", "ホームへ", "home", "#/"))));
     return;
   }
@@ -153,7 +153,7 @@ export async function renderClass(cid, ui) {
   document.title = `${cls.name} - SK Study`;
   const now = Date.now();
   app.replaceChildren(
-    ui.backLink("ホーム", "#/"),
+    ui.backLink("クラス", "#/classes"),
     h("section", { class: "set-head" },
       h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon("groups")),
       h("div", null,
@@ -179,7 +179,7 @@ export async function renderClass(cid, ui) {
     h("div", { class: "set-actions" },
       button("outlined", "クラスから抜ける", "logout", async () => {
         if (!(await confirmDialog("クラスから抜けますか？", `「${cls.name}」から抜けます。提出した答えは先生のところに残ります。もう一度参加するには参加コードが要ります。`, "抜ける", true))) return;
-        try { await cloud.leaveClass(cid); toast("クラスから抜けました"); go("/", true); } catch (e) { toast(cloud.explain(e)); }
+        try { await cloud.leaveClass(cid); toast("クラスから抜けました"); go("/classes", true); } catch (e) { toast(cloud.explain(e)); }
       }, { "data-danger": "" })));
 }
 

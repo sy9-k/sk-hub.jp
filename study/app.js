@@ -1,6 +1,12 @@
 // SK Study — 単語学習
 //   画面は # のあとの場所で切りかえる（ページを読み込み直さない）
-//     #/                 ホーム（今日の復習・続きから・SK の単語セット・マイ単語帳）
+//   ログインしないと使えない（SK Hub Systems アカウントでログインして SK Study に接続したとき。cloud.js の session）
+//   左に横のメニュー（MD1 の navigation drawer）。パソコンは出しっぱなし、スマートフォンは ☰ で出す
+//     #/                 ホーム（あいさつ・今日の復習・記録・続きから・ショートカット）
+//     #/sets             SK の単語セット
+//     #/mine             マイ単語帳
+//     #/prints           プリント（print.js）
+//     #/classes          クラス（classroom.js）
 //     #/set/<ID>         単語セット（記憶度・学習の始め方・単語の一覧）
 //     #/learn/<ID>?mode= 学習（learn = おまかせ学習 / card = 単語カード / test = 小テスト）。ID が review なら今日の復習
 //       小テスト … 決まった数を、答え合わせなしで続けて解き、最後にまとめて採点する（まちがえても出し直さない）。点数は store.js に残す
@@ -20,6 +26,7 @@
 //   データの保存は store.js、書き取りの採点は grade.js
 //   ほかの人が作った単語帳も表示するので、文字は必ず textContent で入れる（innerHTML は数字だけの SVG に使う）
 import * as store from "./store.js";
+import * as cloud from "./cloud.js";
 import { grade, hint } from "./grade.js";
 import { decodeSet, encodeSet, extractCode, shareUrl } from "./share.js";
 import * as tts from "./speech.js";
@@ -79,7 +86,7 @@ function toast(message) {
   toastEl.textContent = message;
   toastEl.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2800);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 4000);
 }
 
 function shuffle(list) {
@@ -167,11 +174,8 @@ function autoSpeak(text, speech, near) {
 
 const VOICE_LANGS = [["en-US", "英語", "Hello. Nice to meet you."], ["ko-KR", "韓国語", "안녕하세요. 반갑습니다."], ["zh-CN", "中国語", "你好，很高兴认识你。"]];
 
-function openSpeechSettings() {
-  if (!tts.supported) {
-    const d0 = openDialog("読み上げ", h("p", null, "このブラウザは読み上げに対応していません。"), [button("filled", "閉じる", null, () => d0.close())]);
-    return;
-  }
+// 読み上げの設定の中身（ダイアログと設定画面の両方で使う）。stop() で後始末
+function speechPanel() {
   const body = h("div", { class: "speech-settings" });
   function draw() {
     const s = tts.getSettings();
@@ -210,8 +214,17 @@ function openSpeechSettings() {
   }
   draw();
   const stopWatch = tts.onVoicesChanged(draw);
-  const d = openDialog("読み上げの設定", body, [button("filled", "閉じる", null, () => d.close())]);
-  d.addEventListener("close", () => { stopWatch(); tts.stop(); });
+  return { body, stop: () => { stopWatch(); tts.stop(); } };
+}
+
+function openSpeechSettings() {
+  if (!tts.supported) {
+    const d0 = openDialog("読み上げ", h("p", null, "このブラウザは読み上げに対応していません。"), [button("filled", "閉じる", null, () => d0.close())]);
+    return;
+  }
+  const panel = speechPanel();
+  const d = openDialog("読み上げの設定", panel.body, [button("filled", "閉じる", null, () => d.close())]);
+  d.addEventListener("close", panel.stop);
 }
 
 // ---------- ダイアログ ----------
@@ -246,19 +259,40 @@ function go(path, replace = false) {
   }
 }
 
+// 画面 → 横のメニューのどれを選んだ状態にするか
+const SECTION_OF = { "": "home", sets: "sets", mine: "mine", edit: "mine", import: "mine", prints: "prints", print: "prints", maker: "maker", classes: "classes", class: "classes", task: "classes", teach: "teach", settings: "settings" };
+const TITLES = { home: "ホーム", sets: "単語セット", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定" };
+
 function route() {
   keyHandler = null;
   tts.stop();
+  closeDrawer();
   const raw = location.hash.replace(/^#/, "") || "/";
   const [path, qs = ""] = raw.split("?");
   const parts = path.split("/").filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch (e) { return p; } });
   const q = new URLSearchParams(qs);
   const [view, id] = parts;
-  document.body.dataset.view = view || "home";
   app.replaceChildren();
   window.scrollTo(0, 0);
+  // ログインしていなければ、どの画面もログインの案内にする（ログインしたら、もとの場所に戻ってくる）
+  if (!allowed(auth)) {
+    renderGate(auth);
+    return;
+  }
+  document.body.dataset.view = view || "home";
+  let section = SECTION_OF[view || ""] || null;
+  if (view === "set") {
+    const set = store.getSet(id);
+    section = set && set.classRef ? "classes" : set && set.source === "sk" ? "sets" : "mine";
+  }
+  setActive(section);
+  topTitle.textContent = TITLES[section] || "";
   try {
     if (!view) renderHome();
+    else if (view === "sets") renderSets();
+    else if (view === "mine") renderMine();
+    else if (view === "prints") { document.title = "プリント - SK Study"; app.append(printSection(printUi)); }
+    else if (view === "classes") { document.title = "クラス - SK Study"; app.append(classSection(printUi)); }
     else if (view === "set") renderSet(id);
     else if (view === "learn") renderLearn(id, q);
     else if (view === "edit") renderEdit(id);
@@ -268,6 +302,7 @@ function route() {
     else if (view === "class") renderClass(id, printUi).catch(showError);
     else if (view === "task") renderTask(id, parts[2], printUi).catch(showError);
     else if (view === "teach") renderTeach(parts.slice(1), printUi).catch(showError);
+    else if (view === "settings") renderSettings();
     else renderMessage("ページが見つかりません", "リンクがまちがっているかもしれません。");
   } catch (e) {
     console.error(e);
@@ -289,6 +324,271 @@ function renderMessage(title, text) {
     h("h1", null, title),
     h("p", null, text),
     linkButton("filled", "ホームへ", "home", "#/")));
+}
+
+// ---------- ログイン（SK Hub Systems アカウント。cloud.js） ----------
+//   使えるのは、ログインして SK Study に接続したとき（ready）だけ
+//   前にログインしていた端末がオフラインのとき（offline）は、このブラウザの記録で学習を続けられる
+
+let auth = null; // cloud.session() の結果（確かめる前は null）
+
+function readHint() {
+  try { return JSON.parse(localStorage.getItem("skhub_account") || "null"); } catch (e) { return null; }
+}
+const allowed = (s) => !!s && (s.status === "ready" || (s.status === "offline" && !!readHint() && cloud.wasInvited()));
+
+const GATE = {
+  "not-invited": ["招待制です", "SK Study は、いまは招待した方だけが使えます。順番待ちに登録しておくと、順番がきたらメールでお知らせします。", "順番待ちに登録する", "hourglass_top"],
+  "signed-out": ["ログインしてください", "SK Study を使うには、SK Hub Systems アカウントでログインします。アカウントは無料で作れます。", "ログイン", "login"],
+  unregistered: ["アカウントの登録を完了してください", "SK Hub Systems アカウントの利用規約に同意すると、SK Study を使えるようになります。", "登録を続ける", "how_to_reg"],
+  "not-connected": ["SK Study に接続してください", "SK Hub Systems アカウントを SK Study に接続すると、学習をはじめられます。", "SK Study に接続する", "link"],
+  offline: ["接続できませんでした", "SK Hub Systems に接続できませんでした。ネットワークを確かめて、もう一度お試しください。", "もう一度", "refresh"]
+};
+
+function renderGate(s) {
+  document.title = "ログイン - SK Study";
+  document.body.dataset.view = "gate";
+  setActive(null);
+  const status = s ? s.status : "checking";
+  const info = GATE[status];
+  const feature = (ic, title, text) => h("li", null, icon(ic), h("span", null, h("strong", null, title), h("small", null, text)));
+  app.replaceChildren(h("section", { class: "gate" },
+    h("div", { class: "gate-card" },
+      h("div", { class: "gate-hero" },
+        h("img", { src: "icon.svg", alt: "", width: 56, height: 56 }),
+        h("p", { class: "gate-name" }, "SK Study", h("span", { class: "beta" }, "試作")),
+        h("p", { class: "gate-tagline" }, "単語カード・4 択・書き取りで、英語・韓国語・中国語や自分で作った単語帳を覚える")),
+      h("div", { class: "gate-body" },
+        info ? [
+          h("h1", null, info[0]),
+          h("p", { class: "muted" }, info[1]),
+          status === "not-invited" && s.reason === "not-google"
+            ? h("p", { class: "muted" }, "招待された Google アカウントでログインしてください。Google 以外のログインでは開けません。")
+            : null,
+          status === "offline"
+            ? button("filled", info[2], info[3], recheckAuth, { class: "filled-btn gate-btn" })
+            : linkButton("filled", info[2], info[3], status === "not-invited" ? "/waiting/?product=study" : cloud.accountUrl(true)),
+          status === "not-invited" ? linkButton("outlined", "別のアカウントでログイン", "switch_account", cloud.accountUrl(false)) : null
+        ] : h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), "ログインを確かめています…"),
+        h("ul", { class: "gate-features" },
+          feature("style", "単語を覚える", "SK の単語セットとマイ単語帳。記憶度に合わせて出題"),
+          feature("assignment", "プリント・小テスト", "HTML・PDF のプリントに答えて自動で採点"),
+          feature("groups", "クラス", "先生のクラスに参加して、課題を提出"))))));
+  const btn = app.querySelector(".gate-body a.filled-btn");
+  if (btn) btn.classList.add("gate-btn");
+}
+
+async function recheckAuth() {
+  cloud.resetSession();
+  auth = null;
+  renderGate(null);
+  auth = await cloud.session({ fresh: true });
+  drawDrawer();
+  route();
+}
+
+async function logout() {
+  closeDrawer();
+  if (!await confirmDialog("ログアウトしますか？", "学習の記録・マイ単語帳・プリントは、このブラウザに残ります。もう一度ログインすると続きから使えます。", "ログアウト")) return;
+  try {
+    const hub = await import("/assets/hub/account.js");
+    await hub.signOutAccount();
+  } catch (e) {
+    console.error(e);
+    toast("ログアウトできませんでした");
+    return;
+  }
+  cloud.resetSession();
+  auth = { status: "signed-out" };
+  go("/", true);
+}
+
+// ---------- 横のメニュー（MD1 の navigation drawer） ----------
+
+const NAV = [
+  { key: "home", href: "#/", icon: "home", label: "ホーム" },
+  { key: "sets", href: "#/sets", icon: "library_books", label: "単語セット" },
+  { key: "mine", href: "#/mine", icon: "bookmarks", label: "マイ単語帳" },
+  { key: "prints", href: "#/prints", icon: "assignment", label: "プリント" },
+  { key: "classes", href: "#/classes", icon: "groups", label: "クラス" },
+  null,
+  { sub: "ツール" },
+  { key: "maker", href: "#/maker", icon: "picture_as_pdf", label: "PDF からプリントを作る" },
+  { key: "teach", href: "#/teach", icon: "school", label: "指導者メニュー" }
+];
+const drawer = document.getElementById("drawer");
+const scrim = document.getElementById("scrim");
+const navToggle = document.getElementById("nav-toggle");
+const topTitle = document.getElementById("top-title");
+const wide = window.matchMedia("(min-width: 1024px)");
+const DRAWER_KEY = "sk_study_drawer_closed";
+let activeNav = null;
+
+function drawDrawer() {
+  const hint = readHint() || {};
+  const name = (auth && auth.name) || hint.name || "";
+  const email = hint.email || (auth && auth.user && auth.user.email) || "";
+  const color = /^(#[0-9a-f]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\))$/i.test(hint.color || "") ? hint.color : null;
+  const avatar = hint.photo && /^https:\/\//.test(hint.photo)
+    ? h("img", { class: "drawer-avatar", src: hint.photo, alt: "", referrerpolicy: "no-referrer" })
+    : h("span", { class: "drawer-avatar", style: color ? `background:${color}` : null, "aria-hidden": "true" }, hint.letter || name.slice(0, 1) || "?");
+  const item = (n) => h("a", { class: "drawer-item", href: n.href, "data-nav": n.key }, icon(n.icon), h("span", null, n.label));
+  drawer.replaceChildren(
+    h("div", { class: "drawer-head" },
+      avatar,
+      h("div", { class: "drawer-who" },
+        h("strong", null, name || "SK Hub Systems アカウント"),
+        email ? h("span", null, email) : null)),
+    h("div", { class: "drawer-list" },
+      NAV.map((n) => (n === null ? h("hr", { class: "drawer-divider" }) : n.sub ? h("p", { class: "drawer-sub" }, n.sub) : item(n))),
+      h("hr", { class: "drawer-divider" }),
+      h("a", { class: "drawer-item", href: "#/settings", "data-nav": "settings" }, icon("settings"), h("span", null, "設定")),
+      h("a", { class: "drawer-item", href: "/account/" }, icon("manage_accounts"), h("span", null, "アカウント")),
+      h("button", { type: "button", class: "drawer-item", onclick: logout }, icon("logout"), h("span", null, "ログアウト"))),
+    h("p", { class: "drawer-foot" }, "学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。"));
+  markActive();
+}
+function setActive(key) { activeNav = key; markActive(); }
+function markActive() {
+  drawer.querySelectorAll("[data-nav]").forEach((a) => {
+    if (a.dataset.nav === activeNav) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  });
+}
+// スマートフォン: 左から出す（後ろは暗くして押せないように）。パソコン: 出しっぱなし（☰ でしまえる）
+function syncDrawer() {
+  const open = document.body.classList.contains("drawer-open");
+  drawer.inert = wide.matches ? document.body.classList.contains("drawer-closed") : !open;
+  navToggle.setAttribute("aria-expanded", String(wide.matches ? !document.body.classList.contains("drawer-closed") : open));
+}
+function openDrawer() {
+  document.body.classList.add("drawer-open");
+  scrim.hidden = false;
+  syncDrawer();
+  const current = drawer.querySelector("[aria-current]") || drawer.querySelector(".drawer-item");
+  if (current) current.focus({ preventScroll: true });
+}
+function closeDrawer() {
+  if (!document.body.classList.contains("drawer-open")) return;
+  document.body.classList.remove("drawer-open");
+  scrim.hidden = true;
+  syncDrawer();
+}
+navToggle.addEventListener("click", () => {
+  if (wide.matches) {
+    const closed = document.body.classList.toggle("drawer-closed");
+    try { localStorage.setItem(DRAWER_KEY, closed ? "1" : "0"); } catch (e) { /* 保存できなくても動く */ }
+    syncDrawer();
+  } else if (document.body.classList.contains("drawer-open")) {
+    closeDrawer();
+    navToggle.focus();
+  } else {
+    openDrawer();
+  }
+});
+scrim.addEventListener("click", closeDrawer);
+drawer.addEventListener("click", (e) => { if (e.target.closest("a.drawer-item")) closeDrawer(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.body.classList.contains("drawer-open")) { closeDrawer(); navToggle.focus(); }
+});
+wide.addEventListener("change", () => { closeDrawer(); syncDrawer(); });
+try { if (localStorage.getItem(DRAWER_KEY) === "1") document.body.classList.add("drawer-closed"); } catch (e) { /* 同上 */ }
+syncDrawer();
+
+// ほかのところ（右上のアカウントのボタン・ほかのタブ）でログイン・ログアウトしたとき
+function onAccountChange() {
+  if (!readHint()) {
+    if (auth && auth.status !== "signed-out") {
+      cloud.resetSession();
+      auth = { status: "signed-out" };
+      route();
+    }
+  } else if (!allowed(auth) && auth) {
+    recheckAuth();
+    return;
+  }
+  drawDrawer();
+}
+document.addEventListener("skhub:account", onAccountChange);
+window.addEventListener("storage", (e) => { if (e.key === "skhub_account" || e.key === null) onAccountChange(); });
+
+// ページの上の見出し（タイトル・説明・右のボタン）
+function pageHead(title, text, actions) {
+  return h("header", { class: "page-head" },
+    h("div", { class: "page-head-text" }, h("h1", null, title), text ? h("p", null, text) : null),
+    actions ? h("div", { class: "page-head-actions" }, actions) : null);
+}
+
+// ---------- 設定（Material Design 1 の Settings パターンにそろえる） ----------
+//   ・「設定」というラベルで、横のメニューの下の方に置く（アカウント・アプリの情報は入れない）
+//   ・よく使うものを上に。グループの間にだけ区切り線を引き、グループには具体的な見出しを付ける
+//   ・ラベルは画面タイトルの左端にそろえる。スイッチ以外は、2 行目に今の値（状態）だけを出す
+//   ・値の変更は、ラジオボタンの簡単なダイアログ
+
+function choiceDialog(title, options, value, onPick) {
+  const name = `choice-${Math.random().toString(36).slice(2)}`;
+  const list = h("div", { class: "radio-list", role: "radiogroup", "aria-label": title },
+    options.map(([v, label]) => h("label", { class: "radio-row" },
+      h("input", { type: "radio", name, value: String(v), checked: String(value) === String(v),
+        onchange: () => { onPick(v); setTimeout(() => d.close(), 180); } }),
+      h("span", null, label))));
+  const d = openDialog(title, list, []);
+  d.classList.add("dialog-simple");
+  return d;
+}
+
+function renderSettings() {
+  document.title = "設定 - SK Study";
+  const root = h("div", { class: "settings" });
+  const group = (title, ...rows) => h("section", { class: "settings-group" }, title ? h("h2", null, title) : null, ...rows.filter(Boolean));
+
+  // 値を選ぶ行（2 行目は今の値）
+  const choiceRow = (label, status, onclick, disabled = false) => h("button", { type: "button", class: "setting-item", onclick, disabled },
+    h("strong", null, label), h("small", null, status));
+  const find = (opts, v) => (opts.find(([x]) => String(x) === String(v)) || opts[0])[1];
+
+  function draw() {
+    const prefs = store.getPrefs();
+    const rows = [
+      group("学習",
+        choiceRow("問題の数", find(COUNTS, prefs.count), () => choiceDialog("問題の数", COUNTS, prefs.count, (v) => { store.setPrefs({ count: Number(v) }); draw(); })),
+        choiceRow("問題の形式", find(FORMATS, prefs.format), () => choiceDialog("問題の形式", FORMATS, prefs.format, (v) => { store.setPrefs({ format: v }); draw(); })))
+    ];
+
+    if (tts.supported) {
+      const s = tts.getSettings();
+      const auto = h("input", { type: "checkbox", checked: s.auto, "aria-label": "自動で読み上げる",
+        onchange: (e) => { tts.saveSettings({ auto: e.target.checked }); draw(); } });
+      const voiceRows = VOICE_LANGS.map(([lang, name, sample]) => {
+        const list = tts.voicesFor(lang);
+        if (!list.length) return choiceRow(`${name}の声`, "この端末には入っていません", null, true);
+        const current = s.voices[lang];
+        const shown = list.find((v) => v.name === current) ? current : null;
+        const status = shown || `おまかせ（${list[0].name}）`;
+        const opts = [["", `おまかせ（${list[0].name}）`], ...list.map((v) => [v.name, `${v.name}${v.localService ? "" : "（ネット）"}`])];
+        return choiceRow(`${name}の声`, status, () => choiceDialog(`${name}の声`, opts, shown || "", (v) => {
+          const saved = { ...tts.getSettings().voices };
+          if (v) saved[lang] = v; else delete saved[lang];
+          tts.saveSettings({ voices: saved });
+          tts.speak(sample, lang);
+          draw();
+        }));
+      });
+      rows.push(
+        h("hr", { class: "settings-divider" }),
+        group("読み上げ",
+          h("label", { class: "setting-item switch-row" }, auto,
+            h("span", null, h("strong", null, "自動で読み上げ"), h("small", null, "外国語を声で再生する"))),
+          choiceRow("速さ", find(tts.RATES, s.rate), () => choiceDialog("読み上げの速さ", tts.RATES, s.rate, (v) => { tts.saveSettings({ rate: Number(v) }); draw(); })),
+          ...voiceRows));
+    }
+    root.replaceChildren(...rows);
+  }
+  draw();
+  const stopWatch = tts.supported ? tts.onVoicesChanged(draw) : null;
+  const leave = () => { window.removeEventListener("hashchange", leave); if (stopWatch) stopWatch(); tts.stop(); };
+  window.addEventListener("hashchange", leave);
+  app.append(pageHead("設定"), root);
 }
 
 // ---------- ホーム ----------
@@ -317,70 +617,124 @@ function setRow(set, { start = false } = {}) {
       start ? button("pill", "学習", null, () => go(`/learn/${encodeURIComponent(set.id)}?mode=learn`)) : null));
 }
 
+// カードの形の単語セット（ホームの「続きから」「おすすめ」）
+function setCard(set) {
+  const lang = store.langOf(set);
+  const s = store.setStats(set);
+  const href = `#/set/${encodeURIComponent(set.id)}`;
+  return h("article", { class: "set-card" },
+    h("a", { class: "set-card-main", href },
+      h("span", { class: "set-card-top" },
+        thumb(lang),
+        ring(s.memory / 100, { size: 44, stroke: 4, color: s.memory >= 100 ? "var(--st-mastered)" : "var(--primary)", label: `${s.memory}%` })),
+      h("span", { class: "set-row-sub" }, langBadge(lang), h("span", null, sourceLabel(set))),
+      h("span", { class: "set-card-title" }, set.title),
+      h("span", { class: "set-row-meta" },
+        h("span", null, icon("format_list_bulleted"), `${s.total} 語`),
+        s.due ? h("span", { class: "due" }, icon("event_repeat"), `復習 ${s.due}`) : null)),
+    h("div", { class: "set-card-actions" },
+      linkButton("text", "開く", null, href),
+      button("text", "学習する", null, () => go(`/learn/${encodeURIComponent(set.id)}?mode=learn`))));
+}
+
 function renderHome() {
   document.title = "SK Study";
-  const prefs = store.getPrefs();
   const due = store.dueItems();
   const o = store.overall();
+  const name = (auth && auth.name) || (readHint() || {}).name || "";
+  const hour = new Date().getHours();
+  const hello = hour >= 5 && hour < 11 ? "おはようございます" : hour >= 11 && hour < 18 ? "こんにちは" : "こんばんは";
+  const dateText = new Date().toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "long" });
 
   const today = h("section", { class: "today" },
     h("div", { class: "today-main" },
-      h("p", { class: "today-label" }, "今日の復習"),
+      h("p", { class: "today-label" }, icon("event_repeat"), "今日の復習"),
       h("p", { class: "today-count" }, String(due.length), h("small", null, "語")),
       h("p", { class: "today-sub" },
         due.length ? "忘れかけたころに復習すると、記憶に残ります。"
           : o.learned ? "今日の復習はおわりました。新しい単語に進みましょう。"
             : "単語セットを選んで、学習をはじめましょう。")),
-    due.length ? button("filled", "復習する", "play_arrow", () => go("/learn/review?mode=learn"), { class: "filled-btn today-start" }) : null,
-    h("div", { class: "today-stats" },
-      h("div", null, h("strong", null, String(o.streak)), h("span", null, "日 連続")),
-      h("div", null, h("strong", null, String(o.mastered)), h("span", null, "語 記憶済み")),
-      h("div", null, h("strong", null, String(o.today)), h("span", null, "問 今日答えた"))));
+    due.length ? button("filled", "復習する", "play_arrow", () => go("/learn/review?mode=learn"), { class: "filled-btn today-start" })
+      : linkButton("filled", "単語セットを選ぶ", "library_books", "#/sets"));
+  const startBtn = today.querySelector("a.filled-btn");
+  if (startBtn) startBtn.classList.add("today-start");
 
-  // 続きから（答えたことのあるセット。復習の多い順）
+  const stat = (ic, value, unit, label, tone) => h("div", { class: `stat-card tone-${tone}` },
+    h("span", { class: "stat-icon" }, icon(ic)),
+    h("span", { class: "stat-text" }, h("strong", null, String(value), h("small", null, unit)), h("span", null, label)));
+
+  // 続きから（答えたことのあるセット。復習の多い順）。まだなければ SK のおすすめ
   const started = store.allSets()
     .map((set) => ({ set, s: store.setStats(set) }))
     .filter(({ s }) => s.started > 0)
-    .sort((a, b) => b.s.due - a.s.due || a.s.memory - b.s.memory);
+    .sort((a, b) => b.s.due - a.s.due || a.s.memory - b.s.memory)
+    .map(({ set }) => set);
+  const picks = started.length ? started.slice(0, 6) : store.getSkSets().slice(0, 3);
 
-  // SK の単語セット
+  const tile = (ic, label, sub, target) => h(typeof target === "string" ? "a" : "button",
+    typeof target === "string" ? { class: "tile", href: target } : { class: "tile", type: "button", onclick: target },
+    h("span", { class: "tile-icon" }, icon(ic)), h("strong", null, label), h("span", null, sub));
+
+  app.append(
+    h("header", { class: "home-head" },
+      h("p", { class: "home-date" }, dateText),
+      h("h1", null, name ? `${hello}、${name} さん` : hello)),
+    h("div", { class: "home-top" },
+      today,
+      h("div", { class: "stat-grid" },
+        stat("local_fire_department", o.streak, "日", "連続で学習", "fire"),
+        stat("verified", o.mastered, "語", "記憶済み", "good"),
+        stat("task_alt", o.today, "問", "今日答えた", "primary"))),
+    h("section", { class: "section" },
+      h("div", { class: "section-head" },
+        h("h2", null, started.length ? "続きから" : "おすすめの単語セット"),
+        linkButton("text", "すべて見る", null, "#/sets")),
+      h("div", { class: "card-grid" }, picks.map(setCard))),
+    h("section", { class: "section" },
+      h("div", { class: "section-head" }, h("h2", null, "ショートカット")),
+      h("div", { class: "tile-grid" },
+        tile("note_add", "単語帳を作る", "自分だけの単語帳", "#/edit/new"),
+        tile("link", "リンクから追加", "友だちの単語帳を受け取る", openImportDialog),
+        tile("assignment", "プリント", "HTML・PDF のプリントに答える", "#/prints"),
+        tile("groups", "クラス", "参加コードでクラスに入る", "#/classes"))));
+}
+
+// SK の単語セット（言語でしぼりこむ）
+function renderSets() {
+  document.title = "単語セット - SK Study";
+  const prefs = store.getPrefs();
   const filters = [["all", "すべて"], ["en", "英語"], ["ko", "韓国語"], ["zh", "中国語"]];
   const list = h("div", { class: "set-list" });
   const chips = h("div", { class: "chips", role: "group", "aria-label": "言語でしぼりこむ" });
-  function drawSk(filter) {
+  function draw(filter) {
     chips.replaceChildren(...filters.map(([key, label]) => h("button", {
       type: "button", class: "chip", "aria-pressed": String(filter === key),
-      onclick: () => { store.setPrefs({ filter: key }); drawSk(key); }
+      onclick: () => { store.setPrefs({ filter: key }); draw(key); }
     }, filter === key ? icon("check") : null, label)));
     const sets = store.getSkSets().filter((s) => filter === "all" || s.lang === filter);
-    list.replaceChildren(...(sets.length ? sets.map((s) => setRow(s)) : [h("p", { class: "empty" }, "この言語のセットはまだありません。")]));
+    list.replaceChildren(...(sets.length ? sets.map((s) => setRow(s, { start: true })) : [h("p", { class: "empty" }, "この言語のセットはまだありません。")]));
   }
-  drawSk(prefs.filter);
-
-  const mine = store.getMySets().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-
+  draw(prefs.filter);
   app.append(
-    today,
-    classSection(printUi),
-    started.length ? h("section", { class: "section" },
-      h("div", { class: "section-head" }, h("h2", null, "続きから")),
-      h("div", { class: "set-list" }, started.slice(0, 4).map(({ set }) => setRow(set, { start: true })))) : "", // append は null を「null」の文字にするので、ないときは空の文字
-    h("section", { class: "section" },
-      h("div", { class: "section-head" }, h("h2", null, "SK の単語セット")),
-      chips, list),
-    h("section", { class: "section" },
-      h("div", { class: "section-head" },
-        h("h2", null, "マイ単語帳"),
-        h("div", { class: "section-actions" },
-          button("text", "リンクから追加", "link", openImportDialog),
-          linkButton("tonal", "新しく作る", "add", "#/edit/new"))),
-      mine.length ? h("div", { class: "set-list" }, mine.map((s) => setRow(s)))
-        : h("div", { class: "empty-card" },
-          icon("library_add", "empty-icon"),
-          h("p", null, "自分の単語帳を作れます。テストに出る言葉、好きな言語、漢字や理科の用語など、なんでも。"),
-          h("p", { class: "muted" }, "作った単語帳は、リンクで友だちに共有できます。"))),
-    printSection(printUi),
-    h("p", { class: "footnote" }, "学習の記録・マイ単語帳・プリントは、いまはこのブラウザの中だけに保存されます。"));
+    pageHead("単語セット", "SK が用意した単語セットです。「自分用にコピー」すると、自由に編集できます。"),
+    chips, list);
+}
+
+// マイ単語帳（自分で作ったもの・共有リンクで受け取ったもの）
+function renderMine() {
+  document.title = "マイ単語帳 - SK Study";
+  const mine = store.getMySets().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  app.append(
+    pageHead("マイ単語帳", "自分で作った単語帳と、共有リンクで受け取った単語帳です。",
+      [button("text", "リンクから追加", "link", openImportDialog), linkButton("filled", "新しく作る", "add", "#/edit/new")]),
+    mine.length ? h("div", { class: "set-list" }, mine.map((s) => setRow(s, { start: true })))
+      : h("div", { class: "empty-card" },
+        icon("library_add", "empty-icon"),
+        h("p", null, "自分の単語帳を作れます。テストに出る言葉、好きな言語、漢字や理科の用語など、なんでも。"),
+        h("p", { class: "muted" }, "作った単語帳は、リンクで友だちに共有できます。"),
+        linkButton("filled", "新しく作る", "add", "#/edit/new")),
+    // MD1 の FAB（スマートフォン）
+    h("a", { class: "fab", href: "#/edit/new", "aria-label": "新しい単語帳を作る", title: "新しい単語帳を作る" }, icon("add")));
 }
 
 function openImportDialog() {
@@ -449,7 +803,7 @@ function renderSet(id) {
       if (await confirmDialog("この単語帳を削除しますか？", `「${set.title}」と、その学習の記録を消します。もとに戻せません。`, "削除する", true)) {
         store.deleteMySet(set.id);
         toast("削除しました");
-        go("/", true);
+        go("/mine", true);
       }
     }, { "data-danger": "" }) : null);
 
@@ -473,7 +827,7 @@ function renderSet(id) {
   }));
 
   app.append(
-    fromClass ? backLink("クラス", `#/class/${encodeURIComponent(set.classRef.cid)}`) : backLink("ホーム", "#/"),
+    fromClass ? backLink("クラス", `#/class/${encodeURIComponent(set.classRef.cid)}`) : set.source === "sk" ? backLink("単語セット", "#/sets") : backLink("マイ単語帳", "#/mine"),
     fromClass ? h("p", { class: "class-banner" }, icon("groups"), `クラスの課題「${set.assignTitle || set.title}」。学習すると、覚えた語の数が先生に届きます。`) : "",
     h("section", { class: "set-head" },
       thumb(lang),
@@ -1086,7 +1440,7 @@ function renderEdit(id) {
     }
   }
 
-  const cancelHref = editing ? `#/set/${encodeURIComponent(editing.id)}` : "#/";
+  const cancelHref = editing ? `#/set/${encodeURIComponent(editing.id)}` : "#/mine";
   const cancel = h("a", { class: "back-link", href: cancelHref, onclick: async (e) => {
     if (!dirty) return;
     e.preventDefault();
@@ -1186,8 +1540,8 @@ document.addEventListener("keydown", (e) => {
 const speechBtn = document.getElementById("speech-settings");
 if (speechBtn) speechBtn.addEventListener("click", openSpeechSettings);
 
-// 押したところから広がる波紋（SK Material。MALU・Nagi と同じ）
-const RIPPLE = ".filled-btn, .tonal-btn, .outlined-btn, .text-btn, .danger-btn, .pill-btn, .icon-btn, .chip, .choice, .set-row, .segmented button, .print-tabs button, .pa-opt, .map-cell, .tc-mark, .mk-roles button";
+// 押したところから広がるインクの波紋（MD1）
+const RIPPLE = ".drawer-item, .tile, .set-card-main, .fab, .filled-btn, .tonal-btn, .outlined-btn, .text-btn, .danger-btn, .pill-btn, .icon-btn, .chip, .choice, .set-row, .segmented button, .print-tabs button, .pa-opt, .map-cell, .tc-mark, .mk-roles button";
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 document.addEventListener("pointerdown", (e) => {
   const target = e.target.closest && e.target.closest(RIPPLE);
@@ -1200,11 +1554,6 @@ document.addEventListener("pointerdown", (e) => {
   dot.addEventListener("animationend", () => dot.remove());
 });
 
-// 上の帯: 下に動かすと面の色を変える（M3 のトップアプリバー）
-const topBar = document.querySelector(".top-bar");
-const onScroll = () => topBar.classList.toggle("is-scrolled", window.scrollY > 0);
-window.addEventListener("scroll", onScroll, { passive: true });
-onScroll();
 
 // ホーム画面に追加（PWA。オフラインでも開けるように sw.js を入れる）
 const INSTALL_KEY = "sk_study_install_dismissed";
@@ -1232,12 +1581,13 @@ if ("serviceWorker" in navigator) {
 }
 
 (async () => {
-  try {
-    await store.loadSkSets();
-  } catch (e) {
-    console.error(e);
-    toast("SK の単語セットを読み込めませんでした");
-  }
+  renderGate(null); // ログインを確かめているあいだ
+  const [, s] = await Promise.all([
+    store.loadSkSets().catch((e) => { console.error(e); toast("SK の単語セットを読み込めませんでした"); }),
+    cloud.session().catch((e) => { console.error(e); return { status: "offline" }; })
+  ]);
+  auth = s;
+  drawDrawer();
   window.addEventListener("hashchange", route);
   route();
 })();

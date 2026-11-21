@@ -11,25 +11,41 @@ export const PRINT_MAX_BYTES = 950000; // Firestore は 1 件 1MB まで
 
 let mods = null;
 async function load() {
-  if (!mods) mods = Promise.all([import("/assets/hub/account.js"), import(FIRESTORE)]).then(([hub, fs]) => ({ hub, fs }));
+  if (!mods) mods = Promise.all([import("/assets/hub/account.js"), import(FIRESTORE), import("/assets/hub/invite.js")]).then(([hub, fs, invite]) => ({ hub, fs, invite }));
   return mods;
+}
+
+// 招待制（assets/hub/invite.js）。招待を確かめられた端末には印を残す（ネットワークがないときも、前に招待された端末なら開ける）
+const INVITED_KEY = "skhub_invited_study";
+export function wasInvited() {
+  try { return localStorage.getItem(INVITED_KEY) === "1"; } catch (e) { return false; }
+}
+function markInvited(on) {
+  try { if (on) localStorage.setItem(INVITED_KEY, "1"); else localStorage.removeItem(INVITED_KEY); } catch (e) { /* 残せなくても使える */ }
 }
 
 function hasHint() {
   try { return !!localStorage.getItem("skhub_account"); } catch (e) { return false; }
 }
 
-// いまの状態。status: signed-out / offline / unregistered / not-connected / ready
+// いまの状態。status: signed-out / offline / not-invited / unregistered / not-connected / ready
 //   ready のときは { user, account, name, hub, fs, db }
 let cached = null;
+// ログアウトしたとき・ログインし直したときに、覚えている状態を消す
+export function resetSession() { cached = null; }
 export async function session({ fresh = false } = {}) {
   if (cached && !fresh) return cached;
   if (!hasHint()) return (cached = { status: "signed-out" });
   let m;
   try { m = await load(); } catch (e) { return { status: "offline" }; }
-  const { hub, fs } = m;
+  const { hub, fs, invite } = m;
   const user = await hub.currentUser();
   if (!user) return (cached = { status: "signed-out" });
+  // 招待されていない人は、ここから先（アカウントの登録・接続）に進ませない
+  let inv;
+  try { inv = await invite.inviteStatus(user, "study"); } catch (e) { return { status: "offline" }; }
+  if (!inv.ok) { markInvited(false); return (cached = { status: "not-invited", reason: inv.reason, user }); }
+  markInvited(true);
   let account = null;
   try {
     const snap = await fs.getDoc(fs.doc(hub.db, "accounts", user.uid));

@@ -335,7 +335,7 @@ export function renderMaker(ui) {
   drawMode();
   drawAi();
   add(app,
-    h("a", { class: "back-link", href: "#/" }, icon("arrow_back"), h("span", null, "ホーム")),
+    h("a", { class: "back-link", href: "#/prints" }, icon("arrow_back"), h("span", null, "プリント")),
     h("div", { class: "mk-head" },
       h("h1", null, "PDF からプリントを作る"),
       h("p", { class: "muted" }, "PDF のプリントを、SK Study で解けるプリント（HTML）に変換します。解答欄を見つけて、答えは隠して自動で採点します。")),
