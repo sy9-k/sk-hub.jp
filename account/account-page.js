@@ -27,14 +27,22 @@ const desktopState = /^[A-Za-z0-9_-]{16,128}$/.test(desktopQuery.get("state") ||
 //   （Google は組み込みの画面でのログインを断る）ので、そのボタンを押したら、アプリが待っている 127.0.0.1 の /switch に移って、いつものブラウザに切りかえてもらう
 const desktopInApp = !!desktopPort && !!desktopState && desktopQuery.get("inapp") === "1";
 const POPUP_LOGINS = ["google", "github", "microsoft"];
-function handoffToDesktop(user, account) {
+//   SK Hub Office は招待制なので、招待されているか（assets/hub/invite.js）も渡す: invited=office / invite=not-invited・not-google
+//   （確かめられなかったときは何も付けない。デスクトップ版は、招待されていないものとして扱う）
+async function handoffToDesktop(user, account) {
   rememberAccount(user, account);
   let hint = "";
   try { hint = localStorage.getItem("skhub_account") || ""; } catch (e) { /* 渡せない */ }
   const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(hint))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   $("[data-acct-next]").textContent = t("ログインしました。SK Hub Office に戻ります…");
   $("[data-acct-next]").hidden = false;
-  location.replace(`http://127.0.0.1:${desktopPort}/callback?state=${encodeURIComponent(desktopState)}&hint=${b64}`);
+  let invite = "";
+  try {
+    const { inviteStatus } = await import("/assets/hub/invite.js");
+    const r = await inviteStatus(user, "office");
+    invite = r.ok ? "&invited=office" : `&invite=${encodeURIComponent(r.reason)}`;
+  } catch (e) { /* 確かめられなかった */ }
+  location.replace(`http://127.0.0.1:${desktopPort}/callback?state=${encodeURIComponent(desktopState)}&hint=${b64}${invite}`);
 }
 let connectKey = SERVICES[new URLSearchParams(location.search).get("connect")] ? new URLSearchParams(location.search).get("connect") : "";
 // 多言語（assets/i18n.js）

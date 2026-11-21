@@ -1,0 +1,23 @@
+    <section class="wt band band--plain">
+      <div class="wrap">
+        <div class="wt-card">
+          <span class="wt-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12M6 22h12M7 2v4a5 5 0 0 0 2 4l3 2-3 2a5 5 0 0 0-2 4v4M17 2v4a5 5 0 0 1-2 4l-3 2 3 2a5 5 0 0 1 2 4v4"/></svg></span>
+          <h1>いまは招待制です</h1>
+          <p class="wt-lead">SK Study と SK Office は、招待した方だけが使えます。順番待ちに登録しておくと、順番がきたときにメールでお知らせします。</p>
+          <form class="wt-form" id="wt-form" novalidate>
+            <fieldset class="wt-products" aria-label="使いたいもの">
+              <label class="wt-chip"><input type="radio" name="product" value="study" checked><span>SK Study</span></label>
+              <label class="wt-chip"><input type="radio" name="product" value="office"><span>SK Office</span></label>
+            </fieldset>
+            <label class="wt-field">
+              <span>メールアドレス</span>
+              <input type="email" id="wt-email" name="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="you@example.com" required>
+            </label>
+            <button type="submit" class="btn btn-ink" id="wt-submit">順番待ちに登録する</button>
+            <p class="wt-note">登録したメールアドレスは、招待のお知らせにだけ使います。くわしくは<a href="/policies/">ポリシー</a>をご覧ください。</p>
+            <p class="wt-msg" id="wt-msg" role="status" aria-live="polite" hidden></p>
+          </form>
+          <p class="wt-have">招待されている方は、<a href="/account/">SK Hub Systems アカウント</a>に、招待されたメールアドレスの Google アカウントでログインしてください。</p>
+        </div>
+      </div>
+    </section>

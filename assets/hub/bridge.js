@@ -5,14 +5,17 @@
 //   { sk: "bridge", id, op: "set", key, value }   → 言語・表示・アクセス解析・利用規約の同意を sk-hub.jp にも保存する（サブドメインで変えたとき）。
 //                                                  サポートID は、sk-hub.jp にまだないときだけ（RedFlag Checker がサブドメインで発行したもの）
 //   { sk: "bridge", id, op: "token" }             → ログイン中なら { uid, token }（お問い合わせで、返事をアカウントで受け取るため）
+//   { sk: "bridge", id, op: "invite", product }  → 招待制のプロダクト（study / office）に招待されているか { ok, reason }。ログインしていなければ null
+//                                                  reason: not-invited / not-google / error（確かめられなかった）（assets/hub/invite.js）
 // sk-hub.jp とサブドメインは同じサイト（sk-hub.jp）なので、iframe の中でも sk-hub.jp の保存場所がそのまま読める。
 // 答えるのは ORIGINS のページだけ。ほかのサイトに埋め込まれても何も渡さない。
-//   office.sk-hub.jp（SK Hub Office）は、ログイン中かのヒント（skhub_account）だけを使う（office/shared/office.js）
+//   office.sk-hub.jp（SK Hub Office）は、ログイン中かのヒント（skhub_account）と、招待されているか（op: "invite"。office/shared/invite-gate.js）を使う
 
 const ORIGINS = ["https://support.sk-hub.jp", "https://office.sk-hub.jp"];
 const PREFS = ["sk_lang", "sk_theme", "sk_analytics", "skhub_terms_accepted", "skhub_terms_notice_shown", "skhub_uuid", "skhub_account"];
 const WRITABLE = ["sk_lang", "sk_theme", "sk_analytics", "skhub_terms_accepted", "skhub_terms_notice_shown"];
 const WRITE_IF_EMPTY = ["skhub_uuid"];
+const INVITE_PRODUCTS = ["study", "office"];
 
 const read = (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } };
 
@@ -33,6 +36,17 @@ async function answer(msg) {
     const { currentUser } = await import("/assets/hub/account.js");
     const user = await currentUser();
     return user ? { uid: user.uid, token: await user.getIdToken() } : null;
+  }
+  if (msg.op === "invite") {
+    if (!INVITE_PRODUCTS.includes(msg.product)) return null;
+    if (!read("skhub_account")) return null; // ログインしていなければ Firebase を読み込まない
+    try {
+      const [{ currentUser }, { inviteStatus }] = await Promise.all([import("/assets/hub/account.js"), import("/assets/hub/invite.js")]);
+      const user = await currentUser();
+      return user ? await inviteStatus(user, msg.product) : null;
+    } catch (e) {
+      return { ok: false, reason: "error" };
+    }
   }
   return null;
 }
