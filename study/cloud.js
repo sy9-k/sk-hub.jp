@@ -105,23 +105,54 @@ export async function lookupCode(code) {
   return { code: snap.id, ...snap.data() };
 }
 
-export async function joinClass(info, name) {
+// 専用コードで、生徒プロファイル（指導者が名簿として作ったもの）を自分のアカウントに結びつける
+export async function joinClass(info) {
+  if (!info.profileId) { const e = new Error("このコードは使えません。先生に新しいコードを聞いてください。"); e.code = "bad-code"; throw e; }
   const { fs, db, user } = await ready();
   const b = fs.writeBatch(db);
-  b.set(fs.doc(db, "studyClasses", info.classId, "members", user.uid), { name: String(name).slice(0, 40), code: info.code, joinedAt: fs.serverTimestamp() });
-  b.set(fs.doc(db, "accounts", user.uid, "studyClasses", info.classId), { name: info.className, teacherName: info.teacherName || "", joinedAt: fs.serverTimestamp() });
+  b.set(fs.doc(db, "studyClasses", info.classId, "members", user.uid), { name: info.profileName, code: info.code, profileId: info.profileId, joinedAt: fs.serverTimestamp() });
+  b.update(fs.doc(db, "studyClasses", info.classId, "profiles", info.profileId), { claimedBy: user.uid, claimedAt: fs.serverTimestamp(), updatedAt: fs.serverTimestamp() });
+  b.set(fs.doc(db, "accounts", user.uid, "studyClasses", info.classId), { name: info.className, teacherName: info.teacherName || "", joinedAt: fs.serverTimestamp(), profileId: info.profileId, profileName: info.profileName });
   try {
     await b.commit();
   } catch (e) {
-    if (e.code === "permission-denied") { const err = new Error("参加できませんでした（参加の受け付けが終わっているかもしれません）。"); err.code = "closed"; throw err; }
+    if (e.code === "permission-denied") { const err = new Error("参加できませんでした（このコードはもう使われているか、参加の受け付けが終わっているかもしれません）。"); err.code = "closed"; throw err; }
     throw e;
   }
+  slots.delete(info.classId);
 }
 
 export async function leaveClass(cid) {
   const { fs, db, user } = await ready();
+  const mine = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyClasses", cid)).catch(() => null);
+  const pid = mine && mine.exists() ? mine.data().profileId : null;
+  if (pid) await fs.updateDoc(fs.doc(db, "studyClasses", cid, "profiles", pid), { claimedBy: null, claimedAt: null, updatedAt: fs.serverTimestamp() }).catch(() => {});
   await fs.deleteDoc(fs.doc(db, "studyClasses", cid, "members", user.uid)).catch(() => {});
   await fs.deleteDoc(fs.doc(db, "accounts", user.uid, "studyClasses", cid));
+  slots.delete(cid);
+}
+
+// 提出・採点の ID。生徒プロファイルがあればその ID、なければ（前の参加の仕方では）UID
+const slots = new Map();
+async function slotOf(cid) {
+  if (slots.has(cid)) return slots.get(cid);
+  const { fs, db, user } = await ready();
+  let id = user.uid;
+  try {
+    const snap = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyClasses", cid));
+    if (snap.exists() && snap.data().profileId) id = snap.data().profileId;
+  } catch (e) { /* UID のまま */ }
+  slots.set(cid, id);
+  return id;
+}
+// クラスの中での、自分の名前（プロファイルの名前）
+export async function myProfileName(cid) {
+  const { fs, db, user, name } = await ready();
+  try {
+    const snap = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyClasses", cid));
+    if (snap.exists()) return snap.data().profileName || snap.data().name || name;
+  } catch (e) { /* 下へ */ }
+  return name;
 }
 
 export async function getClass(cid) {
@@ -145,16 +176,16 @@ export async function getAssignment(cid, aid) {
 }
 
 export async function mySubmission(cid, aid) {
-  const { fs, db, user } = await ready();
-  const snap = await fs.getDoc(fs.doc(db, "studyClasses", cid, "assignments", aid, "submissions", user.uid));
+  const { fs, db } = await ready();
+  const snap = await fs.getDoc(fs.doc(db, "studyClasses", cid, "assignments", aid, "submissions", await slotOf(cid)));
   return snap.exists() ? withId(snap) : null;
 }
 
 // 結果が公開されていなければ null
 export async function myGrade(cid, aid) {
-  const { fs, db, user } = await ready();
+  const { fs, db } = await ready();
   try {
-    const snap = await fs.getDoc(fs.doc(db, "studyClasses", cid, "assignments", aid, "grades", user.uid));
+    const snap = await fs.getDoc(fs.doc(db, "studyClasses", cid, "assignments", aid, "grades", await slotOf(cid)));
     return snap.exists() ? withId(snap) : null;
   } catch (e) {
     if (e.code === "permission-denied") return null;
@@ -164,12 +195,13 @@ export async function myGrade(cid, aid) {
 
 // 提出する。score = { ok, total }、data = 答えなど（JSON にする）。update は単語帳の進み具合を送り直すとき
 export async function submit(cid, aid, score, data, { update = false } = {}) {
-  const { fs, db, user, name } = await ready();
+  const { fs, db } = await ready();
+  const name = await myProfileName(cid);
   const json = JSON.stringify(data || {});
   if (json.length > 200000) throw new Error("提出する内容が大きすぎます。");
   const ok = Number(score.ok) || 0, total = Number(score.total) || 0;
   const body = { name: String(name).slice(0, 40), score: { ok, total, pct: total ? Math.round((ok / total) * 100) : 0 }, data: json, updatedAt: fs.serverTimestamp() };
-  const ref = fs.doc(db, "studyClasses", cid, "assignments", aid, "submissions", user.uid);
+  const ref = fs.doc(db, "studyClasses", cid, "assignments", aid, "submissions", await slotOf(cid));
   if (update) await fs.updateDoc(ref, body);
   else await fs.setDoc(ref, { ...body, submittedAt: fs.serverTimestamp() });
 }
@@ -265,6 +297,8 @@ export async function deleteClass(cls) {
   for (const a of assigns.docs) await deleteAssignment(cls.id, a.id);
   const members = await fs.getDocs(fs.collection(db, "studyClasses", cls.id, "members"));
   await deleteAll(members.docs.map((d) => d.ref));
+  const profs = await fs.getDocs(fs.collection(db, "studyClasses", cls.id, "profiles"));
+  await deleteAll(profs.docs.flatMap((d) => [fs.doc(db, "studyJoinCodes", d.data().code), d.ref]));
   await deleteAll([fs.doc(db, "studyJoinCodes", cls.joinCode), fs.doc(db, "studyClasses", cls.id)]);
 }
 
@@ -277,6 +311,81 @@ export async function members(cid) {
 export async function removeMember(cid, uid) {
   const { fs, db } = await ready();
   await fs.deleteDoc(fs.doc(db, "studyClasses", cid, "members", uid));
+}
+
+// ---------- 生徒プロファイル（名簿）。名前ごとに専用の参加コード ----------
+
+export async function profiles(cid) {
+  const { fs, db } = await ready();
+  const snap = await fs.getDocs(fs.collection(db, "studyClasses", cid, "profiles"));
+  return snap.docs.map(withId).sort((a, b) => (ms(a.createdAt) || 0) - (ms(b.createdAt) || 0) || String(a.name).localeCompare(String(b.name), "ja"));
+}
+
+// 名簿: プロファイル + 前の参加の仕方（プロファイルなし）の生徒。結果の画面などで使う。id は提出・採点の ID
+export async function roster(cid) {
+  const [ps, ms_] = await Promise.all([profiles(cid), members(cid)]);
+  const linked = new Set(ps.map((p) => p.claimedBy).filter(Boolean));
+  return [
+    ...ps.map((p) => ({ id: p.id, name: p.name, claimed: !!p.claimedBy, profile: p })),
+    ...ms_.filter((m) => !m.profileId && !linked.has(m.id)).map((m) => ({ id: m.id, name: m.name, claimed: true, legacy: true }))
+  ];
+}
+
+// 名前（複数）から、プロファイルと専用コードを作る
+export async function createProfiles(cls, names) {
+  const { fs, db, user } = await ready();
+  const list = [...new Set(names.map((n) => String(n).trim().slice(0, 40)).filter(Boolean))];
+  for (let i = 0; i < list.length; i += 150) {
+    const b = fs.writeBatch(db);
+    for (const name of list.slice(i, i + 150)) {
+      const pid = newId();
+      const code = newCode();
+      b.set(fs.doc(db, "studyClasses", cls.id, "profiles", pid), { name, code, claimedBy: null, createdAt: fs.serverTimestamp(), updatedAt: fs.serverTimestamp() });
+      b.set(fs.doc(db, "studyJoinCodes", code), { classId: cls.id, profileId: pid, profileName: name, ownerUid: user.uid, className: cls.name, teacherName: cls.teacherName || "", createdAt: fs.serverTimestamp() });
+    }
+    try { await b.commit(); } catch (e) {
+      if (e.code === "permission-denied") throw new Error("プロファイルを作れませんでした。もう一度ためしてください（コードが重なったときも、やり直すと直ります）。");
+      throw e;
+    }
+  }
+  return list.length;
+}
+
+function profileDoc(p, patch) {
+  return { name: p.name, code: p.code, claimedBy: p.claimedBy || null, ...(p.claimedAt ? { claimedAt: p.claimedAt } : {}), createdAt: p.createdAt, ...patch };
+}
+
+// 名前を変える。まだ使われていないプロファイルは、コードも新しくなる（コードの中の名前を合わせるため）
+export async function renameProfile(cls, p, name) {
+  const { fs, db } = await ready();
+  const nm = String(name).trim().slice(0, 40);
+  if (!nm) return;
+  if (!p.claimedBy) { await resetProfile(cls, p, { name: nm }); return; }
+  await fs.setDoc(fs.doc(db, "studyClasses", cls.id, "profiles", p.id), profileDoc(p, { name: nm, updatedAt: fs.serverTimestamp() }));
+}
+
+// 専用コードを作り直す（前のコードは使えなくなる）。結びつけているアカウントがあれば、結びつけも外す（外すと、そのアカウントでは入れなくなる）
+export async function resetProfile(cls, p, { release = false, name = p.name } = {}) {
+  const { fs, db, user } = await ready();
+  for (let i = 0; i < 5; i++) {
+    const code = newCode();
+    const b = fs.writeBatch(db);
+    b.set(fs.doc(db, "studyJoinCodes", code), { classId: cls.id, profileId: p.id, profileName: name, ownerUid: user.uid, className: cls.name, teacherName: cls.teacherName || "", createdAt: fs.serverTimestamp() });
+    b.set(fs.doc(db, "studyClasses", cls.id, "profiles", p.id), profileDoc(p, { name, code, ...(release ? { claimedBy: null, claimedAt: null } : {}), updatedAt: fs.serverTimestamp() }));
+    b.delete(fs.doc(db, "studyJoinCodes", p.code));
+    if (release && p.claimedBy) b.delete(fs.doc(db, "studyClasses", cls.id, "members", p.claimedBy));
+    try { await b.commit(); return code; } catch (e) { if (e.code !== "permission-denied") throw e; }
+  }
+  throw new Error("コードを作り直せませんでした。");
+}
+
+export async function deleteProfile(cls, p) {
+  const { fs, db } = await ready();
+  const b = fs.writeBatch(db);
+  if (p.claimedBy) b.delete(fs.doc(db, "studyClasses", cls.id, "members", p.claimedBy));
+  b.delete(fs.doc(db, "studyJoinCodes", p.code));
+  b.delete(fs.doc(db, "studyClasses", cls.id, "profiles", p.id));
+  await b.commit();
 }
 
 export async function allAssignments(cid) {
@@ -336,4 +445,15 @@ export async function saveGrade(cid, aid, uid, { ok, total, marks, note = "" }) 
     ok, total, pct: total ? Math.round((ok / total) * 100) : 0,
     marks: JSON.stringify(marks || {}).slice(0, 20000), note: String(note).slice(0, 1000), gradedAt: fs.serverTimestamp()
   });
+}
+
+// ---------- いま使っているプロファイル（個人 / クラスの生徒プロファイル）。この端末だけの印 ----------
+const CTX_KEY = "sk_study_ctx";
+// 個人のときは ""、クラスのプロファイルのときはクラスの ID
+export function activeClass() {
+  try { return localStorage.getItem(CTX_KEY) || ""; } catch (e) { return ""; }
+}
+export function setActiveClass(cid) {
+  try { if (cid) localStorage.setItem(CTX_KEY, cid); else localStorage.removeItem(CTX_KEY); } catch (e) { /* 残せなくても動く */ }
+  document.dispatchEvent(new CustomEvent("sk-study:ctx"));
 }
