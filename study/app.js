@@ -188,8 +188,9 @@ function speechPanel() {
     drawRates(s.rate);
     const rows = VOICE_LANGS.map(([lang, name, sample]) => {
       const list = tts.voicesFor(lang);
+      const sk = tts.hasSkVoice(lang) ? tts.SK_VOICES : [];
       const best = list[0];
-      if (!list.length) {
+      if (!list.length && !sk.length) {
         return h("div", { class: "voice-row" }, h("span", { class: "voice-name" }, name),
           h("p", { class: "muted small" }, icon("info"), `この端末には${name}の声がありません。端末の設定で追加できます。`));
       }
@@ -199,7 +200,8 @@ function speechPanel() {
         tts.saveSettings({ voices: voicesSaved });
         tts.speak(sample, lang);
       } },
-      h("option", { value: "" }, `おまかせ（${best.name}）`),
+      h("option", { value: "" }, best ? `おまかせ（${best.name}）` : "おまかせ"),
+      sk.map(([id, label]) => h("option", { value: id, selected: s.voices[lang] === id }, label)),
       list.map((v) => h("option", { value: v.name, selected: s.voices[lang] === v.name }, `${v.name}${v.localService ? "" : "（ネット）"}`)));
       const test = h("button", { type: "button", class: "icon-btn speak", "aria-label": `${name}を試しに聞く`, title: "試しに聞く",
         onclick: () => tts.speak(sample, lang, { button: test }) }, icon("play_arrow"));
@@ -338,6 +340,18 @@ function renderRoute(nav) {
     renderGate(auth);
     return;
   }
+  // クラスのプロファイルでは、そのクラスの画面だけ（個人の単語帳・プリントなどは出さない）
+  if (cloud.activeClass() && ctxInfo) {
+    const CLASS_VIEWS = ["class", "task", "set", "learn", "print", "settings"];
+    if (!view || !CLASS_VIEWS.includes(view)) {
+      document.body.dataset.view = "class";
+      setActive("home");
+      topTitle.textContent = ctxInfo.className;
+      renderClass(ctxInfo.cid, printUi).catch(showError);
+      app.focus({ preventScroll: true });
+      return;
+    }
+  }
   document.body.dataset.view = view || "home";
   let section = SECTION_OF[view || ""] || null;
   if (view === "set") {
@@ -442,6 +456,7 @@ async function recheckAuth() {
   auth = null;
   renderGate(null);
   auth = await cloud.session({ fresh: true });
+  await refreshCtx();
   drawDrawer();
   route();
 }
@@ -483,28 +498,64 @@ const wide = window.matchMedia("(min-width: 1024px)");
 const DRAWER_KEY = "sk_study_drawer_closed";
 let activeNav = null;
 
+// いま使っているプロファイル。個人なら null、クラスのプロファイルなら { cid, className, profileName }
+let ctxInfo = null;
+const CLASS_NAV = [
+  { key: "home", href: "#/", icon: "home", label: "ホーム" }
+];
+async function refreshCtx() {
+  const cid = cloud.activeClass();
+  if (!cid) { ctxInfo = null; return; }
+  if (!auth || auth.status !== "ready") { ctxInfo = ctxInfo && ctxInfo.cid === cid ? ctxInfo : null; return; }
+  try {
+    const mine = (await cloud.myClasses()).find((c) => c.id === cid && c.profileId);
+    if (mine) ctxInfo = { cid, className: mine.name, profileName: mine.profileName || mine.name };
+    else { ctxInfo = null; cloud.setActiveClass(""); }
+  } catch (e) { /* ネットワークがないときは、前の表示のまま */ }
+}
+// 個人 / クラスのプロファイルを選ぶ
+async function openProfileSwitcher() {
+  if (!auth || auth.status !== "ready") { toast("ログインしてから切り替えられます"); return; }
+  let classes = [];
+  try { classes = (await cloud.myClasses()).filter((c) => c.profileId); } catch (e) { toast(cloud.explain(e)); return; }
+  const cur = cloud.activeClass();
+  const options = [["", `個人（${auth.name}）`], ...classes.map((c) => [c.id, `${c.profileName || c.name}（${c.name}）`])];
+  const d = choiceDialog("プロファイルを切り替え", options, cur, (v) => { cloud.setActiveClass(v); });
+  d.querySelector(".radio-list").after(h("p", { class: "muted small" }, classes.length ? "クラスのプロファイルでは、そのクラスの課題だけが表示されます。" : "クラスのプロファイルはまだありません。「クラス」から先生の専用コードで参加すると追加されます。"));
+}
+document.addEventListener("sk-study:ctx", async () => {
+  await refreshCtx();
+  drawDrawer();
+  if (location.hash === "#/" || location.hash === "" || location.hash === "#") route(); else go("/", true);
+});
+
 function drawDrawer() {
   const hint = readHint() || {};
   const name = (auth && auth.name) || hint.name || "";
   const email = hint.email || (auth && auth.user && auth.user.email) || "";
   const color = /^(#[0-9a-f]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\))$/i.test(hint.color || "") ? hint.color : null;
-  const avatar = hint.photo && /^https:\/\//.test(hint.photo)
+  const shown = ctxInfo ? ctxInfo.profileName : name;
+  const avatar = !ctxInfo && hint.photo && /^https:\/\//.test(hint.photo)
     ? h("img", { class: "drawer-avatar", src: hint.photo, alt: "", referrerpolicy: "no-referrer" })
-    : h("span", { class: "drawer-avatar", style: color ? `background:${color}` : null, "aria-hidden": "true" }, hint.letter || name.slice(0, 1) || "?");
+    : h("span", { class: "drawer-avatar", style: !ctxInfo && color ? `background:${color}` : null, "aria-hidden": "true" }, ctxInfo ? shown.slice(0, 1) || "?" : hint.letter || name.slice(0, 1) || "?");
   const item = (n) => h("a", { class: "drawer-item", href: n.href, "data-nav": n.key }, icon(n.icon), h("span", null, n.label));
+  const canSwitch = !!auth && auth.status === "ready";
+  const who = h(canSwitch ? "button" : "div", canSwitch ? { type: "button", class: `drawer-head drawer-switch${ctxInfo ? " is-class" : ""}`, "aria-label": "プロファイルを切り替え", onclick: openProfileSwitcher } : { class: `drawer-head${ctxInfo ? " is-class" : ""}` },
+    avatar,
+    h("div", { class: "drawer-who" },
+      h("strong", null, shown || "SK Hub Systems アカウント"),
+      ctxInfo ? h("span", null, `クラス: ${ctxInfo.className}`) : email ? h("span", null, email) : null),
+    canSwitch ? icon("unfold_more", "drawer-switch-icon") : null);
+  const nav = ctxInfo ? CLASS_NAV : NAV;
   drawer.replaceChildren(
-    h("div", { class: "drawer-head" },
-      avatar,
-      h("div", { class: "drawer-who" },
-        h("strong", null, name || "SK Hub Systems アカウント"),
-        email ? h("span", null, email) : null)),
+    who,
     h("div", { class: "drawer-list" },
-      NAV.map((n) => (n === null ? h("hr", { class: "drawer-divider" }) : n.sub ? h("p", { class: "drawer-sub" }, n.sub) : item(n))),
+      nav.map((n) => (n === null ? h("hr", { class: "drawer-divider" }) : n.sub ? h("p", { class: "drawer-sub" }, n.sub) : item(n))),
       h("hr", { class: "drawer-divider" }),
       h("a", { class: "drawer-item", href: "#/settings", "data-nav": "settings" }, icon("settings"), h("span", null, "設定")),
       h("a", { class: "drawer-item", href: "/account/" }, icon("manage_accounts"), h("span", null, "アカウント")),
       h("button", { type: "button", class: "drawer-item", onclick: logout }, icon("logout"), h("span", null, "ログアウト"))),
-    h("p", { class: "drawer-foot" }, "学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。"));
+    h("p", { class: "drawer-foot" }, ctxInfo ? "クラスのプロファイルでは、そのクラスの課題だけを表示します。" : "学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。"));
   markActive();
 }
 function setActive(key) { activeNav = key; markActive(); }
@@ -620,11 +671,13 @@ function renderSettings() {
         onchange: (e) => { tts.saveSettings({ auto: e.target.checked }); draw(); } });
       const voiceRows = VOICE_LANGS.map(([lang, name, sample]) => {
         const list = tts.voicesFor(lang);
-        if (!list.length) return choiceRow(`${name}の声`, "この端末には入っていません", null, true);
+        const sk = tts.hasSkVoice(lang) ? tts.SK_VOICES : [];
+        if (!list.length && !sk.length) return choiceRow(`${name}の声`, "この端末には入っていません", null, true);
         const current = s.voices[lang];
-        const shown = list.find((v) => v.name === current) ? current : null;
-        const status = shown || `おまかせ（${list[0].name}）`;
-        const opts = [["", `おまかせ（${list[0].name}）`], ...list.map((v) => [v.name, `${v.name}${v.localService ? "" : "（ネット）"}`])];
+        const auto = list.length ? `おまかせ（${list[0].name}）` : "おまかせ";
+        const opts = [["", auto], ...sk, ...list.map((v) => [v.name, `${v.name}${v.localService ? "" : "（ネット）"}`])];
+        const shown = opts.some(([v]) => v && v === current) ? current : null;
+        const status = shown ? opts.find(([v]) => v === shown)[1] : auto;
         return choiceRow(`${name}の声`, status, () => choiceDialog(`${name}の声`, opts, shown || "", (v) => {
           const saved = { ...tts.getSettings().voices };
           if (v) saved[lang] = v; else delete saved[lang];
@@ -1670,6 +1723,7 @@ if ("serviceWorker" in navigator) {
     cloud.session().catch((e) => { console.error(e); return { status: "offline" }; })
   ]);
   auth = s;
+  await refreshCtx();
   drawDrawer();
   window.addEventListener("hashchange", route);
   route();

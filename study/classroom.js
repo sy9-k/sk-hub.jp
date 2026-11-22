@@ -40,7 +40,7 @@ export function classSection(ui) {
     if (s.status === "signed-out" || s.status === "unregistered") {
       body.replaceChildren(h("div", { class: "empty-card" },
         icon("groups", "empty-icon"),
-        h("p", null, "先生のクラスに参加すると、配られた単語帳・小テスト・プリントに取り組んで提出できます。"),
+        h("p", null, "先生から渡された専用コードで参加すると、配られた単語帳・小テスト・プリントに取り組んで提出できます。"),
         linkButton("filled", "SK Hub Systems アカウントでログイン", "login", cloud.accountUrl(true))));
       return;
     }
@@ -65,7 +65,7 @@ export function classSection(ui) {
             h("span", { class: "set-row-sub" }, h("span", null, c.teacherName ? `${c.teacherName} 先生` : "クラス")),
             h("span", { class: "set-row-title" }, c.name))),
         h("div", { class: "set-row-end" }, icon("chevron_right")))))
-        : h("p", { class: "muted small" }, "まだクラスに参加していません。先生から参加コードを聞いて入れてください。"),
+        : h("p", { class: "muted small" }, "まだクラスに参加していません。先生から専用の参加コードを聞いて入れてください。"),
       h("div", { class: "class-join-row" }, button("tonal", "参加コードを入れる", "add", () => openJoinDialog(ui))));
   })();
   return section;
@@ -85,7 +85,8 @@ export function openJoinDialog(ui) {
       info.replaceChildren(h("div", { class: "join-found" },
         h("strong", null, found.className),
         h("span", { class: "muted small" }, found.teacherName ? `${found.teacherName} 先生のクラス` : ""),
-        h("p", { class: "muted small" }, "参加すると、あなたの表示名・提出した答え・点数がこのクラスの先生に見えます。")));
+        h("p", null, `「${found.profileName || "?"}」のプロファイルとして参加します。`),
+        h("p", { class: "muted small" }, "参加すると、このアカウントにクラスのプロファイルが加わります。左上のアカウントの欄から、個人とクラスを切り替えられます。提出した答え・点数はプロファイルの名前で先生に見えます。")));
       okBtn.querySelector("span:last-child").textContent = "参加する";
     } catch (e) {
       found = null;
@@ -95,16 +96,16 @@ export function openJoinDialog(ui) {
   const okBtn = button("filled", "確かめる", null, async () => {
     if (!found || cloud.normCode(input.value) !== found.code) { await look(); return; }
     try {
-      const s = await cloud.session();
-      await cloud.joinClass(found, s.name);
+      await cloud.joinClass(found);
       d.close();
+      cloud.setActiveClass(found.classId);
       toast(`「${found.className}」に参加しました`);
       go(`/class/${encodeURIComponent(found.classId)}`);
     } catch (e) {
       toast(cloud.explain(e));
     }
   });
-  const d = openDialog("クラスに参加", h("div", null, h("p", null, "先生から聞いた 6 けたの参加コードを入れてください。"), input, info), [button("text", "やめる", null, () => d.close()), okBtn]);
+  const d = openDialog("クラスに参加", h("div", null, h("p", null, "先生から渡された、あなた専用の 6 けたの参加コードを入れてください。"), input, info), [button("text", "やめる", null, () => d.close()), okBtn]);
   input.addEventListener("input", () => { if (found && cloud.normCode(input.value) !== found.code) { found = null; info.replaceChildren(); okBtn.querySelector("span:last-child").textContent = "確かめる"; } });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) okBtn.click(); });
   input.focus();
@@ -144,7 +145,7 @@ export async function renderClass(cid, ui) {
       h("h1", null, "このクラスは開けません"),
       h("p", null, "クラスから外れたか、クラスが削除されたようです。"),
       h("div", { class: "result-actions" },
-        button("filled", "一覧から消す", "delete", async () => { await cloud.leaveClass(cid).catch(() => {}); go("/classes", true); }),
+        button("filled", "一覧から消す", "delete", async () => { await cloud.leaveClass(cid).catch(() => {}); if (cloud.activeClass() === cid) cloud.setActiveClass(""); go("/classes", true); }),
         ui.linkButton("text", "ホームへ", "home", "#/"))));
     return;
   }
@@ -153,7 +154,7 @@ export async function renderClass(cid, ui) {
   document.title = `${cls.name} - SK Study`;
   const now = Date.now();
   app.replaceChildren(
-    ui.backLink("クラス", "#/classes"),
+    ...(cloud.activeClass() === cid ? [] : [ui.backLink("クラス", "#/classes")]),
     h("section", { class: "set-head" },
       h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon("groups")),
       h("div", null,
@@ -179,7 +180,7 @@ export async function renderClass(cid, ui) {
     h("div", { class: "set-actions" },
       button("outlined", "クラスから抜ける", "logout", async () => {
         if (!(await confirmDialog("クラスから抜けますか？", `「${cls.name}」から抜けます。提出した答えは先生のところに残ります。もう一度参加するには参加コードが要ります。`, "抜ける", true))) return;
-        try { await cloud.leaveClass(cid); toast("クラスから抜けました"); go("/classes", true); } catch (e) { toast(cloud.explain(e)); }
+        try { await cloud.leaveClass(cid); if (cloud.activeClass() === cid) cloud.setActiveClass(""); toast("クラスから抜けました"); go("/classes", true); } catch (e) { toast(cloud.explain(e)); }
       }, { "data-danger": "" })));
 }
 

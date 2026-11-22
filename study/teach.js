@@ -132,7 +132,7 @@ async function classesView(ts, ui) {
 
 async function classView(cid, ui) {
   const { h, icon, button, linkButton, toast, confirmDialog, go, app, openDialog } = ui;
-  const [cls, members, assigns] = await Promise.all([cloud.getClass(cid), cloud.members(cid), cloud.allAssignments(cid)]);
+  const [cls, members, assigns] = await Promise.all([cloud.getClass(cid), cloud.roster(cid), cloud.allAssignments(cid)]);
   const counts = await Promise.all(assigns.map((a) => cloud.submissions(cid, a.id).then((x) => x.length).catch(() => null)));
   document.title = `${cls.name} - 指導者メニュー`;
   const reload = () => classView(cid, ui);
@@ -142,20 +142,13 @@ async function classView(cid, ui) {
   app.replaceChildren(...head(ui, cls.name, null, ["クラスの一覧", "#/teach"]),
     h("div", { class: "tc-grid" },
       h("section", { class: "mk-card tc-code" },
-        h("h2", null, icon("key"), "参加コード"),
-        h("p", { class: "code-big", "aria-label": `参加コード ${cls.joinCode.split("").join(" ")}` }, cls.joinCode),
-        h("p", { class: "muted small" }, `生徒は SK Study（${joinUrl}）の「クラス」→「参加コードを入れる」で参加します。SK Hub Systems アカウントが要ります。`),
+        h("h2", null, icon("key"), "参加のしかた"),
+        h("p", { class: "muted small" }, `下の「生徒プロファイル」ごとに、専用の参加コードがあります。生徒は自分の SK Hub Systems アカウントで SK Study（${joinUrl}）を開き、「クラス」→「参加コードを入れる」で専用コードを入れます。コードは 1 人 1 回だけ使えます。`),
         h("label", { class: "switch-row" },
           h("input", { type: "checkbox", checked: cls.open, onchange: async (e) => {
             try { await cloud.updateClass(cls, { open: e.target.checked }); toast(e.target.checked ? "参加を受け付けます" : "参加の受け付けを終えました"); reload(); } catch (err) { toast(cloud.explain(err)); }
           } }),
-          h("span", null, h("strong", null, "参加を受け付ける"), h("small", null, "生徒がそろったら止めておくと安心です"))),
-        h("div", { class: "mk-row" },
-          button("tonal", "コピー", "content_copy", () => copy(cls.joinCode)),
-          button("text", "コードを作り直す", "refresh", async () => {
-            if (!(await confirmDialog("参加コードを作り直しますか？", "今のコードは使えなくなります（参加している生徒はそのままです）。", "作り直す"))) return;
-            try { await cloud.renewCode(cls); toast("作り直しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
-          }))),
+          h("span", null, h("strong", null, "参加を受け付ける"), h("small", null, "生徒がそろったら止めておくと安心です")))),
       h("section", { class: "mk-card" },
         h("div", { class: "section-head" }, h("h2", null, icon("assignment"), `配信（${assigns.length}）`), linkButton("filled", "配信する", "add", `#/teach/${encodeURIComponent(cid)}/new`)),
         assigns.length ? h("div", { class: "set-list flat" }, assigns.map((a, i) => {
@@ -174,15 +167,48 @@ async function classView(cid, ui) {
             h("div", { class: "set-row-end" }, icon("chevron_right")));
         })) : h("p", { class: "muted" }, "まだ配信していません。"))),
     h("section", { class: "mk-card" },
-      h("h2", null, icon("group"), `生徒（${members.length}）`),
+      h("div", { class: "section-head" }, h("h2", null, icon("group"), `生徒プロファイル（${members.length}）`), button("filled", "プロファイルを作る", "person_add", () => {
+        const ta = h("textarea", { class: "field-input", rows: "8", placeholder: "名前を 1 行に 1 人ずつ（例: 田中 太郎）" });
+        const d = openDialog("生徒プロファイルを作る", h("div", null, h("p", null, "名前を 1 行に 1 人ずつ入れてください。1 人ごとに専用の参加コードができます。"), ta), [
+          button("text", "やめる", null, () => d.close()),
+          button("filled", "作る", "add", async () => {
+            const names = ta.value.split(/\r\n|\r|\n/).map((x) => x.trim()).filter(Boolean);
+            if (!names.length) { ta.focus(); return; }
+            try { const n = await cloud.createProfiles(cls, names); d.close(); toast(`${n} 人分のプロファイルを作りました`); reload(); } catch (e) { toast(cloud.explain(e)); }
+          })]);
+        ta.focus();
+      })),
       members.length ? h("table", { class: "tc-table" },
-        h("thead", null, h("tr", null, h("th", null, "名前"), h("th", null, "参加した日"), h("th", null, ""))),
-        h("tbody", null, members.map((m) => h("tr", null,
-          h("td", null, m.name), h("td", null, fmtDate(m.joinedAt)),
-          h("td", { class: "tc-actions" }, button("text", "外す", "person_remove", async () => {
-            if (!(await confirmDialog(`${m.name} さんをクラスから外しますか？`, "提出した答えは残ります。もう一度参加するには参加コードが要ります。", "外す", true))) return;
-            try { await cloud.removeMember(cid, m.id); toast("外しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
-          })))))) : h("p", { class: "muted" }, "まだ生徒がいません。参加コードを配ってください。")),
+        h("thead", null, h("tr", null, h("th", null, "名前"), h("th", null, "参加コード"), h("th", null, "状態"), h("th", null, ""))),
+        h("tbody", null, members.map((m) => {
+          const p = m.profile;
+          return h("tr", null,
+            h("td", null, m.name),
+            h("td", null, p ? (p.claimedBy ? h("span", { class: "muted" }, "-") : h("span", { class: "code-pill" }, p.code)) : h("span", { class: "muted" }, "-")),
+            h("td", null, m.claimed ? "参加ずみ" : "コード待ち"),
+            h("td", { class: "tc-actions" },
+              p && !p.claimedBy ? button("text", "コピー", "content_copy", () => copy(p.code)) : null,
+              p ? button("text", "名前", "edit", () => {
+                const input = h("input", { type: "text", class: "field-input", maxlength: "40", value: p.name });
+                const d = openDialog("名前を変える", h("div", null, input, p.claimedBy ? null : h("p", { class: "muted small" }, "参加コードも新しくなります。")), [button("text", "やめる", null, () => d.close()), button("filled", "保存", null, async () => {
+                  if (!input.value.trim()) return;
+                  try { await cloud.renameProfile(cls, p, input.value); d.close(); reload(); } catch (e) { toast(cloud.explain(e)); }
+                })]);
+                input.focus();
+              }) : null,
+              p ? button("text", p.claimedBy ? "結びつけを外す" : "コード再発行", p.claimedBy ? "link_off" : "refresh", async () => {
+                const msg = p.claimedBy ? [`${p.name} さんの結びつけを外しますか？`, "そのアカウントはこのクラスから外れます。提出した答えは残り、新しいコードで別のアカウントを結びつけられます。", "外す"] : ["コードを作り直しますか？", "今のコードは使えなくなります。", "作り直す"];
+                if (!(await confirmDialog(msg[0], msg[1], msg[2], !!p.claimedBy))) return;
+                try { await cloud.resetProfile(cls, p, { release: !!p.claimedBy }); toast(p.claimedBy ? "外しました" : "作り直しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
+              }) : button("text", "外す", "person_remove", async () => {
+                if (!(await confirmDialog(`${m.name} さんをクラスから外しますか？`, "提出した答えは残ります。", "外す", true))) return;
+                try { await cloud.removeMember(cid, m.id); toast("外しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
+              }),
+              p ? button("text", "削除", "delete", async () => {
+                if (!(await confirmDialog(`${p.name} さんのプロファイルを削除しますか？`, "結びつけているアカウントはクラスから外れます。提出済みの答えは残りますが、名簿から消えます。", "削除する", true))) return;
+                try { await cloud.deleteProfile(cls, p); toast("削除しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
+              }) : null));
+        }))) : h("p", { class: "muted" }, "まだ生徒プロファイルがありません。「プロファイルを作る」で名前を入れると、1 人ずつの参加コードができます。")),
     h("section", { class: "mk-card" },
       h("h2", null, icon("settings"), "クラスの設定"),
       h("div", { class: "mk-row" },
@@ -316,7 +342,7 @@ async function newAssignView(cid, ui) {
 async function resultsView(cid, aid, ui) {
   const { h, icon, button, toast, confirmDialog, go, app, openDialog } = ui;
   const hash = location.hash;
-  const [cls, a, members, subs] = await Promise.all([cloud.getClass(cid), cloud.getAssignment(cid, aid), cloud.members(cid), cloud.submissions(cid, aid)]);
+  const [cls, a, members, subs] = await Promise.all([cloud.getClass(cid), cloud.getAssignment(cid, aid), cloud.roster(cid), cloud.submissions(cid, aid)]);
   if (location.hash !== hash) return;
   document.title = `${a.title} - 指導者メニュー`;
   const k = kindInfo(a);

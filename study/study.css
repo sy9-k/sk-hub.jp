@@ -156,6 +156,17 @@ body.drawer-open .drawer { transform: none; visibility: visible; transition: tra
 .drawer-who { display: flex; flex-direction: column; min-width: 0; font-size: 14px; line-height: 20px; }
 .drawer-who strong { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .drawer-who span { opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drawer-switch {
+  position: relative; width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; align-items: flex-start;
+}
+.drawer-switch:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+.drawer-switch-icon { position: absolute; right: 12px; bottom: 14px; opacity: .85; }
+.drawer-head.is-class {
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .16) 0 64px, transparent 65px),
+    radial-gradient(circle at 62% 120%, rgba(255, 255, 255, .1) 0 96px, transparent 97px),
+    linear-gradient(135deg, #0b6b4f, #1a9a6c);
+}
 .drawer-list { flex: 1; padding: 8px 0; }
 .drawer-item {
   position: relative; overflow: hidden; isolation: isolate; -webkit-tap-highlight-color: transparent;
