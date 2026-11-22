@@ -24,6 +24,9 @@ pages = [
     ("sk-hub-systems.html", "sk-hub-systems/index.html", "SK Hub Systems | SK", "Y-FILTER. の遠隔管理・ブロックリストの配信・アクセスチェックを支える、SK が運営するサーバー基盤「SK Hub Systems」。", True, True),
     ("updates.html", "updates/index.html", "アップデート | SK", "SK のサイトとプロダクト（Y-FILTER.・SK Hub Systems・SK's Lab）のアップデート情報。", True, True),
     ("toolbox.html", "toolbox/index.html", "SK's Toolbox", "毎日ちょっと使う、小さなアプリを集めた SK の道具箱。時計とアラームの「Clock」、関数電卓にもなる「Calc」、画像も入るメモ帳「Memo」、リマインダー「Todo」、あと何日を数える「Countdown」、時間割の「Timetable」、回して決める「Roulette」。", False, True),
+    # SK Hub Develop（開くのは https://develop.sk-hub.jp/。_workers/develop/ の Worker が中継する）。訳さない（NOT_TRANSLATED）
+    ("develop.html", "develop/index.html", "SK Hub Develop", "Conventions and notes for building and maintaining SK's services. A site for developers.", False, False),
+    ("develop-docs.html", "develop/docs/index.html", "Document | SK Hub Develop", "SK Material, localization, building pages and subdomain Workers: how SK's sites are built (in Japanese).", False, False),
     ("lab.html", "lab/index.html", "SK's Lab | SK", "SK の実験的なツールを置いている場所。QR Drop やスマートダッシュボードなど。", False, True),
     ("domain.html", "domain/index.html", "sk-hub.jp への引っ越しのお知らせ | SK", "SK のサイトとプロダクトのアドレスが、sy9-k.github.io から sk-hub.jp に変わります。変わること・新しくできるようになること・変わらないこと・切り替えのときにしてほしいこと。", True, True),
     ("credits.html", "credits/index.html", "Link & Credit | SK", "SK のサイトとプロダクトで使わせてもらっているもの（RedCheck など）と、つながりのあるサイト。", True, True),
@@ -36,18 +39,20 @@ pages = [
     ("material.html", "brand/material/index.html", "SK Material | SK", "MALU・Nagi・SK's Toolbox で使っている部品と配色のきまり「SK Material」。Google の Material Design 3 をもとに、SK の色と文字に合わせて調整したもの。M3 のままのところ・SK で決めたところ・プロダクトごとの配色・出どころとライセンス。", False, True),
     ("nagi.html", "products/nagi/index.html", "Nagi | SK", "集中と休憩をくり返して、勉強や作業の時間を記録する集中タイマー「Nagi」。1 日の目標と連続日数、端末のあいだの同期。", False, True),
     ("office.html", "products/office/index.html", "SK Hub Office | SK", "文書の「Doc」・表計算の「Sheet」・スライドの「Slide」を、ブラウザだけで使える「SK Hub Office」（開発中）。Office の形式での書き出し、端末のあいだの同期。", False, True),
+    ("study.html", "products/study/index.html", "SK Study | SK", "単語カード・4 択・書き取りで、英語・韓国語・中国語や自分で作った単語帳を覚える学習アプリ「SK Study」（招待制）。プリントと小テスト・クラス・端末のあいだの同期。", False, True),
     ("hub-account.html", "sk-hub-systems/account/index.html", "SK Hub Systems アカウント | SK", "SK のサービスを、いつもの Google アカウントひとつで。使えるサービス、端末のあいだの同期、保存する情報、データのダウンロードと削除について。", False, True),
     ("account.html", "account/index.html", "SK Hub Systems アカウント | SK", "SK のサービスを 1 つの Google アカウントで使える「SK Hub Systems アカウント」。ログイン・アカウントの確認・削除。", True, True),
     ("privacy.html", "policies/privacy/index.html", "SK プライバシーポリシー | SK", "SK のサービス（サイト・MALU・Nagi・SK's Toolbox・Y-FILTER.・SK Hub Systems アカウント）での情報の取り扱い。Google アカウントでログインしたときの情報（Google のユーザーデータ）の取り扱いを含みます。", True, True),
     ("policies.html", "policies/index.html", "利用規約・プライバシーポリシー | SK", "SK 利用規約・SK プライバシーポリシーと、SK Hub Systems アカウント・Y-FILTER. の利用規約。", True, True),
     ("lang.html", "lang/index.html", "Language | SK", "Choose your language / 言語を選択", True, False),
-    ("waiting.html", "waiting/index.html", "順番待ち | SK", "SK Study・SK Office は、いまは招待制です。順番待ちに登録すると、順番がきたときにお知らせします。", True, False),
+    ("invites.html", "account/invites/index.html", "招待の状況 | SK", "SK Study・SK Office・Y-FILTER. は、いまは招待制です。ログインしているアカウントが招待されているかを確かめて、そのまま開けます。", True, False),
+    ("waiting.html", "waiting/index.html", "早期アクセス | SK", "SK Study・SK Office は、いまは招待制です。早期アクセスに登録すると、順番がきたときにお知らせします。", True, False),
     ("404.html", "404.html", "ページが見つかりません | SK", "お探しのページは見つかりませんでした。", True, False),
 ]
 # フッターを出さないページ（SK's Toolbox のホーム画面。下にドックがある）
 NO_FOOTER = {"toolbox.html"}
 # 訳さないページ（開発者だけが使う）
-NOT_TRANSLATED = {"privacy.html"}  # お問い合わせの受信箱・記事エディターは、管理画面（admin.sk-hub.jp）に移った
+NOT_TRANSLATED = {"privacy.html", "develop.html", "develop-docs.html"}  # お問い合わせの受信箱・記事エディターは、管理画面（admin.sk-hub.jp）に移った
 
 # ログイン画面（account.html）の CSP。インラインのスクリプトを変えたら、sha256 も変える
 ACCOUNT_CSP = r'''  <!-- このページで動いてよいスクリプト・通信先を決める（ログイン情報を扱うため）。インラインのスクリプトを変えたら、sha256 も変える（この meta を更新するとき、インラインのスクリプトを変えたら hash も計算し直す）。
@@ -72,7 +77,11 @@ EXTRA = {
         '  <script src="/lang/lang.js" defer></script>\n',
         "lang-page",
     ),
-    # 順番待ち（招待制の SK Study・SK Office。登録は assets/hub/invite.js）
+    # 招待の状況（ログイン中のアカウントが、どのプロダクトに招待されているか。/account/invites/invites.js）
+    "invites.html": ('  <link rel="stylesheet" href="/waiting/waiting.css">\n  <link rel="stylesheet" href="/account/invites/invites.css">\n  <script type="module" src="/account/invites/invites.js"></script>\n', None),
+    # 早期アクセス（招待制の SK Study・SK Office・Y-FILTER.。登録は assets/hub/invite.js）
+    "develop.html": ('  <link rel="stylesheet" href="/develop/develop.css">\n', None),
+    "develop-docs.html": ('  <link rel="stylesheet" href="/develop/develop.css">\n', None),
     "waiting.html": ('  <link rel="stylesheet" href="/waiting/waiting.css">\n  <script type="module" src="/waiting/waiting.js"></script>\n', None),
     # 隠しコマンド（assets/nf-secret.js）
     "404.html": ('  <script src="/assets/nf-secret.js" defer></script>\n', None),
@@ -122,6 +131,7 @@ EXTRA = {
         '  <script src="/products/office/office.js" defer></script>\n',
         "of-page",
     ),
+    "study.html": ('  <link rel="stylesheet" href="/products/study/study.css">\n', None),
     "about.html": ('  <link rel="stylesheet" href="/about/about.css">\n  <script src="/about/about.js" defer></script>\n', None),
     "partner-sentaro.html": ('  <link rel="stylesheet" href="/assets/partner/partner.css">\n', "partner-page"),
     "credits.html": ('  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap"></script>\n', None),
@@ -231,6 +241,16 @@ def set_meta(h, pattern, value):
     return re.sub(pattern, lambda m: m.group(1) + value.replace("\\", "\\\\") + m.group(2), h, count=1)
 
 
+# SK Hub Develop は、ヘッダーの項目だけ SK・Document・Support & Info にする（形・動き・フッターはサイトと同じ）
+DEVELOP_PAGES = {"develop.html", "develop-docs.html"}
+DEV_NAV = (
+    '    <a class="hd-item" href="https://sk-hub.jp/">SK</a>\n'
+    '    <a class="hd-item" href="/develop/docs/">Document</a>\n'
+    '    <a class="hd-item" href="https://support.sk-hub.jp/" data-menu="support" data-no-navigation="true">Support &amp; Info</a>\n'
+    '    '
+)
+
+
 def assemble(body, dst, title, desc, no_redirect, indexable, src=None):
     h = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", head)
     h = set_meta(h, r'(<meta name="description" content=")[^"]*(">)', desc)
@@ -256,9 +276,13 @@ def assemble(body, dst, title, desc, no_redirect, indexable, src=None):
     if src in NO_FOOTER:
         # 下にアプリのドックがあるページ: フッターは出さない
         t = re.sub(r'  <footer class="site-footer">[\s\S]*?</footer>\n', "", t, count=1)
-    if src in NOT_TRANSLATED:
+    if src in NOT_TRANSLATED and src not in DEVELOP_PAGES:
         # 開発者用のページは訳さない
         t = t.replace("<script>window.SKI18N && SKI18N.translatePage();</script>", "")
+    if src in DEVELOP_PAGES:
+        # ヘッダー・フッター・メニューは英語で出す（本文のドキュメントは日本語のまま。data-i18n-skip）
+        h = h.replace('<html lang="ja">', '<html lang="ja" data-i18n-langs="en">', 1)
+        h = re.sub(r'(<a class="hd-logo"[\s\S]*?</a>\n)[\s\S]*?(<button class="hd-menu-btn")', lambda m: m.group(1).replace('href="/"', 'href="/develop/"', 1).replace('aria-label="ホーム"', 'aria-label="SK Hub Develop ホーム"', 1) + DEV_NAV + m.group(2), h, count=1)
     return h + '  <main id="main">\n' + body + "  </main>\n" + t
 
 
@@ -280,7 +304,8 @@ print("wrote", len(pages), "pages")
 
 # 辞書にない文を探す（ページ ＋ build で作らないページ ＋ スクリプトの t("…")）
 for rel in STANDALONE_PAGES:
-    checked.append((REPO / rel).read_text(encoding="utf-8"))
+    if (REPO / rel).exists():  # office/ は office.sk-hub.jp に移ったので、転送ページしか残っていない
+        checked.append((REPO / rel).read_text(encoding="utf-8"))
 def runtime_keys_of(sources):
     keys = set()
     for source in sources:
@@ -298,7 +323,7 @@ def check_missing(tr, texts, keys):
             tr.missing.add(key_of(k))
 
 
-runtime_keys = runtime_keys_of((REPO / rel).read_text(encoding="utf-8") for rel in RUNTIME_SOURCES)
+runtime_keys = runtime_keys_of((REPO / rel).read_text(encoding="utf-8") for rel in RUNTIME_SOURCES if (REPO / rel).exists())
 en_only = [(REPO / rel).read_text(encoding="utf-8") for rel in EN_ONLY_PAGES]
 en_only_keys = runtime_keys_of(en_only)
 for code, tr in translators.items():

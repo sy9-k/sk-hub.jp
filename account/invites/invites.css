@@ -1,0 +1,25 @@
+/* 招待の状況（/account/invites/）。色・形はサイトのもの（/assets/site.css） */
+.iv-wrap { max-width: 760px; }
+.iv-who { padding: 22px 24px; margin-bottom: 16px; }
+.iv-who .btn-row { margin-top: 14px; }
+.iv-checking { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.iv-spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--accent); animation: iv-spin .8s linear infinite; }
+@keyframes iv-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .iv-spin { animation: none; } }
+.iv-list { display: flex; flex-direction: column; gap: 12px; }
+.iv-list[hidden] { display: none; }
+.iv-item { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 16px; align-items: center; padding: 18px 20px; }
+.iv-item img { width: 48px; height: 48px; border-radius: 13px; object-fit: contain; grid-row: span 2; }
+.iv-text { display: flex; flex-direction: column; min-width: 0; }
+.iv-text strong { font-size: 16px; font-weight: 800; }
+.iv-text small { color: var(--muted); font-size: 13px; }
+.iv-state { justify-self: end; font-size: 12.5px; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.iv-state[data-tone="ok"] { background: var(--a-soft); color: var(--accent); }
+.iv-state[data-tone="warn"] { background: color-mix(in srgb, #ba1a1a 12%, transparent); color: var(--ink); }
+.iv-act { grid-column: 2 / 4; display: flex; justify-content: flex-start; }
+.iv-act:empty { display: none; }
+.iv-act .btn { min-height: 40px; }
+@media (max-width: 520px) { .iv-item { grid-template-columns: auto 1fr; } .iv-state { grid-column: 2; justify-self: start; } .iv-act { grid-column: 1 / 3; } }
+.iv-note { margin-top: 28px; padding: 18px 20px; border-radius: 18px; corner-shape: superellipse(1.5); background: var(--surface-2); }
+.iv-note h2 { font-size: 16px; font-weight: 800; }
+.iv-note ul { margin: 8px 0 0; padding-left: 1.2em; color: var(--muted); font-size: 14px; display: flex; flex-direction: column; gap: 6px; }

@@ -397,7 +397,7 @@ function readHint() {
 const allowed = (s) => !!s && (s.status === "ready" || (s.status === "offline" && !!readHint() && cloud.wasInvited()));
 
 const GATE = {
-  "not-invited": ["招待制です", "SK Study は、いまは招待した方だけが使えます。順番待ちに登録しておくと、順番がきたらメールでお知らせします。", "順番待ちに登録する", "hourglass_top"],
+  "not-invited": ["招待制です", "SK Study は、いまは招待した方だけが使えます。早期アクセスに登録しておくと、順番がきたらメールでお知らせします。", "早期アクセスに登録する", "hourglass_top"],
   "signed-out": ["ログインしてください", "SK Study を使うには、SK Hub Systems アカウントでログインします。アカウントは無料で作れます。", "ログイン", "login"],
   unregistered: ["アカウントの登録を完了してください", "SK Hub Systems アカウントの利用規約に同意すると、SK Study を使えるようになります。", "登録を続ける", "how_to_reg"],
   "not-connected": ["SK Study に接続してください", "SK Hub Systems アカウントを SK Study に接続すると、学習をはじめられます。", "SK Study に接続する", "link"],

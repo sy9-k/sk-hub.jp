@@ -1,4 +1,4 @@
-// 招待のメール（POST admin.sk-hub.jp/api/invite-mail）。管理画面の「招待と順番待ち」（admin/invites/）が呼ぶ
+// 招待のメール（POST admin.sk-hub.jp/api/invite-mail）。管理画面の「招待と早期アクセス」（admin/invites/）が呼ぶ
 //   受け取るもの: Authorization: Bearer <Firebase の ID トークン>、本文 { email }
 //   ・開発者かどうかは、そのトークンで Firestore の config/developers を読めるかで確かめる（ルールで、登録された本人だけが読める）。
 //     トークンが本物かどうかも Firestore が確かめるので、ここで署名を調べなくてよい
@@ -11,7 +11,8 @@ const EMAIL_RE = /^[^\s@/]{1,64}@[^\s@/]{1,190}\.[^\s@/]{2,}$/;
 
 const PRODUCTS = {
   study: { name: "SK Study", url: "https://sk-hub.jp/study/", what: "単語カード・小テスト・プリント・クラスで学習するアプリ" },
-  office: { name: "SK Office", url: "https://office.sk-hub.jp/", what: "文書・表・プレゼンテーションを作るアプリ（Doc・Sheet・Slide）" }
+  office: { name: "SK Office", url: "https://office.sk-hub.jp/", what: "文書・表・プレゼンテーションを作るアプリ（Doc・Sheet・Slide）" },
+  yfilter: { name: "Y-FILTER.", url: "https://sk-hub.jp/y-filter/", what: "有害なサイトのブロックや利用時間の管理ができるブラウザフィルター" }
 };
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
@@ -58,7 +59,7 @@ export function inviteMail(email, products) {
   //   ・形: カード 28・アイコン 12・ボタンは丸（トップページの「プロダクトを見る」と同じ黒い丸ボタン）
   //   ・ことば: です・ます、短く、やさしく、次にすることを伝える（SK's Brand「ことば」）。日本語と英数字のあいだは半角スペース
   //   ・画像は sk-hub.jp に置いてある PNG（SVG はメールで出ないことがある）。ダークモードは prefers-color-scheme で色を入れかえる
-  const ICONS = { study: "https://sk-hub.jp/study/ico/icon-192.png", office: "https://office.sk-hub.jp/icons/office-logo.png" };
+  const ICONS = { study: "https://sk-hub.jp/study/ico/icon-192.png", office: "https://office.sk-hub.jp/icons/office-logo.png", yfilter: "https://sk-hub.jp/y-filter/shared/icon-128.png" };
   const row = (p, last) => {
     const x = PRODUCTS[p];
     return `

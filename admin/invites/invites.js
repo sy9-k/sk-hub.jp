@@ -1,6 +1,6 @@
-// 招待と順番待ち（/invites/）。SK Study・SK Office は、ここで招待した人（の Google アカウント）だけが開ける
+// 招待と早期アクセス（/invites/）。SK Study・SK Office は、ここで招待した人（の Google アカウント）だけが開ける
 //   招待 hub_invites/{メールアドレス（小文字）} = { products: ["study", "office"], createdAt, createdBy, mailedAt? }
-//   順番待ち hub_waitlist/{プロダクト}__{メールアドレス} = { product, email, createdAt }（/waiting/ から登録される）
+//   早期アクセス hub_waitlist/{プロダクト}__{メールアドレス} = { product, email, createdAt }（/waiting/ から登録される）
 //   権限は y-filter リポジトリの systems/firestore.rules（読み書きは開発者だけ。招待された本人は自分の分だけ読める）
 //   招待すると、招待のメールを自動で送る（/api/invite-mail。_workers/admin/src/invite-mail.js。送れたら mailedAt を入れる）
 import {
@@ -169,12 +169,12 @@ async function loadInvites() {
   }
 }
 
-// ---------- 順番待ち ----------
+// ---------- 早期アクセス ----------
 const waitBox = el("div");
 async function loadWaitlist() {
   try {
     const snap = await getDocs(query(collection(db, "hub_waitlist"), limit(500)));
-    if (snap.empty) { waitBox.replaceChildren(empty("順番待ちの人はいません。", "hourglass_empty")); return; }
+    if (snap.empty) { waitBox.replaceChildren(empty("早期アクセスの人はいません。", "hourglass_empty")); return; }
     const rows = snap.docs
       .slice()
       .sort((a, b) => (toMillis(a.data().createdAt) || 0) - (toMillis(b.data().createdAt) || 0))
@@ -204,7 +204,7 @@ async function loadWaitlist() {
               });
             } }),
             button("削除", { kind: "text-btn", iconName: "delete", onClick: async () => {
-              if (!(await confirmDialog({ title: "順番待ちから消しますか？", text: x.email, ok: "消す", icon: "delete" }))) return;
+              if (!(await confirmDialog({ title: "早期アクセスから消しますか？", text: x.email, ok: "消す", icon: "delete" }))) return;
               try { await deleteDoc(d.ref); logAction("waitlist.remove", x.email, name); toast("消しました"); loadWaitlist(); } catch (err) { toast(explain(err)); }
             } })
           )
@@ -219,7 +219,7 @@ async function loadWaitlist() {
 root.append(
   card("person_add", "招待する", form),
   card("mail_lock", "招待している人", inviteBox),
-  card("hourglass_top", "順番待ち", waitBox)
+  card("hourglass_top", "早期アクセス", waitBox)
 );
 
 startAdmin({

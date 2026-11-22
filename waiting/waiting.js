@@ -1,4 +1,4 @@
-// 順番待ち（/waiting/）。登録は assets/hub/invite.js の joinWaitlist（hub_waitlist に 1 人 1 回だけ）
+// 早期アクセス（/waiting/）。登録は assets/hub/invite.js の joinWaitlist（hub_waitlist に 1 人 1 回だけ）
 import { INVITE_PRODUCTS, joinWaitlist, validEmail } from "/assets/hub/invite.js";
 
 const form = document.getElementById("wt-form");
@@ -16,6 +16,16 @@ const wanted = new URLSearchParams(location.search).get("product");
 if (INVITE_PRODUCTS[wanted]) {
   const r = form.querySelector(`input[name="product"][value="${wanted}"]`);
   if (r) r.checked = true;
+}
+// ?need=invite|google … 招待が必要なページ（Y-FILTER. の管理コンソールなど）から来たとき
+const need = new URLSearchParams(location.search).get("need");
+if (need === "invite" || need === "google") {
+  const name = INVITE_PRODUCTS[wanted] || "このサービス";
+  document.getElementById("wt-need-title").textContent = need === "google" ? `${name} は、Google アカウントでログインしてください` : `${name} は、いま招待制です`;
+  document.getElementById("wt-need-text").textContent = need === "google"
+    ? "招待された方も、そのメールアドレスの Google アカウントでログインしたときだけ開けます。GitHub や LINE など、Google 以外のログインでは開けません。"
+    : "このアカウントは、まだ招待されていません。早期アクセスに登録しておくと、順番がきたときにメールでお知らせします。";
+  document.getElementById("wt-need").hidden = false;
 }
 try {
   const hint = JSON.parse(localStorage.getItem("skhub_account") || "null");
@@ -40,8 +50,8 @@ form.addEventListener("submit", async (e) => {
     // 登録できた画面に切りかえる（登録ずみのときも、同じ画面で伝える）
     doneTitle.textContent = r.already ? "すでに登録されています" : "登録しました";
     doneText.textContent = r.already
-      ? `${name} の順番待ちには、このメールアドレスがすでに入っています。順番は変わらないので、そのままお待ちください。`
-      : `${name} の順番待ちに登録しました。順番がきたら、${email.value.trim()} にお知らせします。`;
+      ? `${name} の早期アクセスには、このメールアドレスがすでに入っています。順番は変わらないので、そのままお待ちください。`
+      : `${name} の早期アクセスに登録しました。順番がきたら、${email.value.trim()} にお知らせします。`;
     formWrap.hidden = true;
     done.hidden = false;
     done.querySelector("h2").focus?.();

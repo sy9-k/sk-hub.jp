@@ -1,4 +1,4 @@
-/* 順番待ち（/waiting/）。色・形はサイトのもの（/assets/site.css）を使う。SK らしく、やさしく・静かに */
+/* 早期アクセス（/waiting/）。色・形はサイトのもの（/assets/site.css）を使う。SK らしく、やさしく・静かに */
 .wt-br { display: none; }
 @media (min-width: 640px) { .wt-br { display: inline; } }
 .wt-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 32px; align-items: start; }
@@ -63,3 +63,20 @@
 .wt-have { margin-top: 26px; padding: 16px 18px; border-radius: 18px; corner-shape: superellipse(1.5); background: var(--surface-2); font-size: 13.5px; }
 .wt-have strong { font-size: 14px; font-weight: 800; }
 .wt-have p { margin-top: 4px; color: var(--muted); }
+
+/* 招待が必要なページから来たとき */
+.wt-need { margin-bottom: 20px; padding: 16px 20px; border-radius: 18px; corner-shape: superellipse(1.5); background: var(--a-soft); border: 1px solid var(--accent-line); }
+.wt-need strong { font-size: 15px; font-weight: 800; }
+.wt-need p { margin-top: 4px; font-size: 14px; color: var(--muted); }
+.wt-need[hidden] { display: none; }
+.wt-products { grid-template-columns: 1fr; }
+.wt-field small { font-weight: 400; font-size: 12.5px; }
+
+/* よくある質問 */
+.wt-faq { display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
+.wt-faq details { border: 1px solid var(--line); border-radius: 18px; corner-shape: superellipse(1.5); background: var(--surface); }
+.wt-faq summary { cursor: pointer; padding: 16px 20px; font-weight: 700; font-size: 15px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.wt-faq summary::-webkit-details-marker { display: none; }
+.wt-faq summary::after { content: "+"; color: var(--muted); font-weight: 400; font-size: 20px; line-height: 1; }
+.wt-faq details[open] summary::after { content: "−"; }
+.wt-faq details p { padding: 0 20px 16px; color: var(--muted); font-size: 14px; }

@@ -214,6 +214,8 @@
   window.SKAnalytics = {
     enabled: function () { return !!MEASUREMENT_ID; },
     choice: read,
+    // 設定のパネル（frameworks/check.js）から、許可・不許可を切りかえる
+    set: function (value) { if (value === "granted" || value === "denied") choose(value); },
     open: function () {
       if (!MEASUREMENT_ID) return;
       if (box) { box.remove(); box = null; }

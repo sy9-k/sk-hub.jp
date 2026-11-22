@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ja" data-i18n-langs="en">
+<head>
+  <meta charset="utf-8">
+  <script src="/assets/coming-soon.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 多言語: /lang/ で選んだ言語で表示する（URL は変わらない）。ページの最後の translatePage() で訳す -->
+  <script src="/assets/i18n.js"></script>
+  <!-- 表示（ライト・ダーク・テーマカラー）。ちらつかないよう、CSS より先に <html> に付ける（選ぶのはヘッダーのアカウントのメニューの「表示」。assets/site.js） -->
+  <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}"),d=document.documentElement;if(t.mode==="light"||t.mode==="dark")d.setAttribute("data-theme",t.mode);if(/^[a-z]{2,12}$/.test(t.accent||"")&&t.accent!=="blue")d.setAttribute("data-accent",t.accent);}catch(e){}})();</script>
+  <title>Document | SK Hub Develop</title>
+  <meta name="description" content="SK Material, localization, building pages and subdomain Workers: how SK's sites are built (in Japanese).">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#ffffff" data-theme-color>
+  <!-- SNS で共有したときの表示（各ページのタイトル・説明・URL は build で入れ替える） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SK">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:title" content="Document | SK Hub Develop">
+  <meta property="og:description" content="SK Material, localization, building pages and subdomain Workers: how SK's sites are built (in Japanese).">
+  <meta property="og:image" content="https://sk-hub.jp/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"></script>
+  <link rel="stylesheet" href="/assets/header.css">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/develop/develop.css">
+</head>
+<body>
+  <a class="skip" href="#main">本文へ移動</a>
+  <header class="site-header">
+    <a class="hd-logo" href="/develop/" aria-label="SK Hub Develop ホーム">
+      <span class="hd-logo-image" aria-hidden="true"><img src="/assets/logo.svg" alt="" width="26" height="26"></span>
+      <span class="hd-logo-back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+    <a class="hd-item" href="https://sk-hub.jp/">SK</a>
+    <a class="hd-item" href="/develop/docs/">Document</a>
+    <a class="hd-item" href="https://support.sk-hub.jp/" data-menu="support" data-no-navigation="true">Support &amp; Info</a>
+    <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
+  </header>
+  <div class="hd-menu" id="hd-menu"><div class="hd-menu-inner"><div class="hd-menu-content"></div></div></div>
+  <div class="hd-backdrop" id="hd-backdrop"></div>
+
+  <main id="main">
+<div class="wrap dv" data-i18n-skip>
+<article>
+    <h1>Document</h1>
+     <p class="lead">SK のサイトを作る・直すときの決まりごとです。リポジトリは <code>sy9-k/sk-hub.jp</code>。</p>
+    <nav class="toc" aria-label="目次"><a href="#start">はじめに</a><a href="#material">SK Material</a><a href="#i18n">多言語</a><a href="#build">ページのビルド</a><a href="#subdomain">サブドメインと Worker</a></nav>
+
+    <h2 id="start">はじめに</h2>
+    <p>sk-hub.jp は <strong>GitHub Pages</strong> で配信する静的なサイトです。サーバーで動く処理は持たず、ログインやデータの保存は Firebase（SK Hub Systems）に任せています。プッシュするとそのまま公開されます。</p>
+    <table class="dv-table">
+      <tr><th>場所</th><th>中身</th></tr>
+      <tr><td><code>index.html</code></td><td>トップページ。ほかのページのヘッダー・フッターの型にもなる</td></tr>
+      <tr><td><code>_build/</code></td><td>ページの元ファイルと build.py。<code>_</code> で始まるフォルダは公開されない</td></tr>
+      <tr><td><code>assets/</code></td><td>サイト共通の CSS・スクリプト・翻訳</td></tr>
+      <tr><td><code>admin/</code>・<code>develop/</code></td><td>サブドメインで開くページ（Worker が中継する）</td></tr>
+      <tr><td><code>_workers/</code></td><td>Cloudflare Workers のコード</td></tr>
+    </table>
+
+    <h2 id="material">SK Material</h2>
+    <p>SK のアプリ（SK Share・SK Study・この Develop サイトなど）は、マテリアルデザインをもとにした <strong>SK Material</strong> で作ります。色は CSS のカスタムプロパティ <code>--md-*</code> に集め、明るい・暗いは同じ名前の値を入れ替えるだけで切りかえます。</p>
+    <table class="dv-table">
+      <tr><th>名前</th><th>明るい</th><th>暗い</th><th>使いどころ</th></tr>
+      <tr><td><code>--md-primary</code></td><td><span class="dv-swatch" style="background:#004ac6"></span>#004ac6</td><td><span class="dv-swatch" style="background:#b4c5ff"></span>#b4c5ff</td><td>ボタン・リンク・強調</td></tr>
+      <tr><td><code>--md-secondary-container</code></td><td><span class="dv-swatch" style="background:#dce2ff"></span>#dce2ff</td><td><span class="dv-swatch" style="background:#33467e"></span>#33467e</td><td>選んでいる項目・やわらかいボタン</td></tr>
+      <tr><td><code>--md-surface</code></td><td><span class="dv-swatch" style="background:#faf8ff"></span>#faf8ff</td><td><span class="dv-swatch" style="background:#11131b"></span>#11131b</td><td>ページの背景</td></tr>
+      <tr><td><code>--md-surface-container-low</code></td><td><span class="dv-swatch" style="background:#f3f3fe"></span>#f3f3fe</td><td><span class="dv-swatch" style="background:#191b23"></span>#191b23</td><td>カード</td></tr>
+      <tr><td><code>--md-on-surface</code></td><td><span class="dv-swatch" style="background:#191b23"></span>#191b23</td><td><span class="dv-swatch" style="background:#e1e2ed"></span>#e1e2ed</td><td>本文の文字</td></tr>
+      <tr><td><code>--md-outline-variant</code></td><td><span class="dv-swatch" style="background:#c3c6d7"></span>#c3c6d7</td><td><span class="dv-swatch" style="background:#434655"></span>#434655</td><td>区切り線</td></tr>
+      <tr><td><code>--md-error</code></td><td><span class="dv-swatch" style="background:#ba1a1a"></span>#ba1a1a</td><td><span class="dv-swatch" style="background:#ffb4ab"></span>#ffb4ab</td><td>エラー</td></tr>
+    </table>
+    <p>全部の値は <code>view/view.css</code> の先頭にあります。文字は <strong>M PLUS 1</strong>、アイコンは Material Symbols、動きは <code>cubic-bezier(.2, 0, 0, 1)</code>（<code>--md-emphasized</code>）です。</p>
+    <h3>明るい・暗いの切りかえ</h3>
+    <p>端末の設定（<code>prefers-color-scheme</code>）に従い、人が選んだときだけ <code>data-theme</code> を付けます。この順で書くと、選んだほうがいつも勝ちます。</p>
+<pre><code>:root { /* 明るい */ }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { /* 暗い */ }
+}
+:root[data-theme="dark"] { /* 暗い（選んだとき） */ }</code></pre>
+
+    <h2 id="i18n">多言語</h2>
+    <p>URL は変えず、<code>/lang/</code> で選んだ言語でページを訳して表示します（<code>assets/i18n.js</code>）。日本語が正式で、日本語の文そのものを翻訳のキーにします。</p>
+    <ul>
+      <li>訳は <code>_build/i18n/&lt;言語&gt;.json</code>（<code>en</code>・<code>zh-CN</code>・<code>zh-TW</code>・<code>ko</code>）。build すると <code>assets/i18n/&lt;言語&gt;.js</code> ができる。</li>
+      <li>訳のない文は、build が <code>_build/i18n/missing/&lt;言語&gt;.json</code> に書き出す。訳を足してもう一度 build する。</li>
+      <li>スクリプトの中の文は <code>t("…")</code> で包む。build で作らないページは <code>build.py</code> の <code>STANDALONE_PAGES</code>・<code>RUNTIME_SOURCES</code> に入れておく。</li>
+      <li>日本語と英語だけのページは <code>&lt;html data-i18n-langs="ja en"&gt;</code> にして、英訳を <code>en.json</code> にだけ足す。</li>
+    </ul>
+
+    <h2 id="build">ページのビルド</h2>
+<pre><code>python _build/build.py</code></pre>
+    <p>トップの <code>index.html</code> の <code>&lt;main id="main"&gt;</code> の外側（<code>&lt;head&gt;</code>・ヘッダー・フッター）を型にして、<code>_build/pages/*.html</code> の中身を差し込み、各ページの <code>index.html</code> と <code>sitemap.xml</code> を書き出します。</p>
+    <div class="dv-note">書き出された <code>about/index.html</code> などを直接直しても、次の build で上書きされます。直すのは <code>_build/pages/</code> の元ファイルです。</div>
+    <p>ページの一覧・タイトル・説明は <code>build.py</code> の <code>pages</code> と <code>EXTRA</code> にあります。SK Share・admin・この Develop サイトのような、独自の見た目のページは build を通さず、そのフォルダのファイルを直接直します。</p>
+
+    <h2 id="subdomain">サブドメインと Worker</h2>
+    <p><code>admin.sk-hub.jp</code>・<code>support.sk-hub.jp</code>・<code>develop.sk-hub.jp</code> は、<strong>Cloudflare Worker</strong> が <code>sk-hub.jp</code>（GitHub Pages）の決まったフォルダをそのつど取ってきて返す中継です。ページを直すときは、リポジトリにプッシュするだけで済みます。</p>
+    <table class="dv-table">
+      <tr><th>開く URL</th><th>実際のファイル</th></tr>
+      <tr><td><code>develop.sk-hub.jp/</code></td><td><code>sk-hub.jp/develop/</code></td></tr>
+      <tr><td><code>develop.sk-hub.jp/docs/</code></td><td><code>sk-hub.jp/develop/docs/</code></td></tr>
+      <tr><td><code>develop.sk-hub.jp/assets/…</code></td><td><code>sk-hub.jp/assets/…</code>（共通の部品はそのままの道筋）</td></tr>
+    </table>
+    <ul>
+      <li>Worker のコードは <code>_workers/&lt;名前&gt;/</code>。公開するアドレスは <code>wrangler.jsonc</code> の <code>routes</code>（<code>custom_domain: true</code>）で決める。</li>
+      <li>サイト共通の部品を新しく使うときは、Worker の <code>SHARED</code> に道筋を足して deploy する。</li>
+      <li>取ってきたものは Cloudflare に <strong>60 秒</strong>置く。直してから出るまで最大それだけかかる。</li>
+      <li>初めて出すときは <code>_workers/develop/</code> で <code>npx wrangler deploy</code>。DNS は自動で作られる。</li>
+    </ul>
+  </article>
+</div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="cols">
+        <div>
+          <a class="logo" href="/" aria-label="SK ホーム"><img src="/assets/logo.svg" alt="" width="36" height="36">SK</a>
+          <p class="about">毎日のネットを、もう少し安心で便利に。Y-FILTER. と MALU を開発しています。</p>
+        </div>
+        <div>
+          <h2>プロダクト</h2>
+          <ul><li><a href="/products/">すべてのプロダクト</a></li><li><a href="/products/y-filter/">Y-FILTER.</a></li><li><a href="/products/malu/">MALU</a></li><li><a href="/products/nagi/">Nagi</a></li><li><a href="/sk-hub-systems/">SK Hub Systems</a></li><li><a href="/toolbox/">SK's Toolbox</a></li><li><a href="/lab/">SK's Lab</a></li></ul>
+        </div>
+        <div>
+          <h2>困ったとき</h2>
+          <ul><li><a href="https://support.sk-hub.jp/">サポート記事</a></li><li><a href="https://support.sk-hub.jp/?type=news">お知らせ</a></li><li><a href="https://support.sk-hub.jp/contact/">お問い合わせ</a></li><li><a href="https://sk-hub.online/">システム稼働状況</a></li></ul>
+        </div>
+        <div>
+          <h2>情報</h2>
+          <ul><li><a href="/updates/">アップデート</a></li><li><a href="/policies/">利用規約とプライバシーポリシー</a></li><li data-analytics-settings hidden><a href="#analytics">アクセス解析の設定</a></li><li><a href="/brand/">SK's Brand</a></li><li><a href="/credits/">Link &amp; Credit</a></li><li><a href="/about/">私について</a></li><li><a href="https://github.com/sy9-k" target="_blank" rel="noopener">私のGitHub</a></li></ul>
+        </div>
+      </div>
+      <div class="wordmark" aria-hidden="true">SK</div>
+      <div class="legal"><span>© 2026 SK</span><span>サーバー基盤: SK Hub Systems</span></div>
+    </div>
+  </footer>
+
+  <!-- ページを選んだ言語に訳す（ほかのスクリプトが動く前に。assets/i18n.js） -->
+  <script>window.SKI18N && SKI18N.translatePage();</script>
+  <script src="/support/articles.js" defer></script>
+  <script src="/assets/site.js" defer></script>
+  <!-- メンテナンス・障害のお知らせの帯（config/maintenance。変えるのは管理画面（admin.sk-hub.jp）） -->
+  <script src="/assets/maintenance.js" defer></script>
+  <!-- SK Hub Systems アカウントの設定の同期（ログイン中だけ） -->
+  <script src="/assets/hub/sync-loader.js" defer></script>
+  <script src="/frameworks/check.js" defer></script>
+  <!-- アクセス解析（Google アナリティクス。許可した人だけ） -->
+  <script src="/assets/analytics.js" defer></script>
+</body>
+</html>

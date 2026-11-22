@@ -1,0 +1,39 @@
+/* SK Study の製品ページ（/products/study/）。ページの中身は _build/pages/study.html。並びと部品は Nagi の製品ページ（assets/site.css の nagi-*）と同じ */
+.band--study { --band-a: rgba(37, 99, 235, .26); --band-b: rgba(124, 58, 237, .12); }
+.study-btn { background: var(--blue); color: #fff; box-shadow: 0 6px 18px rgba(37, 99, 235, .35); }
+.study-mock { max-width: 960px; margin: 0 auto; }
+.study-mock-body { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; align-items: center; padding: 34px 38px 38px; background: radial-gradient(90% 60% at 30% 0%, var(--blue-soft), transparent 70%), var(--surface); }
+.study-mock-quiz { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.study-mock-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 999px; overflow: hidden; font-size: 12.5px; font-weight: 600; }
+.study-mock-seg span { padding: 6px 14px; color: var(--muted); }
+.study-mock-seg span + span { border-left: 1px solid var(--line-strong); }
+.study-mock-seg .on { background: var(--blue-soft); color: var(--blue); }
+.study-mock-flash { width: min(100%, 320px); padding: 30px 20px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); text-align: center; box-shadow: 0 8px 24px rgba(37, 99, 235, .12); }
+.study-mock-flash small { display: block; color: var(--blue); font-size: 12.5px; font-weight: 700; }
+.study-mock-flash strong { display: block; margin-top: 6px; font-size: 28px; font-weight: 600; }
+.study-mock-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(100%, 320px); }
+.study-mock-choices i { font-style: normal; padding: 12px; border-radius: 14px; background: var(--surface-2); text-align: center; font-size: 14px; }
+.study-mock-choices i.on { background: var(--blue); color: #fff; }
+.study-mock-cards { display: flex; flex-direction: column; gap: 14px; }
+.study-mock-card { position: relative; padding: 16px 18px; border-radius: 16px; background: var(--surface-2); }
+.study-mock-card small { color: var(--muted); font-size: 12px; font-weight: 600; }
+.study-mock-card strong { display: block; font-size: 22px; font-weight: 600; margin-top: 2px; }
+.study-mock-card em { font-style: normal; font-size: 14px; color: var(--muted); font-weight: 500; }
+.study-mock-bar { display: flex; gap: 4px; height: 7px; margin-top: 12px; }
+.study-mock-bar::before { content: ""; width: 80%; border-radius: 999px; background: var(--blue); }
+.study-mock-bar span { flex: 1; border-radius: 999px; background: var(--blue-soft); }
+.study-mock-streak { position: absolute; top: 14px; right: 14px; padding: 3px 10px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); font-size: 12px; font-weight: 700; }
+.study-mock-level { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 90px; margin-top: 10px; }
+.study-mock-level i { height: calc(var(--h) * 70px); border-radius: 999px; background: var(--blue-soft); }
+.study-mock-level i.met { background: var(--blue); }
+@media (max-width: 760px) { .study-mock-body { grid-template-columns: 1fr; padding: 24px 18px 26px; } }
+.study-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.study-steps li { display: flex; gap: 14px; align-items: flex-start; padding: 22px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); }
+.study-steps b { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; font-size: 15px; }
+.study-steps strong { display: block; font-size: 16px; }
+.study-steps p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+@media (max-width: 760px) { .study-steps { grid-template-columns: 1fr; } }
+.study-privacy { display: flex; gap: 18px; align-items: flex-start; }
+.study-privacy h2 { font-size: 20px; font-weight: 800; }
+.study-privacy p { color: var(--muted); margin-top: 8px; }
+.study-privacy-links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-weight: 700; font-size: 14px; }

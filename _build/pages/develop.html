@@ -1,0 +1,37 @@
+<div class="dv-hero">
+  <div class="wrap">
+    <div class="dv-tag"><i></i>develop.sk-hub.jp</div>
+    <h1>SK Hub <span>Develop</span></h1>
+    <p class="dv-sub">Conventions and notes for building and maintaining SK's services. A site for developers.</p>
+    <div class="btn-row dv-cta">
+      <a class="btn btn-primary" href="/develop/docs/">Read the Document</a>
+      <a class="btn btn-tonal" href="https://github.com/sy9-k/sk-hub.jp" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="dv-term" aria-hidden="true">
+      <div class="dv-term-bar"><i></i><i></i><i></i><span>sk-hub.jp</span></div>
+<pre><code><b>$</b> git push
+<em>→ GitHub Pages serves sk-hub.jp</em>
+<b>$</b> python _build/build.py
+<em>wrote 36 pages · sitemap.xml</em>
+<b>$</b> npx wrangler deploy
+<em>develop.sk-hub.jp ready</em><u></u></code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="wrap dv-body">
+  <h2 class="dv-h">Document</h2>
+  <p class="dv-note-ja">The documentation itself is written in Japanese.</p>
+  <div class="dv-cards">
+    <a class="dv-c" href="/develop/docs/#start"><code>01</code><h3>Getting started</h3><p>How the site is put together, and where things live.</p></a>
+    <a class="dv-c" href="/develop/docs/#material"><code>02</code><h3>SK Material</h3><p>Colors, type and shape. Switching light and dark.</p></a>
+    <a class="dv-c" href="/develop/docs/#i18n"><code>03</code><h3>Localization</h3><p>Japanese sentences as keys, translated into four languages.</p></a>
+    <a class="dv-c" href="/develop/docs/#build"><code>04</code><h3>Building pages</h3><p>Regenerating pages with build.py.</p></a>
+    <a class="dv-c" href="/develop/docs/#subdomain"><code>05</code><h3>Subdomains &amp; Workers</h3><p>Relaying admin, develop and others from GitHub Pages.</p></a>
+  </div>
+
+  <h2 class="dv-h">Stack</h2>
+  <ul class="dv-stack">
+    <li>GitHub Pages</li><li>Cloudflare Workers</li><li>Firebase</li><li>Vanilla JS</li><li>Python</li>
+  </ul>
+</div>

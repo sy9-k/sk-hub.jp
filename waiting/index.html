@@ -8,16 +8,16 @@
   <script src="/assets/i18n.js"></script>
   <!-- 表示（ライト・ダーク・テーマカラー）。ちらつかないよう、CSS より先に <html> に付ける（選ぶのはヘッダーのアカウントのメニューの「表示」。assets/site.js） -->
   <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}"),d=document.documentElement;if(t.mode==="light"||t.mode==="dark")d.setAttribute("data-theme",t.mode);if(/^[a-z]{2,12}$/.test(t.accent||"")&&t.accent!=="blue")d.setAttribute("data-accent",t.accent);}catch(e){}})();</script>
-  <title>順番待ち | SK</title>
-  <meta name="description" content="SK Study・SK Office は、いまは招待制です。順番待ちに登録すると、順番がきたときにお知らせします。">
+  <title>早期アクセス | SK</title>
+  <meta name="description" content="SK Study・SK Office は、いまは招待制です。早期アクセスに登録すると、順番がきたときにお知らせします。">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#ffffff" data-theme-color>
   <!-- SNS で共有したときの表示（各ページのタイトル・説明・URL は build で入れ替える） -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="SK">
   <meta property="og:locale" content="ja_JP">
-  <meta property="og:title" content="順番待ち | SK">
-  <meta property="og:description" content="SK Study・SK Office は、いまは招待制です。順番待ちに登録すると、順番がきたときにお知らせします。">
+  <meta property="og:title" content="早期アクセス | SK">
+  <meta property="og:description" content="SK Study・SK Office は、いまは招待制です。早期アクセスに登録すると、順番がきたときにお知らせします。">
   <meta property="og:image" content="https://sk-hub.jp/assets/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -51,23 +51,27 @@
     <section class="p-hero band band--plain">
       <div class="wrap">
         <span class="eyebrow">招待制</span>
-        <h1>SK Study と SK Office は、<br class="wt-br">いま招待制です</h1>
-        <p class="lead">安心して使ってもらえるように、少しずつ人を増やしています。順番待ちに登録しておくと、順番がきたときにメールでお知らせします。</p>
+        <h1>SK Study・SK Office・Y-FILTER. は、<br class="wt-br">いま招待制です</h1>
+        <p class="lead">安心して使ってもらえるように、少しずつ人を増やしています。早期アクセスに登録しておくと、順番がきたときにメールでお知らせします。</p>
       </div>
     </section>
 
     <section class="section" style="padding-top:0">
+      <div class="wrap">
+        <!-- 招待が必要なページから来たとき（?need=invite|google）に出す -->
+        <div class="wt-need" id="wt-need" role="note" hidden><strong id="wt-need-title"></strong><p id="wt-need-text"></p></div>
+      </div>
       <div class="wrap wt-grid">
         <div class="card wt-card">
           <div id="wt-form-wrap">
-            <h2>順番待ちに登録する</h2>
-            <p class="wt-sub">使いたいものを選んで、メールアドレスを入れてください。</p>
+            <h2>早期アクセスに登録する</h2>
+            <p class="wt-sub">使いたいものを選んで、メールアドレスを入れてください。あとから、ほかのものも登録できます。</p>
             <form class="wt-form" id="wt-form" novalidate>
               <fieldset class="wt-products" aria-label="使いたいもの">
                 <label class="wt-prod">
                   <input type="radio" name="product" value="study" checked>
                   <span class="wt-prod-box">
-                    <img src="/study/icon.svg" alt="" width="40" height="40">
+                    <img src="/study/ico/icon-192.png" alt="" width="40" height="40">
                     <span class="wt-prod-text"><strong>SK Study</strong><small>単語カード・小テスト・クラス</small></span>
                     <svg class="wt-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
                   </span>
@@ -76,7 +80,15 @@
                   <input type="radio" name="product" value="office">
                   <span class="wt-prod-box">
                     <img src="https://office.sk-hub.jp/icons/office-logo.png" alt="" width="40" height="40">
-                    <span class="wt-prod-text"><strong>SK Office</strong><small>文書・表・プレゼン</small></span>
+                    <span class="wt-prod-text"><strong>SK Office</strong><small>文書・表・スライド</small></span>
+                    <svg class="wt-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+                  </span>
+                </label>
+                <label class="wt-prod">
+                  <input type="radio" name="product" value="yfilter">
+                  <span class="wt-prod-box">
+                    <img class="yf-tile" src="/y-filter/shared/icon.svg" alt="" width="40" height="40">
+                    <span class="wt-prod-text"><strong>Y-FILTER.</strong><small>ブラウザフィルター・管理コンソール</small></span>
                     <svg class="wt-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
                   </span>
                 </label>
@@ -84,15 +96,16 @@
               <label class="wt-field">
                 <span>メールアドレス</span>
                 <input type="email" id="wt-email" name="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="you@example.com" required>
+                <small>招待は、このメールアドレスの Google アカウントに届きます。</small>
               </label>
-              <button type="submit" class="btn btn-primary" id="wt-submit">順番待ちに登録する</button>
+              <button type="submit" class="btn btn-primary" id="wt-submit">早期アクセスに登録する</button>
               <p class="wt-msg" id="wt-msg" role="status" aria-live="polite" hidden></p>
               <p class="wt-note">登録したメールアドレスは、招待のお知らせにだけ使います。くわしくは<a href="/policies/">ポリシー</a>をご覧ください。</p>
             </form>
           </div>
           <div class="wt-done" id="wt-done" hidden>
             <span class="wt-done-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-            <h2 id="wt-done-title">登録しました</h2>
+            <h2 id="wt-done-title" tabindex="-1">登録しました</h2>
             <p id="wt-done-text"></p>
             <div class="btn-row">
               <button type="button" class="btn btn-tonal" id="wt-again">ほかのプロダクトも登録する</button>
@@ -104,15 +117,32 @@
         <aside class="wt-side">
           <h2>招待までの流れ</h2>
           <ol class="wt-steps">
-            <li><span class="wt-num">1</span><div><strong>順番待ちに登録</strong><p>メールアドレスだけ。アカウントは、まだ作らなくて大丈夫です。</p></div></li>
+            <li><span class="wt-num">1</span><div><strong>早期アクセスに登録</strong><p>メールアドレスだけ。アカウントは、まだ作らなくて大丈夫です。</p></div></li>
             <li><span class="wt-num">2</span><div><strong>招待のメールが届く</strong><p>順番がきたら、使いはじめ方を書いたメールをお送りします。</p></div></li>
             <li><span class="wt-num">3</span><div><strong>Google でログインして、はじめる</strong><p>メールのボタンから、そのメールアドレスの Google アカウントでログインします。</p></div></li>
           </ol>
           <div class="wt-have">
             <strong>すでに招待されている方へ</strong>
-            <p><a href="/account/">SK Hub Systems アカウント</a>に、招待されたメールアドレスの Google アカウントでログインしてください。Google 以外のログインでは開けません。</p>
+            <p><a href="/account/invites/">招待の状況</a>で、招待されているプロダクトを確かめて、そのまま開けます。ログインは、招待されたメールアドレスの Google アカウントで行ってください。Google 以外のログインでは開けません。</p>
           </div>
         </aside>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Q &amp; A</span>
+          <h2>よくある質問</h2>
+        </div>
+        <div class="wt-faq">
+          <details><summary>順番は、どのくらいでくる？</summary><p>決まった日はありません。少しずつ人を増やしているので、順番がきたらメールでお知らせします。登録の順に招待するとは限りません。</p></details>
+          <details><summary>使うのに、お金はかかる？</summary><p>かかりません。SK Hub Systems アカウントも無料で作れます。</p></details>
+          <details><summary>登録したメールアドレスは、何に使う？</summary><p>招待のお知らせにだけ使います。ほかの目的には使いません。</p></details>
+          <details><summary>同じものを、2 回登録してしまった</summary><p>大丈夫です。すでに登録されているときは、その旨を表示します。順番は変わりません。</p></details>
+          <details><summary>招待されたか、どうやって分かる？</summary><p>招待のメールが届きます。ログインしてから、<a href="/account/invites/">招待の状況</a>でも確かめられます。</p></details>
+          <details><summary>Google 以外のアカウントでも使える？</summary><p>招待されたメールアドレスの Google アカウントでログインしたときだけ開けます。GitHub や LINE などのログインでは開けません。</p></details>
+        </div>
       </div>
     </section>
   </main>

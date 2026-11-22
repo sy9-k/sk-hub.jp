@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <script src="/assets/coming-soon.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 多言語: /lang/ で選んだ言語で表示する（URL は変わらない）。ページの最後の translatePage() で訳す -->
+  <script src="/assets/i18n.js"></script>
+  <!-- 表示（ライト・ダーク・テーマカラー）。ちらつかないよう、CSS より先に <html> に付ける（選ぶのはヘッダーのアカウントのメニューの「表示」。assets/site.js） -->
+  <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}"),d=document.documentElement;if(t.mode==="light"||t.mode==="dark")d.setAttribute("data-theme",t.mode);if(/^[a-z]{2,12}$/.test(t.accent||"")&&t.accent!=="blue")d.setAttribute("data-accent",t.accent);}catch(e){}})();</script>
+  <title>招待の状況 | SK</title>
+  <meta name="description" content="SK Study・SK Office・Y-FILTER. は、いまは招待制です。ログインしているアカウントが招待されているかを確かめて、そのまま開けます。">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#ffffff" data-theme-color>
+  <!-- SNS で共有したときの表示（各ページのタイトル・説明・URL は build で入れ替える） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SK">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:title" content="招待の状況 | SK">
+  <meta property="og:description" content="SK Study・SK Office・Y-FILTER. は、いまは招待制です。ログインしているアカウントが招待されているかを確かめて、そのまま開けます。">
+  <meta property="og:image" content="https://sk-hub.jp/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"></script>
+  <link rel="stylesheet" href="/assets/header.css">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/waiting/waiting.css">
+  <link rel="stylesheet" href="/account/invites/invites.css">
+  <script type="module" src="/account/invites/invites.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">本文へ移動</a>
+  <header class="site-header">
+    <a class="hd-logo" href="/" aria-label="ホーム">
+      <span class="hd-logo-image" aria-hidden="true"><img src="/assets/logo.svg" alt="" width="26" height="26"></span>
+      <span class="hd-logo-back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+    <a class="hd-item" href="/about/">私について</a>
+    <a class="hd-item" href="/products/" data-menu="products">プロダクト</a>
+    <a class="hd-item" href="https://support.sk-hub.jp/" data-menu="support" data-no-navigation="true">サポートと情報</a>
+    <a class="hd-item hd-account" href="/account/" data-menu="account" data-account-link>アカウント</a>
+    <a class="hd-item hd-lang" href="/lang/" data-lang-link><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg><span class="hd-lang-label">言語</span></a>
+    <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
+  </header>
+  <div class="hd-menu" id="hd-menu"><div class="hd-menu-inner"><div class="hd-menu-content"></div></div></div>
+  <div class="hd-backdrop" id="hd-backdrop"></div>
+
+  <main id="main">
+    <!-- 招待の状況（/account/invites/）。ログインしているアカウントが、どのプロダクトに招待されているかを見せる。動きは /account/invites/invites.js -->
+    <section class="p-hero band band--plain">
+      <div class="wrap">
+        <span class="eyebrow">SK Hub Systems アカウント</span>
+        <h1>招待の状況</h1>
+        <p class="lead">SK Study・SK Office・Y-FILTER. は、いま招待制です。ログインしているアカウントが、どれに招待されているかを確かめて、そのまま開けます。</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="wrap iv-wrap">
+        <div class="card iv-who" id="iv-who">
+          <p class="iv-checking"><span class="iv-spin" aria-hidden="true"></span>ログインを確かめています…</p>
+        </div>
+
+        <div class="iv-list" id="iv-list" hidden>
+          <article class="card iv-item" data-product="study">
+            <img src="/study/ico/icon-192.png" alt="" width="48" height="48">
+            <div class="iv-text"><strong>SK Study</strong><small>単語カード・小テスト・クラス</small></div>
+            <span class="iv-state" data-state>確認中</span>
+            <div class="iv-act" data-act></div>
+          </article>
+          <article class="card iv-item" data-product="office">
+            <img src="https://office.sk-hub.jp/icons/office-logo.png" alt="" width="48" height="48">
+            <div class="iv-text"><strong>SK Office</strong><small>文書・表・スライド</small></div>
+            <span class="iv-state" data-state>確認中</span>
+            <div class="iv-act" data-act></div>
+          </article>
+          <article class="card iv-item" data-product="yfilter">
+            <img class="yf-tile" src="/y-filter/shared/icon.svg" alt="" width="48" height="48">
+            <div class="iv-text"><strong>Y-FILTER.</strong><small>ブラウザフィルター・管理コンソール</small></div>
+            <span class="iv-state" data-state>確認中</span>
+            <div class="iv-act" data-act></div>
+          </article>
+        </div>
+
+        <aside class="iv-note">
+          <h2>招待について</h2>
+          <ul>
+            <li>招待は、メールアドレスごとです。招待されたメールアドレスの <strong>Google アカウント</strong>でログインしたときだけ開けます。</li>
+            <li>GitHub や LINE など、Google 以外のログインでは開けません。</li>
+            <li>まだ招待されていないものは、<a href="/waiting/">早期アクセス</a>に登録しておくと、順番がきたときにメールでお知らせします。</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="cols">
+        <div>
+          <a class="logo" href="/" aria-label="SK ホーム"><img src="/assets/logo.svg" alt="" width="36" height="36">SK</a>
+          <p class="about">毎日のネットを、もう少し安心で便利に。Y-FILTER. と MALU を開発しています。</p>
+        </div>
+        <div>
+          <h2>プロダクト</h2>
+          <ul><li><a href="/products/">すべてのプロダクト</a></li><li><a href="/products/y-filter/">Y-FILTER.</a></li><li><a href="/products/malu/">MALU</a></li><li><a href="/products/nagi/">Nagi</a></li><li><a href="/sk-hub-systems/">SK Hub Systems</a></li><li><a href="/toolbox/">SK's Toolbox</a></li><li><a href="/lab/">SK's Lab</a></li></ul>
+        </div>
+        <div>
+          <h2>困ったとき</h2>
+          <ul><li><a href="https://support.sk-hub.jp/">サポート記事</a></li><li><a href="https://support.sk-hub.jp/?type=news">お知らせ</a></li><li><a href="https://support.sk-hub.jp/contact/">お問い合わせ</a></li><li><a href="https://sk-hub.online/">システム稼働状況</a></li></ul>
+        </div>
+        <div>
+          <h2>情報</h2>
+          <ul><li><a href="/updates/">アップデート</a></li><li><a href="/policies/">利用規約とプライバシーポリシー</a></li><li data-analytics-settings hidden><a href="#analytics">アクセス解析の設定</a></li><li><a href="/brand/">SK's Brand</a></li><li><a href="/credits/">Link &amp; Credit</a></li><li><a href="/about/">私について</a></li><li><a href="https://github.com/sy9-k" target="_blank" rel="noopener">私のGitHub</a></li></ul>
+        </div>
+      </div>
+      <div class="wordmark" aria-hidden="true">SK</div>
+      <div class="legal"><span>© 2026 SK</span><span>サーバー基盤: SK Hub Systems</span></div>
+    </div>
+  </footer>
+
+  <!-- ページを選んだ言語に訳す（ほかのスクリプトが動く前に。assets/i18n.js） -->
+  <script>window.SKI18N && SKI18N.translatePage();</script>
+  <script src="/support/articles.js" defer></script>
+  <script src="/assets/site.js" defer></script>
+  <!-- メンテナンス・障害のお知らせの帯（config/maintenance。変えるのは管理画面（admin.sk-hub.jp）） -->
+  <script src="/assets/maintenance.js" defer></script>
+  <!-- SK Hub Systems アカウントの設定の同期（ログイン中だけ） -->
+  <script src="/assets/hub/sync-loader.js" defer></script>
+  <script src="/frameworks/check.js?check=none" defer></script>
+  <!-- アクセス解析（Google アナリティクス。許可した人だけ） -->
+  <script src="/assets/analytics.js" defer></script>
+</body>
+</html>

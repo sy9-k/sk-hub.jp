@@ -210,6 +210,19 @@ onAuthStateChanged(auth, async (user) => {
 // SK Hub Systems アカウントを作っていない（規約に同意していない）・管理コンソールに接続していないときは、
 // アカウントのページで同意・接続してもらってから戻ってくる（/account/?connect=yfilter&next=/y-filter/）
 async function hasAccount(user) {
+  // 招待制（assets/hub/invite.js）。招待された Google アカウントでログインしていないときは、早期アクセスのページへ
+  try {
+    const { inviteStatus, WAITING_URL } = await import("/assets/hub/invite.js");
+    const inv = await inviteStatus(user, "yfilter");
+    if (!inv.ok) {
+      show("app", false);
+      location.replace(`${WAITING_URL("yfilter")}&need=${inv.reason === "not-google" ? "google" : "invite"}`);
+      return false;
+    }
+  } catch (err) {
+    toast(`招待を確認できませんでした: ${errText(err)}`, true);
+    return false;
+  }
   try {
     const snap = await getDoc(doc(db, "accounts", user.uid));
     if (snap.exists() && snap.data().termsVersion === ACCOUNT_TERMS_VERSION && isConnected(snap.data(), "yfilter")) {
