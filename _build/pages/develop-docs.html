@@ -1,0 +1,69 @@
+<div class="wrap dv" data-i18n-skip>
+<article>
+    <h1>Document</h1>
+     <p class="lead">SK のサイトを作る・直すときの決まりごとです。リポジトリは <code>sy9-k/sk-hub.jp</code>。</p>
+    <nav class="toc" aria-label="目次"><a href="#start">はじめに</a><a href="#material">SK Material</a><a href="#i18n">多言語</a><a href="#build">ページのビルド</a><a href="#subdomain">サブドメインと Worker</a></nav>
+
+    <h2 id="start">はじめに</h2>
+    <p>sk-hub.jp は <strong>GitHub Pages</strong> で配信する静的なサイトです。サーバーで動く処理は持たず、ログインやデータの保存は Firebase（SK Hub Systems）に任せています。プッシュするとそのまま公開されます。</p>
+    <table class="dv-table">
+      <tr><th>場所</th><th>中身</th></tr>
+      <tr><td><code>index.html</code></td><td>トップページ。ほかのページのヘッダー・フッターの型にもなる</td></tr>
+      <tr><td><code>_build/</code></td><td>ページの元ファイルと build.py。<code>_</code> で始まるフォルダは公開されない</td></tr>
+      <tr><td><code>assets/</code></td><td>サイト共通の CSS・スクリプト・翻訳</td></tr>
+      <tr><td><code>admin/</code>・<code>develop/</code></td><td>サブドメインで開くページ（Worker が中継する）</td></tr>
+      <tr><td><code>_workers/</code></td><td>Cloudflare Workers のコード</td></tr>
+    </table>
+
+    <h2 id="material">SK Material</h2>
+    <p>SK のアプリ（SK Share・SK Study・この Develop サイトなど）は、マテリアルデザインをもとにした <strong>SK Material</strong> で作ります。色は CSS のカスタムプロパティ <code>--md-*</code> に集め、明るい・暗いは同じ名前の値を入れ替えるだけで切りかえます。</p>
+    <table class="dv-table">
+      <tr><th>名前</th><th>明るい</th><th>暗い</th><th>使いどころ</th></tr>
+      <tr><td><code>--md-primary</code></td><td><span class="dv-swatch" style="background:#004ac6"></span>#004ac6</td><td><span class="dv-swatch" style="background:#b4c5ff"></span>#b4c5ff</td><td>ボタン・リンク・強調</td></tr>
+      <tr><td><code>--md-secondary-container</code></td><td><span class="dv-swatch" style="background:#dce2ff"></span>#dce2ff</td><td><span class="dv-swatch" style="background:#33467e"></span>#33467e</td><td>選んでいる項目・やわらかいボタン</td></tr>
+      <tr><td><code>--md-surface</code></td><td><span class="dv-swatch" style="background:#faf8ff"></span>#faf8ff</td><td><span class="dv-swatch" style="background:#11131b"></span>#11131b</td><td>ページの背景</td></tr>
+      <tr><td><code>--md-surface-container-low</code></td><td><span class="dv-swatch" style="background:#f3f3fe"></span>#f3f3fe</td><td><span class="dv-swatch" style="background:#191b23"></span>#191b23</td><td>カード</td></tr>
+      <tr><td><code>--md-on-surface</code></td><td><span class="dv-swatch" style="background:#191b23"></span>#191b23</td><td><span class="dv-swatch" style="background:#e1e2ed"></span>#e1e2ed</td><td>本文の文字</td></tr>
+      <tr><td><code>--md-outline-variant</code></td><td><span class="dv-swatch" style="background:#c3c6d7"></span>#c3c6d7</td><td><span class="dv-swatch" style="background:#434655"></span>#434655</td><td>区切り線</td></tr>
+      <tr><td><code>--md-error</code></td><td><span class="dv-swatch" style="background:#ba1a1a"></span>#ba1a1a</td><td><span class="dv-swatch" style="background:#ffb4ab"></span>#ffb4ab</td><td>エラー</td></tr>
+    </table>
+    <p>全部の値は <code>view/view.css</code> の先頭にあります。文字は <strong>M PLUS 1</strong>、アイコンは Material Symbols、動きは <code>cubic-bezier(.2, 0, 0, 1)</code>（<code>--md-emphasized</code>）です。</p>
+    <h3>明るい・暗いの切りかえ</h3>
+    <p>端末の設定（<code>prefers-color-scheme</code>）に従い、人が選んだときだけ <code>data-theme</code> を付けます。この順で書くと、選んだほうがいつも勝ちます。</p>
+<pre><code>:root { /* 明るい */ }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { /* 暗い */ }
+}
+:root[data-theme="dark"] { /* 暗い（選んだとき） */ }</code></pre>
+
+    <h2 id="i18n">多言語</h2>
+    <p>URL は変えず、<code>/lang/</code> で選んだ言語でページを訳して表示します（<code>assets/i18n.js</code>）。日本語が正式で、日本語の文そのものを翻訳のキーにします。</p>
+    <ul>
+      <li>訳は <code>_build/i18n/&lt;言語&gt;.json</code>（<code>en</code>・<code>zh-CN</code>・<code>zh-TW</code>・<code>ko</code>）。build すると <code>assets/i18n/&lt;言語&gt;.js</code> ができる。</li>
+      <li>訳のない文は、build が <code>_build/i18n/missing/&lt;言語&gt;.json</code> に書き出す。訳を足してもう一度 build する。</li>
+      <li>スクリプトの中の文は <code>t("…")</code> で包む。build で作らないページは <code>build.py</code> の <code>STANDALONE_PAGES</code>・<code>RUNTIME_SOURCES</code> に入れておく。</li>
+      <li>日本語と英語だけのページは <code>&lt;html data-i18n-langs="ja en"&gt;</code> にして、英訳を <code>en.json</code> にだけ足す。</li>
+    </ul>
+
+    <h2 id="build">ページのビルド</h2>
+<pre><code>python _build/build.py</code></pre>
+    <p>トップの <code>index.html</code> の <code>&lt;main id="main"&gt;</code> の外側（<code>&lt;head&gt;</code>・ヘッダー・フッター）を型にして、<code>_build/pages/*.html</code> の中身を差し込み、各ページの <code>index.html</code> と <code>sitemap.xml</code> を書き出します。</p>
+    <div class="dv-note">書き出された <code>about/index.html</code> などを直接直しても、次の build で上書きされます。直すのは <code>_build/pages/</code> の元ファイルです。</div>
+    <p>ページの一覧・タイトル・説明は <code>build.py</code> の <code>pages</code> と <code>EXTRA</code> にあります。SK Share・admin・この Develop サイトのような、独自の見た目のページは build を通さず、そのフォルダのファイルを直接直します。</p>
+
+    <h2 id="subdomain">サブドメインと Worker</h2>
+    <p><code>admin.sk-hub.jp</code>・<code>support.sk-hub.jp</code>・<code>develop.sk-hub.jp</code> は、<strong>Cloudflare Worker</strong> が <code>sk-hub.jp</code>（GitHub Pages）の決まったフォルダをそのつど取ってきて返す中継です。ページを直すときは、リポジトリにプッシュするだけで済みます。</p>
+    <table class="dv-table">
+      <tr><th>開く URL</th><th>実際のファイル</th></tr>
+      <tr><td><code>develop.sk-hub.jp/</code></td><td><code>sk-hub.jp/develop/</code></td></tr>
+      <tr><td><code>develop.sk-hub.jp/docs/</code></td><td><code>sk-hub.jp/develop/docs/</code></td></tr>
+      <tr><td><code>develop.sk-hub.jp/assets/…</code></td><td><code>sk-hub.jp/assets/…</code>（共通の部品はそのままの道筋）</td></tr>
+    </table>
+    <ul>
+      <li>Worker のコードは <code>_workers/&lt;名前&gt;/</code>。公開するアドレスは <code>wrangler.jsonc</code> の <code>routes</code>（<code>custom_domain: true</code>）で決める。</li>
+      <li>サイト共通の部品を新しく使うときは、Worker の <code>SHARED</code> に道筋を足して deploy する。</li>
+      <li>取ってきたものは Cloudflare に <strong>60 秒</strong>置く。直してから出るまで最大それだけかかる。</li>
+      <li>初めて出すときは <code>_workers/develop/</code> で <code>npx wrangler deploy</code>。DNS は自動で作られる。</li>
+    </ul>
+  </article>
+</div>

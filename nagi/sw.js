@@ -1,7 +1,7 @@
 // Nagi のサービスワーカー（ホーム画面に追加したとき・オフラインでも開けるように）
 // 画面の部品は先にキャッシュし、ページ本体は通信優先（オフラインのときだけキャッシュ）。
 // 他サイト（Firestore・Google Fonts など）・アクセスチェック（/frameworks/）・アカウント（/assets/hub/）はキャッシュしない
-const CACHE_NAME = 'nagi-v13';
+const CACHE_NAME = 'nagi-v21';
 const urlsToCache = [
   '/nagi/',
   '/nagi/index.html',
@@ -9,7 +9,6 @@ const urlsToCache = [
   '/nagi/app.js',
   '/nagi/account.js',
   '/nagi/manifest.json',
-  '/nagi/sound/break.mp3',
   '/nagi/ico/icon-192.png',
   '/nagi/ico/badge-96.png',
   '/nagi/ico/icon-512.png',

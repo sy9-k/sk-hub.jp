@@ -37,6 +37,13 @@
       "autoPort": false
     },
     {
+      "name": "site-8799",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8799"],
+      "port": 8799,
+      "autoPort": false
+    },
+    {
       "name": "site-mac",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8765"],

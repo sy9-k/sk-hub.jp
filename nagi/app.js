@@ -131,44 +131,28 @@
       if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
       if (audio.state === "suspended") audio.resume();
     } catch (e) { audio = null; }
-    loadBreakSound();
   }
-  // 集中から休憩に変わるときの音（効果音ラボ「クイズ正解2」。鉄琴のフレーズ）。読めなかったら風鈴の音
-  var breakSound = null, breakLoading = false;
-  function loadBreakSound() {
-    if (!audio || breakSound || breakLoading) return;
-    breakLoading = true;
-    fetch("sound/break.mp3").then(function (r) { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
-      .then(function (b) { return new Promise(function (ok, ng) { audio.decodeAudioData(b, ok, ng); }); })
-      .then(function (buf) { breakSound = buf; }, function () { breakLoading = false; });
-  }
-  // kind … "break"（集中のあと）なら鉄琴の音、それ以外（休憩のあと）は風鈴の音
-  function chime(kind) {
+  // 切り替わりの音（集中→休憩、休憩→集中のどちらも）。機内の二音チャイム「ポーン、ポーン」（高い音→低い音）
+  // 機内チャイムは電子音で、倍音をほとんど含まない正弦波（サイン波）に近い。
+  // 立ち上がりは短く、音は少し保ってから、やわらかく消える。高いレ(D)→低いド(C)
+  function chime() {
     if (!settings.sound || !audio) return;
-    if (kind === "break" && breakSound) {
-      var src = audio.createBufferSource();
-      var vol = audio.createGain();
-      vol.gain.value = 0.8;
-      src.buffer = breakSound;
-      src.connect(vol).connect(audio.destination);
-      src.start();
-      return;
-    }
-    // 風鈴のような、やわらかい 3 つの音
     var now = audio.currentTime;
-    [880, 1318.5, 1760].forEach(function (freq, i) {
+    function tone(freq, start, hold, tail) {
       var osc = audio.createOscillator();
       var gain = audio.createGain();
       osc.type = "sine";
       osc.frequency.value = freq;
-      var start = now + i * 0.18;
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 1.6);
+      gain.gain.linearRampToValueAtTime(0.28, start + 0.008);   // 短い立ち上がり
+      gain.gain.setValueAtTime(0.28, start + hold);              // 少し保つ
+      gain.gain.setTargetAtTime(0.0001, start + hold, tail / 4); // なめらかに消える
       osc.connect(gain).connect(audio.destination);
       osc.start(start);
-      osc.stop(start + 1.7);
-    });
+      osc.stop(start + hold + tail * 1.5);
+    }
+    tone(587.33, now, 0.50, 0.40);          // 高い音: レ（D5）。長めに保って、次の音の前でほぼ消える
+    tone(523.25, now + 0.52, 0.30, 2.0);    // 低い音: ド（C5）。あとのほうを長く
   }
   // context … 本文の 1 行目「Nagi · ○○」の ○○（終わった集中・休憩と、その長さ）
   function notify(title, body, context) {

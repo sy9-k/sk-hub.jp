@@ -74,6 +74,7 @@
       items: [
         [t("アカウント"), lp("/account/")],
         [accountUnread ? t("お知らせ（{n}）", { n: accountUnread }) : t("お知らせ"), lp("/account/#notices")],
+        [t("招待の状況"), lp("/account/invites/")],
         // 接続しているサービスだけ（接続は、サービスを最初に使うときに確かめる）
         ...((accountHint.services || []).includes("yfilter") ? [[t("Y-FILTER. 管理コンソール"), "/y-filter/"]] : []),
         [t("データのダウンロード・削除"), lp("/account/#privacy")],
@@ -85,6 +86,7 @@
       items: [
         [t("ログイン・アカウントを作成"), lp("/account/")],
         [t("SK Hub Systems アカウントとは"), lp("https://support.sk-hub.jp/?a=account-about")],
+        [t("早期アクセス（招待制）"), lp("/waiting/")],
         [t("Y-FILTER. 管理コンソール"), "/y-filter/"]
       ]
     };
@@ -103,7 +105,8 @@
             [t("すべてのプロダクト"), lp("/products/")],
             ["SK Hub Systems", lp("/sk-hub-systems/")],
             ["SK's Brand", lp("/brand/")],
-            ["SK's Toolbox", lp("/toolbox/")]
+            ["SK's Toolbox", lp("/toolbox/")],
+            [t("早期アクセス（招待制）"), lp("/waiting/")]
           ]
         },
         {
@@ -112,6 +115,7 @@
             ["Y-FILTER.", lp("/products/y-filter/")],
             ["MALU", lp("/products/malu/")],
             ["Nagi", lp("/products/nagi/")],
+            ["SK Study", lp("/products/study/")],
             ["SK Hub Office", lp("/products/office/")],
             ["SK's Lab", lp("/lab/")]
           ]

@@ -661,7 +661,7 @@
                 }
                 .RedCheckOSS-info-widget:hover .RedCheckOSS-info-widget__links,
                 .RedCheckOSS-info-widget:focus-within .RedCheckOSS-info-widget__links{
-                    max-width:280px;
+                    max-width:360px;
                     max-height:120px;
                     opacity:1;
                     transform:translateY(0);
@@ -680,6 +680,7 @@
                     line-height:1 !important;
                     transition:background-color .15s ease,color .15s ease;
                 }
+                button.RedCheckOSS-info-widget__link{border:0;font-family:inherit;cursor:pointer}
                 .RedCheckOSS-info-widget__link:hover,
                 .RedCheckOSS-info-widget__link:focus-visible{
                     background:#fff3;
@@ -731,8 +732,17 @@
             policyLink.textContent = tw("利用規約・プライバシー");
             policyLink.setAttribute("aria-label", tw("利用規約・プライバシーポリシー"));
 
+            // 設定: アカウントがなくても、このブラウザの同意（規約・プライバシー、アクセス解析）を見直せる
+            const settingsLink = document.createElement("button");
+            settingsLink.type = "button";
+            settingsLink.className = "RedCheckOSS-info-widget__link";
+            settingsLink.textContent = tw("設定");
+            settingsLink.setAttribute("aria-label", tw("設定"));
+            settingsLink.addEventListener("click", () => this.openSettings());
+
             links.appendChild(aboutLink);
             links.appendChild(policyLink);
+            links.appendChild(settingsLink);
 
             const widget = document.createElement("div");
             widget.className = "RedCheckOSS-info-widget";
@@ -749,6 +759,157 @@
 
             this.setupLogoDiagnostic();
             return true;
+        },
+
+        // 設定のパネル。アカウントとは関係なく、このブラウザの同意だけを変える
+        openSettings() {
+            if (document.querySelector('[data-RedCheckOSS-settings="true"]')) {
+                return;
+            }
+
+            const tw = (s) => (window.SKI18N ? window.SKI18N.t(s) : s);
+            const lw = (u) => (window.SKI18N ? window.SKI18N.path(u) : u);
+
+            if (!document.querySelector('[data-RedCheckOSS-style="settings"]')) {
+                const style = document.createElement("style");
+                style.setAttribute("data-RedCheckOSS-style", "settings");
+                style.textContent = `
+                    .RedCheckOSS-set{
+                        --bg:#fff;--fg:#1d1d1f;--sub:#6e6e73;--line:#0000001a;--soft:#f2f2f7;--acc:#2563eb;
+                        position:fixed;inset:0;z-index:2147483647;display:flex;align-items:flex-end;justify-content:center;
+                        padding:16px;background:rgba(0,0,0,.35);
+                        -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+                        font:14px/1.5 Inter,"Noto Sans JP",system-ui,-apple-system,"Segoe UI",sans-serif;
+                        animation:RedCheckOSS-set-fade .18s ease;
+                    }
+                    @media(min-width:600px){.RedCheckOSS-set{align-items:center}}
+                    @media(prefers-color-scheme:dark){
+                        :root:not([data-theme="light"]) .RedCheckOSS-set{--bg:#1c1c1e;--fg:#f5f5f7;--sub:#98989f;--line:#ffffff1f;--soft:#2c2c2e}
+                    }
+                    :root[data-theme="dark"] .RedCheckOSS-set{--bg:#1c1c1e;--fg:#f5f5f7;--sub:#98989f;--line:#ffffff1f;--soft:#2c2c2e}
+                    .RedCheckOSS-set__card{
+                        width:min(400px,100%);padding:6px 6px 16px;border-radius:28px;corner-shape:superellipse(1.5);
+                        background:var(--bg);color:var(--fg);box-shadow:0 20px 60px rgba(0,0,0,.35);
+                        animation:RedCheckOSS-set-rise .22s cubic-bezier(.2,.8,.2,1);
+                    }
+                    .RedCheckOSS-set__head{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 6px 18px}
+                    .RedCheckOSS-set__title{font-size:18px;font-weight:700;letter-spacing:.01em}
+                    .RedCheckOSS-set__x{
+                        width:32px;height:32px;border:0;border-radius:50%;background:var(--soft);color:var(--sub);
+                        font-size:18px;line-height:1;cursor:pointer;transition:filter .15s;
+                    }
+                    .RedCheckOSS-set__x:hover{filter:brightness(.94)}
+                    .RedCheckOSS-set__lead{margin:0;padding:0 18px 12px;color:var(--sub);font-size:12.5px}
+                    .RedCheckOSS-set__group{margin:0 10px;border-radius:18px;background:var(--soft);overflow:hidden}
+                    .RedCheckOSS-set__row{display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:56px}
+                    .RedCheckOSS-set__row + .RedCheckOSS-set__row{border-top:1px solid var(--line)}
+                    .RedCheckOSS-set__text{flex:1;min-width:0}
+                    .RedCheckOSS-set__name{display:block;font-size:14px;font-weight:600}
+                    .RedCheckOSS-set__desc{display:block;margin-top:1px;color:var(--sub);font-size:12px}
+                    .RedCheckOSS-set__ok{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:99px;background:#16a34a22;color:#16a34a;font-size:11.5px;font-weight:600}
+                    .RedCheckOSS-set__go{
+                        flex:none;padding:7px 12px;border-radius:99px;background:var(--bg);color:#dc2626;
+                        font-size:12.5px;font-weight:600;text-decoration:none;white-space:nowrap;
+                    }
+                    .RedCheckOSS-set__go:hover{filter:brightness(.95)}
+                    .RedCheckOSS-set__switch{position:relative;flex:none;width:46px;height:28px;cursor:pointer}
+                    .RedCheckOSS-set__switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+                    .RedCheckOSS-set__switch i{position:absolute;inset:0;border-radius:99px;background:#78788052;transition:background-color .18s}
+                    .RedCheckOSS-set__switch i::after{
+                        content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;
+                        background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .18s;
+                    }
+                    .RedCheckOSS-set__switch input:checked + i{background:var(--acc)}
+                    .RedCheckOSS-set__switch input:checked + i::after{transform:translateX(18px)}
+                    .RedCheckOSS-set__switch input:focus-visible + i{outline:2px solid var(--acc);outline-offset:2px}
+                    .RedCheckOSS-set__foot{padding:12px 18px 0;font-size:12.5px}
+                    .RedCheckOSS-set__foot a{color:var(--acc);text-decoration:none}
+                    .RedCheckOSS-set__foot a:hover{text-decoration:underline}
+                    @keyframes RedCheckOSS-set-fade{from{opacity:0}}
+                    @keyframes RedCheckOSS-set-rise{from{opacity:0;transform:translateY(12px) scale(.98)}}
+                    @media(prefers-reduced-motion:reduce){
+                        .RedCheckOSS-set,.RedCheckOSS-set__card{animation:none}
+                        .RedCheckOSS-set__switch i,.RedCheckOSS-set__switch i::after{transition:none}
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            const el = (tag, cls, text) => {
+                const e = document.createElement(tag);
+                e.className = "RedCheckOSS-set" + cls;
+                if (text !== undefined) e.textContent = text;
+                return e;
+            };
+
+            const overlay = el("div", "");
+            overlay.setAttribute("data-RedCheckOSS-settings", "true");
+            overlay.setAttribute("role", "dialog");
+            overlay.setAttribute("aria-modal", "true");
+            overlay.setAttribute("aria-label", tw("設定"));
+
+            const card = el("div", "__card");
+
+            const close = () => {
+                overlay.remove();
+                document.removeEventListener("keydown", onKey);
+            };
+            const onKey = (e) => { if (e.key === "Escape") close(); };
+
+            const head = el("div", "__head");
+            const x = el("button", "__x", "×");
+            x.type = "button";
+            x.setAttribute("aria-label", tw("閉じる"));
+            x.addEventListener("click", close);
+            head.append(el("span", "__title", tw("設定")), x);
+            card.append(head, el("p", "__lead", tw("アカウントがなくても使えます。このブラウザだけの設定です。")));
+
+            const group = el("div", "__group");
+
+            // 利用規約・プライバシー: 撤回は、案内のページ（/usercheck/entry.html → terms_not_accepted.html）に移る
+            const terms = el("div", "__row");
+            const termsText = el("div", "__text");
+            termsText.append(
+                el("span", "__name", tw("利用規約・プライバシーポリシー")),
+                el("span", "__ok", "✓ " + tw("同意しています"))
+            );
+            const revoke = el("a", "__go", tw("同意を撤回する"));
+            revoke.href = lw(this.CONFIG.ENTRY_URL);
+            terms.append(termsText, revoke);
+            group.appendChild(terms);
+
+            // アクセス解析（assets/analytics.js があるページだけ）
+            const analytics = window.SKAnalytics;
+            if (analytics && analytics.enabled()) {
+                const row = el("label", "__row");
+                const text = el("span", "__text");
+                text.append(
+                    el("span", "__name", tw("アクセス解析")),
+                    el("span", "__desc", tw("見られたページなどを、Google アナリティクスで集計します。広告には使いません。"))
+                );
+                const sw = el("span", "__switch");
+                const box = document.createElement("input");
+                box.type = "checkbox";
+                box.checked = analytics.choice() === "granted";
+                box.addEventListener("change", () => analytics.set(box.checked ? "granted" : "denied"));
+                sw.append(box, document.createElement("i"));
+                row.append(text, sw);
+                group.appendChild(row);
+            }
+            card.appendChild(group);
+
+            const foot = el("div", "__foot");
+            const policy = document.createElement("a");
+            policy.href = lw(this.CONFIG.POLICIES_URL);
+            policy.textContent = tw("利用規約・プライバシーを読む");
+            foot.appendChild(policy);
+            card.appendChild(foot);
+
+            overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+            document.addEventListener("keydown", onKey);
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+            x.focus();
         },
 
         removeInfoWidget() {

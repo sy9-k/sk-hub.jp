@@ -31,7 +31,7 @@ wrangler は sakueinakai2023@gmail.com の Cloudflare アカウントにログ�
 
 ## 招待のメール（`/api/invite-mail`）
 
-SK Study・SK Office は招待制です（招待は管理画面の「招待と順番待ち」 https://admin.sk-hub.jp/invites/ ）。招待すると、管理画面がこの Worker の `POST /api/invite-mail` を呼び、招待された人に使いはじめ方のメールを送ります（`src/invite-mail.js`）。
+SK Study・SK Office は招待制です（招待は管理画面の「招待と早期アクセス」 https://admin.sk-hub.jp/invites/ ）。招待すると、管理画面がこの Worker の `POST /api/invite-mail` を呼び、招待された人に使いはじめ方のメールを送ります（`src/invite-mail.js`）。
 
 - 送れるのは開発者だけです（ID トークンで Firestore の `config/developers` を読めるかで確かめる）。送り先は `hub_invites` に招待があるアドレスだけで、本文には招待したプロダクトが入ります。
 - 送るのは [Resend](https://resend.com/) です（無料の範囲: 1 日 100 通・月 3,000 通）。送れたら、管理画面が `hub_invites` の `mailedAt` に日時を入れます（一覧の「メール」の列）。送れなかったときも招待はそのままで、一覧の「メールを送る」で送り直せます。

@@ -1,0 +1,67 @@
+/* SK Hub Develop の本文（ヘッダー・フッターはサイトと同じ。assets/site.css）。開発者向けの、端末（ターミナル）のような見た目 */
+:root { --dv-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, "BIZ UDGothic", monospace; --dv-term: #0b0e14; --dv-green: #4ade80; }
+
+/* ---- トップ ---- */
+.dv-hero { position: relative; overflow: hidden; isolation: isolate; padding: clamp(48px, 8vw, 96px) 0 56px; border-bottom: 1px solid var(--line); }
+.dv-hero::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: .7;
+  background:
+    radial-gradient(600px 300px at 85% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 40px 40px;
+  -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent);
+}
+.dv-tag { display: inline-flex; align-items: center; gap: 8px; font: 600 13px var(--dv-mono); color: var(--accent); padding: 5px 12px; border: 1px solid var(--accent-line); border-radius: 999px; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.dv-tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--dv-green); box-shadow: 0 0 8px var(--dv-green); }
+.dv-hero h1 { margin: 20px 0 12px; font-size: clamp(40px, 8vw, 76px); line-height: 1.05; font-weight: 800; letter-spacing: -.04em; }
+.dv-hero h1 span { background: linear-gradient(100deg, var(--accent), #7c5cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.dv-sub { max-width: 560px; color: var(--muted); font-size: 17px; margin: 0; }
+.dv-cta { margin-top: 28px; }
+.dv-term { max-width: 560px; margin-top: 44px; border-radius: 14px; overflow: hidden; background: var(--dv-term); box-shadow: 0 24px 60px rgba(13, 16, 20, .28); border: 1px solid #232938; }
+.dv-term-bar { display: flex; align-items: center; gap: 7px; padding: 11px 14px; background: #131826; border-bottom: 1px solid #232938; }
+.dv-term-bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a4154; }
+.dv-term-bar i:nth-child(1) { background: #ff5f57; }
+.dv-term-bar i:nth-child(2) { background: #febc2e; }
+.dv-term-bar i:nth-child(3) { background: #28c840; }
+.dv-term-bar span { margin-left: 8px; font: 12px var(--dv-mono); color: #6b7385; }
+.dv-term pre { margin: 0; padding: 18px 20px; font: 13.5px/1.9 var(--dv-mono); color: #d7dce8; overflow-x: auto; }
+.dv-term pre code { background: none; padding: 0; font: inherit; }
+.dv-term b { color: var(--dv-green); font-weight: 700; margin-right: 6px; }
+.dv-term em { color: #7e8aa6; font-style: normal; }
+.dv-term u { display: inline-block; width: 8px; height: 1.1em; vertical-align: -3px; margin-left: 4px; background: var(--dv-green); text-decoration: none; animation: dv-blink 1.1s steps(1) infinite; }
+@keyframes dv-blink { 50% { opacity: 0; } }
+
+.dv-body { padding-top: 56px; padding-bottom: 80px; }
+.dv-h { margin: 0 0 18px; font: 700 14px var(--dv-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.dv-h::before { content: "// "; color: var(--accent); }
+.dv-note-ja { margin: -6px 0 16px; color: var(--muted); font-size: 13px; }
+.dv-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; margin-bottom: 56px; }
+.dv-c { display: block; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); text-decoration: none; transition: border-color .2s, transform .2s, box-shadow .2s; }
+.dv-c:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 16%, transparent); }
+.dv-c code { font: 700 12px var(--dv-mono); color: var(--accent); }
+.dv-c h3 { margin: 8px 0 4px; font-size: 17px; font-weight: 800; }
+.dv-c p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.dv-stack { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 0; }
+.dv-stack li { font: 600 13px var(--dv-mono); padding: 6px 14px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); }
+
+/* ---- Document ---- */
+.dv { max-width: 780px; padding-top: 48px; padding-bottom: 80px; line-height: 1.85; }
+.dv h1 { margin: 0 0 8px; font-size: 38px; line-height: 1.2; font-weight: 800; letter-spacing: -.03em; }
+.dv h1::before { content: "~/"; font-family: var(--dv-mono); color: var(--accent); margin-right: 4px; }
+.dv h2 { margin: 56px 0 12px; padding-top: 10px; font-size: 22px; font-weight: 800; scroll-margin-top: 80px; }
+.dv h2::before { content: "#"; font-family: var(--dv-mono); color: var(--accent); margin-right: 10px; font-weight: 700; }
+.dv h3 { margin: 24px 0 6px; font-size: 16px; font-weight: 800; }
+.dv .lead { color: var(--muted); margin: 0 0 8px; max-width: none; }
+.dv a { color: var(--accent); }
+.dv .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; font: 600 13px var(--dv-mono); }
+.dv .toc a { padding: 6px 14px; border: 1px solid var(--line-strong); border-radius: 999px; text-decoration: none; color: var(--ink); background: var(--surface); }
+.dv .toc a:hover { border-color: var(--accent); color: var(--accent); }
+.dv code { font-family: var(--dv-mono); background: var(--surface-2); padding: .12em .4em; border-radius: 5px; font-size: .88em; }
+.dv pre { margin: 16px 0; padding: 16px 18px; overflow-x: auto; background: var(--dv-term); color: #d7dce8; border: 1px solid #232938; border-radius: 12px; font-size: 13.5px; line-height: 1.7; box-shadow: 0 8px 24px rgba(13, 16, 20, .14); }
+.dv pre code { background: none; padding: 0; color: inherit; }
+.dv .dv-note { margin: 16px 0; padding: 12px 16px; border: 1px solid var(--accent-line); border-left: 3px solid var(--accent); border-radius: 10px; background: color-mix(in srgb, var(--accent) 7%, var(--surface)); font-size: 14px; }
+.dv .dv-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+.dv .dv-table th, .dv .dv-table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.dv .dv-table th { color: var(--muted); font: 700 12px var(--dv-mono); text-transform: uppercase; letter-spacing: .05em; }
+.dv .dv-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line-strong); vertical-align: -1px; margin-right: 6px; }
+@media (prefers-reduced-motion: reduce) { .dv-term u { animation: none; } .dv-c { transition: none; } }

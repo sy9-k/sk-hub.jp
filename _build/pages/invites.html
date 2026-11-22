@@ -1,0 +1,46 @@
+    <!-- 招待の状況（/account/invites/）。ログインしているアカウントが、どのプロダクトに招待されているかを見せる。動きは /account/invites/invites.js -->
+    <section class="p-hero band band--plain">
+      <div class="wrap">
+        <span class="eyebrow">SK Hub Systems アカウント</span>
+        <h1>招待の状況</h1>
+        <p class="lead">SK Study・SK Office・Y-FILTER. は、いま招待制です。ログインしているアカウントが、どれに招待されているかを確かめて、そのまま開けます。</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="wrap iv-wrap">
+        <div class="card iv-who" id="iv-who">
+          <p class="iv-checking"><span class="iv-spin" aria-hidden="true"></span>ログインを確かめています…</p>
+        </div>
+
+        <div class="iv-list" id="iv-list" hidden>
+          <article class="card iv-item" data-product="study">
+            <img src="/study/ico/icon-192.png" alt="" width="48" height="48">
+            <div class="iv-text"><strong>SK Study</strong><small>単語カード・小テスト・クラス</small></div>
+            <span class="iv-state" data-state>確認中</span>
+            <div class="iv-act" data-act></div>
+          </article>
+          <article class="card iv-item" data-product="office">
+            <img src="https://office.sk-hub.jp/icons/office-logo.png" alt="" width="48" height="48">
+            <div class="iv-text"><strong>SK Office</strong><small>文書・表・スライド</small></div>
+            <span class="iv-state" data-state>確認中</span>
+            <div class="iv-act" data-act></div>
+          </article>
+          <article class="card iv-item" data-product="yfilter">
+            <img class="yf-tile" src="/y-filter/shared/icon.svg" alt="" width="48" height="48">
+            <div class="iv-text"><strong>Y-FILTER.</strong><small>ブラウザフィルター・管理コンソール</small></div>
+            <span class="iv-state" data-state>確認中</span>
+            <div class="iv-act" data-act></div>
+          </article>
+        </div>
+
+        <aside class="iv-note">
+          <h2>招待について</h2>
+          <ul>
+            <li>招待は、メールアドレスごとです。招待されたメールアドレスの <strong>Google アカウント</strong>でログインしたときだけ開けます。</li>
+            <li>GitHub や LINE など、Google 以外のログインでは開けません。</li>
+            <li>まだ招待されていないものは、<a href="/waiting/">早期アクセス</a>に登録しておくと、順番がきたときにメールでお知らせします。</li>
+          </ul>
+        </aside>
+      </div>
+    </section>

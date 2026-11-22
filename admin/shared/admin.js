@@ -41,7 +41,7 @@ export const NAV = [
   { heading: "ユーザー" },
   { id: "accounts", href: "/accounts/", icon: "manage_search", label: "アカウントを探す" },
   { id: "access", href: "/access/", icon: "shield_person", label: "アクセスの制限" },
-  { id: "invites", href: "/invites/", icon: "mail_lock", label: "招待と順番待ち" },
+  { id: "invites", href: "/invites/", icon: "mail_lock", label: "招待と早期アクセス" },
   { id: "teachers", href: "/teachers/", icon: "school", label: "SK Study の指導者" },
   { heading: "コンテンツ" },
   { id: "share", href: "/share/", icon: "lock_open", label: "SK Share" },
@@ -231,7 +231,7 @@ export const LOG_LABEL = {
   "invite.add": "SK Study・SK Office に招待した",
   "invite.mail": "招待のメールを送った",
   "invite.remove": "招待を取り消した",
-  "waitlist.remove": "順番待ちから消した"
+  "waitlist.remove": "早期アクセスから消した"
 };
 let currentUser = null;
 let logWarned = false;

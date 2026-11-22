@@ -1,0 +1,114 @@
+    <!-- SK Study の製品ページ（招待制）。Nagi・MALU と同じ並び: 表紙 → 画面のイメージ → 特長 → 使い方 → 補足。見た目は /products/study/study.css -->
+    <section class="p-hero band band--study">
+      <div class="wrap">
+        <div class="top">
+          <img class="icon" src="/study/ico/icon-192.png" alt="">
+          <div>
+            <h1>SK Study</h1>
+            <div class="kind">単語学習（Web）</div>
+          </div>
+          <span class="badge badge-dev"><span class="dot"></span>招待制</span>
+        </div>
+        <p class="lead">単語カード・4 択・書き取りで、英語・韓国語・中国語や、自分で作った単語帳を覚える。忘れかけた頃にもう一度出してくれるので、すきま時間でも身につきます。いまは招待した方だけが使えます。</p>
+        <div class="btn-row">
+          <a class="btn btn-primary study-btn" href="/waiting/?product=study">早期アクセスに登録する<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-tonal" href="/study/">招待された方はこちら</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SK Study の画面のイメージ（CSS で描いたもの。本物の画面は /study/） -->
+    <section class="section screenshot-wrap">
+      <div class="wrap">
+        <div class="window study-mock" aria-hidden="true">
+          <div class="window-bar"><i></i><i></i><i></i><span class="window-url">sk-hub.jp/study</span></div>
+          <div class="study-mock-body">
+            <div class="study-mock-quiz">
+              <div class="study-mock-seg"><span>カード</span><span class="on">✓ 4 択</span><span>書き取り</span></div>
+              <div class="study-mock-flash"><small>英語</small><strong>perseverance</strong></div>
+              <div class="study-mock-choices"><i>忍耐</i><i class="on">粘り強さ</i><i>幸運</i><i>反対</i></div>
+            </div>
+            <div class="study-mock-cards">
+              <div class="study-mock-card">
+                <small>今日の学習</small>
+                <strong>24 語 <em>/ 30 語</em></strong>
+                <div class="study-mock-bar"><span></span></div>
+                <span class="study-mock-streak">5日連続</span>
+              </div>
+              <div class="study-mock-card">
+                <small>覚えた度合い</small>
+                <div class="study-mock-level"><i style="--h:.4"></i><i style="--h:.7"></i><i style="--h:1" class="met"></i><i style="--h:.55"></i><i style="--h:.85"></i><i style="--h:1" class="met"></i><i style="--h:.6"></i></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Features</span>
+          <h2>特長</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card feature">
+            <span class="tile-ico ti-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg></span>
+            <h3>単語を覚える</h3>
+            <p>SK の単語セットと、自分で作る「マイ単語帳」。覚えた度合いに合わせて、出す単語を変えます。</p>
+          </div>
+          <div class="card feature">
+            <span class="tile-ico ti-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.8 2.1c-.8.5-1.3 1-1.3 2M12 17h.01"/></svg></span>
+            <h3>4 択・書き取り</h3>
+            <p>カードでめくる・4 つから選ぶ・書いて答える。同じ単語を、いろいろな形で練習できます。</p>
+          </div>
+          <div class="card feature">
+            <span class="tile-ico ti-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 13h6M10 17h4"/></svg></span>
+            <h3>プリントと小テスト</h3>
+            <p>HTML や PDF のプリントに答えると、そのまま自動で採点。答え合わせは下から出るシートで見られます。</p>
+          </div>
+          <div class="card feature">
+            <span class="tile-ico ti-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 1.5 6 5.5"/></svg></span>
+            <h3>クラス</h3>
+            <p>先生のクラスに参加して、出された課題を提出できます。</p>
+          </div>
+          <div class="card feature">
+            <span class="tile-ico ti-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></span>
+            <h3>ホーム画面に追加</h3>
+            <p>ホーム画面に追加すると、アプリのようにすぐ開けます。画面の切りかえは Android の動きに合わせています。</p>
+          </div>
+          <div class="card feature">
+            <span class="tile-ico ti-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-13.7 5.6M4 12a8 8 0 0 1 13.7-5.6"/><path d="M18 3v4h-4M6 21v-4h4"/></svg></span>
+            <h3>端末のあいだで同期</h3>
+            <p>SK Hub Systems アカウントでログインすると、学習の記録が端末のあいだでそろいます。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">How it works</span>
+          <h2>使いはじめるまで</h2>
+        </div>
+        <ol class="study-steps">
+          <li><b>1</b><div><strong>早期アクセスに登録</strong><p>メールアドレスだけ。アカウントは、まだ作らなくて大丈夫です。</p></div></li>
+          <li><b>2</b><div><strong>招待のメールが届く</strong><p>順番がきたら、使いはじめ方を書いたメールをお送りします。</p></div></li>
+          <li><b>3</b><div><strong>Google でログインして、はじめる</strong><p>そのメールアドレスの Google アカウントでログインします。</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="card study-privacy">
+          <span class="tile-ico ti-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <div>
+            <h2>招待制で、少しずつ</h2>
+            <p>安心して使ってもらえるように、少しずつ人を増やしています。登録したメールアドレスは、招待のお知らせにだけ使います。SK Study はいま試作で、使いながら見た目や機能を整えています。</p>
+            <p class="study-privacy-links"><a href="/policies/privacy/">SK プライバシーポリシー</a><a href="/waiting/?product=study">早期アクセスに登録する</a></p>
+          </div>
+        </div>
+      </div>
+    </section>

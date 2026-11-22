@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SK Material App System Design1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@24,400,1,0&display=block">
+<style>
+/* SK Material App System Design1
+   ベースは Material Design 1（2014 年の Material Design）。M3 ではなく、MD1 の仕様で作る。
+   - 紙と影: 面は紙。高さは z-depth（影）だけで表す。角は 2px。
+   - 色: SK Material と同じ配色（SK's Blue）。帯=primary-container、主ボタン=primary、FAB=tertiary-container。使い方は MD1（色は帯・主ボタン・FAB に集める）
+   - 部品: 高さ 36 の大文字ボタン（角 2px）・円形 FAB・下線だけの入力・インクの波紋・スナックバー（#323232）
+   - 大きさ: 8dp の方眼。上の帯は 56（広い画面は 64）、リストは 56 / 72、押せる大きさは 48
+   - 動き: fast-out-slow-in（.4,0,.2,1）。出る 225ms・消える 195ms・波紋 300ms
+   - 文字: Roboto の段階（Display / Headline / Title / Subhead / Body / Caption / Button）に、日本語は M PLUS 1
+   - ダーク: SK Material のダーク（地 #11131b・紙 #1d1f27）
+   SK Material（M3 がもと）とは別系統。共有するのは SK's Blue の色あいと M PLUS 1 だけ。 */
+/* 配色は SK Material（SK's Blue）と同じ値。役割の対応: primary=primary / 上の帯=primary-container / FAB・復習=tertiary(-container) / 選んだチップ=secondary-container
+     地は surface-container、紙は surface（MD1 の「灰の地に白い紙」を SK の値で） */
+:root {
+  --primary:#004ac6; --on-primary:#ffffff; --primary-dark:#003ea8; --primary-container:#2563eb; --on-primary-container:#eeefff;
+  --secondary-container:#acbfff; --on-secondary-container:#394c84;
+  --tertiary:#943700; --tertiary-container:#bc4800; --on-tertiary-container:#ffede6; --tertiary-dark:#7a2d00;
+  --error:#ba1a1a; --error-container:#ffdad6; --on-error-container:#93000a;
+  --good:#006b2c; --good-container:#baecbc; --on-good-container:#00531f;
+  --bg:#ededf9; --paper:#faf8ff; --paper-2:#f3f3fe; --paper-3:#e7e7f3; --chip:#e1e2ed;
+  --text:#191b23; --text-2:#434655; --text-3:#737686;
+  --divider:#c3c6d7;
+  --bar:var(--primary-container); --on-bar:var(--on-primary-container);
+  --link:var(--primary);
+  --ink:rgba(25,27,35,.16);
+  --inverse:#2e3039; --on-inverse:#f0f0fb; --inverse-action:#b4c5ff;
+  --good-bg:var(--good-container); --good-fg:var(--on-good-container); --bad-bg:var(--error-container); --bad-fg:var(--on-error-container);
+  --font:"Roboto","M PLUS 1","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+
+  /* z-depth（MD1 の影） */
+  --z1:0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.12),0 1px 5px 0 rgba(0,0,0,.2);
+  --z2:0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12),0 2px 4px -1px rgba(0,0,0,.2);
+  --z3:0 6px 10px 0 rgba(0,0,0,.14),0 1px 18px 0 rgba(0,0,0,.12),0 3px 5px -1px rgba(0,0,0,.2);
+  --z4:0 8px 10px 1px rgba(0,0,0,.14),0 3px 14px 2px rgba(0,0,0,.12),0 5px 5px -3px rgba(0,0,0,.2);
+  --z5:0 16px 24px 2px rgba(0,0,0,.14),0 6px 30px 5px rgba(0,0,0,.12),0 8px 10px -5px rgba(0,0,0,.2);
+  --radius:2px;
+  --fast-out-slow-in:cubic-bezier(.4,0,.2,1); --decel:cubic-bezier(0,0,.2,1); --accel:cubic-bezier(.4,0,1,1);
+}
+:root[data-theme="dark"]{
+  --primary:#b4c5ff; --on-primary:#002a78; --primary-dark:#c9d4ff; --primary-container:#2563eb; --on-primary-container:#eeefff;
+  --secondary-container:#33467e; --on-secondary-container:#a4b6f5;
+  --tertiary:#ffb596; --tertiary-container:#bc4800; --on-tertiary-container:#ffede6; --tertiary-dark:#a33f00;
+  --error:#ffb4ab; --error-container:#93000a; --on-error-container:#ffdad6;
+  --good:#7fdc9b; --good-container:#0f3a1d; --on-good-container:#baecbc;
+  --bg:#11131b; --paper:#1d1f27; --paper-2:#191b23; --paper-3:#282a32; --chip:#32343d;
+  --text:#e1e2ed; --text-2:#c3c6d7; --text-3:#8d90a0;
+  --divider:#434655;
+  --bar:var(--primary-container); --on-bar:var(--on-primary-container); --link:#b4c5ff; --ink:rgba(225,226,237,.2);
+  --inverse:#e1e2ed; --on-inverse:#2e3039; --inverse-action:#0053db;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.6 var(--font);-webkit-font-smoothing:antialiased}
+.ic{font-family:"Material Symbols Sharp";font-weight:400;font-style:normal;font-size:24px;line-height:1;display:inline-block;vertical-align:middle;font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24;user-select:none}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--link)}
+
+/* ===== MD1 の文字の段階 ===== */
+.t-display{font-size:34px;font-weight:400;line-height:40px}
+.t-headline{font-size:24px;font-weight:400;line-height:32px}
+.t-title{font-size:20px;font-weight:500;line-height:28px}
+.t-subhead{font-size:16px;font-weight:400;line-height:24px}
+.t-body2{font-size:14px;font-weight:500;line-height:24px}
+.t-body1{font-size:14px;font-weight:400;line-height:20px}
+.t-caption{font-size:12px;font-weight:400;line-height:16px;color:var(--text-2)}
+
+/* ===== ページ（見本のまわり） ===== */
+.page-bar{position:sticky;top:0;z-index:20;height:56px;display:flex;align-items:center;gap:16px;padding:0 16px;background:var(--bar);color:var(--on-bar);box-shadow:var(--z2)}
+.page-bar h1{margin:0;font-size:20px;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.page-bar nav{display:flex;gap:0;overflow-x:auto}
+.page-bar nav a{color:inherit;text-decoration:none;font-size:14px;font-weight:500;padding:0 12px;line-height:56px;white-space:nowrap;opacity:.8}
+.page-bar nav a:hover{opacity:1;background:rgba(255,255,255,.1)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 96px}
+.hero{padding:48px 0 16px}
+.hero .tag{display:inline-block;font-size:12px;font-weight:500;letter-spacing:.06em;color:var(--on-tertiary-container);background:var(--tertiary-container);padding:2px 8px;border-radius:var(--radius)}
+.hero h2{margin:16px 0 8px;font-size:clamp(28px,5vw,45px);line-height:1.2;font-weight:400}
+.hero p{margin:0;max-width:640px;color:var(--text-2);font-size:16px;line-height:24px}
+section{padding:40px 0 8px}
+section>h3{margin:0 0 4px;font-size:24px;font-weight:400}
+section>.lead{margin:0 0 24px;color:var(--text-2);max-width:680px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+code{font:500 12.5px/1.4 ui-monospace,Consolas,monospace;background:var(--paper-3);padding:1px 6px;border-radius:var(--radius)}
+.theme-btn{border:0;background:transparent;color:inherit;height:36px;padding:0 8px;border-radius:var(--radius);display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500;text-transform:uppercase;position:relative;overflow:hidden}
+.theme-btn:hover{background:rgba(255,255,255,.1)}
+
+/* ===== Design1 の部品 ===== */
+/* 紙（カード）: 白い紙・角 2・z1。枠線は引かない */
+.card{background:var(--paper);border-radius:var(--radius);box-shadow:var(--z1);padding:16px;transition:box-shadow 225ms var(--fast-out-slow-in)}
+.card.raise:hover{box-shadow:var(--z4)}
+.card h4{margin:0 0 4px;font-size:20px;font-weight:500;line-height:28px}
+.card p{margin:0;color:var(--text-2)}
+
+/* ボタン: 高さ 36・最小幅 88・角 2・大文字・14/500。raised は z2、flat は文字だけ */
+.btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:88px;height:36px;padding:0 16px;border:0;border-radius:var(--radius);background:transparent;color:var(--primary);font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;transition:box-shadow 225ms var(--fast-out-slow-in),background 195ms var(--fast-out-slow-in)}
+.btn:hover{background:color-mix(in srgb,var(--primary) 10%,transparent)}
+.btn.raised{background:var(--primary);color:var(--on-primary);box-shadow:var(--z2)}
+.btn.raised:hover{background:var(--primary-dark);box-shadow:var(--z3)}
+.btn.raised:active{box-shadow:var(--z4)}
+.btn.neutral{background:var(--chip);color:var(--text);box-shadow:var(--z2)}
+.btn.neutral:hover{background:var(--chip);box-shadow:var(--z3)}
+.btn.tertiary{background:var(--tertiary-container);color:var(--on-tertiary-container);box-shadow:var(--z2)}
+.btn.tertiary:hover{filter:brightness(.92);box-shadow:var(--z3)}
+.btn.danger{color:var(--error)}
+.btn[disabled]{color:var(--text-3);background:transparent;box-shadow:none;pointer-events:none}
+.btn.raised[disabled]{background:color-mix(in srgb,var(--text) 12%,transparent)}
+.btn .ic{font-size:18px}
+.ripple{position:absolute;border-radius:50%;background:var(--ink);transform:scale(0);opacity:1;pointer-events:none;animation:ripple 300ms var(--decel) forwards}
+.btn.raised .ripple{background:color-mix(in srgb,var(--on-primary) 30%,transparent)}
+.btn.tertiary .ripple,.fab .ripple,.bar-btn .ripple,.tab .ripple{background:rgba(255,255,255,.3)}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+
+/* FAB: 直径 56 の円・accent・z3（押すと z5）。画面に 1 つだけ */
+.fab{position:relative;overflow:hidden;display:inline-grid;place-items:center;width:56px;height:56px;border:0;border-radius:50%;background:var(--tertiary-container);color:var(--on-tertiary-container);box-shadow:var(--z3);transition:box-shadow 225ms var(--fast-out-slow-in),transform 225ms var(--fast-out-slow-in)}
+.fab:hover{filter:brightness(.92)}
+.fab:active{box-shadow:var(--z5)}
+.fab.mini{width:40px;height:40px}
+
+/* チップ: 高さ 32・全丸・#e0e0e0。選ぶと濃い灰（MD1 の chip） */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 12px;border:0;border-radius:16px;background:var(--chip);color:var(--text);font-size:13px;transition:background 195ms var(--fast-out-slow-in),color 195ms}
+.chip[aria-pressed="true"]{background:var(--secondary-container);color:var(--on-secondary-container)}
+.chip .ic{font-size:18px}
+
+/* 入力: 下線だけ。選ぶと線が 2px の primary、ラベルは上に浮く */
+.field{position:relative;display:block;padding-top:16px}
+.field input{width:100%;height:40px;padding:12px 0 0;border:0;border-bottom:1px solid var(--text-3);border-radius:0;background:transparent;color:var(--text);font:inherit;font-size:16px;outline:0;transition:border-color 195ms,box-shadow 195ms}
+.field input:focus{border-bottom-color:var(--primary);box-shadow:0 1px 0 0 var(--primary)}
+.field span{position:absolute;left:0;top:30px;font-size:16px;color:var(--text-2);pointer-events:none;transition:all 195ms var(--fast-out-slow-in);transform-origin:left top}
+.field input:focus+span,.field input:not(:placeholder-shown)+span{top:16px;font-size:12px}
+.field input:focus+span{color:var(--primary)}
+
+/* タブ: 色つきの帯に白い字、下に accent の線 */
+.tabs{display:flex;background:var(--bar);color:var(--on-bar);box-shadow:var(--z2);border-radius:var(--radius) var(--radius) 0 0}
+.tab{position:relative;overflow:hidden;flex:1;height:48px;border:0;background:transparent;font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;color:color-mix(in srgb,var(--on-bar) 70%,transparent)}
+.tab[aria-selected="true"]{color:var(--on-bar)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#ffb596}
+
+/* スイッチ・チェック */
+.sw-row{display:flex;align-items:center;justify-content:space-between;min-height:48px}
+.switch{position:relative;width:36px;height:14px;border-radius:7px;background:var(--text-3);border:0;padding:0;transition:background 195ms}
+.switch::after{content:"";position:absolute;left:-3px;top:-3px;width:20px;height:20px;border-radius:50%;background:#fafafa;box-shadow:var(--z1);transition:transform 195ms var(--fast-out-slow-in),background 195ms}
+.switch[aria-checked="true"]{background:color-mix(in srgb,var(--tertiary-container) 50%,transparent)}
+.switch[aria-checked="true"]::after{transform:translateX(22px);background:var(--tertiary-container)}
+
+/* リスト: 1 行 56・2 行 72。左に丸いアバター 40。区切りは 1px の線（アバターの右から） */
+.list{margin:0;padding:8px 0;list-style:none;background:var(--paper);border-radius:var(--radius);box-shadow:var(--z1)}
+.li{position:relative;display:flex;align-items:center;gap:16px;min-height:72px;padding:0 16px}
+.li.one{min-height:56px}
+.li+.li::before{content:"";position:absolute;top:0;left:72px;right:0;height:1px;background:var(--divider)}
+.li .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;color:var(--on-primary-container);background:var(--primary-container)}
+.li .tx{flex:1;min-width:0}
+.li .tx b{display:block;font-size:16px;font-weight:400;line-height:24px}
+.li .tx small{display:block;color:var(--text-2);font-size:14px;line-height:20px}
+.li .end{font-size:12px;color:var(--text-2)}
+
+/* 進み具合: 4px の帯 */
+.prog{height:4px;background:var(--secondary-container);overflow:hidden}
+.prog>i{display:block;height:100%;background:var(--primary);transition:width 375ms var(--fast-out-slow-in)}
+
+/* ===== 見本: 色・文字・影・動き ===== */
+.sw{border-radius:var(--radius);padding:12px;min-height:88px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:var(--z1)}
+.sw b{font-size:14px;font-weight:500}
+.sw small{opacity:.85;font-family:ui-monospace,Consolas,monospace;font-size:11px}
+.rule{display:grid;grid-template-columns:120px 1fr;gap:8px 16px;margin:0}
+.rule dt{font-weight:500}
+.rule dd{margin:0;color:var(--text-2)}
+.ty{display:grid;grid-template-columns:140px 1fr;align-items:baseline;gap:16px;padding:12px 0;border-bottom:1px solid var(--divider)}
+.ty:last-child{border:0}
+.ty small{font-size:12px;color:var(--text-2)}
+.z{height:96px;border-radius:var(--radius);background:var(--paper);display:grid;place-items:center;font-size:13px;font-weight:500}
+.mo{display:grid;gap:12px}
+.mo-row{display:grid;grid-template-columns:140px 1fr;align-items:center;gap:16px;font-size:13px}
+.mo-track{height:24px;position:relative;border-bottom:1px solid var(--divider)}
+.mo-dot{position:absolute;top:2px;left:0;width:20px;height:20px;border-radius:50%;background:var(--tertiary-container)}
+.mo.go .mo-dot{left:calc(100% - 20px)}
+
+/* ===== スマホの枠（Study の見本） ===== */
+.phones{display:flex;flex-wrap:wrap;gap:32px;justify-content:center;padding:8px 0}
+.phone{width:320px;height:640px;border-radius:24px;background:var(--bg);box-shadow:var(--z5),0 0 0 8px var(--inverse);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.status{flex:none;height:24px;background:var(--primary);color:var(--on-primary);font-size:11px;display:flex;align-items:center;justify-content:space-between;padding:0 12px}
+.p-bar{flex:none;height:56px;display:flex;align-items:center;gap:8px;padding:0 4px 0 16px;background:var(--bar);color:var(--on-bar);box-shadow:var(--z2);position:relative;z-index:2}
+.p-bar b{flex:1;font-size:20px;font-weight:500}
+.bar-btn{position:relative;overflow:hidden;width:48px;height:48px;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;color:inherit}
+.p-body{flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
+.p-nav{flex:none;height:56px;display:flex;background:var(--paper);box-shadow:0 -2px 4px rgba(0,0,0,.14)}
+.p-nav button{position:relative;overflow:hidden;flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--text-2)}
+.p-nav button[aria-current="page"]{color:var(--primary)}
+.p-fab{position:absolute;right:16px;bottom:72px;z-index:3}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stat div{padding:12px 4px;border-radius:var(--radius);background:var(--paper);box-shadow:var(--z1)}
+.stat b{display:block;font-size:24px;font-weight:400;line-height:32px}
+.stat small{font-size:12px;color:var(--text-2)}
+.q-word{font-size:34px;font-weight:400;text-align:center;margin:8px 0 0;line-height:40px}
+.q-sub{text-align:center;color:var(--text-2);font-size:14px;margin:0}
+.choice{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;width:100%;min-height:56px;padding:0 16px;border:0;border-radius:var(--radius);background:var(--paper);box-shadow:var(--z1);text-align:left;font-size:16px;transition:box-shadow 225ms var(--fast-out-slow-in),background 225ms}
+.choice .k{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:13px;font-weight:500;background:var(--chip);color:var(--text-2)}
+.choice:hover{box-shadow:var(--z3)}
+.choice.is-right{background:var(--good-bg);color:var(--good-fg)}
+.choice.is-right .k{background:var(--good);color:var(--paper)}
+.choice.is-wrong{background:var(--bad-bg);color:var(--bad-fg)}
+.choice.is-wrong .k{background:var(--error);color:var(--paper)}
+.snack{display:flex;align-items:center;gap:24px;min-height:48px;padding:0 8px 0 24px;border-radius:var(--radius);background:var(--inverse);color:var(--on-inverse);font-size:14px;box-shadow:var(--z3)}
+.snack span{flex:1}
+.snack .btn{color:var(--inverse-action);min-width:0}
+.mem{display:flex;height:8px;overflow:hidden}
+.mem i{display:block;height:100%}
+footer{padding:32px 16px;text-align:center;font-size:12px;color:var(--text-2)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
+@media (max-width:640px){.page-bar nav{display:none}.rule{grid-template-columns:1fr}.ty,.mo-row{grid-template-columns:1fr;gap:4px}}
+</style>
+</head>
+<body>
+
+<header class="page-bar">
+  <h1>SK Material App System Design1</h1>
+  <nav aria-label="目次"><a href="#principles">考え方</a><a href="#color">色</a><a href="#type">文字</a><a href="#shape">形と影</a><a href="#motion">動き</a><a href="#parts">部品</a><a href="#study">Study</a></nav>
+  <button class="theme-btn" id="themeBtn" type="button" aria-label="ライトとダークを切りかえる"><span class="ic" id="themeIco">brightness_4</span><span id="themeTx">ダーク</span></button>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <span class="tag">DESIGN 1 ・ MATERIAL DESIGN 1 BASE</span>
+    <h2>紙とインクの<br>アプリ・システム</h2>
+    <p>2014 年の Material Design（MD1）をそのままベースにした、アプリ画面用のデザイン。面は紙で、高さは影（z-depth）だけで表します。色は原色のパレット、角は 2px、押すとインクの波紋。最初の当てはめ先は SK Study です。</p>
+  </div>
+
+  <section id="principles">
+    <h3>考え方</h3>
+    <p class="lead">SK Material（M3 がもと）とは別系統です。MD1 の決まりごとを土台に、SK's Blue の色あいと M PLUS 1 だけを合わせています。</p>
+    <div class="grid g3">
+      <div class="card"><h4>紙と影</h4><p>面はすべて紙。z1〜z5 の影の 5 段で高さを表し、枠線は引かない。</p></div>
+      <div class="card"><h4>SK Material の配色</h4><p>色は SK Material（SK's Blue）と同じ値。使い方だけ MD1 に合わせ、色は帯・主ボタン・FAB に集める。</p></div>
+      <div class="card"><h4>角は 2px</h4><p>ボタン・カード・入力・スナックバーは 2px。丸いのは FAB・アバター・チップだけ。</p></div>
+      <div class="card"><h4>8dp の方眼</h4><p>余白と大きさは 8 の倍数。上の帯 56、リスト 56 / 72、押せる大きさ 48。</p></div>
+      <div class="card"><h4>インクの波紋</h4><p>押した場所から広がる。動きは fast-out-slow-in で、弾まない。</p></div>
+      <div class="card"><h4>画面の骨組み</h4><p>ステータスバー 24 + 上の帯 56 + 中身 + 下のナビ 56。FAB は右下に 1 つ。</p></div>
+    </div>
+  </section>
+
+  <section id="color">
+    <h3>色</h3>
+    <p class="lead">値は SK Material（SK's Blue・ライト/ダーク）をそのまま使います。MD1 の「灰の地に白い紙」に合わせて、地は surface-container、紙は surface にしました。右上のボタンでダークにできます。</p>
+    <div class="grid g3">
+      <div class="sw" style="background:var(--primary-container);color:var(--on-primary-container)"><b>primary-container</b><small>#2563eb ・ 上の帯</small></div>
+      <div class="sw" style="background:var(--primary);color:var(--on-primary)"><b>primary</b><small>#004ac6 ・ 主ボタン・ステータスバー・リンク</small></div>
+      <div class="sw" style="background:var(--tertiary-container);color:var(--on-tertiary-container)"><b>tertiary-container</b><small>#bc4800 ・ FAB・スイッチ・タブの線</small></div>
+      <div class="sw" style="background:var(--secondary-container);color:var(--on-secondary-container)"><b>secondary-container</b><small>#acbfff ・ 選んだチップ・進みの地</small></div>
+      <div class="sw" style="background:var(--good-container);color:var(--on-good-container)"><b>good</b><small>#006b2c ・ 正解・記憶済み（SK's Matcha）</small></div>
+      <div class="sw" style="background:var(--error-container);color:var(--on-error-container)"><b>error</b><small>#ba1a1a ・ まちがい・弱点</small></div>
+      <div class="sw" style="background:var(--paper);color:var(--text)"><b>surface（紙）</b><small>#faf8ff ・ カード</small></div>
+      <div class="sw" style="background:var(--bg);color:var(--text)"><b>surface-container（地）</b><small>#ededf9 ・ 画面の地</small></div>
+    </div>
+    <dl class="rule" style="margin-top:24px">
+      <dt>文字の色</dt><dd>本文は on-surface、補足は on-surface-variant、無効は outline。</dd>
+      <dt>区切り線</dt><dd>outline-variant、1px。</dd>
+    </dl>
+  </section>
+
+  <section id="type">
+    <h3>文字</h3>
+    <p class="lead">MD1 の文字の段階（Roboto）に合わせ、日本語は M PLUS 1 で表示します。</p>
+    <div class="card">
+      <div class="ty"><small>Display 1 ・ 34/40</small><span class="t-display">出題の単語</span></div>
+      <div class="ty"><small>Headline ・ 24/32</small><span class="t-headline">今日の復習</span></div>
+      <div class="ty"><small>Title ・ 20/28 ・ 500</small><span class="t-title">上の帯・カードの見出し</span></div>
+      <div class="ty"><small>Subhead ・ 16/24</small><span class="t-subhead">リストの 1 行目・入力した文字</span></div>
+      <div class="ty"><small>Body 2 ・ 14/24 ・ 500</small><span class="t-body2">強調した本文</span></div>
+      <div class="ty"><small>Body 1 ・ 14/20</small><span class="t-body1">本文。リストの 2 行目はこの大きさ（54%）。</span></div>
+      <div class="ty"><small>Caption ・ 12/16</small><span class="t-caption">補足・下のナビの名前・注意書き</span></div>
+      <div class="ty"><small>Button ・ 14 ・ 500 ・ 大文字</small><span class="t-body2" style="text-transform:uppercase;letter-spacing:.04em">Start review</span></div>
+    </div>
+  </section>
+
+  <section id="shape">
+    <h3>形と影</h3>
+    <p class="lead">高さは z-depth の 5 段。ホバーで上がり、押している間はさらに上がります。</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+      <div class="z" style="box-shadow:var(--z1)">z1 ・ カード</div>
+      <div class="z" style="box-shadow:var(--z2)">z2 ・ 上の帯・ボタン</div>
+      <div class="z" style="box-shadow:var(--z3)">z3 ・ FAB</div>
+      <div class="z" style="box-shadow:var(--z4)">z4 ・ メニュー</div>
+      <div class="z" style="box-shadow:var(--z5)">z5 ・ ダイアログ</div>
+    </div>
+    <dl class="rule" style="margin-top:24px">
+      <dt>角</dt><dd>2px が基本。円は FAB・アバター・スイッチのつまみ。チップは 16px（全丸）。</dd>
+      <dt>余白</dt><dd>画面の左右 16（カード同士は 8）。カードの内側 16。リストの左は 16、文字は 72 から。</dd>
+      <dt>押せる大きさ</dt><dd>最小 48×48。見た目が 36 のボタンも、上下に 6 ずつ当たり判定を足す。</dd>
+    </dl>
+  </section>
+
+  <section id="motion">
+    <h3>動き</h3>
+    <p class="lead">MD1 のカーブ。出るときはゆっくり止まり、消えるときは加速して去ります。</p>
+    <div class="card">
+      <div class="mo" id="mo">
+        <div class="mo-row"><span>動かす 225ms</span><div class="mo-track"><i class="mo-dot" style="transition:left 225ms var(--fast-out-slow-in)"></i></div></div>
+        <div class="mo-row"><span>出てくる 225ms</span><div class="mo-track"><i class="mo-dot" style="transition:left 225ms var(--decel)"></i></div></div>
+        <div class="mo-row"><span>消える 195ms</span><div class="mo-track"><i class="mo-dot" style="transition:left 195ms var(--accel)"></i></div></div>
+      </div>
+      <div style="margin-top:16px"><button class="btn neutral" id="moBtn" type="button"><span class="ic">play_arrow</span>動かす</button></div>
+    </div>
+  </section>
+
+  <section id="parts">
+    <h3>部品</h3>
+    <p class="lead">押すとインクの波紋（300ms）が出ます。</p>
+    <div class="grid g2">
+      <div class="card"><h4>ボタン</h4><p style="margin-bottom:16px">主は raised（塗る）。ほかは flat（文字だけ）。</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn raised" type="button"><span class="ic">play_arrow</span>はじめる</button>
+          <button class="btn tertiary" type="button">ほしい</button>
+          <button class="btn neutral" type="button">あとで</button>
+          <button class="btn" type="button">キャンセル</button>
+          <button class="btn danger" type="button">削除</button>
+          <button class="btn raised" type="button" disabled>無効</button>
+        </div></div>
+      <div class="card"><h4>FAB</h4><p style="margin-bottom:16px">円形・tertiary・画面ごとに 1 つ。小さいものは 40。</p>
+        <div style="display:flex;gap:16px;align-items:center"><button class="fab" type="button" aria-label="追加"><span class="ic">add</span></button><button class="fab mini" type="button" aria-label="編集"><span class="ic">edit</span></button></div></div>
+      <div class="card"><h4>チップ</h4><p style="margin-bottom:16px">絞りこみ。選ぶと primary で塗る。</p>
+        <div class="chips">
+          <button class="chip" aria-pressed="true" type="button"><span class="ic">check</span>英語</button>
+          <button class="chip" aria-pressed="false" type="button">韓国語</button>
+          <button class="chip" aria-pressed="false" type="button">中国語</button>
+          <button class="chip" aria-pressed="false" type="button">弱点</button>
+        </div></div>
+      <div class="card"><h4>入力とスイッチ</h4>
+        <label class="field"><input placeholder=" "><span>単語</span></label>
+        <div class="sw-row"><span>読み上げる</span><button class="switch" role="switch" aria-checked="true" type="button" aria-label="読み上げる"></button></div></div>
+      <div style="grid-column:1/-1"><div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="true" type="button">単語</button><button class="tab" role="tab" aria-selected="false" type="button">記録</button><button class="tab" role="tab" aria-selected="false" type="button">教室</button></div>
+        <ul class="list" style="border-radius:0 0 2px 2px">
+          <li class="li"><span class="av ic">translate</span><div class="tx"><b>英単語 ターゲット 1900</b><small>1〜200 語・記憶済み 64%</small></div><span class="end">128 / 200</span></li>
+          <li class="li"><span class="av ic" style="background:var(--tertiary)">history_edu</span><div class="tx"><b>古文単語 315</b><small>1〜100 語・記憶済み 22%</small></div><span class="end">22 / 100</span></li>
+          <li class="li one"><span class="av ic" style="background:var(--secondary-container);color:var(--on-secondary-container)">school</span><div class="tx"><b>教室のセット</b></div><span class="ic" style="color:var(--text-2)">chevron_right</span></li>
+        </ul></div>
+    </div>
+  </section>
+
+  <section id="study">
+    <h3>SK Study に当てはめる</h3>
+    <p class="lead">ホーム・出題・結果の 3 画面。帯だけが primary で、中身は紙のカード。正解は green、まちがいは red。</p>
+    <div class="phones">
+
+      <div class="phone" aria-label="ホーム">
+        <div class="status"><span>12:30</span><span>●●●</span></div>
+        <div class="p-bar"><span class="ic">menu</span><b>SK Study</b><button class="bar-btn" type="button" aria-label="検索"><span class="ic">search</span></button></div>
+        <div class="p-body">
+          <div class="card"><h4>今日の復習</h4><p style="margin-bottom:12px">12 語がたまっています。</p>
+            <div class="prog" style="margin-bottom:16px"><i style="width:34%"></i></div>
+            <button class="btn raised" type="button"><span class="ic">play_arrow</span>復習する</button></div>
+          <div class="stat"><div><b>128</b><small>記憶済み</small></div><div><b style="color:var(--tertiary)">12</b><small>復習</small></div><div><b style="color:var(--error)">7</b><small>弱点</small></div></div>
+          <div class="chips" style="padding:4px 0"><button class="chip" aria-pressed="true" type="button">すべて</button><button class="chip" aria-pressed="false" type="button">英語</button><button class="chip" aria-pressed="false" type="button">古文</button></div>
+          <ul class="list">
+            <li class="li"><span class="av ic">translate</span><div class="tx"><b>ターゲット 1900</b><small>記憶済み 64%</small></div></li>
+            <li class="li"><span class="av ic" style="background:var(--tertiary)">history_edu</span><div class="tx"><b>古文単語 315</b><small>記憶済み 22%</small></div></li>
+          </ul>
+        </div>
+        <button class="fab p-fab" type="button" aria-label="追加"><span class="ic">add</span></button>
+        <nav class="p-nav"><button aria-current="page" type="button"><span class="ic">home</span>ホーム</button><button type="button"><span class="ic">style</span>単語帳</button><button type="button"><span class="ic">bar_chart</span>記録</button><button type="button"><span class="ic">person</span>わたし</button></nav>
+      </div>
+
+      <div class="phone" aria-label="出題">
+        <div class="status"><span>12:30</span><span>●●●</span></div>
+        <div class="p-bar"><button class="bar-btn" type="button" aria-label="閉じる"><span class="ic">close</span></button><b>3 / 12</b><button class="bar-btn" type="button" aria-label="音声"><span class="ic">volume_up</span></button></div>
+        <div class="prog" style="border-radius:0"><i style="width:25%"></i></div>
+        <div class="p-body" id="quiz" style="padding:16px 8px 8px">
+          <div style="margin-top:16px"><p class="q-sub">この単語の意味は？</p><p class="q-word">abandon</p><p class="q-sub">/əˈbændən/</p></div>
+          <div style="flex:1"></div>
+          <button class="choice" type="button"><span class="k">1</span>〜を捨てる・見捨てる</button>
+          <button class="choice" type="button"><span class="k">2</span>〜を吸収する</button>
+          <button class="choice" type="button"><span class="k">3</span>〜を達成する</button>
+          <button class="choice" type="button"><span class="k">4</span>〜を禁止する</button>
+          <p class="t-caption" style="text-align:center;margin:4px 0 0">選ぶと答えが出ます（見本では 1 番が正解）</p>
+        </div>
+      </div>
+
+      <div class="phone" aria-label="結果">
+        <div class="status"><span>12:30</span><span>●●●</span></div>
+        <div class="p-bar"><button class="bar-btn" type="button" aria-label="閉じる"><span class="ic">close</span></button><b>結果</b></div>
+        <div class="p-body">
+          <div class="card" style="text-align:center;padding:24px 16px"><span class="ic" style="font-size:48px;color:var(--good)">check_circle</span>
+            <div class="t-display" style="margin-top:4px">10 / 12</div><p>83%　前回より +8%</p></div>
+          <div class="card"><h4>記憶度の内訳</h4>
+            <div class="mem" style="margin:8px 0 12px"><i style="flex:10;background:var(--good)"></i><i style="flex:2;background:var(--error)"></i></div>
+            <p>正解 10 ・ まちがい 2</p></div>
+          <ul class="list">
+            <li class="li one"><span class="av ic" style="background:var(--error)">close</span><div class="tx"><b>abandon</b></div><span class="end">捨てる</span></li>
+            <li class="li one"><span class="av ic" style="background:var(--error)">close</span><div class="tx"><b>reluctant</b></div><span class="end">気が進まない</span></li>
+          </ul>
+          <div style="flex:1"></div>
+          <div class="snack"><span>弱点に 2 語を追加しました</span><button class="btn" type="button">元に戻す</button></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" type="button">もう一度</button><button class="btn raised" type="button">完了</button></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+<footer>SK Material App System Design1 ・ モックアップ（まだ公開していません）</footer>
+
+<script>
+(function(){
+  // インクの波紋
+  document.addEventListener('pointerdown',function(e){
+    var t=e.target.closest('.btn,.fab,.bar-btn,.choice,.chip,.tab,.p-nav button,.theme-btn');
+    if(!t||t.disabled)return;
+    var r=t.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2,i=document.createElement('span');
+    i.className='ripple';
+    i.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px';
+    t.appendChild(i);setTimeout(function(){i.remove()},400);
+  });
+  // チップ・タブ・スイッチ
+  document.querySelectorAll('.chips').forEach(function(g){g.addEventListener('click',function(e){
+    var c=e.target.closest('.chip');if(c)c.setAttribute('aria-pressed',c.getAttribute('aria-pressed')==='true'?'false':'true');
+  });});
+  document.querySelectorAll('.tabs').forEach(function(g){g.addEventListener('click',function(e){
+    var c=e.target.closest('.tab');if(!c)return;
+    g.querySelectorAll('.tab').forEach(function(t){t.setAttribute('aria-selected',t===c?'true':'false')});
+  });});
+  document.querySelectorAll('.switch').forEach(function(s){s.addEventListener('click',function(){
+    s.setAttribute('aria-checked',s.getAttribute('aria-checked')==='true'?'false':'true');
+  });});
+  // 動き
+  var mo=document.getElementById('mo');
+  document.getElementById('moBtn').addEventListener('click',function(){mo.classList.toggle('go')});
+  // 出題（1 番が正解）
+  var q=document.getElementById('quiz');
+  q.addEventListener('click',function(e){
+    var c=e.target.closest('.choice');if(!c||q.dataset.done)return;
+    q.dataset.done=1;
+    q.querySelectorAll('.choice').forEach(function(b){if(b.querySelector('.k').textContent==='1')b.classList.add('is-right')});
+    if(!c.classList.contains('is-right'))c.classList.add('is-wrong');
+  });
+  // ライト/ダーク
+  var root=document.documentElement;
+  function dark(){return root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
+  function sync(){document.getElementById('themeTx').textContent=dark()?'ライト':'ダーク'}
+  document.getElementById('themeBtn').addEventListener('click',function(){root.dataset.theme=dark()?'light':'dark';sync()});
+  if(matchMedia('(prefers-color-scheme: dark)').matches&&!root.dataset.theme)root.dataset.theme='dark';
+  sync();
+})();
+</script>
+</body>
+</html>
