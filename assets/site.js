@@ -216,7 +216,10 @@
       title.textContent = text;
       return title;
     };
-    const toEntries = items => items.map(item => {
+    // 韓国版（kr.sk-hub.jp。Worker が window.SK_REGION = "kr" を入れる）で出さないもの
+    const REGION_HIDDEN_KR = /^\/(products\/(y-filter|malu)\/|lab\/)/;
+    const inRegion = item => window.SK_REGION !== "kr" || !REGION_HIDDEN_KR.test(String(Array.isArray(item) ? item[1] : item.href || ""));
+    const toEntries = items => items.filter(inRegion).map(item => {
       if (Array.isArray(item)) return item;
       if (!item.action) return [item.label, item.href];
       return [item.label, item.href || "#", e => { e.preventDefault(); closeMenu(); item.action(); }];

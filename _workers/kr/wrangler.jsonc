@@ -1,0 +1,15 @@
+// SK Hub Korea（kr.sk-hub.jp と、韓国から開いた sk-hub.jp）の Worker。手順は README.md
+{
+  "name": "sk-kr",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+  // 公開するアドレス（ゾーン sk-hub.jp が同じ Cloudflare アカウントにあること）
+  //   kr.sk-hub.jp … DNS は deploy で自動で作られる
+  //   sk-hub.jp/   … 韓国から開いた人に韓国向けのページを出すための route。sk-hub.jp の DNS が「プロキシ済み」（オレンジの雲）でないと動かない（README）
+  "routes": [
+    { "pattern": "kr.sk-hub.jp", "custom_domain": true },
+    { "pattern": "sk-hub.jp/", "zone_name": "sk-hub.jp" }
+  ],
+  "workers_dev": false,
+  "observability": { "enabled": true }
+}

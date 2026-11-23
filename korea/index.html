@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <script src="/assets/coming-soon.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 多言語: /lang/ で選んだ言語で表示する（URL は変わらない）。ページの最後の translatePage() で訳す -->
+  <script src="/assets/i18n.js"></script>
+  <!-- 表示（ライト・ダーク・テーマカラー）。ちらつかないよう、CSS より先に <html> に付ける（選ぶのはヘッダーのアカウントのメニューの「表示」。assets/site.js） -->
+  <script>(function(){try{var t=JSON.parse(localStorage.getItem("sk_theme")||"{}"),d=document.documentElement;if(t.mode==="light"||t.mode==="dark")d.setAttribute("data-theme",t.mode);if(/^[a-z]{2,12}$/.test(t.accent||"")&&t.accent!=="blue")d.setAttribute("data-accent",t.accent);}catch(e){}})();</script>
+  <title>SK Hub Korea | 日本と韓国をつなぐ</title>
+  <meta name="description" content="日本語と韓国語を、もっと身近に。MALU（辞書）・SK Study（単語帳）・歌詞のふりがななど、日本と韓国のどちらの人にも使える SK のアプリ。">
+  <meta name="theme-color" content="#ffffff" data-theme-color>
+  <link rel="canonical" href="https://sk-hub.jp/korea/">
+  <!-- SNS で共有したときの表示（各ページのタイトル・説明・URL は build で入れ替える） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SK">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:title" content="SK Hub Korea | 日本と韓国をつなぐ">
+  <meta property="og:description" content="日本語と韓国語を、もっと身近に。MALU（辞書）・SK Study（単語帳）・歌詞のふりがななど、日本と韓国のどちらの人にも使える SK のアプリ。">
+  <meta property="og:url" content="https://sk-hub.jp/korea/">
+  <meta property="og:image" content="https://sk-hub.jp/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"></script>
+  <link rel="stylesheet" href="/assets/header.css">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/about/about.css">
+  <link rel="stylesheet" href="/korea/korea.css">
+  <script src="/about/about.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">本文へ移動</a>
+  <header class="site-header">
+    <a class="hd-logo" href="/" aria-label="ホーム">
+      <span class="hd-logo-image" aria-hidden="true"><img src="/assets/logo.svg" alt="" width="26" height="26"></span>
+      <span class="hd-logo-back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+    <a class="hd-item" href="/about/">私について</a>
+    <a class="hd-item" href="/products/" data-menu="products">プロダクト</a>
+    <a class="hd-item" href="https://support.sk-hub.jp/" data-menu="support" data-no-navigation="true">サポートと情報</a>
+    <a class="hd-item hd-account" href="/account/" data-menu="account" data-account-link>アカウント</a>
+    <a class="hd-item hd-lang" href="/lang/" data-lang-link><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg><span class="hd-lang-label">言語</span></a>
+    <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
+  </header>
+  <div class="hd-menu" id="hd-menu"><div class="hd-menu-inner"><div class="hd-menu-content"></div></div></div>
+  <div class="hd-backdrop" id="hd-backdrop"></div>
+
+  <main id="main">
+    <!-- 日本と韓国をつなぐ SK Hub の紹介ページ（/korea/）。kr.sk-hub.jp のトップは、このページではなく地域版のトップ（_workers/kr/）。
+         見た目は /about/ の部品（about.css）と korea.css。原文は日本語で、_build/i18n/ko.json で韓国語に訳す。 -->
+    <section class="ab-hero">
+      <div class="ab-orb ab-orb-a" aria-hidden="true"></div>
+      <div class="ab-orb ab-orb-b" aria-hidden="true"></div>
+      <div class="ab-grid-bg" aria-hidden="true"></div>
+      <div class="wrap ab-hero-inner">
+        <span class="ab-pill ab-reveal"><span class="ab-pulse" aria-hidden="true"></span>日本と韓国をつなぐ</span>
+        <h1 class="ab-title ab-reveal" style="--d:.08s"><span class="ab-grad">SK Hub</span></h1>
+        <p class="ab-lead ab-reveal" style="--d:.16s">日本語と韓国語を、もっと身近に。<br>辞書・単語帳・歌詞のふりがなで、ことばの壁を低くします。</p>
+        <div class="btn-row ab-actions ab-reveal" style="--d:.24s">
+          <a class="btn btn-primary" href="/products/malu/">日韓の辞書を使ってみる<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-tonal" href="/lang/?next=/">言語を選ぶ / 언어 선택</a>
+        </div>
+        <div class="ab-scroll ab-reveal" style="--d:.4s" aria-hidden="true"><span></span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head ab-reveal">
+          <span class="eyebrow">For Japan &amp; Korea</span>
+          <h2>日本と韓国、どちらの人にも</h2>
+          <p>ことばを学ぶ人にも、ふだんの勉強や作業にも。日本語と韓国語のどちらの画面でも使えます。</p>
+        </div>
+        <div class="kr-two">
+          <div class="kr-card ab-reveal">
+            <span class="kr-flag" aria-hidden="true">JP → KR</span>
+            <h3>韓国語を学ぶ日本の人へ</h3>
+            <ul>
+              <li><b>MALU</b>：国語・英語・韓国語・中国語などの辞書を、ひとつの検索ボックスから引けます。</li>
+              <li><b>歌詞のふりがな</b>：ハングルの歌詞に、カタカナの読みを付けて表示できます。ノレバン風の画面もあります。</li>
+              <li><b>SK Study</b>：単語カード・4 択・書き取りで、韓国語の単語帳を覚えられます。</li>
+            </ul>
+          </div>
+          <div class="kr-card ab-reveal" style="--d:.08s">
+            <span class="kr-flag" aria-hidden="true">KR → JP</span>
+            <h3>日本語を学ぶ韓国の人へ</h3>
+            <ul>
+              <li><b>表示は韓国語に</b>：サイトとアプリの画面を、韓国語に切りかえて使えます。</li>
+              <li><b>MALU</b>：日本語・英語など、どの言語のことばも、ひとつの検索ボックスで調べられます。</li>
+              <li><b>SK Study</b>：自分で作った単語帳で、日本語の単語やフレーズを覚えられます。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head ab-reveal">
+          <span class="eyebrow">Products</span>
+          <h2>つくっているもの</h2>
+          <p>ことばの学習に使えるものを中心に、SK がつくっているアプリです。</p>
+        </div>
+        <div class="ab-bento">
+          <a class="ab-tile ab-tile-big ab-reveal ab-t-malu" href="/products/malu/">
+            <div class="ab-tile-top"><span class="badge badge-live"><span class="dot"></span>公開中</span><span class="ab-arrow" aria-hidden="true">↗</span></div>
+            <h3>MALU</h3>
+            <div class="kind">辞書検索アプリ（Web）</div>
+            <p>国語・英語・韓国語・中国語などの辞書を、ひとつの検索ボックスから引けるアプリ。</p>
+          </a>
+          <a class="ab-tile ab-reveal ab-t-nagi" href="/products/study/">
+            <div class="ab-tile-top"><span class="ab-arrow" aria-hidden="true">↗</span></div>
+            <h3>SK Study</h3>
+            <div class="kind">学習アプリ（招待制）</div>
+            <p>単語カード・4 択・書き取りで、単語を覚えます。</p>
+          </a>
+          <a class="ab-tile ab-reveal ab-t-tb" href="/lyrics/">
+            <div class="ab-tile-top"><span class="ab-arrow" aria-hidden="true">↗</span></div>
+            <h3>Lyrics</h3>
+            <div class="kind">歌詞の表示</div>
+            <p>歌詞に、ふりがなやカラオケ風の表示を付けられます。</p>
+          </a>
+          <a class="ab-tile ab-reveal ab-t-yf" href="/products/y-filter/">
+            <div class="ab-tile-top"><span class="badge badge-dev"><span class="dot"></span>開発中</span><span class="ab-arrow" aria-hidden="true">↗</span></div>
+            <h3>Y-FILTER.</h3>
+            <div class="kind">ブラウザ拡張機能</div>
+            <p>有害なサイトのブロックや利用時間の管理ができる、フィルタリング拡張機能。</p>
+          </a>
+          <a class="ab-tile ab-tile-wide ab-reveal ab-t-hub" href="/products/">
+            <div class="ab-tile-top"><span class="ab-arrow" aria-hidden="true">↗</span></div>
+            <h3>すべてのプロダクト</h3>
+            <div class="kind">Nagi・SK Hub Office・SK's Toolbox ほか</div>
+            <p>集中タイマーの Nagi や、小さな道具を集めた SK's Toolbox も、韓国語の画面で使えます。</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head ab-reveal">
+          <span class="eyebrow">Language</span>
+          <h2>韓国語で使うために</h2>
+        </div>
+        <div class="ab-links">
+          <a class="ab-link ab-reveal" href="/lang/?next=/"><span class="ab-link-ico" aria-hidden="true">言</span><strong>言語を選ぶ</strong><span>日本語・English・简体中文・繁體中文・한국어</span></a>
+          <a class="ab-link ab-reveal" href="/policies/"><span class="ab-link-ico" aria-hidden="true">§</span><strong>規約とプライバシー</strong><span>韓国語の参考訳があります（正式なものは日本語です）</span></a>
+          <a class="ab-link ab-reveal" href="https://support.sk-hub.jp/" data-no-navigation="true"><span class="ab-link-ico" aria-hidden="true">?</span><strong>サポート</strong><span>使い方の記事とお知らせ</span></a>
+          <a class="ab-link ab-reveal" href="/about/"><span class="ab-link-ico" aria-hidden="true">SK</span><strong>SK について</strong><span>つくっている人と、これまでのこと</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="ab-contact ab-reveal">
+          <div class="ab-contact-text">
+            <span class="eyebrow">Contact</span>
+            <h2>気になったら、<br>お気軽に。</h2>
+            <p>質問やご意見は、お問い合わせフォームから送れます。韓国語で書いても大丈夫です。</p>
+          </div>
+          <div class="btn-row">
+            <a class="btn btn-ink" href="https://support.sk-hub.jp/contact/">お問い合わせ</a>
+            <a class="btn btn-tonal" href="https://sk-hub.jp/?site=jp" data-no-navigation="true">日本語のトップへ</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="cols">
+        <div>
+          <a class="logo" href="/" aria-label="SK ホーム"><img src="/assets/logo.svg" alt="" width="36" height="36">SK</a>
+          <p class="about" data-region="jp">毎日のネットを、もう少し安心で便利に。Y-FILTER. と MALU を開発しています。</p>
+          <p class="about" data-region="kr" hidden>毎日のネットを、もう少し安心で便利に。Nagi・SK Study・SK Hub Office などを開発しています。</p>
+        </div>
+        <div>
+          <h2>プロダクト</h2>
+          <ul><li><a href="/products/">すべてのプロダクト</a></li><li data-region="jp"><a href="/products/y-filter/">Y-FILTER.</a></li><li data-region="jp"><a href="/products/malu/">MALU</a></li><li><a href="/products/nagi/">Nagi</a></li><li><a href="/sk-hub-systems/">SK Hub Systems</a></li><li><a href="/toolbox/">SK's Toolbox</a></li><li data-region="jp"><a href="/lab/">SK's Lab</a></li></ul>
+        </div>
+        <div>
+          <h2>困ったとき</h2>
+          <ul><li><a href="https://support.sk-hub.jp/">サポート記事</a></li><li><a href="https://support.sk-hub.jp/?type=news">お知らせ</a></li><li><a href="https://support.sk-hub.jp/contact/">お問い合わせ</a></li><li><a href="https://sk-hub.online/">システム稼働状況</a></li></ul>
+        </div>
+        <div>
+          <h2>情報</h2>
+          <ul><li><a href="/updates/">アップデート</a></li><li><a href="/policies/">利用規約とプライバシーポリシー</a></li><li data-analytics-settings hidden><a href="#analytics">アクセス解析の設定</a></li><li><a href="/brand/">SK's Brand</a></li><li><a href="/credits/">Link &amp; Credit</a></li><li><a href="/about/">私について</a></li><li><a href="https://github.com/sy9-k" target="_blank" rel="noopener">私のGitHub</a></li></ul>
+        </div>
+      </div>
+      <div class="wordmark" aria-hidden="true">SK</div>
+      <div class="legal"><span>© 2026 SK</span><span>サーバー基盤: SK Hub Systems</span></div>
+    </div>
+  </footer>
+
+  <!-- ページを選んだ言語に訳す（ほかのスクリプトが動く前に。assets/i18n.js） -->
+  <script>window.SKI18N && SKI18N.translatePage();</script>
+  <script src="/support/articles.js" defer></script>
+  <script src="/assets/site.js" defer></script>
+  <!-- メンテナンス・障害のお知らせの帯（config/maintenance。変えるのは管理画面（admin.sk-hub.jp）） -->
+  <script src="/assets/maintenance.js" defer></script>
+  <!-- SK Hub Systems アカウントの設定の同期（ログイン中だけ） -->
+  <script src="/assets/hub/sync-loader.js" defer></script>
+  <script src="/frameworks/check.js" defer></script>
+  <!-- アクセス解析（Google アナリティクス。許可した人だけ） -->
+  <script src="/assets/analytics.js" defer></script>
+</body>
+</html>
