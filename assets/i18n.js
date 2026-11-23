@@ -21,6 +21,9 @@
   function byCode(code) { for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return LANGS[i]; return null; }
   function stored() { try { return localStorage.getItem(STORAGE_KEY) || ""; } catch (e) { return ""; } }
 
+  // ?hl=ko … まだ言語を選んでいない人の言語を決める（kr.sk-hub.jp から sk-hub.jp のアプリに移ったときに、韓国語のまま開く。選んだ言語は変えない）
+  try { var hl = new URLSearchParams(location.search).get("hl"); if (byCode(hl) && !stored()) localStorage.setItem(STORAGE_KEY, hl); } catch (e) {}
+
   var root = document.documentElement;
   var lang = byCode(stored()) ? stored() : "ja";
   // ページが対応する言語を絞っているとき（例: <html data-i18n-langs="ja en">。SK's Lab のツール）、それ以外の言語は英語で出す

@@ -31,6 +31,8 @@ pages = [
     ("domain.html", "domain/index.html", "sk-hub.jp への引っ越しのお知らせ | SK", "SK のサイトとプロダクトのアドレスが、sy9-k.github.io から sk-hub.jp に変わります。変わること・新しくできるようになること・変わらないこと・切り替えのときにしてほしいこと。", True, True),
     ("credits.html", "credits/index.html", "Link & Credit | SK", "SK のサイトとプロダクトで使わせてもらっているもの（RedCheck など）と、つながりのあるサイト。", True, True),
     ("partner-sentaro.html", "partner/sentaro/index.html", "Sentaro（Search3958）との相互提携 | SK", "SK と Sentaro さん（Search3958）の相互提携の内容。お互いにしていること・共通の約束・同意内容の原本。", True, True),
+    # 日本と韓国をつなぐ SK Hub の紹介ページ（/korea/）。kr.sk-hub.jp（_workers/kr/）のトップとは別
+    ("korea.html", "korea/index.html", "SK Hub Korea | 日本と韓国をつなぐ", "日本語と韓国語を、もっと身近に。MALU（辞書）・SK Study（単語帳）・歌詞のふりがななど、日本と韓国のどちらの人にも使える SK のアプリ。", False, True),
     ("about.html", "about/index.html", "私について | SK", "Y-FILTER. と MALU を開発している SK の自己紹介と、これまでにつくったもの。", False, True),
     ("y-filter.html", "products/y-filter/index.html", "Y-FILTER. | SK", "有害なサイトのブロックや利用時間の管理ができるブラウザ拡張機能「Y-FILTER.」（開発中）。", False, True),
     ("malu.html", "products/malu/index.html", "MALU | SK", "国語・英語・韓国語・中国語などの辞書をひとつの検索ボックスから引ける辞書検索アプリ「MALU」。", False, True),
@@ -133,6 +135,7 @@ EXTRA = {
     ),
     "study.html": ('  <link rel="stylesheet" href="/products/study/study.css">\n', None),
     "about.html": ('  <link rel="stylesheet" href="/about/about.css">\n  <script src="/about/about.js" defer></script>\n', None),
+    "korea.html": ('  <link rel="stylesheet" href="/about/about.css">\n  <link rel="stylesheet" href="/korea/korea.css">\n  <script src="/about/about.js" defer></script>\n', None),
     "partner-sentaro.html": ('  <link rel="stylesheet" href="/assets/partner/partner.css">\n', "partner-page"),
     "credits.html": ('  <script src="/assets/fonts.js" data-fonts="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap"></script>\n', None),
     "y-filter.html": (
