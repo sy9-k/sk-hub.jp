@@ -15,8 +15,15 @@ const KIND = {
   wordtest: { name: "単語の小テスト", icon: "quiz" },
   print: { name: "プリント", icon: "assignment" }
 };
+// 生徒の左メニューの分け方。小テスト = 単語の小テスト・試験、課題 = プリント、資料 = 単語帳
+export const GROUPS = {
+  quiz: { name: "小テスト", icon: "quiz", has: (a) => a.kind === "wordtest" || (a.kind === "print" && !!(a.print && a.print.exam)), empty: "配られた小テストはありません。" },
+  task: { name: "課題", icon: "assignment", has: (a) => a.kind === "print" && !(a.print && a.print.exam), empty: "配られた課題はありません。" },
+  material: { name: "資料", icon: "menu_book", has: (a) => a.kind === "words", empty: "配られた資料はありません。" }
+};
 export const kindInfo = (a) => (a.kind === "print" && a.print && a.print.exam ? { name: "試験", icon: "timer" } : KIND[a.kind] || KIND.words);
 
+const isPcLike = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 const fmtDue = (v) => {
   const t = cloud.toMillis(v);
   if (!t) return "";
@@ -129,7 +136,7 @@ function loading(ui) {
   ui.app.replaceChildren(ui.h("p", { class: "loading" }, ui.h("span", { class: "spinner", "aria-hidden": "true" }), "読み込み中…"));
 }
 
-export async function renderClass(cid, ui) {
+export async function renderClass(cid, ui, group = "") {
   const { h, icon, button, toast, confirmDialog, go, app } = ui;
   const hash = location.hash;
   loading(ui);
@@ -149,6 +156,8 @@ export async function renderClass(cid, ui) {
         ui.linkButton("text", "ホームへ", "home", "#/"))));
     return;
   }
+  const g = GROUPS[group] || null;
+  if (g) assigns = assigns.filter(g.has);
   const subs = await Promise.all(assigns.map((a) => cloud.mySubmission(cid, a.id).catch(() => null)));
   if (location.hash !== hash) return;
   document.title = `${cls.name} - SK Study`;
@@ -161,7 +170,7 @@ export async function renderClass(cid, ui) {
         h("p", { class: "set-row-sub" }, h("span", null, cls.teacherName ? `${cls.teacherName} 先生` : "クラス")),
         h("h1", null, cls.name))),
     h("section", { class: "section" },
-      h("h2", null, `課題（${assigns.length}）`),
+      h("h2", null, `${g ? g.name : "配られたもの"}（${assigns.length}）`),
       assigns.length ? h("div", { class: "set-list" }, assigns.map((a, i) => {
         const k = kindInfo(a);
         const sub = subs[i];
@@ -176,7 +185,7 @@ export async function renderClass(cid, ui) {
               h("span", { class: "set-row-title" }, a.title)),
             h("span", { class: "set-row-meta" }, h("span", { class: sub ? "done" : late ? "warn" : "" }, icon(sub ? "task_alt" : "pending"), status))),
           h("div", { class: "set-row-end" }, icon("chevron_right")));
-      })) : h("p", { class: "muted" }, "まだ配られた課題はありません。")),
+      })) : h("p", { class: "muted" }, g ? g.empty : "まだ配られたものはありません。")),
     h("div", { class: "set-actions" },
       button("outlined", "クラスから抜ける", "logout", async () => {
         if (!(await confirmDialog("クラスから抜けますか？", `「${cls.name}」から抜けます。提出した答えは先生のところに残ります。もう一度参加するには参加コードが要ります。`, "抜ける", true))) return;
@@ -215,8 +224,10 @@ export async function renderTask(cid, aid, ui) {
     } catch (e) { /* また次に */ }
   }
 
+  const tname = await cloud.getClass(cid).then((c) => c.teacherName || "").catch(() => "");
+  const extra = { noCopy: !!a.noCopy, teacherName: tname };
   if (a.kind === "words") {
-    const set = store.cacheClassSet(cid, aid, "words", a.set || {}, a.title);
+    const set = store.cacheClassSet(cid, aid, "words", a.set || {}, a.title, extra);
     go(`/set/${encodeURIComponent(set.id)}`, true);
     return;
   }
@@ -233,10 +244,21 @@ export async function renderTask(cid, aid, ui) {
   }
 
   // 単語の小テスト
-  const set = store.cacheClassSet(cid, aid, "wordtest", a.set || {}, a.title);
+  const set = store.cacheClassSet(cid, aid, "wordtest", a.set || {}, a.title, extra);
   const count = Math.min((a.test && a.test.count) || 10, set.words.length);
   const format = (a.test && a.test.format) || "auto";
   document.title = `${a.title} - SK Study`;
+  if (sub && !a.resultsOpen) {
+    // 先生が返却するまで、点数も答えも見せない
+    app.replaceChildren(
+      ui.backLink("クラス", back),
+      h("section", { class: "result task-result" },
+        h("p", { class: "test-pill big" }, "提出ずみ"),
+        h("h1", null, a.title),
+        icon("hourglass_top", "message-icon"),
+        h("p", { class: "result-score" }, "結果は、先生が返却すると見られます。")));
+    return;
+  }
   if (sub) {
     let data = {};
     try { data = JSON.parse(sub.data || "{}"); } catch (e) { /* 空 */ }
@@ -267,12 +289,14 @@ export async function renderTask(cid, aid, ui) {
       h("ul", { class: "lobby-facts" },
         h("li", null, icon("quiz"), `${count} 問（${{ auto: "4 択と書き取り", choice: "4 択", write: "書き取り" }[format]}）`),
         due ? h("li", { class: due < Date.now() ? "warn" : "" }, icon("event"), `締め切り ${fmtDue(a.due)}`) : null,
-        h("li", null, icon("send"), "1 回だけ。終わると答えと点数が先生に届きます")),
+        h("li", null, icon("send"), "1 回だけ。提出する前に、全部の答えを確かめられます"),
+        h("li", null, icon("assignment_return"), "結果は、先生が返却すると見られます"),
+        isPcLike() ? h("li", null, icon("fullscreen"), "全画面にして始めます。途中で全画面をやめると、戻すまで進めません") : null),
       button("filled", "はじめる", "play_arrow", () => {
         if (!set.words.length) { toast("この小テストには単語が入っていません"); return; }
         const items = ui.shuffle(set.words).slice(0, count).map((word) => ({ set, word }));
         ui.runSession({
-          items, mode: "test", format, title: a.title, backHref: back,
+          items, mode: "test", format, title: a.title, backHref: back, classTest: true,
           onTestDone: async (results) => {
             const NONE = "\u0000none";
             const data = {
@@ -288,11 +312,13 @@ export async function renderTask(cid, aid, ui) {
             try {
               await cloud.submit(cid, aid, score, data);
               toast("先生に提出しました");
+              return true;
             } catch (e) {
               const p = readPending();
               p[pkey] = { score, data };
               writePending(p);
               toast(`先生に送れませんでした。次に開いたときに送り直します（${cloud.explain(e)}）`);
+              return false;
             }
           }
         });

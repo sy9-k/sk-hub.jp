@@ -1,5 +1,5 @@
 // SK Study のデータ（いまはこのブラウザの中だけに保存する）
-//   ・SK の単語セット … sets.json（だれにでも同じものを配る。あとで管理画面から配信できるようにする）
+//   ・SK認定コンテンツ … sets.json（だれにでも同じものを配る。あとで管理画面から配信できるようにする）
 //   ・マイ単語帳 … localStorage の sk_study_sets
 //       [{ id: "my-…", title, lang, langName, speech, description, words: [{ w, m, r, ex, exm }], source, from, createdAt, updatedAt }]
 //       lang: en / ko / zh / custom（custom のときは langName が言語の名前、speech が読み上げの言語）
@@ -79,9 +79,10 @@ export const getClassSets = () => Object.values(read(CLASS_SETS_KEY, {}));
 export const allSets = () => [...skSets, ...getMySets(), ...getClassSets()];
 
 // クラスの課題の単語帳を入れる（同じ課題なら入れ直す）
-export function cacheClassSet(cid, aid, kind, data, title) {
+// extra = { noCopy: 先生がコピーを禁止している, teacherName: 配信した先生 }
+export function cacheClassSet(cid, aid, kind, data, title, extra = {}) {
   const id = `cls-${cid}-${aid}`;
-  const set = { ...cleanSet({ ...data, title: data.title || title }), id, source: "class", classRef: { cid, aid, kind }, assignTitle: String(title || "").slice(0, 80) };
+  const set = { ...cleanSet({ ...data, title: data.title || title }), id, source: "class", classRef: { cid, aid, kind }, assignTitle: String(title || "").slice(0, 80), noCopy: !!extra.noCopy, teacherName: String(extra.teacherName || "").slice(0, 40) };
   const all = read(CLASS_SETS_KEY, {});
   all[id] = set;
   write(CLASS_SETS_KEY, all);

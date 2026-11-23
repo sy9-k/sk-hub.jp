@@ -3,7 +3,9 @@
 //     （Mac の Chrome では en-US が「Albert」「Bad News」などのおもしろ音声になる）。なので声を自分で選ぶ
 //   ・選び方: 本人が設定で選んだ声 → なければ「いちばんきれいな声」（rank()）
 //   ・声の一覧はあとから届くことがある（voiceschanged）。届いたら選び直す
-//   ・設定は localStorage の sk_study_speech = { auto, rate, voices: { "en-US": 声の名前, … } }
+//   ・端末の声のほかに「SK の声」（tts.sk-hub.jp の Worker が Cloudflare AI の MeloTTS で作る mp3）も選べる。
+//     設定の声の名前が "sk" のとき。ネットにつながらない・Worker が使えないときは端末の声で読む
+//   ・設定は localStorage の sk_study_speech = { auto, rate, voices: { "en-US": 声の名前 or "sk", … } }
 //     auto（既定 true）… 外国語の単語が出たとき（問題・答え合わせ・カード）に自動で読み上げる。日本語は読まない
 const KEY = "sk_study_speech";
 
@@ -20,6 +22,15 @@ const GOOD = [
   [/^google/i, 40],                         // Chrome の Google の声（ネットにつながっているとき）
   [/samantha|alex|ava|allison|susan|zoe|yuna|sora|ting-?ting|tian-?tian|li-?mu|kyoko|otoya|daniel|karen/i, 30]
 ];
+
+// SK の声（tts.sk-hub.jp）。対応している言語だけ
+const SK_URL = "https://tts.sk-hub.jp/";
+const SK_LANGS = ["en-US", "ko-KR", "zh-CN"];
+export const SK_VOICES = [["sk", "SK の声"]];
+export const hasSkVoice = (lang) => SK_LANGS.includes(lang);
+export const isSkVoice = (id) => id === "sk";
+const skFailed = new Set(); // 使えなかった言語（今回の起動のあいだは端末の声にする）
+const skAudio = new Map();  // 取ってきた音声を覚えておく（同じ言葉をすぐ読める）
 
 let voices = [];
 const listeners = new Set();
@@ -81,14 +92,44 @@ export function pickVoice(lang) {
 }
 
 export function canSpeak(lang) {
-  if (!supported || !lang) return false;
+  if (!lang) return false;
+  if (hasSkVoice(lang) && isSkVoice(getSettings().voices[lang]) && !skFailed.has(lang)) return true;
+  if (!supported) return false;
   // 声の一覧がまだ届いていないブラウザでは、とりあえず話せることにする
   return !voices.length || voicesFor(lang).length > 0;
 }
 
 let current = null; // Chrome は話している途中の発話を片づけて止めてしまうことがあるので、参照を持っておく
-export function speak(text, lang, { button = null } = {}) {
-  if (!supported || !lang || !text) return;
+let skPlayer = null;
+function mark(button, on) {
+  if (!button) return;
+  button.classList.toggle("is-speaking", on);
+}
+function clearMarks() {
+  document.querySelectorAll(".speak.is-speaking").forEach((b) => b.classList.remove("is-speaking"));
+}
+
+async function speakSk(text, lang, id, button) {
+  const key = `${lang}|${id}|${text}`;
+  let blobUrl = skAudio.get(key);
+  if (!blobUrl) {
+    const q = new URLSearchParams({ l: lang, t: text });
+    const res = await fetch(`${SK_URL}?${q}`);
+    if (!res.ok) throw new Error(String(res.status));
+    blobUrl = URL.createObjectURL(await res.blob());
+    skAudio.set(key, blobUrl);
+  }
+  const a = new Audio(blobUrl);
+  a.playbackRate = getSettings().rate;
+  const done = () => { if (skPlayer === a) skPlayer = null; mark(button, false); };
+  a.addEventListener("ended", done);
+  a.addEventListener("error", done);
+  skPlayer = a;
+  await a.play();
+}
+
+function speakDevice(text, lang, button) {
+  if (!supported) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(String(text));
   u.lang = lang;
@@ -96,9 +137,8 @@ export function speak(text, lang, { button = null } = {}) {
   if (voice) u.voice = voice;
   u.rate = getSettings().rate;
   if (button) {
-    document.querySelectorAll(".speak.is-speaking").forEach((b) => b.classList.remove("is-speaking"));
-    button.classList.add("is-speaking");
-    const done = () => button.classList.remove("is-speaking");
+    mark(button, true);
+    const done = () => mark(button, false);
     u.addEventListener("end", done);
     u.addEventListener("error", done);
   }
@@ -107,9 +147,26 @@ export function speak(text, lang, { button = null } = {}) {
   setTimeout(() => { if (current === u) speechSynthesis.speak(u); }, 30);
 }
 
+export function speak(text, lang, { button = null } = {}) {
+  if (!lang || !text) return;
+  stop();
+  if (button) { clearMarks(); mark(button, true); }
+  const id = getSettings().voices[lang];
+  if (hasSkVoice(lang) && isSkVoice(id) && !skFailed.has(lang)) {
+    speakSk(String(text), lang, id, button).catch((e) => {
+      // ネットや Worker が使えない・ブラウザが再生を止めた → 端末の声で読む
+      if (e && e.name === "NotAllowedError") { mark(button, false); return; }
+      skFailed.add(lang);
+      speakDevice(text, lang, button);
+    });
+    return;
+  }
+  speakDevice(text, lang, button);
+}
+
 export function stop() {
-  if (!supported) return;
   current = null;
-  speechSynthesis.cancel();
-  document.querySelectorAll(".speak.is-speaking").forEach((b) => b.classList.remove("is-speaking"));
+  if (skPlayer) { skPlayer.pause(); skPlayer = null; }
+  if (supported) speechSynthesis.cancel();
+  clearMarks();
 }

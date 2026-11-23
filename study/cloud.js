@@ -208,14 +208,20 @@ export async function submit(cid, aid, score, data, { update = false } = {}) {
 
 // ---------- 指導者 ----------
 
-// { teacher: { name, org } | null, app: 申し込み | null }
+// { teacher: { name, org } | null, admin: 総合管理者 | null, schools: 先生として入っている学校 [{ id, name }], app: 申し込み | null }
 export async function teacherState() {
   const { fs, db, user } = await ready();
-  const [t, a] = await Promise.all([
+  const [t, a, ad, st] = await Promise.all([
     fs.getDoc(fs.doc(db, "studyTeachers", user.uid)).catch(() => null),
-    fs.getDoc(fs.doc(db, "studyTeacherApps", user.uid)).catch(() => null)
+    fs.getDoc(fs.doc(db, "studyTeacherApps", user.uid)).catch(() => null),
+    fs.getDoc(fs.doc(db, "studyAdmins", user.uid)).catch(() => null),
+    fs.getDocs(fs.collection(db, "accounts", user.uid, "studyStaff")).catch(() => null)
   ]);
-  return { teacher: t && t.exists() ? t.data() : null, app: a && a.exists() ? a.data() : null };
+  // 学校から外されていたら、学校の読み取りが断られる。その学校は一覧に出さない
+  const schools = (await Promise.all(((st && st.docs) || []).map(async (d) => {
+    try { const sc = await fs.getDoc(fs.doc(db, "studySchools", d.id)); return sc.exists() ? { id: d.id, name: sc.data().name } : null; } catch (e) { return null; }
+  }))).filter(Boolean);
+  return { teacher: t && t.exists() ? t.data() : null, app: a && a.exists() ? a.data() : null, admin: ad && ad.exists() ? ad.data() : null, schools };
 }
 
 export async function applyTeacher({ name, org, purpose }) {
@@ -246,14 +252,14 @@ function newId() {
 }
 
 // クラスを作る（参加コードがほかと重なったら作り直す）
-export async function createClass(name, teacherName) {
+export async function createClass(name, teacherName, schoolId) {
   const { fs, db, user } = await ready();
   const cid = newId();
   for (let i = 0; i < 5; i++) {
     const code = newCode();
     const b = fs.writeBatch(db);
     b.set(fs.doc(db, "studyClasses", cid), {
-      ownerUid: user.uid, name: String(name).trim().slice(0, 60), teacherName: String(teacherName || "").slice(0, 40),
+      ownerUid: user.uid, name: String(name).trim().slice(0, 60), teacherName: String(teacherName || "").slice(0, 40), schoolId: String(schoolId),
       joinCode: code, open: true, createdAt: fs.serverTimestamp(), updatedAt: fs.serverTimestamp()
     });
     b.set(fs.doc(db, "studyJoinCodes", code), { classId: cid, ownerUid: user.uid, className: String(name).trim().slice(0, 60), teacherName: String(teacherName || "").slice(0, 40), createdAt: fs.serverTimestamp() });
@@ -264,7 +270,7 @@ export async function createClass(name, teacherName) {
 
 export async function updateClass(cls, patch) {
   const { fs, db } = await ready();
-  const next = { ownerUid: cls.ownerUid, name: cls.name, teacherName: cls.teacherName || "", joinCode: cls.joinCode, open: !!cls.open, createdAt: cls.createdAt, ...patch, updatedAt: fs.serverTimestamp() };
+  const next = { ownerUid: cls.ownerUid, name: cls.name, teacherName: cls.teacherName || "", ...(cls.schoolId ? { schoolId: cls.schoolId } : {}), joinCode: cls.joinCode, open: !!cls.open, createdAt: cls.createdAt, ...patch, updatedAt: fs.serverTimestamp() };
   await fs.setDoc(fs.doc(db, "studyClasses", cls.id), next);
 }
 
@@ -275,7 +281,7 @@ export async function renewCode(cls) {
     const code = newCode();
     const b = fs.writeBatch(db);
     b.set(fs.doc(db, "studyJoinCodes", code), { classId: cls.id, ownerUid: user.uid, className: cls.name, teacherName: cls.teacherName || "", createdAt: fs.serverTimestamp() });
-    b.set(fs.doc(db, "studyClasses", cls.id), { ownerUid: cls.ownerUid, name: cls.name, teacherName: cls.teacherName || "", joinCode: code, open: !!cls.open, createdAt: cls.createdAt, updatedAt: fs.serverTimestamp() });
+    b.set(fs.doc(db, "studyClasses", cls.id), { ownerUid: cls.ownerUid, name: cls.name, teacherName: cls.teacherName || "", ...(cls.schoolId ? { schoolId: cls.schoolId } : {}), joinCode: code, open: !!cls.open, createdAt: cls.createdAt, updatedAt: fs.serverTimestamp() });
     b.delete(fs.doc(db, "studyJoinCodes", cls.joinCode));
     try { await b.commit(); return code; } catch (e) { if (e.code !== "permission-denied") throw e; }
   }
@@ -311,6 +317,122 @@ export async function members(cid) {
 export async function removeMember(cid, uid) {
   const { fs, db } = await ready();
   await fs.deleteDoc(fs.doc(db, "studyClasses", cid, "members", uid));
+}
+
+// ---------- 総合管理者 → 学校 → 先生 ----------
+//   総合管理者 … 開発者（SK）が配る「総合管理者のコード」で、本人がなる。学校を作り、先生にコードを配る
+//   先生 … 総合管理者が学校ごとに作る「先生のコード」で、本人がなる。学校の中でクラスを作る
+//   総合管理者は、自分の学校のクラス（生徒・配信・提出）を読める。書き換えられるのはクラスの持ち主の先生だけ
+
+// 先生・総合管理者のコードを調べる
+export async function lookupStaffCode(code) {
+  const { fs, db } = await ready();
+  const snap = await fs.getDoc(fs.doc(db, "studyStaffCodes", normCode(code)));
+  if (!snap.exists()) { const e = new Error("コードが見つかりません。"); e.code = "bad-code"; throw e; }
+  return { code: snap.id, ...snap.data() };
+}
+
+// コードを使って、総合管理者・先生になる
+export async function redeemStaffCode(info) {
+  if (info.claimedBy) { const e = new Error("このコードはもう使われています。"); e.code = "bad-code"; throw e; }
+  const { fs, db, user } = await ready();
+  const b = fs.writeBatch(db);
+  if (info.role === "admin") {
+    b.set(fs.doc(db, "studyAdmins", user.uid), { name: info.name, org: "", createdAt: fs.serverTimestamp(), code: info.code });
+  } else {
+    const t = await fs.getDoc(fs.doc(db, "studyTeachers", user.uid)).catch(() => null);
+    if (!t || !t.exists()) b.set(fs.doc(db, "studyTeachers", user.uid), { name: info.name, org: info.schoolName || "", approvedAt: fs.serverTimestamp(), approvedBy: user.uid, code: info.code });
+    b.set(fs.doc(db, "studySchools", info.schoolId, "staff", user.uid), { name: info.name, code: info.code, joinedAt: fs.serverTimestamp() });
+    b.set(fs.doc(db, "accounts", user.uid, "studyStaff", info.schoolId), { schoolName: info.schoolName, joinedAt: fs.serverTimestamp() });
+  }
+  b.update(fs.doc(db, "studyStaffCodes", info.code), { claimedBy: user.uid, claimedAt: fs.serverTimestamp() });
+  try { await b.commit(); } catch (e) {
+    if (e.code === "permission-denied") { const err = new Error("使えませんでした（このコードはもう使われているか、取り消されたかもしれません）。"); err.code = "bad-code"; throw err; }
+    throw e;
+  }
+}
+
+// 自分が作ったコード（総合管理者のコード・先生のコード）
+export async function myStaffCodes() {
+  const { fs, db, user } = await ready();
+  const snap = await fs.getDocs(fs.query(fs.collection(db, "studyStaffCodes"), fs.where("ownerUid", "==", user.uid)));
+  return snap.docs.map(withId).sort((a, b) => (ms(a.createdAt) || 0) - (ms(b.createdAt) || 0));
+}
+
+// 名前（複数）から、コードを作る。role: "admin"（開発者）/ "teacher"（学校の総合管理者。school = { id, name }）
+export async function issueStaffCodes(role, names, school = null) {
+  const { fs, db, user } = await ready();
+  const list = [...new Set(names.map((n) => String(n).trim().slice(0, 40)).filter(Boolean))];
+  for (const name of list) {
+    let done = false;
+    for (let i = 0; i < 5 && !done; i++) {
+      const body = { role, name, ownerUid: user.uid, claimedBy: null, createdAt: fs.serverTimestamp(), ...(role === "teacher" ? { schoolId: school.id, schoolName: school.name } : {}) };
+      try { await fs.setDoc(fs.doc(db, "studyStaffCodes", newCode()), body); done = true; } catch (e) { if (e.code !== "permission-denied") throw e; }
+    }
+    if (!done) throw new Error("コードを作れませんでした。もう一度ためしてください。");
+  }
+  return list.length;
+}
+
+export async function deleteStaffCode(code) {
+  const { fs, db } = await ready();
+  await fs.deleteDoc(fs.doc(db, "studyStaffCodes", code));
+}
+
+export async function mySchools() {
+  const { fs, db, user } = await ready();
+  const snap = await fs.getDocs(fs.query(fs.collection(db, "studySchools"), fs.where("ownerUid", "==", user.uid)));
+  return snap.docs.map(withId).sort((a, b) => (ms(a.createdAt) || 0) - (ms(b.createdAt) || 0));
+}
+
+export async function getSchool(sid) {
+  const { fs, db } = await ready();
+  const snap = await fs.getDoc(fs.doc(db, "studySchools", sid));
+  if (!snap.exists()) { const e = new Error("not-found"); e.code = "not-found"; throw e; }
+  return withId(snap);
+}
+
+export async function createSchool(name) {
+  const { fs, db, user } = await ready();
+  const ref = fs.doc(db, "studySchools", newId());
+  await fs.setDoc(ref, { ownerUid: user.uid, name: String(name).trim().slice(0, 60), createdAt: fs.serverTimestamp(), updatedAt: fs.serverTimestamp() });
+  return ref.id;
+}
+
+export async function renameSchool(school, name) {
+  const { fs, db } = await ready();
+  await fs.setDoc(fs.doc(db, "studySchools", school.id), { ownerUid: school.ownerUid, name: String(name).trim().slice(0, 60), createdAt: school.createdAt, updatedAt: fs.serverTimestamp() });
+}
+
+// クラスが残っている学校は消せない。先生の名簿とコードも消す
+export async function deleteSchool(school) {
+  const { fs, db } = await ready();
+  const [classes, staff, codes] = await Promise.all([schoolClasses(school.id), schoolStaff(school.id), myStaffCodes()]);
+  if (classes.length) throw new Error("クラスが残っている学校は削除できません。先にクラスを削除してください。");
+  await deleteAll([
+    ...staff.map((m) => fs.doc(db, "studySchools", school.id, "staff", m.id)),
+    ...codes.filter((c) => c.schoolId === school.id).map((c) => fs.doc(db, "studyStaffCodes", c.id)),
+    fs.doc(db, "studySchools", school.id)
+  ]);
+}
+
+export async function schoolStaff(sid) {
+  const { fs, db } = await ready();
+  const snap = await fs.getDocs(fs.collection(db, "studySchools", sid, "staff"));
+  return snap.docs.map(withId).sort((a, b) => String(a.name).localeCompare(String(b.name), "ja"));
+}
+
+// 先生を学校から外す（その先生は、この学校のクラスを触れなくなる。クラスと生徒の提出は残る）
+export async function removeStaff(sid, uid) {
+  const { fs, db } = await ready();
+  await fs.deleteDoc(fs.doc(db, "studySchools", sid, "staff", uid));
+}
+
+// 学校のクラス（総合管理者が読む）
+export async function schoolClasses(sid) {
+  const { fs, db } = await ready();
+  const snap = await fs.getDocs(fs.query(fs.collection(db, "studyClasses"), fs.where("schoolId", "==", sid)));
+  return snap.docs.map(withId).sort((a, b) => (ms(b.createdAt) || 0) - (ms(a.createdAt) || 0));
 }
 
 // ---------- 生徒プロファイル（名簿）。名前ごとに専用の参加コード ----------
@@ -400,7 +522,7 @@ export async function saveAssignment(cid, aid, data, existing = null) {
   const body = {
     kind: data.kind, title: String(data.title).trim().slice(0, 80),
     due: data.due ? fs.Timestamp.fromMillis(data.due) : null,
-    published: !!data.published, resultsOpen: !!data.resultsOpen,
+    published: !!data.published, resultsOpen: !!data.resultsOpen, noCopy: !!data.noCopy,
     updatedAt: fs.serverTimestamp(),
     createdAt: existing ? existing.createdAt : fs.serverTimestamp()
   };
