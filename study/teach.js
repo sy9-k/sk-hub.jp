@@ -12,6 +12,7 @@ import * as store from "./store.js";
 import { getHtml, gradeAnswers, listPrints, parsePrint, tally } from "./print.js";
 import { normPass, openAnswers } from "./printfmt.js";
 import { fmtDue, kindInfo } from "./classroom.js";
+import { openInviteSheet } from "./invite-pdf.js";
 
 const FORMAT_LABEL = { auto: "おまかせ（4 択と書き取り）", choice: "4 択だけ", write: "書き取りだけ" };
 const MARK_LABEL = { ok: "○", partial: "△", ng: "×", pending: "未採点" };
@@ -223,6 +224,11 @@ async function schoolView(sid, s, ui) {
   const reload = () => renderTeach(["school", sid], ui);
   const copy = async (text) => { try { await navigator.clipboard.writeText(text); toast("コピーしました"); } catch (e) { toast("コピーできませんでした"); } };
   const ref = { id: sid, name: school.name };
+  // 参加の案内 PDF（コードの入れ方つき。1 人 1 枚）
+  const sheet = (list) => {
+    if (!list.length) { toast("コード待ちの先生がいません"); return; }
+    if (!openInviteSheet({ kind: "teacher", items: list.map((c) => ({ name: c.name, code: c.id })) })) toast("案内を開けませんでした。ポップアップを許可してください");
+  };
   const issue = () => {
     const ta = h("textarea", { class: "field-input", rows: "6", placeholder: "先生の名前を 1 行に 1 人ずつ（例: 山田 花子）" });
     const d = openDialog("先生のコードを作る", h("div", null, h("p", null, "名前を 1 行に 1 人ずつ入れてください。1 人ごとに専用のコードができます。コードは 1 回だけ使えます。"), ta), [
@@ -236,7 +242,7 @@ async function schoolView(sid, s, ui) {
   };
   app.replaceChildren(...head(ui, school.name, "総合管理者の画面です。先生のコードを配り、学校のクラスの様子を見られます。", ["指導者メニュー", "#/teach"]),
     h("section", { class: "mk-card" },
-      h("div", { class: "section-head" }, h("h2", null, icon("school"), `先生（${staff.length}）`), button("filled", "先生のコードを作る", "person_add", issue)),
+      h("div", { class: "section-head" }, h("h2", null, icon("school"), `先生（${staff.length}）`), h("div", { class: "section-actions" }, button("outlined", "案内 PDF（コード待ちの全員）", "picture_as_pdf", () => sheet(codes)), button("filled", "先生のコードを作る", "person_add", issue))),
       h("p", { class: "muted small" }, "先生は SK Study の「指導者メニュー」→「コードを入れる」で、専用のコードを入れて学校に入ります。コードは 1 人 1 回だけ使えます。"),
       staff.length || codes.length ? h("table", { class: "tc-table" },
         h("thead", null, h("tr", null, h("th", null, "名前"), h("th", null, "コード"), h("th", null, "状態"), h("th", null, ""))),
@@ -251,6 +257,7 @@ async function schoolView(sid, s, ui) {
             h("td", null, c.name), h("td", null, h("span", { class: "code-pill" }, c.id)), h("td", null, "コード待ち"),
             h("td", { class: "tc-actions" },
               button("text", "コピー", "content_copy", () => copy(c.id)),
+              button("text", "案内 PDF", "picture_as_pdf", () => sheet([c])),
               button("text", "再発行", "refresh", async () => {
                 try { await cloud.deleteStaffCode(c.id); await cloud.issueStaffCodes("teacher", [c.name], ref); toast("作り直しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
               }),
@@ -294,6 +301,12 @@ async function classView(cid, ui) {
   const reload = () => classView(cid, ui);
   const copy = async (text) => { try { await navigator.clipboard.writeText(text); toast("コピーしました"); } catch (e) { toast("コピーできませんでした"); } };
   const joinUrl = `${location.origin}/study/#/`;
+  // 参加の案内 PDF（コードの入れ方つき。1 人 1 枚）
+  const sheet = (list) => {
+    if (!list.length) { toast("コード待ちの生徒がいません"); return; }
+    if (!openInviteSheet({ kind: "student", orgName: cls.name, subName: cls.teacherName || "", items: list })) toast("案内を開けませんでした。ポップアップを許可してください");
+  };
+  const pendingProfiles = members.filter((m) => m.profile && !m.profile.claimedBy).map((m) => ({ name: m.profile.name, code: m.profile.code }));
 
   app.replaceChildren(...head(ui, cls.name, ro ? `${cls.teacherName ? `${cls.teacherName} 先生` : "先生"}のクラス（見るだけ）` : null, ro && cls.schoolId ? ["学校", `#/teach/school/${encodeURIComponent(cls.schoolId)}`] : ["指導者メニュー", "#/teach"]),
     h("div", { class: "tc-grid" },
@@ -323,7 +336,7 @@ async function classView(cid, ui) {
             h("div", { class: "set-row-end" }, icon("chevron_right")));
         })) : h("p", { class: "muted" }, "まだ配信していません。"))),
     h("section", { class: "mk-card" },
-      h("div", { class: "section-head" }, h("h2", null, icon("group"), `生徒プロファイル（${members.length}）`), button("filled", "プロファイルを作る", "person_add", () => {
+      h("div", { class: "section-head" }, h("h2", null, icon("group"), `生徒プロファイル（${members.length}）`), h("div", { class: "section-actions" }, button("outlined", "案内 PDF（コード待ちの全員）", "picture_as_pdf", () => sheet(pendingProfiles)), button("filled", "プロファイルを作る", "person_add", () => {
         const ta = h("textarea", { class: "field-input", rows: "8", placeholder: "名前を 1 行に 1 人ずつ（例: 田中 太郎）" });
         const d = openDialog("生徒プロファイルを作る", h("div", null, h("p", null, "名前を 1 行に 1 人ずつ入れてください。1 人ごとに専用の参加コードができます。"), ta), [
           button("text", "やめる", null, () => d.close()),
@@ -333,7 +346,7 @@ async function classView(cid, ui) {
             try { const n = await cloud.createProfiles(cls, names); d.close(); toast(`${n} 人分のプロファイルを作りました`); reload(); } catch (e) { toast(cloud.explain(e)); }
           })]);
         ta.focus();
-      })),
+      }))),
       members.length ? h("table", { class: "tc-table" },
         h("thead", null, h("tr", null, h("th", null, "名前"), h("th", null, "参加コード"), h("th", null, "状態"), h("th", null, ""))),
         h("tbody", null, members.map((m) => {
@@ -344,6 +357,7 @@ async function classView(cid, ui) {
             h("td", null, m.claimed ? "参加ずみ" : "コード待ち"),
             h("td", { class: "tc-actions" },
               p && !p.claimedBy ? button("text", "コピー", "content_copy", () => copy(p.code)) : null,
+              p && !p.claimedBy ? button("text", "案内 PDF", "picture_as_pdf", () => sheet([{ name: p.name, code: p.code }])) : null,
               p ? button("text", "名前", "edit", () => {
                 const input = h("input", { type: "text", class: "field-input", maxlength: "40", value: p.name });
                 const d = openDialog("名前を変える", h("div", null, input, p.claimedBy ? null : h("p", { class: "muted small" }, "参加コードも新しくなります。")), [button("text", "やめる", null, () => d.close()), button("filled", "保存", null, async () => {
