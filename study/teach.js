@@ -97,7 +97,7 @@ function openStaffCodeDialog(ui, onDone) {
   };
   const okBtn = button("filled", "確かめる", null, async () => {
     if (!found || cloud.normCode(input.value) !== found.code) { await look(); return; }
-    try { await cloud.redeemStaffCode(found); d.close(); toast("入りました"); onDone(); } catch (e) { toast(cloud.explain(e)); }
+    try { await cloud.redeemStaffCode(found); d.close(); toast("入りました。左上のアカウントの欄から、先生のプロファイルに切り替えられます"); onDone(); } catch (e) { toast(cloud.explain(e)); }
   });
   const d = openDialog("コードを入れる", h("div", null, h("p", null, "総合管理者または学校の先生から渡された、あなた専用の 6 けたのコードを入れてください。"), input, info), [button("text", "やめる", null, () => d.close()), okBtn]);
   input.addEventListener("input", () => { if (found && cloud.normCode(input.value) !== found.code) { found = null; info.replaceChildren(); okBtn.querySelector("span:last-child").textContent = "確かめる"; } });

@@ -30,6 +30,7 @@ import * as cloud from "./cloud.js";
 import { grade, hint } from "./grade.js";
 import { decodeSet, encodeSet, extractCode, shareUrl } from "./share.js";
 import * as tts from "./speech.js";
+import * as records from "./records.js";
 import { printSection, renderPrint } from "./print.js";
 import { renderMaker } from "./maker.js";
 import { createKeyboard, KEYBOARD_LANGS } from "./keyboard.js";
@@ -343,7 +344,7 @@ function renderRoute(nav) {
     return;
   }
   // クラスのプロファイルでは、そのクラスの画面だけ（個人の単語帳・プリントなどは出さない）
-  if (cloud.activeClass() && ctxInfo) {
+  if (cloud.activeClass() && ctxInfo && !ctxInfo.staff) {
     const CLASS_VIEWS = ["class", "task", "set", "learn", "print", "settings"];
     if (!view || !CLASS_VIEWS.includes(view)) {
       document.body.dataset.view = "class";
@@ -513,6 +514,13 @@ async function refreshCtx() {
   if (!cid) { ctxInfo = null; return; }
   if (!auth || auth.status !== "ready") { ctxInfo = ctxInfo && ctxInfo.cid === cid ? ctxInfo : null; return; }
   try {
+    if (cloud.isStaffCtx(cid)) {
+      // 先生・総合管理者のプロファイル（組織のプロファイル）
+      const mine = (await cloud.staffProfiles()).find((p) => p.id === cid);
+      if (mine) ctxInfo = { cid, staff: true, className: mine.orgName, profileName: mine.name };
+      else { ctxInfo = null; cloud.setActiveClass(""); }
+      return;
+    }
     const mine = (await cloud.myClasses()).find((c) => c.id === cid && c.profileId);
     if (mine) ctxInfo = { cid, className: mine.name, profileName: mine.profileName || mine.name };
     else { ctxInfo = null; cloud.setActiveClass(""); }
@@ -521,17 +529,19 @@ async function refreshCtx() {
 // 個人 / クラスのプロファイルを選ぶ
 async function openProfileSwitcher() {
   if (!auth || auth.status !== "ready") { toast("ログインしてから切り替えられます"); return; }
-  let classes = [];
-  try { classes = (await cloud.myClasses()).filter((c) => c.profileId); } catch (e) { toast(cloud.explain(e)); return; }
+  let classes = [], staff = [];
+  try { [classes, staff] = await Promise.all([cloud.myClasses().then((l) => l.filter((c) => c.profileId)), cloud.staffProfiles().catch(() => [])]); } catch (e) { toast(cloud.explain(e)); return; }
   const cur = cloud.activeClass();
-  const options = [["", `個人（${auth.name}）`], ...classes.map((c) => [c.id, `${c.profileName || c.name}（${c.name}）`])];
+  const options = [["", `個人（${auth.name}）`], ...staff.map((p) => [p.id, `${p.name}（${p.orgName}）`]), ...classes.map((c) => [c.id, `${c.profileName || c.name}（${c.name}）`])];
   const d = choiceDialog("プロファイルを切り替え", options, cur, (v) => { cloud.setActiveClass(v); });
-  d.querySelector(".radio-list").after(h("p", { class: "muted small" }, classes.length ? "クラスのプロファイルでは、そのクラスの課題だけが表示されます。" : "クラスのプロファイルはまだありません。「クラス」から先生の専用コードで参加すると追加されます。"));
+  d.querySelector(".radio-list").after(h("p", { class: "muted small" }, classes.length || staff.length ? "組織（クラス・先生）のプロファイルの学習の記録は、オンラインに保存され、どの端末でも同じものを使えます。クラスのプロファイルでは、そのクラスの課題だけが表示されます。" : "組織のプロファイルはまだありません。「クラス」で専用コードで参加すると、クラスのプロファイルが加わります。先生・総合管理者は、指導者メニューでコードを入れると加わります。"));
 }
 document.addEventListener("sk-study:ctx", async () => {
   await refreshCtx();
+  records.switchTo(ctxInfo ? ctxInfo.cid : ""); // 組織のプロファイルは、記録を別に持つ
   drawDrawer();
   if (location.hash === "#/" || location.hash === "" || location.hash === "#") route(); else go("/", true);
+  records.sync().then((changed) => { if (changed) route(); });
 });
 
 function drawDrawer() {
@@ -549,9 +559,9 @@ function drawDrawer() {
     avatar,
     h("div", { class: "drawer-who" },
       h("strong", null, shown || "SK Hub Systems アカウント"),
-      ctxInfo ? h("span", null, `クラス: ${ctxInfo.className}`) : email ? h("span", null, email) : null),
+      ctxInfo ? h("span", null, `${ctxInfo.staff ? "" : "クラス: "}${ctxInfo.className}`) : email ? h("span", null, email) : null),
     canSwitch ? icon("unfold_more", "drawer-switch-icon") : null);
-  const nav = ctxInfo ? CLASS_NAV : NAV;
+  const nav = ctxInfo && !ctxInfo.staff ? CLASS_NAV : NAV;
   drawer.replaceChildren(
     who,
     h("div", { class: "drawer-list" },
@@ -560,7 +570,7 @@ function drawDrawer() {
       h("a", { class: "drawer-item", href: "#/settings", "data-nav": "settings" }, icon("settings"), h("span", null, "設定")),
       h("a", { class: "drawer-item", href: "/account/" }, icon("manage_accounts"), h("span", null, "アカウント")),
       h("button", { type: "button", class: "drawer-item", onclick: logout }, icon("logout"), h("span", null, "ログアウト"))),
-    h("p", { class: "drawer-foot" }, ctxInfo ? "クラスのプロファイルでは、そのクラスの課題だけを表示します。" : "学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。"));
+    h("p", { class: "drawer-foot" }, ctxInfo ? `${ctxInfo.staff ? "先生・総合管理者のプロファイル。" : "クラスのプロファイルでは、そのクラスの課題だけを表示します。"}学習の記録はオンラインに保存されます。` : "学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。"));
   markActive();
 }
 function setActive(key) { activeNav = key; markActive(); }
@@ -616,6 +626,7 @@ function onAccountChange() {
     if (auth && auth.status !== "signed-out") {
       cloud.resetSession();
       auth = { status: "signed-out" };
+      records.switchTo("");
       route();
     }
   } else if (!allowed(auth) && auth) {
@@ -1823,7 +1834,9 @@ if ("serviceWorker" in navigator) {
   ]);
   auth = s;
   await refreshCtx();
+  records.switchTo(ctxInfo ? ctxInfo.cid : "");
   drawDrawer();
   window.addEventListener("hashchange", route);
   route();
+  records.sync().then((changed) => { if (changed) route(); }); // オンラインの記録を合わせる
 })();
