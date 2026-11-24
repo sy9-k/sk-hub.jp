@@ -445,7 +445,7 @@ function renderGate(s) {
     h("div", { class: "gate-card" },
       h("div", { class: "gate-hero" },
         h("img", { src: "icon.svg", alt: "", width: 56, height: 56 }),
-        h("p", { class: "gate-name" }, "SK Study", h("span", { class: "beta" }, "試作")),
+        h("p", { class: "gate-name" }, "SK Study", h("span", { class: "beta" }, "先行公開")),
         h("p", { class: "gate-tagline" }, "単語カード・4 択・書き取りで、英語・韓国語・中国語や自分で作った単語帳を覚える")),
       h("div", { class: "gate-body" },
         info ? [
