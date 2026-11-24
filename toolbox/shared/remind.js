@@ -116,16 +116,28 @@
 
   // ---- 自動入力: 「明日 9時 歯医者」「毎週火曜 ゴミ出し !!」から、日付・時刻・繰り返し・優先度を取り出す ----
   //   返すもの: { text（残りのタイトル）, due, time, repeat, priority, found: [見つけた言葉] }
+  //   タイトルから取り除くのは、空白（または入力の端）で区切った、ひとつの言葉として書いたときだけ。
+  //   「[英コミ] IELTS Writing Task 1（追加分・水曜）」のように、文の途中や括弧の中に書いた日付は、
+  //   締切日・時刻は決めるがタイトルはそのまま残す（前は「（追加分・ ）」「今日の宿題 → の宿題」のように、
+  //   言葉だけが抜けて崩れていた）
   var WD = { "日": 0, "月": 1, "火": 2, "水": 3, "木": 4, "金": 5, "土": 6 };
   var WD_EN = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
   function parseQuick(input) {
-    var text = " " + String(input || "") + " ", now = new Date(), r = { due: null, time: null, repeat: null, priority: 0, found: [] };
+    var text = " " + String(input || "") + " ", now = new Date(), r = { due: null, time: null, repeat: null, priority: 0, found: [] }, removed = false;
+    // 見つけた言葉が、空白で区切られたひとつの言葉か（入力の端も空白と同じあつかい）
+    function alone(m) {
+      var start = m.index + (m[0].length - m[0].replace(/^\s+/, "").length);
+      var end = m.index + m[0].replace(/\s+$/, "").length;
+      return /\s/.test(start > 0 ? text.charAt(start - 1) : " ") && /\s/.test(end < text.length ? text.charAt(end) : " ");
+    }
     function take(re, fn) {
       var m = re.exec(text);
       if (!m) return false;
       if (fn(m) === false) return false;
       r.found.push(m[0].trim());
+      if (!alone(m)) return true; // タイトルの一部として書かれている → 日付などは決めるが、文字は消さない
       text = text.slice(0, m.index) + " " + text.slice(m.index + m[0].length);
+      removed = true;
       return true;
     }
     function day(n) { var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + n); return ymd(d); }
@@ -173,6 +185,8 @@
     if (r.repeat && !r.due) r.due = day(0);
     // 優先度（! を 1〜3 個、単独で）
     take(/(?:^|\s)(!{1,3}|！{1,3})(?=\s)/, function (m) { r.priority = m[1].length; });
+    // 取り除いた跡に、空の括弧だけが残らないように（「英検（水曜 ）」など）
+    if (removed) text = text.replace(/[（(]\s*[）)]/g, " ");
     r.text = text.replace(/\s+/g, " ").trim();
     if (!r.text) { r.text = String(input || "").trim(); r.due = r.time = r.repeat = null; r.priority = 0; r.found = []; }
     return r;
