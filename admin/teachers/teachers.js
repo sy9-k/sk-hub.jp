@@ -70,9 +70,11 @@ async function load() {
   for (const c of adminCodes) {
     const copy = button("コピー", { kind: "text-btn", iconName: "content_copy", small: true });
     copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(c.code); toast("コピーしました"); } catch (e) { toast("コピーできませんでした"); } });
+    const pdf = button("案内 PDF", { kind: "text-btn", iconName: "picture_as_pdf", small: true });
+    pdf.addEventListener("click", () => sheet([c]));
     const del = button("取り消す", { kind: "text-btn", iconName: "delete", small: true });
     del.addEventListener("click", () => busy(del, async () => { await deleteDoc(doc(db, "studyStaffCodes", c.code)); toast("取り消しました"); load(); }));
-    aList.append(listItem({ iconName: "key", title: c.name, sub: `コード ${c.code} ・ ${fmtDateTime(c.createdAt)} に作成 ・ まだ使われていません`, end: [badge("コード待ち", "warn"), copy, del] }));
+    aList.append(listItem({ iconName: "key", title: c.name, sub: `コード ${c.code} ・ ${fmtDateTime(c.createdAt)} に作成 ・ まだ使われていません`, end: [badge("コード待ち", "warn"), copy, pdf, del] }));
   }
   for (const d of admins.docs) {
     const a = d.data();
@@ -80,13 +82,20 @@ async function load() {
     rm.addEventListener("click", () => busy(rm, () => revokeAdmin(d.id, a)));
     aList.append(listItem({ iconName: "admin_panel_settings", title: a.name, sub: `${fmtDateTime(a.createdAt)} に参加 ・ UID ${d.id}`, end: [rm] }));
   }
+  const sheet = async (list) => {
+    if (!list.length) { toast("コード待ちの総合管理者がいません"); return; }
+    const { openInviteSheet } = await import("/study/invite-pdf.js");
+    if (!openInviteSheet({ kind: "admin", orgName: "SK Study の総合管理者", items: list.map((c) => ({ name: c.name, code: c.code })) })) toast("案内を開けませんでした。ポップアップを許可してください");
+  };
+  const allSheet = button("案内 PDF（コード待ちの全員）", { kind: "text-btn", iconName: "picture_as_pdf" });
+  allSheet.addEventListener("click", () => sheet(adminCodes));
   const issue = button("総合管理者のコードを作る", { iconName: "add" });
   issue.addEventListener("click", () => busy(issue, issueAdminCode));
 
   root.replaceChildren(
     card("admin_panel_settings", `総合管理者（${admins.size}）`,
       note("総合管理者は、学校を作り、先生にコードを配れます。自分の学校のクラスの生徒・提出も見られます。ここで名前ごとにコードを作って渡してください（コードは 1 回だけ使えます）。"),
-      issue, aList),
+      issue, allSheet, aList),
     card("how_to_reg", `申し込み（確認待ち ${pending.length}）`,
       note("指導者は、自分のクラスの生徒の名前・答え・点数・試験の記録を見られます。所属や使い方を確かめてから承認してください。"),
       appList),
