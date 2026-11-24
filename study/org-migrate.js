@@ -205,7 +205,6 @@ export async function adoptOrgLinks(c) {
     fs.getDocs(fs.collection(db, "accounts", user.uid, "studyClasses")),
     fs.getDocs(fs.collection(db, "accounts", user.uid, "studyStaff"))
   ]);
-  const have = new Set(mine.docs.map((d) => d.id));
   const schools = new Map(); // sid → { name, from: student / teacher }
   for (const d of staffLinks.docs) schools.set(d.id, { name: d.data().schoolName || "", from: "teacher" });
   await Promise.all(classLinks.docs.map(async (d) => {
@@ -216,13 +215,22 @@ export async function adoptOrgLinks(c) {
     else if (!schools.get(sid).name) schools.get(sid).name = cls.data().schoolName || "";
   }));
   const made = [];
+  const linkOf = new Map(mine.docs.map((d) => [d.id, d.data()]));
   for (const [sid, info] of schools) {
-    if (have.has(sid)) continue;
     const snap = await fs.getDocs(fs.query(fs.collection(db, "studySchools", sid, "people"), fs.where("claimedBy", "==", user.uid))).catch(() => null);
     if (!snap || snap.empty) continue;
     const list = snap.docs.map(withId);
-    const person = list.find((p) => p.role === info.from) || list[0];
-    await fs.setDoc(fs.doc(db, "accounts", user.uid, "studyOrgs", sid), { schoolName: String(info.name || "").slice(0, 60), personId: person.id, role: person.role, joinedAt: fs.serverTimestamp() });
+    const t = list.find((p) => p.role === "teacher");
+    const st = list.find((p) => p.role === "student");
+    const old = linkOf.get(sid) || null;
+    // 先生と生徒の両方のとき、どちらの目印も持つ。主な役割（personId・role）は、すでにあればそのまま
+    const oldT = org.linkPid(old, "teacher"), oldS = org.linkPid(old, "student");
+    if (old && (!t || oldT === t.id) && (!st || oldS === st.id)) continue; // すでにそろっている
+    const primary = old && old.personId ? { personId: old.personId, role: old.role } : (list.find((p) => p.role === info.from) || list[0]);
+    const link = { schoolName: String(info.name || (old && old.schoolName) || "").slice(0, 60), personId: primary.personId || primary.id, role: primary.role, joinedAt: old && old.joinedAt ? old.joinedAt : fs.serverTimestamp() };
+    if (t) link.teacherPid = t.id;
+    if (st) link.studentPid = st.id;
+    await fs.setDoc(fs.doc(db, "accounts", user.uid, "studyOrgs", sid), link);
     made.push(sid);
   }
   return made;

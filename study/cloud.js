@@ -151,7 +151,8 @@ async function slotOf(cid) {
       const cls = await fs.getDoc(fs.doc(db, "studyClasses", cid));
       if (cls.exists() && cls.data().orgModel === true) {
         const link = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyOrgs", cls.data().schoolId));
-        if (link.exists() && link.data().personId) id = link.data().personId;
+        const sp = link.exists() ? org.linkPid(link.data(), "student") : "";
+        if (sp) id = sp;
       }
     } catch (e) { /* UID のまま */ }
   }
@@ -170,7 +171,8 @@ export async function myProfileName(cid) {
     const cls = await fs.getDoc(fs.doc(db, "studyClasses", cid));
     if (cls.exists() && cls.data().orgModel === true) {
       const link = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyOrgs", cls.data().schoolId));
-      const p = link.exists() ? await org.myPerson({ fs, db, user }, cls.data().schoolId, link.data().personId) : null;
+      const sp = link.exists() ? org.linkPid(link.data(), "student") : "";
+      const p = sp ? await org.myPerson({ fs, db, user }, cls.data().schoolId, sp) : null;
       if (p) return p.name;
     }
   } catch (e) { /* 下へ */ }
@@ -444,6 +446,14 @@ export async function schoolStaff(sid) {
   return snap.docs.map(withId).sort((a, b) => String(a.name).localeCompare(String(b.name), "ja"));
 }
 
+// 先生の名前を直す（総合管理者。学校の先生名簿の名前。コードは変わらない）
+export async function renameStaff(sid, uid, name) {
+  const { fs, db } = await ready();
+  const n = String(name || "").trim().slice(0, 40);
+  if (!n) throw new Error("名前を入れてください。");
+  await fs.updateDoc(fs.doc(db, "studySchools", sid, "staff", uid), { name: n });
+}
+
 // 先生を学校から外す（その先生は、この学校のクラスを触れなくなる。クラスと生徒の提出は残る）
 export async function removeStaff(sid, uid) {
   const { fs, db } = await ready();
@@ -467,7 +477,13 @@ export async function staffProfiles() {
   const ts = await teacherState();
   const out = [];
   if (ts.admin) out.push({ id: "admin", name: ts.admin.name, orgName: "総合管理者" });
-  for (const sc of ts.schools) out.push({ id: `staff-${sc.id}`, name: ts.teacher ? ts.teacher.name : ts.admin ? ts.admin.name : "先生", orgName: `${sc.name} の先生` });
+  const { fs, db, user } = await ready();
+  for (const sc of ts.schools) {
+    // 学校ごとの先生名簿の名前（総合管理者が直せる）。読めなければ、先生の申し込みの名前
+    const mine = await fs.getDoc(fs.doc(db, "studySchools", sc.id, "staff", user.uid)).catch(() => null);
+    const name = mine && mine.exists() && mine.data().name ? mine.data().name : ts.teacher ? ts.teacher.name : ts.admin ? ts.admin.name : "先生";
+    out.push({ id: `staff-${sc.id}`, name, orgName: `${sc.name} の先生` });
+  }
   return out;
 }
 
@@ -667,3 +683,6 @@ export const rollbackClass = withReady(migrate.rollbackClass);
 export const adoptOrgLinks = withReady(migrate.adoptOrgLinks);
 export const isTeacherOf = withReady(org.isTeacherOf);
 export const isOrgCtx = (c) => String(c || "").startsWith("org-");
+export const syncTeacherName = withReady(org.syncTeacherName);
+export const linkPid = org.linkPid;
+export const linkRoles = org.linkRoles;
