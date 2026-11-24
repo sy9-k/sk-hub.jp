@@ -4,7 +4,10 @@
 //       studyTeacherApps/{UID}・studyTeachers/{UID}・studyJoinCodes/{コード}・studyClasses/{cid}
 //       studyClasses/{cid}/members/{UID}・/assignments/{aid}・/assignments/{aid}/submissions/{UID}・/grades/{UID}
 //       accounts/{UID}/studyClasses/{cid}（本人の、参加しているクラスの一覧）
+//       組織モデル（学校の名簿 people → クラスの担任・在籍）は org.js。下の「組織モデル」でそのまま使える形にしてある
 //   ・クラスに参加するには、アカウントを SK Study に接続しておく（/account/?connect=study）
+import * as org from "./org.js";
+import * as migrate from "./org-migrate.js";
 const FIRESTORE = "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 見まちがえやすい I・O・0・1 は使わない
 export const PRINT_MAX_BYTES = 950000; // Firestore は 1 件 1MB まで
@@ -142,6 +145,16 @@ async function slotOf(cid) {
     const snap = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyClasses", cid));
     if (snap.exists() && snap.data().profileId) id = snap.data().profileId;
   } catch (e) { /* UID のまま */ }
+  // 従来の参加ではないとき: 組織モデルのクラスなら、学校の名簿の自分のユーザーの ID
+  if (id === user.uid) {
+    try {
+      const cls = await fs.getDoc(fs.doc(db, "studyClasses", cid));
+      if (cls.exists() && cls.data().orgModel === true) {
+        const link = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyOrgs", cls.data().schoolId));
+        if (link.exists() && link.data().personId) id = link.data().personId;
+      }
+    } catch (e) { /* UID のまま */ }
+  }
   slots.set(cid, id);
   return id;
 }
@@ -151,6 +164,15 @@ export async function myProfileName(cid) {
   try {
     const snap = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyClasses", cid));
     if (snap.exists()) return snap.data().profileName || snap.data().name || name;
+  } catch (e) { /* 下へ */ }
+  // 組織モデルのクラス: 学校の名簿の、自分のユーザーの名前
+  try {
+    const cls = await fs.getDoc(fs.doc(db, "studyClasses", cid));
+    if (cls.exists() && cls.data().orgModel === true) {
+      const link = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyOrgs", cls.data().schoolId));
+      const p = link.exists() ? await org.myPerson({ fs, db, user }, cls.data().schoolId, link.data().personId) : null;
+      if (p) return p.name;
+    }
   } catch (e) { /* 下へ */ }
   return name;
 }
@@ -475,6 +497,9 @@ export async function profiles(cid) {
 
 // 名簿: プロファイル + 前の参加の仕方（プロファイルなし）の生徒。結果の画面などで使う。id は提出・採点の ID
 export async function roster(cid) {
+  // 組織モデルのクラスは、在籍から名簿を作る
+  const cls = await getClass(cid).catch(() => null);
+  if (cls && cls.orgModel === true) return org.orgRoster(await ready(), cls);
   const [ps, ms_] = await Promise.all([profiles(cid), members(cid)]);
   const linked = new Set(ps.map((p) => p.claimedBy).filter(Boolean));
   return [
@@ -609,3 +634,36 @@ export function setActiveClass(cid) {
   try { if (cid) localStorage.setItem(CTX_KEY, cid); else localStorage.removeItem(CTX_KEY); } catch (e) { /* 残せなくても動く */ }
   document.dispatchEvent(new CustomEvent("sk-study:ctx"));
 }
+
+// ---------- 組織モデル（学校の名簿 → クラスの担任・在籍）。実装は org.js。ログインして接続している状態（ready）でそのまま使える ----------
+const withReady = (fn) => async (...args) => fn(await ready(), ...args);
+export const myOrgs = withReady(org.myOrgs);
+export const lookupOrgCode = withReady(org.lookupOrgCode);
+export const joinOrg = withReady(org.joinOrg);
+export const leaveOrg = withReady(org.leaveOrg);
+export const myPerson = withReady(org.myPerson);
+export const personClasses = withReady(org.personClasses);
+export const schoolPeople = withReady(org.schoolPeople);
+export const peopleCodes = withReady(org.peopleCodes);
+export const createPeople = withReady(org.createPeople);
+export const renamePerson = withReady(org.renamePerson);
+export const reissueCode = withReady(org.reissueCode);
+export const setPersonStatus = withReady(org.setPersonStatus);
+export const releasePerson = withReady(org.releasePerson);
+export const deletePerson = withReady(org.deletePerson);
+export const deleteSchoolPeople = withReady(org.deleteSchoolPeople);
+export const orgClasses = withReady(org.orgClasses);
+export const createOrgClass = withReady(org.createOrgClass);
+export const renameOrgClass = withReady(org.renameOrgClass);
+export const classPeople = withReady(org.classPeople);
+export const enrollPeople = withReady(org.enrollPeople);
+export const unenroll = withReady(org.unenroll);
+export const teacherClassesOf = withReady(org.teacherClassesOf);
+export const deleteOrgClass = withReady(org.deleteOrgClass);
+// 従来の方式 → 組織モデルへの移行（org-migrate.js）
+export const planMigration = withReady(migrate.planMigration);
+export const runMigration = withReady(migrate.runMigration);
+export const rollbackClass = withReady(migrate.rollbackClass);
+export const adoptOrgLinks = withReady(migrate.adoptOrgLinks);
+export const isTeacherOf = withReady(org.isTeacherOf);
+export const isOrgCtx = (c) => String(c || "").startsWith("org-");
