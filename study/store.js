@@ -40,6 +40,7 @@ let ctx = "";
 export const getContext = () => ctx;
 export function setContext(c) { ctx = String(c || ""); }
 const K = (base) => (ctx ? `${base}@${ctx}` : base);
+export const ctxKey = K; // プロファイルごとに分ける保存先の名前（マイ単語帳・プリントの一覧・記録）
 const recordListeners = new Set();
 export const onRecordsChange = (fn) => { recordListeners.add(fn); };
 const recordsChanged = () => recordListeners.forEach((fn) => { try { fn(); } catch (e) { /* 通知で止めない */ } });
@@ -83,7 +84,7 @@ export async function loadSkSets() {
   return skSets;
 }
 export const getSkSets = () => skSets;
-export const getMySets = () => read(SETS_KEY, []);
+export const getMySets = () => read(K(SETS_KEY), []);
 export const getClassSets = () => Object.values(read(CLASS_SETS_KEY, {}));
 export const allSets = () => [...skSets, ...getMySets(), ...getClassSets()];
 
@@ -148,12 +149,12 @@ export function saveMySet(input, id = null) {
     if (input.from) set.from = String(input.from).slice(0, LIMITS.title);
     sets.push(set);
   }
-  if (!write(SETS_KEY, sets)) throw new Error("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）");
+  if (!write(K(SETS_KEY), sets)) throw new Error("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）");
   return set;
 }
 
 export function deleteMySet(id) {
-  write(SETS_KEY, getMySets().filter((s) => s.id !== id));
+  write(K(SETS_KEY), getMySets().filter((s) => s.id !== id));
   const progress = read(K(PROGRESS_KEY), {});
   delete progress[id];
   write(K(PROGRESS_KEY), progress);

@@ -24,6 +24,7 @@
 //       左のプリント … スクリプトを動かさない iframe（sandbox）。外のファイルは CSP で止める
 import { openAnswers, readPrintMeta } from "./printfmt.js";
 import * as cloud from "./cloud.js";
+import { ctxKey } from "./store.js";
 
 const CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛㉜㉝㉞㉟";
 const CIRCLED_RE = "[①-⑳㉑-㉟]";
@@ -49,7 +50,7 @@ function writeJSON(key, value) {
 
 // ---------- 保存 ----------
 
-export const listPrints = () => readJSON(LIST_KEY, []);
+export const listPrints = () => readJSON(ctxKey(LIST_KEY), []);
 
 let dbPromise = null;
 function idb(mode, fn) {
@@ -84,7 +85,7 @@ export async function addPrint(html, title) {
   try { await idb("readwrite", (st) => st.put(html, id)); } catch (e) { throw new Error("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）"); }
   const list = listPrints();
   list.unshift({ id, title: String(title || parsed.title).slice(0, 80), addedAt: Date.now(), blanks: s.total, exam: parsed.exam, minutes: parsed.exam ? parsed.meta.minutes || 0 : 0 });
-  writeJSON(LIST_KEY, list);
+  writeJSON(ctxKey(LIST_KEY), list);
   return id;
 }
 
@@ -94,11 +95,11 @@ export async function saveClassPrint(id, html, title, classRef) {
   await idb("readwrite", (st) => st.put(html, id));
   const list = listPrints().filter((p) => p.id !== id);
   list.unshift({ id, title: String(title).slice(0, 80), addedAt: Date.now(), blanks: parsed.blanks.length, exam: parsed.exam, minutes: parsed.exam ? parsed.meta.minutes || 0 : 0, classRef });
-  writeJSON(LIST_KEY, list);
+  writeJSON(ctxKey(LIST_KEY), list);
 }
 
 async function deletePrint(id) {
-  writeJSON(LIST_KEY, listPrints().filter((p) => p.id !== id));
+  writeJSON(ctxKey(LIST_KEY), listPrints().filter((p) => p.id !== id));
   await idb("readwrite", (s) => s.delete(id)).catch(() => {});
   try { localStorage.removeItem(htmlKey(id)); localStorage.removeItem(stateKey(id)); } catch (e) { /* 消せなくても一覧からは消える */ }
 }

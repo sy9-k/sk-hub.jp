@@ -356,6 +356,18 @@ function renderRoute(nav) {
       return;
     }
   }
+  // 先生・総合管理者のプロファイルでは、指導者メニューと先生用の教材だけ（個人の画面・クラスの参加は出さない）
+  if (cloud.activeClass() && ctxInfo && ctxInfo.staff) {
+    const STAFF_VIEWS = ["sets", "mine", "edit", "import", "prints", "print", "maker", "set", "learn", "settings"];
+    if (!STAFF_VIEWS.includes(view)) {
+      document.body.dataset.view = "teach";
+      setActive("home");
+      topTitle.textContent = ctxInfo.className;
+      renderTeach(view === "teach" ? parts.slice(1) : [], printUi).catch(showError);
+      app.focus({ preventScroll: true });
+      return;
+    }
+  }
   document.body.dataset.view = view || "home";
   let section = SECTION_OF[view || ""] || null;
   if (view === "set") {
@@ -494,6 +506,16 @@ const NAV = [
   { key: "maker", href: "#/maker", icon: "picture_as_pdf", label: "PDF からプリントを作る" },
   { key: "teach", href: "#/teach", icon: "school", label: "指導者メニュー" }
 ];
+// 先生・総合管理者のプロファイル: 指導者メニューと、先生用の教材（マイ単語帳・プリントはプロファイルごとに別）だけ
+const STAFF_NAV = [
+  { key: "home", href: "#/", icon: "school", label: "指導者メニュー" },
+  { key: "sets", href: "#/sets", icon: "library_books", label: "SK認定コンテンツ" },
+  { key: "mine", href: "#/mine", icon: "bookmarks", label: "マイ単語帳" },
+  { key: "prints", href: "#/prints", icon: "assignment", label: "プリント" },
+  null,
+  { sub: "ツール" },
+  { key: "maker", href: "#/maker", icon: "picture_as_pdf", label: "PDF からプリントを作る" }
+];
 const drawer = document.getElementById("drawer");
 const scrim = document.getElementById("scrim");
 const navToggle = document.getElementById("nav-toggle");
@@ -561,7 +583,8 @@ function drawDrawer() {
       h("strong", null, shown || "SK Hub Systems アカウント"),
       ctxInfo ? h("span", null, `${ctxInfo.staff ? "" : "クラス: "}${ctxInfo.className}`) : email ? h("span", null, email) : null),
     canSwitch ? icon("unfold_more", "drawer-switch-icon") : null);
-  const nav = ctxInfo && !ctxInfo.staff ? CLASS_NAV : NAV;
+  // 個人には指導者メニューを出さない（先生・総合管理者は、自分のプロファイルに切り替えて使う）
+  const nav = ctxInfo ? (ctxInfo.staff ? STAFF_NAV : CLASS_NAV) : NAV.filter((n) => !n || n.key !== "teach");
   drawer.replaceChildren(
     who,
     h("div", { class: "drawer-list" },
@@ -1772,6 +1795,7 @@ const printUi = {
   h, icon, button, linkButton, toast, openDialog, confirmDialog, go, ring, app,
   message: renderMessage,
   setKeys: (fn) => { keyHandler = fn; },
+  staffCtx: () => !!(ctxInfo && ctxInfo.staff),
   backLink, shuffle, runSession: (cfg) => runSession(cfg)
 };
 

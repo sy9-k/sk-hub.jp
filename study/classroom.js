@@ -40,7 +40,7 @@ export function classSection(ui) {
   const { h, icon, button, linkButton } = ui;
   const body = h("div", { class: "class-home" }, h("p", { class: "muted small" }, "確認中…"));
   const section = h("section", { class: "section" },
-    h("div", { class: "section-head" }, h("h2", null, "クラス"), h("div", { class: "section-actions" }, linkButton("text", "指導者メニュー", "school", "#/teach"))),
+    h("div", { class: "section-head" }, h("h2", null, "クラス"), h("div", { class: "section-actions" }, linkButton("text", "先生・管理者の方はこちら", "school", "#/teach"))),
     body);
   (async () => {
     const s = await cloud.session();
