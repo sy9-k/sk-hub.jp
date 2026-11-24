@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sk-clock-v26';
+const CACHE_NAME = 'sk-clock-v27';
 const ASSETS = [
   '/toolbox/clock/',
   '/toolbox/clock/index.html',
@@ -60,6 +60,20 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// 通信優先。ただし 4 秒たっても返事がなく、キャッシュがあるときはキャッシュを出す（電波が弱い・Wi-Fi だけ繋がっているときに、白い画面で固まらないように）
+function netFirst(request) {
+  const lookup = () => caches.match(request, { ignoreSearch: true });
+  const net = fetch(request).then((response) => {
+    if (response && response.status === 200 && response.type === 'basic') {
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+    }
+    return response;
+  }).catch(lookup);
+  const slow = new Promise((resolve) => setTimeout(resolve, 4000)).then(lookup).then((hit) => hit || new Promise(() => {}));
+  return Promise.race([net, slow]);
+}
+
 self.addEventListener('fetch', (e) => {
   // SK Hub Systems のアクセスチェック（/frameworks/ と Firestore）・アカウント（/assets/hub/・/y-filter/）はキャッシュしない。
   // キャッシュすると、ブロックの解除や check.js・アカウントの更新が反映されなくなるため。
@@ -72,15 +86,7 @@ self.addEventListener('fetch', (e) => {
   const sameOrigin = url.origin === self.location.origin;
   if (sameOrigin) {
     e.respondWith(
-      fetch(e.request)
-        .then((response) => {
-          if (response && response.status === 200 && response.type === 'basic') {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(e.request, { ignoreSearch: true }))
+      netFirst(e.request)
     );
     return;
   }

@@ -2,7 +2,7 @@
 // 試作のあいだは変更が多いので、/study/ の中は通信優先（オフラインのときだけキャッシュ）。直してもすぐ届く
 // アイコンの書体（Google Fonts）はキャッシュ優先（オフラインでもアイコンが消えないように）
 // アクセスチェック（/frameworks/）・アカウント（/assets/hub/）・Firestore などほかのサイトはキャッシュしない
-const CACHE_NAME = 'study-v40';
+const CACHE_NAME = 'study-v41';
 const urlsToCache = [
   '/study/',
   '/study/index.html',
@@ -74,11 +74,11 @@ self.addEventListener('fetch', (event) => {
 
   // /study/ の中と、ページ本体: 通信優先。オフラインのときだけキャッシュ（ページはホームにもどす）
   if (event.request.mode === 'navigate' || url.pathname.startsWith('/study/')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((res) => put(event.request, res))
-        .catch(() => caches.match(event.request, { ignoreSearch: true }).then((hit) => hit || (event.request.mode === 'navigate' ? caches.match('/study/') : Response.error())))
-    );
+    // 通信優先。ただし 4 秒たっても返事がなく、キャッシュがあるときはキャッシュを出す（電波が弱いときに白い画面で固まらないように）
+    const lookup = () => caches.match(event.request, { ignoreSearch: true }).then((hit) => hit || (event.request.mode === 'navigate' ? caches.match('/study/') : undefined));
+    const net = fetch(event.request).then((res) => put(event.request, res)).catch(() => lookup().then((hit) => hit || Response.error()));
+    const slow = new Promise((resolve) => setTimeout(resolve, 4000)).then(lookup).then((hit) => hit || new Promise(() => {}));
+    event.respondWith(Promise.race([net, slow]));
     return;
   }
 
