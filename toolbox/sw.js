@@ -1,6 +1,6 @@
 // SK's Toolbox のホーム画面（/toolbox/）の Service Worker。スコープは /toolbox/ 全体
 // 各アプリは自分のフォルダに自分の sw.js を持つ（スコープがせまいほうが使われる）。まだ開いたことのないアプリは、ここで開ける
-const CACHE_NAME = 'sk-toolbox-v26';
+const CACHE_NAME = 'sk-toolbox-v27';
 const ASSETS = [
   // ホーム画面と、4 つのアプリ（ホーム画面から開いたことがなくても、オフラインで開けるように）
   '/toolbox/',
@@ -115,6 +115,20 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
+// 通信優先。ただし 4 秒たっても返事がなく、キャッシュがあるときはキャッシュを出す（電波が弱い・Wi-Fi だけ繋がっているときに、白い画面で固まらないように）
+function netFirst(request) {
+  const lookup = () => caches.match(request, { ignoreSearch: true });
+  const net = fetch(request).then((response) => {
+    if (response && response.status === 200 && response.type === 'basic') {
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+    }
+    return response;
+  }).catch(lookup);
+  const slow = new Promise((resolve) => setTimeout(resolve, 4000)).then(lookup).then((hit) => hit || new Promise(() => {}));
+  return Promise.race([net, slow]);
+}
+
 self.addEventListener('fetch', (e) => {
   // SK Hub Systems のアクセスチェック（/frameworks/ と Firestore）・アカウント（/assets/hub/・/y-filter/）はキャッシュしない。
   // キャッシュすると、ブロックの解除や check.js・アカウントの更新が反映されなくなるため。
@@ -127,15 +141,7 @@ self.addEventListener('fetch', (e) => {
   const sameOrigin = url.origin === self.location.origin;
   if (sameOrigin) {
     e.respondWith(
-      fetch(e.request)
-        .then((response) => {
-          if (response && response.status === 200 && response.type === 'basic') {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(e.request, { ignoreSearch: true }))
+      netFirst(e.request)
     );
     return;
   }

@@ -1,7 +1,7 @@
 // Nagi のサービスワーカー（ホーム画面に追加したとき・オフラインでも開けるように）
 // 画面の部品は先にキャッシュし、ページ本体は通信優先（オフラインのときだけキャッシュ）。
 // 他サイト（Firestore・Google Fonts など）・アクセスチェック（/frameworks/）・アカウント（/assets/hub/）はキャッシュしない
-const CACHE_NAME = 'nagi-v21';
+const CACHE_NAME = 'nagi-v22';
 const urlsToCache = [
   '/nagi/',
   '/nagi/index.html',
@@ -58,17 +58,19 @@ self.addEventListener('fetch', (event) => {
 
   // ページ本体・多言語の辞書・アクセス解析は通信優先（更新がすぐ届くように）。オフラインのときだけキャッシュ
   if (event.request.mode === 'navigate' || url.pathname.startsWith('/assets/i18n') || url.pathname === '/assets/analytics.js') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request).then((hit) => hit || caches.match('/nagi/')))
-    );
+    // 通信優先。ただし 4 秒たっても返事がなく、キャッシュがあるときはキャッシュを出す（電波が弱いときに白い画面で固まらないように）
+    const lookup = () => caches.match(event.request).then((hit) => hit || (event.request.mode === 'navigate' ? caches.match('/nagi/') : undefined));
+    const net = fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      })
+      .catch(lookup);
+    const slow = new Promise((resolve) => setTimeout(resolve, 4000)).then(lookup).then((hit) => hit || new Promise(() => {}));
+    event.respondWith(Promise.race([net, slow]));
     return;
   }
 
