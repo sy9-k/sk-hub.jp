@@ -28,6 +28,17 @@ function fail(code, message) { const e = new Error(message); e.code = code; retu
 
 // ---------- 本人（生徒・先生のユーザー） ----------
 
+// 目印（accounts/{UID}/studyOrgs/{sid}）の中の、role（student / teacher）のユーザーの ID。なければ ''
+//   同じアカウントが、同じ学校で先生と生徒の両方のとき、目印に teacherPid・studentPid が入る（personId・role は、主なほう）
+export function linkPid(link, role) {
+  if (!link) return "";
+  return link[`${role}Pid`] || (link.role === role ? link.personId || "" : "");
+}
+// 目印に入っている役割 ["teacher", "student"] のうち、あるもの
+export function linkRoles(link) {
+  return ["teacher", "student"].filter((r) => linkPid(link, r));
+}
+
 // 入っている学校の一覧 [{ id: 学校の ID, schoolName, personId, role, joinedAt }]
 export async function myOrgs(c) {
   const { fs, db, user } = c;
@@ -50,7 +61,14 @@ export async function joinOrg(c, info) {
   const { fs, db, user } = c;
   const b = fs.writeBatch(db);
   b.update(fs.doc(db, "studySchools", info.schoolId, "people", info.personId), { claimedBy: user.uid, claimedAt: fs.serverTimestamp(), updatedAt: fs.serverTimestamp() });
-  b.set(fs.doc(db, "accounts", user.uid, "studyOrgs", info.schoolId), { schoolName: info.schoolName, personId: info.personId, role: info.role, code: info.code, joinedAt: fs.serverTimestamp() });
+  // すでに、同じ学校の別の役割の目印があれば、その役割も残す（先生で入っていた人が、生徒としても入る、など）
+  const prev = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyOrgs", info.schoolId)).catch(() => null);
+  const old = prev && prev.exists() ? prev.data() : null;
+  const other = info.role === "teacher" ? "student" : "teacher";
+  const keep = old && linkPid(old, other) ? { [`${other}Pid`]: linkPid(old, other) } : {};
+  b.set(fs.doc(db, "accounts", user.uid, "studyOrgs", info.schoolId), {
+    schoolName: info.schoolName, personId: info.personId, role: info.role, [`${info.role}Pid`]: info.personId, ...keep, code: info.code, joinedAt: fs.serverTimestamp()
+  });
   try {
     await b.commit();
   } catch (e) {
@@ -248,6 +266,17 @@ export async function classPeople(c, cid) {
   return { teachers: t.docs.map(withId).sort(byName), students: s.docs.map(withId).sort(byName) };
 }
 
+// 担任の名前を、クラスの teacherName（生徒の画面などに出る「〇〇 先生」）に反映する。複数なら「・」でつなぐ（40 字まで）。変わらなければ書かない
+export async function syncTeacherName(c, cid, teachers = null) {
+  const { fs, db } = c;
+  const list = teachers || (await classPeople(c, cid)).teachers;
+  const name = trim(list.map((t) => t.name).join("・"), 40);
+  const snap = await fs.getDoc(fs.doc(db, "studyClasses", cid)).catch(() => null);
+  if (!snap || !snap.exists() || snap.data().teacherName === name) return name;
+  await fs.updateDoc(fs.doc(db, "studyClasses", cid), { teacherName: name, updatedAt: fs.serverTimestamp() }).catch(() => {});
+  return name;
+}
+
 // 名簿から、クラスに入れる（role: student = 在籍 / teacher = 担任）。すでに入っている人は飛ばす。入れた人の数を返す
 //   slots … Map(ユーザーの ID → 提出・採点の ID)。従来のプロファイルで提出していたクラスを移すときだけ使う（ふつうは要らない）
 export async function enrollPeople(c, cls, persons, role = "student", { slots = null } = {}) {
@@ -265,6 +294,7 @@ export async function enrollPeople(c, cls, persons, role = "student", { slots = 
     }
     await b.commit();
   }
+  if (role === "teacher" && todo.length) await syncTeacherName(c, cls.id);
   return todo.length;
 }
 
@@ -275,6 +305,7 @@ export async function unenroll(c, cid, sid, pid, role = "student") {
   b.delete(fs.doc(db, "studyClasses", cid, role === "teacher" ? "teachers" : "enrollments", pid));
   b.delete(fs.doc(db, "studySchools", sid, "people", pid, "classes", cid));
   await b.commit();
+  if (role === "teacher") await syncTeacherName(c, cid).catch(() => {});
 }
 
 // 先生が担任のクラス（本人の classes から）
@@ -307,7 +338,7 @@ export async function isTeacherOf(c, cls) {
   const { fs, db, user } = c;
   if (!cls || !cls.schoolId) return false;
   const link = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyOrgs", cls.schoolId)).catch(() => null);
-  const pid = link && link.exists() ? link.data().personId : null;
+  const pid = link && link.exists() ? linkPid(link.data(), "teacher") : null;
   if (!pid) return false;
   const t = await fs.getDoc(fs.doc(db, "studyClasses", cls.id, "teachers", pid)).catch(() => null);
   return !!(t && t.exists());

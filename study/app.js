@@ -556,11 +556,14 @@ async function refreshCtx() {
   try {
     if (cloud.isOrgCtx(cid)) {
       // 学校のプロファイル（組織モデル。学校の名簿のユーザー。生徒・先生）
-      const sid = cid.slice(4);
+      // org-<学校の ID>（目印の主な役割）/ org-<学校の ID>:student・:teacher（同じ学校で、先生と生徒の両方のとき）
+      const [sid, wanted] = cid.slice(4).split(":");
       const o = (await cloud.myOrgs()).find((x) => x.id === sid);
-      const person = o ? await cloud.myPerson(sid, o.personId) : null;
+      const role = wanted || (o && o.role);
+      const pid = o ? cloud.linkPid(o, role) : "";
+      const person = pid ? await cloud.myPerson(sid, pid) : null;
       if (!o || !person) { ctxInfo = null; cloud.setActiveClass(""); return; }
-      ctxInfo = { cid, org: true, sid, personId: o.personId, role: o.role, staff: o.role === "teacher", className: o.schoolName || "学校", profileName: person.name, suspended: person.status === "suspended" };
+      ctxInfo = { cid, org: true, sid, personId: pid, role, staff: role === "teacher", className: o.schoolName || "学校", profileName: person.name, suspended: person.status === "suspended" };
       return;
     }
     if (cloud.isStaffCtx(cid)) {
@@ -579,10 +582,11 @@ async function refreshCtx() {
 // 学校のプロファイル（組織モデル）の一覧 [{ id: "org-<学校の ID>", role, schoolName, name }]
 async function orgProfiles() {
   const orgs = await cloud.myOrgs().catch(() => []);
-  return Promise.all(orgs.map(async (o) => {
-    const p = await cloud.myPerson(o.id, o.personId).catch(() => null);
-    return { id: `org-${o.id}`, sid: o.id, role: o.role, schoolName: o.schoolName || "学校", name: p ? p.name : "" };
-  })).then((l) => l.filter((x) => x.name));
+  // 同じ学校で、先生と生徒の両方のとき、プロファイルも 2 つ（主な役割は org-<学校の ID>、もう一方は org-<学校の ID>:<役割>）
+  return Promise.all(orgs.flatMap((o) => cloud.linkRoles(o).map(async (role) => {
+    const p = await cloud.myPerson(o.id, cloud.linkPid(o, role)).catch(() => null);
+    return { id: role === o.role ? `org-${o.id}` : `org-${o.id}:${role}`, sid: o.id, role, schoolName: o.schoolName || "学校", name: p ? p.name : "" };
+  }))).then((l) => l.filter((x) => x.name));
 }
 // 従来のクラスのプロファイル。組織モデルに移されたクラスは、学校のプロファイルに入るので、ここには出さない
 async function legacyClassProfiles() {

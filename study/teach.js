@@ -292,7 +292,14 @@ async function schoolView(sid, s, ui) {
         h("tbody", null,
           staff.map((m) => h("tr", null,
             h("td", null, m.name), h("td", null, h("span", { class: "muted" }, "-")), h("td", null, "参加ずみ"),
-            h("td", { class: "tc-actions" }, button("text", "外す", "person_remove", async () => {
+            h("td", { class: "tc-actions" }, button("text", "名前", "edit", () => {
+              const input = h("input", { type: "text", class: "field-input", maxlength: "40", value: m.name });
+              const d = openDialog("先生の名前", h("div", null, input, h("p", { class: "muted small" }, "学校の先生名簿の名前です。本人の画面（先生のプロファイル・クラスの表示）に出ます。")), [button("text", "やめる", null, () => d.close()), button("filled", "保存", null, async () => {
+                if (!input.value.trim()) return;
+                try { await cloud.renameStaff(sid, m.id, input.value); d.close(); toast("名前を変えました"); reload(); } catch (e) { toast(cloud.explain(e)); }
+              })]);
+              input.focus();
+            }), button("text", "外す", "person_remove", async () => {
               if (!(await confirmDialog(`${m.name} さんを学校から外しますか？`, "この先生は、この学校のクラスを触れなくなります。クラスと生徒の提出は残ります。", "外す", true))) return;
               try { await cloud.removeStaff(sid, m.id); toast("外しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
             })))),

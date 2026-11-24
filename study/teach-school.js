@@ -138,6 +138,8 @@ export function schoolTabs(ui, { school, classes, legacy, reload }) {
   async function classesPanel() {
     const orgClasses = await cloud.orgClasses(school.id);
     const per = await Promise.all(orgClasses.map((k) => cloud.classPeople(k.id).catch(() => ({ teachers: [], students: [] }))));
+    // 担任の名前が、クラスの表示（生徒の画面の「〇〇 先生」）とずれていたら、そろえる（担任を紐づけた時期によっては、空のままのため）
+    await Promise.all(orgClasses.map(async (k, i) => { const n = await cloud.syncTeacherName(k.id, per[i].teachers).catch(() => null); if (n != null) k.teacherName = n; }));
     const create = () => {
       const input = h("input", { type: "text", class: "field-input", maxlength: "60", placeholder: "例: 1 年 A 組 英語" });
       const d = openDialog("クラスを作る", h("div", null, h("label", { class: "field" }, h("span", { class: "field-label" }, "クラスの名前"), input),
