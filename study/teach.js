@@ -45,9 +45,14 @@ export async function renderTeach(parts, ui) {
   try { ts = await cloud.teacherState(); } catch (e) { ui.message("指導者メニューを開けませんでした", cloud.explain(e)); return; }
   if (location.hash !== hash) return;
   const [cid, sub] = parts;
+  // 先生・総合管理者は、専用のプロファイルで入る（個人のプロファイルでは、プロファイルの選択とコード入力だけ）
+  //   学校のない従来の先生（申し込みで承認された人）だけは、個人のままでも使える
+  const staff = !!(ui.staffCtx && ui.staffCtx());
+  const legacy = !!ts.teacher && !ts.schools.length && !ts.admin;
   try {
-    if (!ts.teacher && !ts.admin) await codeView(ui);
-    else if (!cid) await homeView(ts, s, ui);
+    if (!staff && !legacy) await personalView(ts, ui);
+    else if (!ts.teacher && !ts.admin) await codeView(ui);
+    else if (!cid) await homeView(ts, s, ui, staff ? cloud.activeClass() : "");
     else if (cid === "school" && sub) await schoolView(sub, s, ui);
     else if (sub === "new") await newAssignView(cid, ui);
     else if (sub) await resultsView(cid, sub, ui);
@@ -97,7 +102,7 @@ function openStaffCodeDialog(ui, onDone) {
   };
   const okBtn = button("filled", "確かめる", null, async () => {
     if (!found || cloud.normCode(input.value) !== found.code) { await look(); return; }
-    try { await cloud.redeemStaffCode(found); d.close(); toast("入りました"); onDone(); } catch (e) { toast(cloud.explain(e)); }
+    try { await cloud.redeemStaffCode(found); d.close(); toast("入りました。左上のアカウントの欄から、先生のプロファイルに切り替えられます"); onDone(); } catch (e) { toast(cloud.explain(e)); }
   });
   const d = openDialog("コードを入れる", h("div", null, h("p", null, "総合管理者または学校の先生から渡された、あなた専用の 6 けたのコードを入れてください。"), input, info), [button("text", "やめる", null, () => d.close()), okBtn]);
   input.addEventListener("input", () => { if (found && cloud.normCode(input.value) !== found.code) { found = null; info.replaceChildren(); okBtn.querySelector("span:last-child").textContent = "確かめる"; } });
@@ -119,9 +124,37 @@ async function codeView(ui) {
 
 // ---------- 指導者メニューのホーム（総合管理者: 学校 / 先生: クラス） ----------
 
-async function homeView(ts, s, ui) {
+// 個人のプロファイルで開いたとき: 先生・総合管理者のプロファイルへの切りかえと、コードを入れる入り口
+async function personalView(ts, ui) {
+  const { h, icon, button, app } = ui;
+  const profiles = await cloud.staffProfiles().catch(() => []);
+  app.replaceChildren(...head(ui, "先生・総合管理者", "先生・総合管理者は、生徒のクラスのプロファイルと同じように、専用のプロファイルで入ります。プロファイルごとに、教材（マイ単語帳・プリント）と学習の記録が別になります。", ["ホーム", "#/"]),
+    profiles.length ? h("section", { class: "section" },
+      h("div", { class: "section-head" }, h("h2", null, `プロファイル（${profiles.length}）`)),
+      h("div", { class: "set-list" }, profiles.map((p) => h("div", { class: "set-row" },
+        h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon(p.id === "admin" ? "admin_panel_settings" : "school")),
+        h("div", { class: "set-row-body" },
+          h("span", { class: "set-row-link" },
+            h("span", { class: "set-row-sub" }, h("span", null, p.orgName)),
+            h("span", { class: "set-row-title" }, p.name))),
+        h("div", { class: "set-row-end" }, button("filled", "このプロファイルで入る", "login", () => cloud.setActiveClass(p.id))))))) : null,
+    h("section", { class: "mk-card" },
+      h("h2", null, icon("key"), "コードを入れる"),
+      h("p", null, profiles.length ? "別の学校の先生にもなるときは、その学校の先生のコードを入れます。" : "渡されたコードを入れると、先生・総合管理者のプロファイルができます。"),
+      h("ul", { class: "mk-summary" },
+        h("li", null, icon("admin_panel_settings"), "総合管理者のコード … SK（開発者）から渡されます。学校を作り、先生にコードを配れます"),
+        h("li", null, icon("school"), "先生のコード … 学校の総合管理者から渡されます。学校の中でクラスを作れます")),
+      h("div", { class: "mk-row" }, button("filled", "コードを入れる", "key", () => openStaffCodeDialog(ui, () => renderTeach([], ui))))));
+}
+
+async function homeView(ts, s, ui, ctx = "") {
   const { h, icon, button, toast, go, app, openDialog } = ui;
-  const [classes, schools] = await Promise.all([ts.teacher ? cloud.teacherClasses() : [], ts.admin ? cloud.mySchools() : []]);
+  // ctx: 先生のプロファイルなら staff-<学校の ID>、総合管理者なら admin、従来の先生（個人のまま）は ""
+  const sid = ctx.startsWith("staff-") ? ctx.slice(6) : "";
+  const showAdmin = !!ts.admin && (!ctx || ctx === "admin");
+  const showTeacher = !!ts.teacher && (!ctx || !!sid);
+  const [allClasses, schools] = await Promise.all([showTeacher ? cloud.teacherClasses() : [], showAdmin ? cloud.mySchools() : []]);
+  const classes = sid ? allClasses.filter((c) => c.schoolId === sid) : allClasses;
   const schoolName = new Map([...ts.schools, ...schools].map((x) => [x.id, x.name]));
   const reload = () => renderTeach([], ui);
   const createSchool = () => {
@@ -136,7 +169,7 @@ async function homeView(ts, s, ui) {
   };
   const createClass = () => {
     if (!ts.schools.length) { toast("先生として入っている学校がありません。学校の総合管理者から先生のコードをもらってください"); return; }
-    const sel = h("select", { class: "field-select", "aria-label": "学校" }, ts.schools.map((x) => h("option", { value: x.id }, x.name)));
+    const sel = h("select", { class: "field-select", "aria-label": "学校" }, (sid ? ts.schools.filter((x) => x.id === sid) : ts.schools).map((x) => h("option", { value: x.id }, x.name)));
     const input = h("input", { type: "text", class: "field-input", maxlength: "60", placeholder: "例: 1 年 A 組 英語" });
     const d = openDialog("クラスを作る", h("div", null,
       h("label", { class: "field" }, h("span", { class: "field-label" }, "学校"), sel),
@@ -149,9 +182,9 @@ async function homeView(ts, s, ui) {
       })]);
     input.focus();
   };
-  const who = ts.admin ? `${ts.admin.name}（総合管理者）` : `${ts.teacher.name} 先生`;
-  app.replaceChildren(...head(ui, who, ts.teacher && ts.teacher.org ? ts.teacher.org : "", ["ホーム", "#/"]),
-    ts.admin ? h("section", { class: "section" },
+  const who = showAdmin ? `${ts.admin.name}（総合管理者）` : `${ts.teacher.name} 先生`;
+  app.replaceChildren(...head(ui, who, sid ? schoolName.get(sid) || "" : showTeacher && ts.teacher.org ? ts.teacher.org : "", ["ホーム", "#/"]),
+    showAdmin ? h("section", { class: "section" },
       h("div", { class: "section-head" }, h("h2", null, `学校（${schools.length}）`), button("filled", "学校を作る", "add", createSchool)),
       schools.length ? h("div", { class: "set-list" }, schools.map((x) => h("div", { class: "set-row" },
         h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon("apartment")),
@@ -161,8 +194,8 @@ async function homeView(ts, s, ui) {
             h("span", { class: "set-row-title" }, x.name))),
         h("div", { class: "set-row-end" }, icon("chevron_right")))))
         : h("div", { class: "empty-card" }, icon("apartment", "empty-icon"), h("p", null, "まだ学校がありません。学校を作って、先生にコードを配りましょう。"))) : null,
-    ts.teacher ? h("section", { class: "section" },
-      h("div", { class: "section-head" }, h("h2", null, `${ts.admin ? "自分の " : ""}クラス（${classes.length}）`), button("filled", "クラスを作る", "add", createClass)),
+    showTeacher ? h("section", { class: "section" },
+      h("div", { class: "section-head" }, h("h2", null, `${showAdmin ? "自分の " : ""}クラス（${classes.length}）`), button("filled", "クラスを作る", "add", createClass)),
       classes.length ? h("div", { class: "set-list" }, classes.map((c) => h("div", { class: "set-row" },
         h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon("groups")),
         h("div", { class: "set-row-body" },
@@ -171,7 +204,7 @@ async function homeView(ts, s, ui) {
             h("span", { class: "set-row-title" }, c.name))),
         h("div", { class: "set-row-end" }, icon("chevron_right")))))
         : h("div", { class: "empty-card" }, icon("groups", "empty-icon"), h("p", null, "まだクラスがありません。クラスを作って、参加コードを生徒に配りましょう。"))) : null,
-    h("section", { class: "mk-card" },
+    ctx ? null : h("section", { class: "mk-card" },
       h("h2", null, icon("key"), "コードを入れる"),
       h("p", { class: "muted small" }, ts.admin ? "先生としても入るときは、学校の総合管理者から渡された先生のコードを入れます。" : "ほかの学校の先生にもなるときは、その学校の先生のコードを入れます。"),
       h("div", { class: "mk-row" }, button("outlined", "コードを入れる", "key", () => openStaffCodeDialog(ui, reload)))),

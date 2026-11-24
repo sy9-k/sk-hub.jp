@@ -35,6 +35,16 @@ export const SPEECH_CHOICES = [
 
 export const LIMITS = { title: 60, description: 200, langName: 20, w: 100, m: 200, r: 100, ex: 300, words: 1000 };
 
+// いまのプロファイル。個人は ""、組織（クラス・先生）のプロファイルは、その ID。組織のプロファイルの記録は別に持ち、オンラインに保存して共有する（records.js）
+let ctx = "";
+export const getContext = () => ctx;
+export function setContext(c) { ctx = String(c || ""); }
+const K = (base) => (ctx ? `${base}@${ctx}` : base);
+export const ctxKey = K; // プロファイルごとに分ける保存先の名前（マイ単語帳・プリントの一覧・記録）
+const recordListeners = new Set();
+export const onRecordsChange = (fn) => { recordListeners.add(fn); };
+const recordsChanged = () => recordListeners.forEach((fn) => { try { fn(); } catch (e) { /* 通知で止めない */ } });
+
 function read(key, fallback) {
   try {
     const v = JSON.parse(localStorage.getItem(key) || "null");
@@ -74,7 +84,7 @@ export async function loadSkSets() {
   return skSets;
 }
 export const getSkSets = () => skSets;
-export const getMySets = () => read(SETS_KEY, []);
+export const getMySets = () => read(K(SETS_KEY), []);
 export const getClassSets = () => Object.values(read(CLASS_SETS_KEY, {}));
 export const allSets = () => [...skSets, ...getMySets(), ...getClassSets()];
 
@@ -139,24 +149,25 @@ export function saveMySet(input, id = null) {
     if (input.from) set.from = String(input.from).slice(0, LIMITS.title);
     sets.push(set);
   }
-  if (!write(SETS_KEY, sets)) throw new Error("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）");
+  if (!write(K(SETS_KEY), sets)) throw new Error("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）");
   return set;
 }
 
 export function deleteMySet(id) {
-  write(SETS_KEY, getMySets().filter((s) => s.id !== id));
-  const progress = read(PROGRESS_KEY, {});
+  write(K(SETS_KEY), getMySets().filter((s) => s.id !== id));
+  const progress = read(K(PROGRESS_KEY), {});
   delete progress[id];
-  write(PROGRESS_KEY, progress);
+  write(K(PROGRESS_KEY), progress);
+  recordsChanged();
 }
 
 // SK のセットを自分用にコピーする（覚えぐあいも引きつぐ）
 export function copySet(set) {
   const copy = saveMySet({ ...set, source: "copy", from: set.title, title: set.title });
-  const progress = read(PROGRESS_KEY, {});
+  const progress = read(K(PROGRESS_KEY), {});
   if (progress[set.id]) {
     progress[copy.id] = JSON.parse(JSON.stringify(progress[set.id]));
-    write(PROGRESS_KEY, progress);
+    write(K(PROGRESS_KEY), progress);
   }
   return copy;
 }
@@ -164,7 +175,7 @@ export function copySet(set) {
 // ---------- 覚えぐあい ----------
 
 export function progressOf(setId) {
-  return read(PROGRESS_KEY, {})[setId] || {};
+  return read(K(PROGRESS_KEY), {})[setId] || {};
 }
 
 // new（未学習）/ weak（弱点 = 最後にまちがえた）/ learning（記憶中）/ mastered（記憶済み）
@@ -199,7 +210,7 @@ export function setStats(set) {
 // 答えを記録する。ok = 正解か
 //   その日にもう出し終えた単語（due が明日以降）は、正解しても箱を上げない（同じ日に何度も答えて「覚えた」にならないように）
 export function recordAnswer(setId, word, ok) {
-  const progress = read(PROGRESS_KEY, {});
+  const progress = read(K(PROGRESS_KEY), {});
   const p = progress[setId] || (progress[setId] = {});
   const today = dayNumber();
   const rec = p[word] || { b: 0, due: today, ok: 0, ng: 0 };
@@ -216,21 +227,22 @@ export function recordAnswer(setId, word, ok) {
   }
   rec.at = Date.now();
   p[word] = rec;
-  write(PROGRESS_KEY, progress);
+  write(K(PROGRESS_KEY), progress);
 
-  const days = read(DAYS_KEY, {});
+  const days = read(K(DAYS_KEY), {});
   const key = localDate();
   days[key] = (days[key] || 0) + 1;
   // 古い記録は 400 日で消す
   const keys = Object.keys(days).sort();
   while (keys.length > 400) delete days[keys.shift()];
-  write(DAYS_KEY, days);
+  write(K(DAYS_KEY), days);
+  recordsChanged();
   return rec;
 }
 
 // 今日の復習（due が今日以前の単語）。[{ set, word }]
 export function dueItems() {
-  const progress = read(PROGRESS_KEY, {});
+  const progress = read(K(PROGRESS_KEY), {});
   const today = dayNumber();
   const items = [];
   for (const set of allSets()) {
@@ -247,7 +259,7 @@ export function dueItems() {
 }
 
 export function overall() {
-  const progress = read(PROGRESS_KEY, {});
+  const progress = read(K(PROGRESS_KEY), {});
   let mastered = 0, learned = 0;
   for (const set of allSets()) {
     const p = progress[set.id];
@@ -260,7 +272,7 @@ export function overall() {
     }
   }
   // 続けた日数（今日まだなら昨日まで）
-  const days = read(DAYS_KEY, {});
+  const days = read(K(DAYS_KEY), {});
   let streak = 0;
   const d = new Date();
   if (!days[localDate(d)]) d.setDate(d.getDate() - 1);
@@ -273,13 +285,52 @@ export function overall() {
 
 const TESTS_KEY = "sk_study_tests";
 export function recordTest(setId, ok, total) {
-  const list = read(TESTS_KEY, []);
+  const list = read(K(TESTS_KEY), []);
   list.push({ setId, at: Date.now(), ok, total });
   while (list.length > 200) list.shift();
-  write(TESTS_KEY, list);
+  write(K(TESTS_KEY), list);
+  recordsChanged();
+}
+
+// 組織のプロファイルの記録（覚えぐあい・学習した日・小テスト）。オンラインへの保存・合わせ（records.js）で使う
+export function snapshotRecords() {
+  return { progress: read(K(PROGRESS_KEY), {}), days: read(K(DAYS_KEY), {}), tests: read(K(TESTS_KEY), []) };
+}
+// オンラインの記録をこの端末のものと合わせる。単語は新しく答えたほう、学習した日は多いほう、小テストは足し合わせる
+//   → { localChanged: この端末の記録が変わった, remoteStale: オンラインの記録に足りないものがある }
+export function mergeRecords(remote) {
+  const local = snapshotRecords();
+  const r = remote || {};
+  const progress = JSON.parse(JSON.stringify(local.progress));
+  const days = { ...local.days };
+  let localChanged = false;
+  for (const [sid, words] of Object.entries(r.progress || {})) {
+    const p = progress[sid] || (progress[sid] = {});
+    for (const [w, rec] of Object.entries(words || {})) {
+      if (!p[w] || (rec.at || 0) > (p[w].at || 0)) { p[w] = rec; localChanged = true; }
+    }
+  }
+  for (const [k, v] of Object.entries(r.days || {})) {
+    if (v > (days[k] || 0)) { days[k] = v; localChanged = true; }
+  }
+  const keys = Object.keys(days).sort();
+  while (keys.length > 400) delete days[keys.shift()];
+  const seen = new Map(local.tests.map((t) => [`${t.setId}|${t.at}`, t]));
+  for (const t of r.tests || []) {
+    if (!seen.has(`${t.setId}|${t.at}`)) { seen.set(`${t.setId}|${t.at}`, t); localChanged = true; }
+  }
+  const tests = [...seen.values()].sort((a, b) => a.at - b.at).slice(-200);
+  if (localChanged) {
+    write(K(PROGRESS_KEY), progress);
+    write(K(DAYS_KEY), days);
+    write(K(TESTS_KEY), tests);
+  }
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const remoteStale = !remote || !same(progress, r.progress || {}) || !same(days, r.days || {}) || !same(tests, r.tests || []);
+  return { localChanged, remoteStale };
 }
 export function testsOf(setId) {
-  return read(TESTS_KEY, []).filter((t) => t.setId === setId);
+  return read(K(TESTS_KEY), []).filter((t) => t.setId === setId);
 }
 
 // ---------- 設定（問題の数・形式など） ----------

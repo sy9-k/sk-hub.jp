@@ -435,6 +435,36 @@ export async function schoolClasses(sid) {
   return snap.docs.map(withId).sort((a, b) => (ms(b.createdAt) || 0) - (ms(a.createdAt) || 0));
 }
 
+// ---------- 組織のプロファイル（先生・総合管理者）と、その学習の記録 ----------
+//   プロファイルの ID（ctx）: クラスの生徒 = クラスの ID / 先生 = "staff-<学校の ID>" / 総合管理者 = "admin"
+//   組織のプロファイルの学習の記録は、accounts/{UID}/studyRecords/{ctx} に保存して、どの端末からも同じものを使えるようにする
+export const isStaffCtx = (c) => c === "admin" || String(c || "").startsWith("staff-");
+
+// 先生・総合管理者として入っている組織のプロファイル [{ id, name, orgName }]
+export async function staffProfiles() {
+  const ts = await teacherState();
+  const out = [];
+  if (ts.admin) out.push({ id: "admin", name: ts.admin.name, orgName: "総合管理者" });
+  for (const sc of ts.schools) out.push({ id: `staff-${sc.id}`, name: ts.teacher ? ts.teacher.name : ts.admin ? ts.admin.name : "先生", orgName: `${sc.name} の先生` });
+  return out;
+}
+
+export async function loadRecords(ctx) {
+  const { fs, db, user } = await ready();
+  const snap = await fs.getDoc(fs.doc(db, "accounts", user.uid, "studyRecords", ctx));
+  if (!snap.exists()) return null;
+  const d = snap.data();
+  const parse = (v, fb) => { try { return JSON.parse(v || "null") || fb; } catch (e) { return fb; } };
+  return { progress: parse(d.progress, {}), days: parse(d.days, {}), tests: parse(d.tests, []) };
+}
+
+export async function saveRecords(ctx, rec) {
+  const { fs, db, user } = await ready();
+  const body = { progress: JSON.stringify(rec.progress || {}), days: JSON.stringify(rec.days || {}), tests: JSON.stringify(rec.tests || []), updatedAt: fs.serverTimestamp() };
+  if (body.progress.length > 600000 || body.days.length > 50000 || body.tests.length > 200000) throw new Error("記録が大きすぎて保存できません。");
+  await fs.setDoc(fs.doc(db, "accounts", user.uid, "studyRecords", ctx), body);
+}
+
 // ---------- 生徒プロファイル（名簿）。名前ごとに専用の参加コード ----------
 
 export async function profiles(cid) {
