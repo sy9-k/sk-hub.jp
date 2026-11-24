@@ -3,13 +3,15 @@
 //   承認・却下・取り消しは、本人のアカウントの「お知らせ」（accounts/{UID}/notices、kind: info）でも知らせる
 //   データの形と権限は y-filter リポジトリの systems/firestore.rules の「SK Study」
 import {
-  collection, doc, getDocs, serverTimestamp, writeBatch
+  collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   $, badge, busy, button, card, confirmDialog, db, el, empty, errorNote, fmtDateTime, listItem, logAction, note, promptDialog, startAdmin, toast
 } from "/shared/admin.js";
 
 const root = $("[data-page]");
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 見まちがえやすい I・O・0・1 は使わない
+const newCode = () => [...crypto.getRandomValues(new Uint8Array(6))].map((b) => CODE_CHARS[b % CODE_CHARS.length]).join("");
 const STATUS = { pending: ["確認待ち", "warn"], approved: ["承認ずみ", "ok"], rejected: ["却下", ""] };
 
 function noticeRef(batch, uid, title, body) {
@@ -18,9 +20,9 @@ function noticeRef(batch, uid, title, body) {
 
 async function load() {
   root.replaceChildren(note("読み込み中…"));
-  let apps, teachers;
+  let apps, teachers, admins, codes;
   try {
-    [apps, teachers] = await Promise.all([getDocs(collection(db, "studyTeacherApps")), getDocs(collection(db, "studyTeachers"))]);
+    [apps, teachers, admins, codes] = await Promise.all([getDocs(collection(db, "studyTeacherApps")), getDocs(collection(db, "studyTeachers")), getDocs(collection(db, "studyAdmins")), getDocs(collection(db, "studyStaffCodes"))]);
   } catch (err) {
     root.replaceChildren(errorNote(err));
     return;
@@ -61,7 +63,30 @@ async function load() {
     tList.append(listItem({ iconName: "school", title: t.name, sub: `${t.org || "（所属なし）"} ・ ${fmtDateTime(t.approvedAt)} に承認 ・ UID ${d.id}`, end: [rm] }));
   }
 
+  // 総合管理者（学校を作り、先生にコードを配う人）。ここでコードを作って渡す
+  const adminCodes = codes.docs.map((d) => ({ code: d.id, ...d.data() })).filter((c) => c.role === "admin" && !c.claimedBy);
+  const aList = el("ul", "ad-list");
+  if (!admins.size && !adminCodes.length) aList.append(empty("まだ総合管理者はいません。", "admin_panel_settings"));
+  for (const c of adminCodes) {
+    const copy = button("コピー", { kind: "text-btn", iconName: "content_copy", small: true });
+    copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(c.code); toast("コピーしました"); } catch (e) { toast("コピーできませんでした"); } });
+    const del = button("取り消す", { kind: "text-btn", iconName: "delete", small: true });
+    del.addEventListener("click", () => busy(del, async () => { await deleteDoc(doc(db, "studyStaffCodes", c.code)); toast("取り消しました"); load(); }));
+    aList.append(listItem({ iconName: "key", title: c.name, sub: `コード ${c.code} ・ ${fmtDateTime(c.createdAt)} に作成 ・ まだ使われていません`, end: [badge("コード待ち", "warn"), copy, del] }));
+  }
+  for (const d of admins.docs) {
+    const a = d.data();
+    const rm = button("取り消す", { kind: "text-btn", iconName: "person_remove", small: true });
+    rm.addEventListener("click", () => busy(rm, () => revokeAdmin(d.id, a)));
+    aList.append(listItem({ iconName: "admin_panel_settings", title: a.name, sub: `${fmtDateTime(a.createdAt)} に参加 ・ UID ${d.id}`, end: [rm] }));
+  }
+  const issue = button("総合管理者のコードを作る", { iconName: "add" });
+  issue.addEventListener("click", () => busy(issue, issueAdminCode));
+
   root.replaceChildren(
+    card("admin_panel_settings", `総合管理者（${admins.size}）`,
+      note("総合管理者は、学校を作り、先生にコードを配れます。自分の学校のクラスの生徒・提出も見られます。ここで名前ごとにコードを作って渡してください（コードは 1 回だけ使えます）。"),
+      issue, aList),
     card("how_to_reg", `申し込み（確認待ち ${pending.length}）`,
       note("指導者は、自分のクラスの生徒の名前・答え・点数・試験の記録を見られます。所属や使い方を確かめてから承認してください。"),
       appList),
@@ -81,6 +106,36 @@ async function approve(a) {
     await b.commit();
     await logAction("teacher.approve", a.uid, a.name);
     toast("承認しました");
+  } catch (err) {
+    root.prepend(errorNote(err));
+  }
+  load();
+}
+
+async function issueAdminCode() {
+  const name = await promptDialog({ title: "総合管理者のコードを作ります", label: "総合管理者の名前", placeholder: "例: 山田 太郎", ok: "作る", maxLength: 40 });
+  if (!name || !name.trim()) return;
+  for (let i = 0; i < 5; i++) {
+    try {
+      await setDoc(doc(db, "studyStaffCodes", newCode()), { role: "admin", name: name.trim().slice(0, 40), ownerUid: currentUid, claimedBy: null, createdAt: serverTimestamp() });
+      await logAction("studyadmin.code", currentUid, name.trim());
+      toast("コードを作りました");
+      load();
+      return;
+    } catch (err) {
+      if (err.code !== "permission-denied") { root.prepend(errorNote(err)); return; }
+    }
+  }
+  root.prepend(errorNote(new Error("コードを作れませんでした。もう一度ためしてください。")));
+}
+
+async function revokeAdmin(uid, a) {
+  const ok = await confirmDialog({ title: `${a.name} さんの総合管理者を取り消しますか？`, text: "学校を作る・先生のコードを配ることができなくなります。作った学校とクラスは残ります。", ok: "取り消す" });
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, "studyAdmins", uid));
+    await logAction("studyadmin.revoke", uid, a.name);
+    toast("取り消しました");
   } catch (err) {
     root.prepend(errorNote(err));
   }

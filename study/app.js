@@ -3,7 +3,7 @@
 //   ログインしないと使えない（SK Hub Systems アカウントでログインして SK Study に接続したとき。cloud.js の session）
 //   左に横のメニュー（MD1 の navigation drawer）。パソコンは出しっぱなし、スマートフォンは ☰ で出す
 //     #/                 ホーム（あいさつ・今日の復習・記録・続きから・ショートカット）
-//     #/sets             SK の単語セット
+//     #/sets             SK認定コンテンツ
 //     #/mine             マイ単語帳
 //     #/prints           プリント（print.js）
 //     #/classes          クラス（classroom.js）
@@ -32,7 +32,8 @@ import { decodeSet, encodeSet, extractCode, shareUrl } from "./share.js";
 import * as tts from "./speech.js";
 import { printSection, renderPrint } from "./print.js";
 import { renderMaker } from "./maker.js";
-import { classSection, renderClass, renderTask, reportProgress } from "./classroom.js";
+import { createKeyboard, KEYBOARD_LANGS } from "./keyboard.js";
+import { classSection, renderClass, renderTask, reportProgress, GROUPS } from "./classroom.js";
 import { renderTeach } from "./teach.js";
 
 const app = document.getElementById("app");
@@ -277,7 +278,7 @@ function go(path, replace = false) {
 
 // 画面 → 横のメニューのどれを選んだ状態にするか
 const SECTION_OF = { "": "home", sets: "sets", mine: "mine", edit: "mine", import: "mine", prints: "prints", print: "prints", maker: "maker", classes: "classes", class: "classes", task: "classes", teach: "teach", settings: "settings" };
-const TITLES = { home: "ホーム", sets: "単語セット", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定" };
+const TITLES = { home: "ホーム", sets: "SK認定コンテンツ", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定" };
 
 // ---------- 画面の切りかえの動き（Android と同じ） ----------
 //   深さ: 0 = メニューの画面（ホーム・単語セット…）、1 = 中の画面（単語セットの中・編集・クラス…）、2 = 全面の画面（学習・プリント）
@@ -329,6 +330,7 @@ function route() {
 
 function renderRoute(nav) {
   keyHandler = null;
+  endTestMode();
   tts.stop();
   closeDrawer();
   const { parts, q } = nav;
@@ -345,9 +347,10 @@ function renderRoute(nav) {
     const CLASS_VIEWS = ["class", "task", "set", "learn", "print", "settings"];
     if (!view || !CLASS_VIEWS.includes(view)) {
       document.body.dataset.view = "class";
-      setActive("home");
-      topTitle.textContent = ctxInfo.className;
-      renderClass(ctxInfo.cid, printUi).catch(showError);
+      const k = !view && GROUPS[q.get("k")] ? q.get("k") : "";
+      setActive(k || "home");
+      topTitle.textContent = k ? GROUPS[k].name : ctxInfo.className;
+      renderClass(ctxInfo.cid, printUi, k).catch(showError);
       app.focus({ preventScroll: true });
       return;
     }
@@ -444,7 +447,7 @@ function renderGate(s) {
           status === "not-invited" ? linkButton("outlined", "別のアカウントでログイン", "switch_account", cloud.accountUrl(false)) : null
         ] : h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), "ログインを確かめています…"),
         h("ul", { class: "gate-features" },
-          feature("style", "単語を覚える", "SK の単語セットとマイ単語帳。記憶度に合わせて出題"),
+          feature("style", "単語を覚える", "SK認定コンテンツとマイ単語帳。記憶度に合わせて出題"),
           feature("assignment", "プリント・小テスト", "HTML・PDF のプリントに答えて自動で採点"),
           feature("groups", "クラス", "先生のクラスに参加して、課題を提出"))))));
   const btn = app.querySelector(".gate-body a.filled-btn");
@@ -481,7 +484,7 @@ async function logout() {
 
 const NAV = [
   { key: "home", href: "#/", icon: "home", label: "ホーム" },
-  { key: "sets", href: "#/sets", icon: "library_books", label: "単語セット" },
+  { key: "sets", href: "#/sets", icon: "library_books", label: "SK認定コンテンツ" },
   { key: "mine", href: "#/mine", icon: "bookmarks", label: "マイ単語帳" },
   { key: "prints", href: "#/prints", icon: "assignment", label: "プリント" },
   { key: "classes", href: "#/classes", icon: "groups", label: "クラス" },
@@ -501,7 +504,9 @@ let activeNav = null;
 // いま使っているプロファイル。個人なら null、クラスのプロファイルなら { cid, className, profileName }
 let ctxInfo = null;
 const CLASS_NAV = [
-  { key: "home", href: "#/", icon: "home", label: "ホーム" }
+  { key: "home", href: "#/", icon: "home", label: "ホーム" },
+  null,
+  ...Object.entries(GROUPS).map(([k, g]) => ({ key: k, href: `#/?k=${k}`, icon: g.icon, label: g.name }))
 ];
 async function refreshCtx() {
   const cid = cloud.activeClass();
@@ -765,9 +770,9 @@ function renderHome() {
       h("p", { class: "today-sub" },
         due.length ? "忘れかけたころに復習すると、記憶に残ります。"
           : o.learned ? "今日の復習はおわりました。新しい単語に進みましょう。"
-            : "単語セットを選んで、学習をはじめましょう。")),
+            : "SK認定コンテンツを選んで、学習をはじめましょう。")),
     due.length ? button("filled", "復習する", "play_arrow", () => go("/learn/review?mode=learn"), { class: "filled-btn today-start" })
-      : linkButton("filled", "単語セットを選ぶ", "library_books", "#/sets"));
+      : linkButton("filled", "SK認定コンテンツを選ぶ", "library_books", "#/sets"));
   const startBtn = today.querySelector("a.filled-btn");
   if (startBtn) startBtn.classList.add("today-start");
 
@@ -811,9 +816,9 @@ function renderHome() {
         tile("groups", "クラス", "参加コードでクラスに入る", "#/classes"))));
 }
 
-// SK の単語セット（言語でしぼりこむ）
+// SK認定コンテンツ（言語でしぼりこむ）
 function renderSets() {
-  document.title = "単語セット - SK Study";
+  document.title = "SK認定コンテンツ - SK Study";
   const prefs = store.getPrefs();
   const filters = [["all", "すべて"], ["en", "英語"], ["ko", "韓国語"], ["zh", "中国語"]];
   const list = h("div", { class: "set-list" });
@@ -828,7 +833,7 @@ function renderSets() {
   }
   draw(prefs.filter);
   app.append(
-    pageHead("単語セット", "SK が用意した単語セットです。「自分用にコピー」すると、自由に編集できます。"),
+    pageHead("SK認定コンテンツ", "SK が認定したコンテンツです。「自分用にコピー」すると、自由に編集できます。"),
     chips, list);
 }
 
@@ -867,9 +872,10 @@ function openImportDialog() {
 // ---------- 単語セット ----------
 
 function sourceText(set) {
-  if (set.source === "sk") return "SK の単語セット";
+  if (set.source === "sk") return "SK認定コンテンツ";
+  if (set.source === "class") return set.teacherName ? `${set.teacherName} 先生が配信` : "先生が配信";
   if (set.source === "shared") return `共有リンクから追加${set.from && set.from !== set.title ? `（もとの名前: ${set.from}）` : ""}`;
-  if (set.source === "copy") return `SK の「${set.from || ""}」をコピー`;
+  if (set.source === "copy") return `SK認定コンテンツの「${set.from || ""}」をコピー`;
   return "マイ単語帳";
 }
 
@@ -906,7 +912,7 @@ function renderSet(id) {
   const actions = h("div", { class: "set-actions" },
     mine ? linkButton("outlined", "編集", "edit", `#/edit/${encodeURIComponent(set.id)}`) : null,
     fromClass ? null : button("outlined", "共有", "share", () => openShare(set)),
-    !mine ? button("outlined", "自分用にコピー", "content_copy", () => {
+    !mine && !set.noCopy ? button("outlined", "自分用にコピー", "content_copy", () => {
       const copy = store.copySet(set);
       toast("マイ単語帳にコピーしました。自由に編集できます");
       go(`/set/${encodeURIComponent(copy.id)}`);
@@ -921,7 +927,7 @@ function renderSet(id) {
 
   // 単語の一覧（上が外国語、下が日本語。右は記憶度の輪）
   const p = store.progressOf(set.id);
-  const list = h("ol", { class: "word-list" }, set.words.map((w) => {
+  const list = h("ol", { class: set.noCopy ? "word-list no-copy" : "word-list" }, set.words.map((w) => {
     const rec = p[w.w];
     return h("li", { class: "word-row" },
       h("div", { class: "word-pair" },
@@ -938,16 +944,17 @@ function renderSet(id) {
       h("span", { class: "word-status", title: STATUS[store.statusOf(rec)].label }, wordRing(rec)));
   }));
 
+  if (set.noCopy) for (const t of ["copy", "cut", "contextmenu", "dragstart", "selectstart"]) list.addEventListener(t, (e) => e.preventDefault());
   app.append(
-    fromClass ? backLink("クラス", `#/class/${encodeURIComponent(set.classRef.cid)}`) : set.source === "sk" ? backLink("単語セット", "#/sets") : backLink("マイ単語帳", "#/mine"),
-    fromClass ? h("p", { class: "class-banner" }, icon("groups"), `クラスの課題「${set.assignTitle || set.title}」。学習すると、覚えた語の数が先生に届きます。`) : "",
+    fromClass ? backLink("クラス", `#/class/${encodeURIComponent(set.classRef.cid)}`) : set.source === "sk" ? backLink("SK認定コンテンツ", "#/sets") : backLink("マイ単語帳", "#/mine"),
+    fromClass ? h("p", { class: "class-banner" }, icon("groups"), `${set.teacherName ? `${set.teacherName} 先生が配信した` : "先生が配信した"}課題「${set.assignTitle || set.title}」。学習すると、覚えた語の数が先生に届きます。${set.noCopy ? "この単語帳はコピーできません。" : ""}`) : "",
     h("section", { class: "set-head" },
       thumb(lang),
       h("div", null,
         h("p", { class: "set-row-sub" }, langBadge(lang), set.level ? h("span", null, set.level) : null),
         h("h1", null, set.title),
         set.description ? h("p", { class: "set-desc" }, set.description) : null,
-        h("p", { class: "muted small" }, icon(set.source === "sk" ? "verified" : "person"), sourceText(set)))),
+        h("p", { class: "muted small" }, icon(set.source === "sk" ? "verified" : set.source === "class" ? "school" : "person"), sourceText(set), set.noCopy ? " ・ コピー禁止" : ""))),
     h("section", { class: "memory-card" },
       h("h2", null, "記憶度"),
       h("div", { class: "memory-body" },
@@ -985,7 +992,7 @@ async function openShare(set) {
   }
   const field = h("textarea", { class: "field-input share-url", readonly: true, rows: "3", "aria-label": "共有リンク" }, url);
   const notes = isSk
-    ? [h("p", null, "SK の単語セットのページへのリンクです。")]
+    ? [h("p", null, "SK認定コンテンツのページへのリンクです。")]
     : [h("p", null, "リンクに単語帳がまるごと入っています（サーバーには保存しません）。受け取った人は、自分のマイ単語帳にコピーして使えます。"),
       h("p", { class: "muted small" }, "リンクを知っている人はだれでも見られます。あとで単語帳を直しても、送ったリンクの中身は変わりません。"),
       url.length > 6000 ? h("p", { class: "warn small" }, icon("warning"), "単語が多いのでリンクが長くなっています。アプリによっては途中で切れることがあります。") : null];
@@ -1068,7 +1075,7 @@ function tierOf(item) {
 }
 
 // 1 問を作る。{ type: choice|write, dir: fw（外国語 → 日本語）|bw（日本語 → 外国語）, tier, options, answer }
-function makeQuestion(item, format, retry) {
+function makeQuestion(item, format, retry, forceBw = false) {
   const tier = retry ? 1 : tierOf(item);
   let dir = Math.random() < 0.5 ? "fw" : "bw";
   let type;
@@ -1076,6 +1083,7 @@ function makeQuestion(item, format, retry) {
   else if (format === "write") type = "write";
   else type = tier === 3 && Math.random() < 0.7 ? "write" : "choice";
   if (format === "auto" && type === "write" && Math.random() < 0.75) dir = "bw"; // 書き取りは外国語を答えるほうを多めに
+  if (forceBw && type === "write") dir = "bw"; // 画面のキーボードで答えられるように、外国語を答える形にする（日本語はかな漢字変換が要る）
   const key = dir === "fw" ? "m" : "w";
   const pool = choicePool(item, key);
   if (type === "choice" && pool.length < 3) type = "write";
@@ -1091,9 +1099,48 @@ function makeQuestion(item, format, retry) {
 const isTyping = (e) => !!e.target.closest && !!e.target.closest("input, textarea, select");
 const isControl = (e) => !!e.target.closest && !!e.target.closest("button, a, [role=button], input, textarea, select");
 
+// ---------- クラスの小テスト: 全画面（パソコン）・提出前の確認 ----------
+const testMode = { fs: false };
+const isPc = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+function endTestMode() {
+  testMode.fs = false;
+  hideFsGuard();
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+function hideFsGuard() {
+  const g = document.getElementById("fs-guard");
+  if (g) g.remove();
+  app.inert = false;
+}
+// 全画面でないあいだは、警告の画面でさえぎる（後ろの問題は操作できない）
+function showFsGuard() {
+  if (document.getElementById("fs-guard")) return;
+  app.inert = true;
+  document.body.append(h("div", { id: "fs-guard", class: "fs-guard", role: "alertdialog", "aria-labelledby": "fs-guard-title" },
+    icon("fullscreen", "fs-guard-icon"),
+    h("h2", { id: "fs-guard-title" }, "全画面で受けてください"),
+    h("p", null, "全画面ではありません。小テストは、全画面で受けます。続けるには、全画面にしてください。"),
+    button("filled", "全画面にする", "fullscreen", () => document.documentElement.requestFullscreen().catch(() => toast("全画面にできませんでした。ブラウザの設定を確かめてください"))),
+    h("p", { class: "muted small" }, "ブラウザが全画面を許可していないときは、設定で許可してください。")));
+}
+document.addEventListener("fullscreenchange", () => {
+  if (!testMode.fs) return;
+  if (document.fullscreenElement) hideFsGuard(); else showFsGuard();
+});
+
 function runSession(cfg) {
   const { mode } = cfg;
   const isTest = mode === "test";
+  // クラスの小テスト: 全画面（パソコン）・上の帯なし・提出前に全部の答えを確認・結果は先生が返却するまで見えない
+  const classTest = isTest && !!cfg.classTest;
+  let editing = -1; // 提出前の確認で直している問題の番号
+  if (classTest) {
+    document.body.dataset.view = "learn"; // 上の帯と横のメニューを出さない
+    if (isPc() && !document.fullscreenElement && document.documentElement.requestFullscreen) {
+      testMode.fs = true;
+      document.documentElement.requestFullscreen().catch(() => showFsGuard());
+    }
+  }
   let curQn = null;  // いまの問題（小テストの結果に出す）
   let given = "";    // いまの問題に答えたもの（同上）
   const queue = cfg.items.map((item) => ({ item, retry: 0 }));
@@ -1165,14 +1212,15 @@ function runSession(cfg) {
     judge.className = "judge";
     if (pending !== null) {
       const { item, retry } = queue[pos];
-      store.recordAnswer(item.set.id, item.word.w, pending);
-      if (!firstTry.has(keyOf(item))) firstTry.set(keyOf(item), { item, ok: pending, qn: curQn, given });
+      if (!classTest) store.recordAnswer(item.set.id, item.word.w, pending); // クラスの小テストは、記憶の記録に混ぜない（結果が見えてしまうため）
+      if (editing >= 0 || !firstTry.has(keyOf(item))) firstTry.set(keyOf(item), { item, ok: pending, qn: curQn, given });
       // まちがえたら、少しあとにもう一度（学習のときだけ）
       if (!pending && mode === "learn" && retry < RETRY_MAX) {
         queue.splice(Math.min(pos + 1 + RETRY_GAP, queue.length), 0, { item, retry: retry + 1 });
       }
       pending = null;
     }
+    if (editing >= 0) { editing = -1; pos = queue.length; showReview(); return; }
     pos++;
     if (pos >= queue.length) finish();
     else show();
@@ -1187,7 +1235,8 @@ function runSession(cfg) {
     body.replaceChildren();
     const { item, retry } = queue[pos];
     if (mode === "card") { levelEl.replaceChildren(); showCard(item); return; }
-    const qn = makeQuestion(item, cfg.format, retry > 0);
+    // 小テスト: 書き取りは、画面のキーボード（keyboard.js）で答えられる外国語を答える形にする
+    const qn = makeQuestion(item, cfg.format, retry > 0, isTest && KEYBOARD_LANGS.includes(store.langOf(item.set).key));
     curQn = qn;
     given = "";
     levelEl.replaceChildren(...[
@@ -1278,13 +1327,18 @@ function runSession(cfg) {
     const reading = !fw && lang.key === "zh" ? item.word.r || "" : "";
     const input = h("input", {
       type: "text", class: "write-input", autocomplete: "off", autocapitalize: "off", autocorrect: "off", spellcheck: "false",
-      lang: fw ? "ja" : langAttr(lang), "aria-label": "答え",
+      lang: fw ? "ja" : langAttr(lang), "aria-label": "答え", inputmode: "text", enterkeyhint: "done",
       placeholder: fw ? "日本語で答える" : reading ? `${lang.name}で（ピンインでも OK）` : `${lang.name}で答える`
     });
     const hintEl = h("p", { class: "hint", hidden: true });
     const host = newSheetHost();
     const submitBtn = h("button", { type: "submit", class: "filled-btn" }, h("span", null, "確定"));
+    // 外国語を答える問題は、端末のキーボードではなく、画面のキーボード（keyboard.js）で答える。日本語を答える問題だけ、端末のキーボード
+    const touch = window.matchMedia("(pointer: coarse)").matches;
+    const useKb = !fw && KEYBOARD_LANGS.includes(lang.key);
+    const kbBtn = !useKb && touch ? button("tonal", "キーボードを表示", "keyboard", () => input.focus()) : null;
     const helpers = h("div", { class: "write-helpers" },
+      kbBtn,
       isTest ? null : button("text", "ヒント", "lightbulb", () => { hintEl.textContent = hint(target); hintEl.hidden = false; input.focus(); }),
       button("text", isTest ? "わからない（とばす）" : "わからない", "help", () => settle(false, "")));
     const nextBtn = button("filled", "次へ", "arrow_forward", next, { class: "filled-btn next-btn", hidden: true });
@@ -1327,6 +1381,11 @@ function runSession(cfg) {
     const q = questionArea(item, qn.dir);
     q.append(form, hintEl, helpers);
     body.append(q, host);
+    if (useKb) {
+      const kb = createKeyboard({ h, lang: lang.key, input, touch, onEnter: () => form.requestSubmit() });
+      body.append(kb.el);
+      body.classList.add("has-kbd");
+    }
     keyHandler = (e) => {
       if (answered && e.key === "Enter" && !isControl(e)) { e.preventDefault(); next(); }
     };
@@ -1381,7 +1440,7 @@ function runSession(cfg) {
   // ---- 結果 ----
   function finish() {
     keyHandler = null;
-    if (isTest) { finishTest(); return; }
+    if (isTest) { if (classTest) showReview(); else finishTest(); return; }
     // クラスの単語帳の課題なら、進み具合を先生に送る
     const classSets = new Set(cfg.items.map((it) => it.set).filter((x) => x.source === "class"));
     classSets.forEach((x) => reportProgress(x));
@@ -1417,6 +1476,46 @@ function runSession(cfg) {
           speakButton(item.word.w, lang.speech),
           wordRing(rec));
       }))));
+  }
+
+  // ---- クラスの小テスト: 提出前の確認（全部の答えを見て、直してから送る） ----
+  function showReview() {
+    keyHandler = null;
+    tts.stop();
+    levelEl.replaceChildren();
+    counter.textContent = "";
+    barFill.style.width = "100%";
+    const list = h("ol", { class: "test-list review-list" }, queue.map(({ item }, i) => {
+      const r = firstTry.get(keyOf(item));
+      const lang = store.langOf(item.set);
+      const fw = r.qn && r.qn.dir === "fw";
+      return h("li", { class: "test-row review-row" },
+        h("span", { class: "review-num" }, String(i + 1)),
+        h("div", { class: "test-q" },
+          h("span", { class: "test-prompt", lang: fw ? langAttr(lang) : "ja" }, fw ? item.word.w : item.word.m),
+          h("span", { class: "test-type" }, r.qn && r.qn.type === "write" ? "書き取り" : "4 択"),
+          h("span", { class: "review-given" }, "あなたの答え: ", h("strong", null, r.given || "（答えなし）"))),
+        button("text", "直す", "edit", () => { editing = i; pos = i; show(); }));
+    }));
+    const sendBtn = button("filled", "この内容で提出する", "send", async () => {
+      sendBtn.disabled = true;
+      const results = queue.map(({ item }) => firstTry.get(keyOf(item)));
+      endTestMode();
+      let sent = false;
+      try { sent = cfg.onTestDone ? await cfg.onTestDone(results) : true; } catch (e) { sent = false; }
+      body.replaceChildren(h("div", { class: "result" },
+        icon(sent ? "task_alt" : "schedule_send", "message-icon"),
+        h("h2", null, sent ? "提出しました" : "あとで送ります"),
+        h("p", { class: "result-score" }, sent ? "結果は、先生が返却すると見られます。" : "送れなかったので、この端末に残しました。次にこの課題を開いたときに送り直します。"),
+        h("div", { class: "result-actions" }, linkButton("filled", "もどる", "arrow_back", cfg.backHref))));
+    });
+    body.replaceChildren(h("div", { class: "result review" },
+      h("p", { class: "test-pill big" }, "提出前の確認"),
+      h("h2", null, "答えを確かめましょう"),
+      h("p", { class: "result-score" }, `${queue.length} 問。提出すると、あとから変えられません。`),
+      list,
+      h("div", { class: "result-actions" }, sendBtn)));
+    window.scrollTo(0, 0);
   }
 
   // ---- 小テストの結果 ----
@@ -1719,7 +1818,7 @@ if ("serviceWorker" in navigator) {
 (async () => {
   renderGate(null); // ログインを確かめているあいだ
   const [, s] = await Promise.all([
-    store.loadSkSets().catch((e) => { console.error(e); toast("SK の単語セットを読み込めませんでした"); }),
+    store.loadSkSets().catch((e) => { console.error(e); toast("SK認定コンテンツを読み込めませんでした"); }),
     cloud.session().catch((e) => { console.error(e); return { status: "offline" }; })
   ]);
   auth = s;

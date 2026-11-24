@@ -1,5 +1,7 @@
 // SK Study の指導者メニュー（パソコン向け）。データは cloud.js、権限は y-filter の systems/firestore.rules の「SK Study」
-//   #/teach              申し込み（まだ指導者でないとき）・クラスの一覧
+//   階層: 総合管理者 → 学校 → 先生 → クラス。総合管理者・先生は、コード（総合管理者のコードは SK が、先生のコードは学校の総合管理者が配る）で入る
+//   #/teach              コードを入れる（まだ指導者でないとき）・総合管理者は学校の一覧、先生はクラスの一覧
+//   #/teach/school/<sid> 学校（総合管理者。先生のコード・先生・クラス）
 //   #/teach/<cid>        クラス（参加コード・配信・生徒）
 //   #/teach/<cid>/new    配信する（単語帳・単語の小テスト・プリント）
 //   #/teach/<cid>/<aid>  結果（提出の一覧・採点・結果の公開）
@@ -44,8 +46,9 @@ export async function renderTeach(parts, ui) {
   if (location.hash !== hash) return;
   const [cid, sub] = parts;
   try {
-    if (!ts.teacher) await applyView(ts, s, ui);
-    else if (!cid) await classesView(ts, ui);
+    if (!ts.teacher && !ts.admin) await codeView(ui);
+    else if (!cid) await homeView(ts, s, ui);
+    else if (cid === "school" && sub) await schoolView(sub, s, ui);
     else if (sub === "new") await newAssignView(cid, ui);
     else if (sub) await resultsView(cid, sub, ui);
     else await classView(cid, ui);
@@ -63,83 +66,203 @@ function head(ui, title, lead, back) {
   ].filter(Boolean);
 }
 
-// ---------- 申し込み ----------
+// ---------- コードを入れる（総合管理者・先生になる） ----------
 
-async function applyView(ts, s, ui) {
-  const { h, icon, button, toast, confirmDialog, app } = ui;
-  const appDoc = ts.app;
-  const parts = head(ui, "指導者になる", "指導者は、クラスを作って生徒を招き、単語帳・単語の小テスト・プリント（試験も）を配って、提出された答えを見たり採点したりできます。", ["ホーム", "#/"]);
-  if (appDoc && appDoc.status === "pending") {
-    app.replaceChildren(...parts, h("section", { class: "mk-card" },
-      h("h2", null, icon("hourglass_top"), "申し込みを受け付けました"),
-      h("p", null, "SK が確認して承認すると、ここからクラスを作れるようになります。しばらくお待ちください。"),
-      h("dl", { class: "tc-dl" }, h("dt", null, "名前"), h("dd", null, appDoc.name), h("dt", null, "学校・塾など"), h("dd", null, appDoc.org || "-"), h("dt", null, "使い方"), h("dd", null, appDoc.purpose || "-")),
-      h("div", { class: "mk-row" }, button("text", "申し込みを取り消す", "close", async () => {
-        if (!(await confirmDialog("申し込みを取り消しますか？", "もう一度申し込むこともできます。", "取り消す", true))) return;
-        try { await cloud.cancelTeacherApp(); toast("取り消しました"); renderTeach([], ui); } catch (e) { toast(cloud.explain(e)); }
-      }))));
-    return;
-  }
-  const name = h("input", { type: "text", class: "field-input", maxlength: "40", value: (appDoc && appDoc.name) || s.name || "" });
-  const org = h("input", { type: "text", class: "field-input", maxlength: "80", value: (appDoc && appDoc.org) || "", placeholder: "例: SK 中学校・SK 学習塾（個人なら空でもよい）" });
-  const purpose = h("textarea", { class: "field-input", rows: "3", maxlength: "500", placeholder: "例: 英語の授業で、毎週の単語テストを配りたい" }, (appDoc && appDoc.purpose) || "");
-  const agree = h("input", { type: "checkbox" });
-  app.replaceChildren(...parts,
-    appDoc && appDoc.status === "rejected" ? h("p", { class: "warn" }, icon("info"), `前回の申し込みは承認されませんでした。${appDoc.note ? `（${appDoc.note}）` : ""}内容を見直して、もう一度申し込めます。`) : "",
-    h("section", { class: "mk-card" },
-      h("h2", null, icon("how_to_reg"), "申し込み"),
-      h("label", { class: "field" }, h("span", { class: "field-label" }, "名前（生徒に「〇〇 先生」と表示されます）"), name),
-      h("label", { class: "field" }, h("span", { class: "field-label" }, "学校・塾など（任意）"), org),
-      h("label", { class: "field" }, h("span", { class: "field-label" }, "どのように使いますか（任意）"), purpose),
-      h("label", { class: "switch-row" }, agree, h("span", null, h("strong", null, "生徒の答え・点数・試験の記録を、授業のためだけに使います"), h("small", null, "生徒の個人の情報を、ほかの目的に使ったり、ほかの人に渡したりしません。"))),
-      h("div", { class: "mk-row" }, button("filled", "申し込む", "send", async () => {
-        if (!name.value.trim()) { toast("名前を入れてください"); name.focus(); return; }
-        if (!agree.checked) { toast("チェックを入れてください"); return; }
-        try { await cloud.applyTeacher({ name: name.value, org: org.value, purpose: purpose.value }); toast("申し込みました"); renderTeach([], ui); } catch (e) { toast(cloud.explain(e)); }
-      }))));
+function roleText(info) {
+  return info.role === "admin" ? "総合管理者" : `${info.schoolName} の先生`;
 }
 
-// ---------- クラスの一覧 ----------
+function openStaffCodeDialog(ui, onDone) {
+  const { h, button, toast, openDialog } = ui;
+  const input = h("input", { type: "text", class: "field-input code-input", maxlength: "7", placeholder: "ABC123", autocomplete: "off", autocapitalize: "characters", "aria-label": "コード" });
+  const info = h("div", { class: "join-info" });
+  let found = null;
+  const look = async () => {
+    const code = cloud.normCode(input.value);
+    if (code.length !== 6) { toast("コードは 6 けたです"); input.focus(); return; }
+    info.replaceChildren(h("p", { class: "muted small" }, "確認中…"));
+    try {
+      found = await cloud.lookupStaffCode(code);
+      if (found.claimedBy) { info.replaceChildren(h("p", { class: "warn small" }, "このコードはもう使われています。")); found = null; return; }
+      info.replaceChildren(h("div", { class: "join-found" },
+        h("strong", null, `${found.name} さん`),
+        h("p", null, `${roleText(found)}として入ります。`),
+        found.role === "admin" ? h("p", { class: "muted small" }, "総合管理者は、学校を作り、先生にコードを配れます。自分の学校のクラスの様子も見られます。")
+          : h("p", { class: "muted small" }, "学校の中でクラスを作り、生徒に配信できます。学校の総合管理者は、あなたのクラスの生徒・提出を見られます。")));
+      okBtn.querySelector("span:last-child").textContent = "このコードを使う";
+    } catch (e) {
+      found = null;
+      info.replaceChildren(h("p", { class: "warn small" }, e.code === "bad-code" ? "コードが見つかりません。もう一度確かめてください。" : cloud.explain(e)));
+    }
+  };
+  const okBtn = button("filled", "確かめる", null, async () => {
+    if (!found || cloud.normCode(input.value) !== found.code) { await look(); return; }
+    try { await cloud.redeemStaffCode(found); d.close(); toast("入りました"); onDone(); } catch (e) { toast(cloud.explain(e)); }
+  });
+  const d = openDialog("コードを入れる", h("div", null, h("p", null, "総合管理者または学校の先生から渡された、あなた専用の 6 けたのコードを入れてください。"), input, info), [button("text", "やめる", null, () => d.close()), okBtn]);
+  input.addEventListener("input", () => { if (found && cloud.normCode(input.value) !== found.code) { found = null; info.replaceChildren(); okBtn.querySelector("span:last-child").textContent = "確かめる"; } });
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) okBtn.click(); });
+  input.focus();
+}
 
-async function classesView(ts, ui) {
+async function codeView(ui) {
+  const { h, icon, button, app } = ui;
+  app.replaceChildren(...head(ui, "指導者になる", "指導者は、総合管理者 → 学校 → クラス の階層で管理します。総合管理者・先生には、それぞれ専用のコードが渡されます。", ["ホーム", "#/"]),
+    h("section", { class: "mk-card" },
+      h("h2", null, icon("key"), "コードを入れる"),
+      h("p", null, "渡されたコードを入れると、総合管理者・先生として使えるようになります。"),
+      h("ul", { class: "mk-summary" },
+        h("li", null, icon("admin_panel_settings"), "総合管理者のコード … SK（開発者）から渡されます。学校を作り、先生にコードを配れます"),
+        h("li", null, icon("school"), "先生のコード … 学校の総合管理者から渡されます。学校の中でクラスを作れます")),
+      h("div", { class: "mk-row" }, button("filled", "コードを入れる", "key", () => openStaffCodeDialog(ui, () => renderTeach([], ui))))));
+}
+
+// ---------- 指導者メニューのホーム（総合管理者: 学校 / 先生: クラス） ----------
+
+async function homeView(ts, s, ui) {
   const { h, icon, button, toast, go, app, openDialog } = ui;
-  const classes = await cloud.teacherClasses();
-  const create = () => {
-    const input = h("input", { type: "text", class: "field-input", maxlength: "60", placeholder: "例: 1 年 A 組 英語" });
-    const d = openDialog("クラスを作る", h("div", null, h("p", null, "クラスの名前を入れてください。作ると、生徒に配る参加コードができます。"), input), [
+  const [classes, schools] = await Promise.all([ts.teacher ? cloud.teacherClasses() : [], ts.admin ? cloud.mySchools() : []]);
+  const schoolName = new Map([...ts.schools, ...schools].map((x) => [x.id, x.name]));
+  const reload = () => renderTeach([], ui);
+  const createSchool = () => {
+    const input = h("input", { type: "text", class: "field-input", maxlength: "60", placeholder: "例: SK 中学校" });
+    const d = openDialog("学校を作る", h("div", null, h("p", null, "学校の名前を入れてください。作ったあと、先生のコードを配れます。"), input), [
       button("text", "やめる", null, () => d.close()),
       button("filled", "作る", "add", async () => {
         if (!input.value.trim()) { input.focus(); return; }
-        try { const cid = await cloud.createClass(input.value, ts.teacher.name); d.close(); go(`/teach/${cid}`); } catch (e) { toast(cloud.explain(e)); }
+        try { const sid = await cloud.createSchool(input.value); d.close(); go(`/teach/school/${sid}`); } catch (e) { toast(cloud.explain(e)); }
       })]);
     input.focus();
   };
-  app.replaceChildren(...head(ui, `${ts.teacher.name} 先生`, ts.teacher.org || "", ["ホーム", "#/"]),
-    h("section", { class: "section" },
-      h("div", { class: "section-head" }, h("h2", null, `クラス（${classes.length}）`), button("filled", "クラスを作る", "add", create)),
+  const createClass = () => {
+    if (!ts.schools.length) { toast("先生として入っている学校がありません。学校の総合管理者から先生のコードをもらってください"); return; }
+    const sel = h("select", { class: "field-select", "aria-label": "学校" }, ts.schools.map((x) => h("option", { value: x.id }, x.name)));
+    const input = h("input", { type: "text", class: "field-input", maxlength: "60", placeholder: "例: 1 年 A 組 英語" });
+    const d = openDialog("クラスを作る", h("div", null,
+      h("label", { class: "field" }, h("span", { class: "field-label" }, "学校"), sel),
+      h("label", { class: "field" }, h("span", { class: "field-label" }, "クラスの名前"), input),
+      h("p", { class: "muted small" }, "作ると、生徒に配る参加コードができます。")), [
+      button("text", "やめる", null, () => d.close()),
+      button("filled", "作る", "add", async () => {
+        if (!input.value.trim()) { input.focus(); return; }
+        try { const cid = await cloud.createClass(input.value, ts.teacher.name, sel.value); d.close(); go(`/teach/${cid}`); } catch (e) { toast(cloud.explain(e)); }
+      })]);
+    input.focus();
+  };
+  const who = ts.admin ? `${ts.admin.name}（総合管理者）` : `${ts.teacher.name} 先生`;
+  app.replaceChildren(...head(ui, who, ts.teacher && ts.teacher.org ? ts.teacher.org : "", ["ホーム", "#/"]),
+    ts.admin ? h("section", { class: "section" },
+      h("div", { class: "section-head" }, h("h2", null, `学校（${schools.length}）`), button("filled", "学校を作る", "add", createSchool)),
+      schools.length ? h("div", { class: "set-list" }, schools.map((x) => h("div", { class: "set-row" },
+        h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon("apartment")),
+        h("div", { class: "set-row-body" },
+          h("a", { class: "set-row-link", href: `#/teach/school/${encodeURIComponent(x.id)}` },
+            h("span", { class: "set-row-sub" }, h("span", null, "先生・クラスを見る")),
+            h("span", { class: "set-row-title" }, x.name))),
+        h("div", { class: "set-row-end" }, icon("chevron_right")))))
+        : h("div", { class: "empty-card" }, icon("apartment", "empty-icon"), h("p", null, "まだ学校がありません。学校を作って、先生にコードを配りましょう。"))) : null,
+    ts.teacher ? h("section", { class: "section" },
+      h("div", { class: "section-head" }, h("h2", null, `${ts.admin ? "自分の " : ""}クラス（${classes.length}）`), button("filled", "クラスを作る", "add", createClass)),
       classes.length ? h("div", { class: "set-list" }, classes.map((c) => h("div", { class: "set-row" },
         h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon("groups")),
         h("div", { class: "set-row-body" },
           h("a", { class: "set-row-link", href: `#/teach/${encodeURIComponent(c.id)}` },
-            h("span", { class: "set-row-sub" }, h("span", { class: "code-pill" }, c.joinCode), h("span", null, c.open ? "参加を受け付け中" : "参加の受け付けは終了")),
+            h("span", { class: "set-row-sub" }, h("span", { class: "code-pill" }, c.joinCode), h("span", null, schoolName.get(c.schoolId) || (c.schoolId ? "学校" : "学校なし")), h("span", null, c.open ? "参加を受け付け中" : "参加の受け付けは終了")),
             h("span", { class: "set-row-title" }, c.name))),
         h("div", { class: "set-row-end" }, icon("chevron_right")))))
-        : h("div", { class: "empty-card" }, icon("groups", "empty-icon"), h("p", null, "まだクラスがありません。クラスを作って、参加コードを生徒に配りましょう。"))),
+        : h("div", { class: "empty-card" }, icon("groups", "empty-icon"), h("p", null, "まだクラスがありません。クラスを作って、参加コードを生徒に配りましょう。"))) : null,
+    h("section", { class: "mk-card" },
+      h("h2", null, icon("key"), "コードを入れる"),
+      h("p", { class: "muted small" }, ts.admin ? "先生としても入るときは、学校の総合管理者から渡された先生のコードを入れます。" : "ほかの学校の先生にもなるときは、その学校の先生のコードを入れます。"),
+      h("div", { class: "mk-row" }, button("outlined", "コードを入れる", "key", () => openStaffCodeDialog(ui, reload)))),
     h("p", { class: "footnote" }, "指導者メニューはパソコンでの利用を前提にしています。"));
+}
+
+// ---------- 学校（総合管理者） ----------
+
+async function schoolView(sid, s, ui) {
+  const { h, icon, button, toast, confirmDialog, go, app, openDialog } = ui;
+  const school = await cloud.getSchool(sid);
+  if (school.ownerUid !== s.user.uid) { go("/teach", true); return; }
+  const [staff, classes, allCodes] = await Promise.all([cloud.schoolStaff(sid), cloud.schoolClasses(sid), cloud.myStaffCodes()]);
+  const codes = allCodes.filter((c) => c.schoolId === sid && !c.claimedBy);
+  document.title = `${school.name} - 指導者メニュー`;
+  const reload = () => renderTeach(["school", sid], ui);
+  const copy = async (text) => { try { await navigator.clipboard.writeText(text); toast("コピーしました"); } catch (e) { toast("コピーできませんでした"); } };
+  const ref = { id: sid, name: school.name };
+  const issue = () => {
+    const ta = h("textarea", { class: "field-input", rows: "6", placeholder: "先生の名前を 1 行に 1 人ずつ（例: 山田 花子）" });
+    const d = openDialog("先生のコードを作る", h("div", null, h("p", null, "名前を 1 行に 1 人ずつ入れてください。1 人ごとに専用のコードができます。コードは 1 回だけ使えます。"), ta), [
+      button("text", "やめる", null, () => d.close()),
+      button("filled", "作る", "add", async () => {
+        const names = ta.value.split(/\r\n|\r|\n/).map((x) => x.trim()).filter(Boolean);
+        if (!names.length) { ta.focus(); return; }
+        try { const n = await cloud.issueStaffCodes("teacher", names, ref); d.close(); toast(`${n} 人分のコードを作りました`); reload(); } catch (e) { toast(cloud.explain(e)); }
+      })]);
+    ta.focus();
+  };
+  app.replaceChildren(...head(ui, school.name, "総合管理者の画面です。先生のコードを配り、学校のクラスの様子を見られます。", ["指導者メニュー", "#/teach"]),
+    h("section", { class: "mk-card" },
+      h("div", { class: "section-head" }, h("h2", null, icon("school"), `先生（${staff.length}）`), button("filled", "先生のコードを作る", "person_add", issue)),
+      h("p", { class: "muted small" }, "先生は SK Study の「指導者メニュー」→「コードを入れる」で、専用のコードを入れて学校に入ります。コードは 1 人 1 回だけ使えます。"),
+      staff.length || codes.length ? h("table", { class: "tc-table" },
+        h("thead", null, h("tr", null, h("th", null, "名前"), h("th", null, "コード"), h("th", null, "状態"), h("th", null, ""))),
+        h("tbody", null,
+          staff.map((m) => h("tr", null,
+            h("td", null, m.name), h("td", null, h("span", { class: "muted" }, "-")), h("td", null, "参加ずみ"),
+            h("td", { class: "tc-actions" }, button("text", "外す", "person_remove", async () => {
+              if (!(await confirmDialog(`${m.name} さんを学校から外しますか？`, "この先生は、この学校のクラスを触れなくなります。クラスと生徒の提出は残ります。", "外す", true))) return;
+              try { await cloud.removeStaff(sid, m.id); toast("外しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
+            })))),
+          codes.map((c) => h("tr", null,
+            h("td", null, c.name), h("td", null, h("span", { class: "code-pill" }, c.id)), h("td", null, "コード待ち"),
+            h("td", { class: "tc-actions" },
+              button("text", "コピー", "content_copy", () => copy(c.id)),
+              button("text", "再発行", "refresh", async () => {
+                try { await cloud.deleteStaffCode(c.id); await cloud.issueStaffCodes("teacher", [c.name], ref); toast("作り直しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
+              }),
+              button("text", "取り消す", "delete", async () => {
+                try { await cloud.deleteStaffCode(c.id); toast("取り消しました"); reload(); } catch (e) { toast(cloud.explain(e)); }
+              })))))) : h("p", { class: "muted" }, "まだ先生がいません。「先生のコードを作る」で、名前ごとのコードを作って配りましょう.".replace("配りましょう.", "配りましょう。"))),
+    h("section", { class: "mk-card" },
+      h("h2", null, icon("groups"), `クラス（${classes.length}）`),
+      classes.length ? h("div", { class: "set-list flat" }, classes.map((c) => h("div", { class: "set-row" },
+        h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon("groups")),
+        h("div", { class: "set-row-body" },
+          h("a", { class: "set-row-link", href: `#/teach/${encodeURIComponent(c.id)}` },
+            h("span", { class: "set-row-sub" }, h("span", null, c.teacherName ? `${c.teacherName} 先生` : "先生")),
+            h("span", { class: "set-row-title" }, c.name))),
+        h("div", { class: "set-row-end" }, icon("chevron_right")))))
+        : h("p", { class: "muted" }, "まだクラスがありません。先生がクラスを作ると、ここに出ます。")),
+    h("section", { class: "mk-card" },
+      h("h2", null, icon("settings"), "学校の設定"),
+      h("div", { class: "mk-row" },
+        button("outlined", "名前を変える", "edit", () => {
+          const input = h("input", { type: "text", class: "field-input", maxlength: "60", value: school.name });
+          const d = openDialog("学校の名前", input, [button("text", "やめる", null, () => d.close()), button("filled", "保存", null, async () => {
+            if (!input.value.trim()) return;
+            try { await cloud.renameSchool(school, input.value); d.close(); reload(); } catch (e) { toast(cloud.explain(e)); }
+          })]);
+        }),
+        button("outlined", "学校を削除", "delete", async () => {
+          if (!(await confirmDialog("学校を削除しますか？", `「${school.name}」と、先生の名簿・配ったコードを消します。クラスが残っているときは削除できません。`, "削除する", true))) return;
+          try { await cloud.deleteSchool(school); toast("削除しました"); go("/teach", true); } catch (e) { toast(cloud.explain(e)); }
+        }, { "data-danger": "" }))));
 }
 
 // ---------- クラス ----------
 
 async function classView(cid, ui) {
   const { h, icon, button, linkButton, toast, confirmDialog, go, app, openDialog } = ui;
-  const [cls, members, assigns] = await Promise.all([cloud.getClass(cid), cloud.roster(cid), cloud.allAssignments(cid)]);
+  const [cls, members, assigns, sess] = await Promise.all([cloud.getClass(cid), cloud.roster(cid), cloud.allAssignments(cid), cloud.session()]);
+  const ro = cls.ownerUid !== sess.user.uid; // 学校の総合管理者は読むだけ（書き換えられるのはクラスの持ち主の先生）
   const counts = await Promise.all(assigns.map((a) => cloud.submissions(cid, a.id).then((x) => x.length).catch(() => null)));
   document.title = `${cls.name} - 指導者メニュー`;
   const reload = () => classView(cid, ui);
   const copy = async (text) => { try { await navigator.clipboard.writeText(text); toast("コピーしました"); } catch (e) { toast("コピーできませんでした"); } };
   const joinUrl = `${location.origin}/study/#/`;
 
-  app.replaceChildren(...head(ui, cls.name, null, ["クラスの一覧", "#/teach"]),
+  app.replaceChildren(...head(ui, cls.name, ro ? `${cls.teacherName ? `${cls.teacherName} 先生` : "先生"}のクラス（見るだけ）` : null, ro && cls.schoolId ? ["学校", `#/teach/school/${encodeURIComponent(cls.schoolId)}`] : ["指導者メニュー", "#/teach"]),
     h("div", { class: "tc-grid" },
       h("section", { class: "mk-card tc-code" },
         h("h2", null, icon("key"), "参加のしかた"),
@@ -160,7 +283,7 @@ async function classView(cid, ui) {
                 h("span", { class: "set-row-sub" },
                   h("span", { class: "kind-pill" }, k.name),
                   h("span", { class: a.published ? "pub-pill on" : "pub-pill" }, a.published ? "公開中" : "非公開"),
-                  a.resultsOpen ? h("span", { class: "pub-pill on" }, "結果を公開") : null,
+                  a.resultsOpen ? h("span", { class: "pub-pill on" }, a.kind === "wordtest" ? "返却ずみ" : "結果を公開") : null,
                   a.due ? h("span", null, `締め切り ${fmtDue(a.due)}`) : null),
                 h("span", { class: "set-row-title" }, a.title)),
               h("span", { class: "set-row-meta" }, h("span", null, icon("inbox"), counts[i] == null ? "-" : `提出 ${counts[i]} / ${members.length}`))),
@@ -223,6 +346,12 @@ async function classView(cid, ui) {
           if (!(await confirmDialog("クラスを削除しますか？", `「${cls.name}」と、配信した課題・生徒の提出・採点をすべて消します。もとに戻せません。`, "削除する", true))) return;
           try { await cloud.deleteClass(cls); toast("削除しました"); go("/teach", true); } catch (e) { toast(cloud.explain(e)); }
         }, { "data-danger": "" }))));
+  if (ro) {
+    // 学校の総合管理者には、見るだけの画面にする
+    app.querySelectorAll(".mk-card").forEach((c) => { const t = c.querySelector("h2"); if (t && /クラスの設定|参加のしかた/.test(t.textContent)) c.remove(); });
+    app.querySelectorAll("button, .tc-actions, a.filled-btn").forEach((e) => e.remove());
+    app.querySelectorAll("a.set-row-link").forEach((a) => a.removeAttribute("href"));
+  }
 }
 
 // ---------- 配信する ----------
@@ -246,7 +375,7 @@ async function newAssignView(cid, ui) {
   const cls = await cloud.getClass(cid);
   const sets = [...store.getSkSets(), ...store.getMySets()];
   const prints = listPrints().filter((p) => !p.classRef);
-  const S = { kind: "wordtest", title: "", setId: sets[0] ? sets[0].id : "", count: 10, format: "auto", printId: prints[0] ? prints[0].id : "", strip: false, due: "", published: true };
+  const S = { kind: "wordtest", title: "", setId: sets[0] ? sets[0].id : "", count: 10, format: "auto", printId: prints[0] ? prints[0].id : "", strip: false, due: "", published: true, noCopy: false };
   const form = h("div", { class: "tc-form" });
   const status = h("p", { class: "mk-status", "aria-live": "polite" });
   let printInfo = null; // { html, bytes, exam, minutes, blanks, images }
@@ -267,7 +396,7 @@ async function newAssignView(cid, ui) {
       h("input", { type: "radio", name: "tc-kind", value, checked: S.kind === value, onchange: () => { S.kind = value; draw(); } }),
       h("span", null, h("strong", null, icon(ic), " ", title), h("small", null, desc)));
     const setSel = h("select", { class: "field-select", onchange: (e) => { S.setId = e.target.value; } },
-      h("optgroup", { label: "SK の単語セット" }, store.getSkSets().map((s) => h("option", { value: s.id, selected: s.id === S.setId }, `${s.title}（${s.words.length} 語）`))),
+      h("optgroup", { label: "SK認定コンテンツ" }, store.getSkSets().map((s) => h("option", { value: s.id, selected: s.id === S.setId }, `${s.title}（${s.words.length} 語）`))),
       store.getMySets().length ? h("optgroup", { label: "マイ単語帳" }, store.getMySets().map((s) => h("option", { value: s.id, selected: s.id === S.setId }, `${s.title}（${s.words.length} 語）`))) : null);
     const count = h("input", { type: "number", class: "field-input", min: "1", max: "100", value: String(S.count), oninput: (e) => { S.count = Math.max(1, Math.min(100, Number(e.target.value) || 10)); } });
     const format = h("select", { class: "field-select", onchange: (e) => { S.format = e.target.value; } }, Object.entries(FORMAT_LABEL).map(([v, l]) => h("option", { value: v, selected: S.format === v }, l)));
@@ -275,6 +404,7 @@ async function newAssignView(cid, ui) {
       prints.map((p) => h("option", { value: p.id, selected: p.id === S.printId }, `${p.exam ? "【試験】" : ""}${p.title}（解答欄 ${p.blanks}）`)));
     const title = h("input", { type: "text", class: "field-input", maxlength: "80", value: S.title, placeholder: "空なら、単語帳・プリントの名前", oninput: (e) => { S.title = e.target.value; } });
     const due = h("input", { type: "datetime-local", class: "field-input", value: S.due, oninput: (e) => { S.due = e.target.value; } });
+    const noCopy = h("input", { type: "checkbox", checked: S.noCopy, onchange: (e) => { S.noCopy = e.target.checked; } });
     const pub = h("input", { type: "checkbox", checked: S.published, onchange: (e) => { S.published = e.target.checked; } });
     const tooBig = printInfo && (S.strip ? bytes(stripImages(printInfo.html)) : printInfo.bytes) > cloud.PRINT_MAX_BYTES;
     form.replaceChildren(
@@ -300,13 +430,14 @@ async function newAssignView(cid, ui) {
       h("div", { class: "field-row" },
         h("label", { class: "field" }, h("span", { class: "field-label" }, "課題の名前"), title),
         h("label", { class: "field" }, h("span", { class: "field-label" }, "締め切り（任意）"), due)),
+      S.kind === "print" ? null : h("label", { class: "switch-row" }, noCopy, h("span", null, h("strong", null, "生徒がコピーできないようにする"), h("small", null, "「自分用にコピー」と、単語のコピー・選択をできなくします。生徒には「先生が配信」と表示されます"))),
       h("label", { class: "switch-row" }, pub, h("span", null, h("strong", null, "すぐ生徒に公開する"), h("small", null, "あとで結果の画面から公開・非公開を切りかえられます"))),
       h("div", { class: "mk-row" }, button("filled", "配信する", "send", saveIt)),
       status);
   }
 
   async function saveIt() {
-    const data = { kind: S.kind, published: S.published, resultsOpen: false, due: S.due ? new Date(S.due).getTime() : null };
+    const data = { kind: S.kind, published: S.published, noCopy: S.kind !== "print" && S.noCopy, resultsOpen: false, due: S.due ? new Date(S.due).getTime() : null };
     if (S.kind === "print") {
       if (!printInfo) { toast("プリントを選んでください"); return; }
       const html = S.strip ? stripImages(printInfo.html) : printInfo.html;
@@ -517,7 +648,13 @@ async function resultsView(cid, aid, ui) {
         h("h2", null, icon("tune"), "公開"),
         h("label", { class: "switch-row" }, h("input", { type: "checkbox", checked: a.published, onchange: (e) => setFlags({ published: e.target.checked }) }),
           h("span", null, h("strong", null, "生徒に公開する"), h("small", null, "非公開にすると、生徒の一覧から消えます（提出は残ります）"))),
-        a.kind !== "words" ? h("label", { class: "switch-row" }, h("input", { type: "checkbox", checked: a.resultsOpen, onchange: (e) => openResults(e.target.checked) }),
+        a.kind === "wordtest" ? h("div", { class: "switch-row return-row" },
+          h("span", null, h("strong", null, a.resultsOpen ? "返却ずみ" : "未返却"), h("small", null, a.resultsOpen ? "生徒は、自分の点数と答えを見られます" : "返却するまで、生徒は点数も答えも見られません（提出したことだけ分かります）")),
+          button(a.resultsOpen ? "outlined" : "filled", a.resultsOpen ? "返却を取り消す" : "返却する", "assignment_return", async () => {
+            if (!a.resultsOpen && !(await confirmDialog("返却しますか？", `提出した生徒に、点数と答えが見えるようになります。まだ提出していない生徒がいても、返却できます。`, "返却する"))) return;
+            openResults(!a.resultsOpen);
+          })) : null,
+        a.kind === "print" ? h("label", { class: "switch-row" }, h("input", { type: "checkbox", checked: a.resultsOpen, onchange: (e) => openResults(e.target.checked) }),
           h("span", null, h("strong", null, "結果を生徒に見せる"), h("small", null, sealed && sealed.pass ? "先生の採点と、試験の答え（合言葉）が生徒に届きます" : "先生の採点が生徒に届きます"))) : null,
         h("div", { class: "mk-row" },
           button("outlined", "CSV で保存", "download", csv),
