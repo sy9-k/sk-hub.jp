@@ -1205,6 +1205,10 @@ a.acct-notice-title:hover { color: var(--acct-link); text-decoration: underline;
 .lang-item:active { transform: scale(.97); }
 .lang-item[aria-checked="true"] { background: var(--ink); color: var(--bg); box-shadow: 0 10px 24px -10px rgba(13, 16, 20, .5); }
 .lang-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.lang-label { margin: 22px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: .06em; color: var(--muted); text-align: left; }
+.lang-label + .lang-list { margin-top: 8px; }
+.lang-item small { display: block; margin-top: 2px; font-size: 11px; font-weight: 600; opacity: .65; }
+.lang-region .lang-item { height: 58px; }
 .lang-continue { font: inherit; font-size: 16px; font-weight: 800; width: 100%; height: 0; margin-top: 0; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); cursor: pointer; opacity: 0; overflow: hidden; transform: translateY(8px); transition: height .35s cubic-bezier(.22, 1, .36, 1), margin .35s cubic-bezier(.22, 1, .36, 1), opacity .3s ease, transform .35s cubic-bezier(.22, 1, .36, 1); }
 .lang-card.is-chosen .lang-continue { height: 54px; margin-top: 18px; opacity: 1; transform: none; box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--accent) 70%, transparent); }
 .lang-continue:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }
