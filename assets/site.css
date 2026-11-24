@@ -48,7 +48,7 @@
   --radius: 28px;
   /* Google Fonts を読み込まない地域（assets/fonts.js）では、端末にある日本語の文字を使う
      （Windows 11 は Noto Sans JP 入り。Android は Noto Sans CJK JP、Mac・iPhone はヒラギノ） */
-  --font: Inter, "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", Meiryo, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font: Inter, "Noto Sans JP", "Noto Sans CJK JP", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", Meiryo, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color-scheme: light;
 }
 
