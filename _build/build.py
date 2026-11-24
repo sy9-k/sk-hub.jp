@@ -17,6 +17,8 @@ from i18n import LANGS, Translator, key_of, load_table, translate  # noqa: E402
 
 index = (REPO / "index.html").read_text(encoding="utf-8")
 head, rest = index.split('  <main id="main">\n', 1)
+# トップだけにある hreflang（日本版と韓国版）は型に入れない。ほかのページには assemble で、そのページの分を足す
+head = re.sub(r'  <link rel="alternate" hreflang="[^"]*" href="[^"]*">\n', "", head)
 home_body, tail = rest.split("  </main>\n", 1)
 
 # (元, 出力先, タイトル, 説明, リダイレクトしない, 検索に載せる)
@@ -254,6 +256,23 @@ DEV_NAV = (
 )
 
 
+# kr.sk-hub.jp（_workers/kr/）でも出すページ。検索エンジンに日本版と韓国版を伝える（hreflang）
+KR_ALT = {
+    "products/index.html", "products/nagi/index.html", "products/office/index.html", "products/study/index.html",
+    "policies/index.html", "policies/privacy/index.html", "updates/index.html", "brand/index.html",
+    "credits/index.html", "sk-hub-systems/index.html", "brand/material/index.html",
+}
+
+
+def kr_alt_links(dst):
+    path = "/" + dst.removesuffix("index.html")
+    return (
+        f'  <link rel="alternate" hreflang="ja" href="{ORIGIN}{path}">\n'
+        f'  <link rel="alternate" hreflang="ko" href="https://kr.sk-hub.jp{path}">\n'
+        f'  <link rel="alternate" hreflang="x-default" href="{ORIGIN}{path}">\n'
+    )
+
+
 def assemble(body, dst, title, desc, no_redirect, indexable, src=None):
     h = re.sub(r"<title>.*?</title>", f"<title>{title}</title>", head)
     h = set_meta(h, r'(<meta name="description" content=")[^"]*(">)', desc)
@@ -262,6 +281,8 @@ def assemble(body, dst, title, desc, no_redirect, indexable, src=None):
     if indexable:
         h = set_meta(h, r'(<meta property="og:url" content=")[^"]*(">)', page_url(dst))
         h = set_meta(h, r'(<link rel="canonical" href=")[^"]*(">)', page_url(dst))
+        if dst in KR_ALT:
+            h = h.replace("</head>\n", kr_alt_links(dst) + "</head>\n", 1)
     else:
         # 検索に載せないページ（受信箱・404 など）: URL の指定を外して noindex にする
         h = re.sub(r'  <link rel="canonical" href="[^"]*">\n', "", h)

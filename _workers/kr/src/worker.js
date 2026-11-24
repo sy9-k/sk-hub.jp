@@ -14,7 +14,7 @@
 //   ・data-region="jp" の付いた要素を消す（日本だけで出すもの。例: Sentaro さんとの提携、SaeTab）
 //   ・data-region="kr" の付いた hidden の要素を出す（韓国だけで出すもの）
 //   ・言語を選んでいなければ韓国語で出す
-//   ・kr.sk-hub.jp では、canonical・og:url を kr.sk-hub.jp にそろえる
+//   ・kr.sk-hub.jp では、canonical・og:url を kr.sk-hub.jp にそろえ、タイトル・説明文を韓国語にして、hreflang（日本版と韓国版）を付ける
 // 隠したいものがあるときは、sk-hub.jp の HTML にその要素へ data-region="jp" を付けるだけでよい（Worker は直さない）。
 //
 // 韓国から開いても日本語のトップを見たいとき: sk-hub.jp/?site=jp を開く（30 日のあいだ、出し分けをやめる）。
@@ -37,6 +37,27 @@ const SKIP_DAYS = 30;
 // 韓国版の印（window.SK_REGION。assets/site.js のメニューが見る）と、言語を選んでいなければ韓国語（i18n.js より前に入れる）
 const KO_DEFAULT = '<script>window.SK_REGION="kr";(function(){try{if(!localStorage.getItem("sk_lang"))localStorage.setItem("sk_lang","ko");}catch(e){}})();</script>';
 
+// 検索結果・共有カードに出す、韓国版の説明文（日本語の説明文に Y-FILTER. や MALU など韓国で出さないものが入っているページ用）。
+// ここにないページは、sk-hub.jp の辞書（assets/i18n/ko.js）に訳があればそれを使う
+const KR_DESC = {
+  "/": "고등학생 SK가 만드는 집중 타이머 Nagi, 작은 앱 도구 상자 SK's Toolbox, 학습 앱 SK Study의 소개와 지원 정보.",
+  "/products/": "SK가 만드는 앱 목록. 집중 타이머 Nagi, 작은 앱 도구 상자 SK's Toolbox, 학습 앱 SK Study, SK Hub Office, SK Hub Systems."
+};
+
+// sk-hub.jp の訳の辞書（assets/i18n/ko.js の window.SK_I18N_DICT）。しばらく覚えておく
+let dictCache = null;
+let dictAt = 0;
+async function koDict() {
+  if (dictCache && Date.now() - dictAt < 10 * 60 * 1000) return dictCache;
+  try {
+    const r = await fetch(ORIGIN + "/assets/i18n/ko.js", { cf: { cacheTtl: CACHE_SECONDS, cacheEverything: true } });
+    const t = await r.text();
+    dictCache = JSON.parse(t.slice(t.indexOf("{")).replace(/;\s*$/, ""));
+    dictAt = Date.now();
+  } catch (e) { dictCache = dictCache || {}; }
+  return dictCache;
+}
+
 function isBot(request) {
   return /bot|crawler|spider|slurp|facebookexternalhit|preview/i.test(request.headers.get("User-Agent") || "");
 }
@@ -55,16 +76,36 @@ function clean(res) {
 }
 
 // HTML を韓国向けに整える（krUrl は kr.sk-hub.jp のとき、そのページのアドレス）
-function localize(res, krUrl) {
+async function localize(res, krUrl) {
   if (!isHtml(res)) return res;
   const rw = new HTMLRewriter()
     .on("head", { element(el) { el.prepend(KO_DEFAULT, { html: true }); } })
     .on('[data-region="jp"]', { element(el) { el.remove(); } })
     .on('[data-region="kr"]', { element(el) { el.removeAttribute("hidden"); } });
   if (krUrl) {
+    const path = new URL(krUrl).pathname;
+    const dict = await koDict();
+    const tr = (text) => dict[text] || text;
+    const desc = (text) => KR_DESC[path] || tr(text);
+    let title = "";
     rw.on('link[rel="canonical"]', { element(el) { el.setAttribute("href", krUrl); } })
       .on('meta[property="og:url"]', { element(el) { el.setAttribute("content", krUrl); } })
-      .on('meta[property="og:locale"]', { element(el) { el.setAttribute("content", "ko_KR"); } });
+      .on('meta[property="og:locale"]', { element(el) { el.setAttribute("content", "ko_KR"); } })
+      // 検索エンジンは JavaScript の訳を読まないことがあるので、タイトルと説明文は Worker で韓国語にしておく
+      .on("title", { text(t) {
+        title += t.text; t.remove();
+        if (t.lastInTextNode) { t.replace(tr(title.trim()), { html: false }); title = ""; }
+      } })
+      .on('meta[name="description"]', { element(el) { el.setAttribute("content", desc(el.getAttribute("content") || "")); } })
+      .on('meta[property="og:description"]', { element(el) { el.setAttribute("content", desc(el.getAttribute("content") || "")); } })
+      .on('meta[property="og:title"]', { element(el) { el.setAttribute("content", tr(el.getAttribute("content") || "")); } })
+      // 日本版と韓国版を検索エンジンに伝える
+      .on("head", { element(el) {
+        el.append(
+          `<link rel="alternate" hreflang="ko" href="${krUrl}">` +
+          `<link rel="alternate" hreflang="ja" href="${ORIGIN + path}">` +
+          `<link rel="alternate" hreflang="x-default" href="${ORIGIN + path}">`, { html: true });
+      } });
   }
   return rw.transform(res);
 }
@@ -84,7 +125,19 @@ async function krHost(request, url) {
     return new Response(`User-agent: *\nAllow: /\nSitemap: https://${KR_HOST}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
   }
   if (path === "/sitemap.xml") {
-    const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://${KR_HOST}/</loc></url>\n</urlset>\n`;
+    // sk-hub.jp の sitemap から、韓国版で出すページだけを選んで、日本版を alternate に付ける
+    let paths = ["/"];
+    try {
+      const xml = await (await fetch(ORIGIN + "/sitemap.xml", { cf: { cacheTtl: 3600, cacheEverything: true } })).text();
+      for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+        const p = new URL(m[1]).pathname;
+        if (p !== "/" && !BLOCKED.test(p) && MIRROR.some((re) => re.test(p))) paths.push(p);
+      }
+    } catch (e) { /* 取れなければトップだけ */ }
+    const items = paths.map((p) => `  <url><loc>https://${KR_HOST}${p}</loc>` +
+      `<xhtml:link rel="alternate" hreflang="ko" href="https://${KR_HOST}${p}"/>` +
+      `<xhtml:link rel="alternate" hreflang="ja" href="${ORIGIN}${p}"/></url>`).join("\n");
+    const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${items}\n</urlset>\n`;
     return new Response(body, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
   }
 
@@ -111,7 +164,7 @@ async function krHost(request, url) {
   }
   if (res.status === 404 && !shared) return Response.redirect(ORIGIN + path + url.search, 302);
 
-  const out = clean(localize(res, `https://${KR_HOST}${path}`));
+  const out = clean(await localize(res, `https://${KR_HOST}${path}`));
   // 中身が整えてある HTML は、ブラウザに長く置かせない（隠すものを直したらすぐ出るように）。ほかはそのまま置く
   out.headers.set("Cache-Control", isHtml(res) ? "private, no-cache" : `public, max-age=${CACHE_SECONDS}`);
   return out;
@@ -133,7 +186,7 @@ async function apexHost(request, url, country) {
 
   const res = await fetch(request);
   if (res.status !== 200 || !isHtml(res)) return res;
-  const out = clean(localize(res, null));
+  const out = clean(await localize(res, null));
   out.headers.set("Cache-Control", "private, no-cache");
   out.headers.set("Vary", "Cookie");
   return out;
