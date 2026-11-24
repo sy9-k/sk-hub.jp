@@ -30,12 +30,13 @@ import * as cloud from "./cloud.js";
 import { grade, hint } from "./grade.js";
 import { decodeSet, encodeSet, extractCode, shareUrl } from "./share.js";
 import * as tts from "./speech.js";
+import "./select.js";
 import * as records from "./records.js";
 import { printSection, renderPrint } from "./print.js";
 import { renderMaker } from "./maker.js";
 import { createKeyboard, KEYBOARD_LANGS } from "./keyboard.js";
-import { classSection, renderClass, renderTask, reportProgress, GROUPS } from "./classroom.js";
-import { renderTeach } from "./teach.js";
+import { classSection, renderClass, renderTask, reportProgress, openJoinDialog, openOrgJoinDialog, renderOrgStudent, GROUPS } from "./classroom.js";
+import { renderTeach, openStaffCodeDialog } from "./teach.js";
 
 const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
@@ -241,7 +242,7 @@ function openDialog(title, body, actions) {
   let closing = false;
   d.close = (value) => {
     if (closing || !d.open) return;
-    if (motionOff.matches) { closeNow(value); return; }
+    if (motionReduced()) { closeNow(value); return; }
     closing = true;
     d.classList.add("is-closing");
     let finished = false;
@@ -278,8 +279,8 @@ function go(path, replace = false) {
 }
 
 // 画面 → 横のメニューのどれを選んだ状態にするか
-const SECTION_OF = { "": "home", sets: "sets", mine: "mine", edit: "mine", import: "mine", prints: "prints", print: "prints", maker: "maker", classes: "classes", class: "classes", task: "classes", teach: "teach", settings: "settings" };
-const TITLES = { home: "ホーム", sets: "SK認定コンテンツ", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定" };
+const SECTION_OF = { "": "home", sets: "sets", mine: "mine", edit: "mine", import: "mine", prints: "prints", print: "prints", maker: "maker", classes: "classes", class: "classes", task: "classes", teach: "teach", settings: "settings", account: "account" };
+const TITLES = { home: "ホーム", sets: "SK認定コンテンツ", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定", account: "アカウント" };
 
 // ---------- 画面の切りかえの動き（Android と同じ） ----------
 //   深さ: 0 = メニューの画面（ホーム・単語セット…）、1 = 中の画面（単語セットの中・編集・クラス…）、2 = 全面の画面（学習・プリント）
@@ -311,7 +312,7 @@ function route() {
   const [path, qs = ""] = raw.split("?");
   const parts = path.split("/").filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch (e) { return p; } });
   const nav = { key: path, parts, q: new URLSearchParams(qs), depth: depthOf(parts[0], parts), gate: !allowed(auth) };
-  const motion = motionOff.matches ? "none" : motionFor(lastNav, nav);
+  const motion = motionReduced() ? "none" : motionFor(lastNav, nav);
   lastNav = nav;
   // 横に入れかわるときは、一覧が下から浮かぶ動きを止める（動きが重ならないように）
   app.classList.toggle("is-sliding", motion === "forward" || motion === "back");
@@ -343,9 +344,22 @@ function renderRoute(nav) {
     renderGate(auth);
     return;
   }
+  // 学校のプロファイルの生徒（組織モデル）: 紐づいた全クラスの課題をまとめた画面と、クラス・課題・学習の画面だけ
+  if (cloud.activeClass() && ctxInfo && ctxInfo.org && !ctxInfo.staff) {
+    const ORG_VIEWS = ["class", "task", "set", "learn", "print", "settings", "account"];
+    if (!view || !ORG_VIEWS.includes(view)) {
+      document.body.dataset.view = "class";
+      const k = !view && GROUPS[q.get("k")] ? q.get("k") : "";
+      setActive(k || "home");
+      topTitle.textContent = k ? GROUPS[k].name : ctxInfo.className;
+      renderOrgStudent(ctxInfo, printUi, k).catch(showError);
+      app.focus({ preventScroll: true });
+      return;
+    }
+  }
   // クラスのプロファイルでは、そのクラスの画面だけ（個人の単語帳・プリントなどは出さない）
-  if (cloud.activeClass() && ctxInfo && !ctxInfo.staff) {
-    const CLASS_VIEWS = ["class", "task", "set", "learn", "print", "settings"];
+  if (cloud.activeClass() && ctxInfo && !ctxInfo.staff && !ctxInfo.org) {
+    const CLASS_VIEWS = ["class", "task", "set", "learn", "print", "settings", "account"];
     if (!view || !CLASS_VIEWS.includes(view)) {
       document.body.dataset.view = "class";
       const k = !view && GROUPS[q.get("k")] ? q.get("k") : "";
@@ -358,7 +372,7 @@ function renderRoute(nav) {
   }
   // 先生・総合管理者のプロファイルでは、指導者メニューと先生用の教材だけ（個人の画面・クラスの参加は出さない）
   if (cloud.activeClass() && ctxInfo && ctxInfo.staff) {
-    const STAFF_VIEWS = ["sets", "mine", "edit", "import", "prints", "print", "maker", "set", "learn", "settings"];
+    const STAFF_VIEWS = ["sets", "mine", "edit", "import", "prints", "print", "maker", "set", "learn", "settings", "account"];
     if (!STAFF_VIEWS.includes(view)) {
       document.body.dataset.view = "teach";
       setActive("home");
@@ -367,6 +381,12 @@ function renderRoute(nav) {
       app.focus({ preventScroll: true });
       return;
     }
+  }
+  // 個人のプロファイルでは、クラス・指導者の画面は開けない（クラス・先生のプロファイルに切り替えて使う。コードは「アカウント」から入れる）
+  if (!cloud.activeClass() && ["classes", "class", "task", "teach"].includes(view)) {
+    toast("クラス・先生の画面は、クラス・先生のプロファイルで開けます");
+    go("/account", true);
+    return;
   }
   document.body.dataset.view = view || "home";
   let section = SECTION_OF[view || ""] || null;
@@ -392,6 +412,7 @@ function renderRoute(nav) {
     else if (view === "task") renderTask(id, parts[2], printUi).catch(showError);
     else if (view === "teach") renderTeach(parts.slice(1), printUi).catch(showError);
     else if (view === "settings") renderSettings();
+    else if (view === "account") renderAccount().catch(showError);
     else renderMessage("ページが見つかりません", "リンクがまちがっているかもしれません。");
   } catch (e) {
     console.error(e);
@@ -427,7 +448,7 @@ function readHint() {
 const allowed = (s) => !!s && (s.status === "ready" || (s.status === "offline" && !!readHint() && cloud.wasInvited()));
 
 const GATE = {
-  "not-invited": ["招待制です", "SK Study は、いまは招待した方だけが使えます。早期アクセスに登録しておくと、順番がきたらメールでお知らせします。", "早期アクセスに登録する", "hourglass_top"],
+  "not-invited": ["招待制です", "SK Study は、いまは招待した方だけが使えます。順番待ちに登録しておくと、順番がきたらメールでお知らせします。", "順番待ちに登録する", "hourglass_top"],
   "signed-out": ["ログインしてください", "SK Study を使うには、SK Hub Systems アカウントでログインします。アカウントは無料で作れます。", "ログイン", "login"],
   unregistered: ["アカウントの登録を完了してください", "SK Hub Systems アカウントの利用規約に同意すると、SK Study を使えるようになります。", "登録を続ける", "how_to_reg"],
   "not-connected": ["SK Study に接続してください", "SK Hub Systems アカウントを SK Study に接続すると、学習をはじめられます。", "SK Study に接続する", "link"],
@@ -440,31 +461,29 @@ function renderGate(s) {
   setActive(null);
   const status = s ? s.status : "checking";
   const info = GATE[status];
-  const feature = (ic, title, text) => h("li", null, icon(ic), h("span", null, h("strong", null, title), h("small", null, text)));
+  const feature = (ic, title) => h("li", null, icon(ic), title);
   app.replaceChildren(h("section", { class: "gate" },
     h("div", { class: "gate-card" },
       h("div", { class: "gate-hero" },
-        h("img", { src: "icon.svg", alt: "", width: 56, height: 56 }),
-        h("p", { class: "gate-name" }, "SK Study", h("span", { class: "beta" }, "先行公開")),
-        h("p", { class: "gate-tagline" }, "単語カード・4 択・書き取りで、英語・韓国語・中国語や自分で作った単語帳を覚える")),
+        h("img", { src: "icon.svg", alt: "", width: 64, height: 64 }),
+        h("p", { class: "gate-name" }, "SK Study", h("span", { class: "beta" }, "先行公開"))),
       h("div", { class: "gate-body" },
         info ? [
           h("h1", null, info[0]),
-          h("p", { class: "muted" }, info[1]),
+          h("p", null, info[1]),
           status === "not-invited" && s.reason === "not-google"
-            ? h("p", { class: "muted" }, "招待された Google アカウントでログインしてください。Google 以外のログインでは開けません。")
+            ? h("p", null, "招待された Google アカウントでログインしてください。Google 以外のログインでは開けません。")
             : null,
           status === "offline"
             ? button("filled", info[2], info[3], recheckAuth, { class: "filled-btn gate-btn" })
             : linkButton("filled", info[2], info[3], status === "not-invited" ? "/waiting/?product=study" : cloud.accountUrl(true)),
           status === "not-invited" ? linkButton("outlined", "別のアカウントでログイン", "switch_account", cloud.accountUrl(false)) : null
         ] : h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), "ログインを確かめています…"),
-        h("ul", { class: "gate-features" },
-          feature("style", "単語を覚える", "SK認定コンテンツとマイ単語帳。記憶度に合わせて出題"),
-          feature("assignment", "プリント・小テスト", "HTML・PDF のプリントに答えて自動で採点"),
-          feature("groups", "クラス", "先生のクラスに参加して、課題を提出"))))));
-  const btn = app.querySelector(".gate-body a.filled-btn");
-  if (btn) btn.classList.add("gate-btn");
+        h("ul", { class: "gate-features", "aria-hidden": "true" },
+          feature("style", "単語"),
+          feature("assignment", "プリント"),
+          feature("groups", "クラス"))))));
+  app.querySelectorAll(".gate-body > a, .gate-body > button").forEach((b) => b.classList.add("gate-btn"));
 }
 
 async function recheckAuth() {
@@ -500,7 +519,6 @@ const NAV = [
   { key: "sets", href: "#/sets", icon: "library_books", label: "SK認定コンテンツ" },
   { key: "mine", href: "#/mine", icon: "bookmarks", label: "マイ単語帳" },
   { key: "prints", href: "#/prints", icon: "assignment", label: "プリント" },
-  { key: "classes", href: "#/classes", icon: "groups", label: "クラス" },
   null,
   { sub: "ツール" },
   { key: "maker", href: "#/maker", icon: "picture_as_pdf", label: "PDF からプリントを作る" },
@@ -536,6 +554,15 @@ async function refreshCtx() {
   if (!cid) { ctxInfo = null; return; }
   if (!auth || auth.status !== "ready") { ctxInfo = ctxInfo && ctxInfo.cid === cid ? ctxInfo : null; return; }
   try {
+    if (cloud.isOrgCtx(cid)) {
+      // 学校のプロファイル（組織モデル。学校の名簿のユーザー。生徒・先生）
+      const sid = cid.slice(4);
+      const o = (await cloud.myOrgs()).find((x) => x.id === sid);
+      const person = o ? await cloud.myPerson(sid, o.personId) : null;
+      if (!o || !person) { ctxInfo = null; cloud.setActiveClass(""); return; }
+      ctxInfo = { cid, org: true, sid, personId: o.personId, role: o.role, staff: o.role === "teacher", className: o.schoolName || "学校", profileName: person.name, suspended: person.status === "suspended" };
+      return;
+    }
     if (cloud.isStaffCtx(cid)) {
       // 先生・総合管理者のプロファイル（組織のプロファイル）
       const mine = (await cloud.staffProfiles()).find((p) => p.id === cid);
@@ -549,14 +576,28 @@ async function refreshCtx() {
   } catch (e) { /* ネットワークがないときは、前の表示のまま */ }
 }
 // 個人 / クラスのプロファイルを選ぶ
+// 学校のプロファイル（組織モデル）の一覧 [{ id: "org-<学校の ID>", role, schoolName, name }]
+async function orgProfiles() {
+  const orgs = await cloud.myOrgs().catch(() => []);
+  return Promise.all(orgs.map(async (o) => {
+    const p = await cloud.myPerson(o.id, o.personId).catch(() => null);
+    return { id: `org-${o.id}`, sid: o.id, role: o.role, schoolName: o.schoolName || "学校", name: p ? p.name : "" };
+  })).then((l) => l.filter((x) => x.name));
+}
+// 従来のクラスのプロファイル。組織モデルに移されたクラスは、学校のプロファイルに入るので、ここには出さない
+async function legacyClassProfiles() {
+  const list = (await cloud.myClasses()).filter((c) => c.profileId);
+  const moved = await Promise.all(list.map((c) => cloud.getClass(c.id).then((k) => k.orgModel === true).catch(() => false)));
+  return list.filter((c, i) => !moved[i]);
+}
 async function openProfileSwitcher() {
   if (!auth || auth.status !== "ready") { toast("ログインしてから切り替えられます"); return; }
-  let classes = [], staff = [];
-  try { [classes, staff] = await Promise.all([cloud.myClasses().then((l) => l.filter((c) => c.profileId)), cloud.staffProfiles().catch(() => [])]); } catch (e) { toast(cloud.explain(e)); return; }
+  let classes = [], staff = [], orgs = [];
+  try { [classes, staff, orgs] = await Promise.all([legacyClassProfiles(), cloud.staffProfiles().catch(() => []), orgProfiles()]); } catch (e) { toast(cloud.explain(e)); return; }
   const cur = cloud.activeClass();
-  const options = [["", `個人（${auth.name}）`], ...staff.map((p) => [p.id, `${p.name}（${p.orgName}）`]), ...classes.map((c) => [c.id, `${c.profileName || c.name}（${c.name}）`])];
+  const options = [["", `個人（${auth.name}）`], ...orgs.map((o) => [o.id, `${o.name}（${o.schoolName}・${o.role === "teacher" ? "先生" : "生徒"}）`]), ...staff.map((p) => [p.id, `${p.name}（${p.orgName}）`]), ...classes.map((c) => [c.id, `${c.profileName || c.name}（${c.name}）`])];
   const d = choiceDialog("プロファイルを切り替え", options, cur, (v) => { cloud.setActiveClass(v); });
-  d.querySelector(".radio-list").after(h("p", { class: "muted small" }, classes.length || staff.length ? "組織（クラス・先生）のプロファイルの学習の記録は、オンラインに保存され、どの端末でも同じものを使えます。クラスのプロファイルでは、そのクラスの課題だけが表示されます。" : "組織のプロファイルはまだありません。「クラス」で専用コードで参加すると、クラスのプロファイルが加わります。先生・総合管理者は、指導者メニューでコードを入れると加わります。"));
+  d.querySelector(".radio-list").after(h("p", { class: "muted small" }, classes.length || staff.length || orgs.length ? "組織（学校・クラス・先生）のプロファイルの学習の記録は、オンラインに保存され、どの端末でも同じものを使えます。クラスのプロファイルでは、そのクラスの課題だけが表示されます。" : "組織のプロファイルはまだありません。「クラス」で専用コードで参加すると、クラスのプロファイルが加わります。先生・総合管理者は、指導者メニューでコードを入れると加わります。"));
 }
 document.addEventListener("sk-study:ctx", async () => {
   await refreshCtx();
@@ -581,19 +622,19 @@ function drawDrawer() {
     avatar,
     h("div", { class: "drawer-who" },
       h("strong", null, shown || "SK Hub Systems アカウント"),
-      ctxInfo ? h("span", null, `${ctxInfo.staff ? "" : "クラス: "}${ctxInfo.className}`) : email ? h("span", null, email) : null),
+      ctxInfo ? h("span", null, `${ctxInfo.staff || ctxInfo.org ? "" : "クラス: "}${ctxInfo.className}`) : email ? h("span", null, email) : null),
     canSwitch ? icon("unfold_more", "drawer-switch-icon") : null);
   // 個人には指導者メニューを出さない（先生・総合管理者は、自分のプロファイルに切り替えて使う）
-  const nav = ctxInfo ? (ctxInfo.staff ? STAFF_NAV : CLASS_NAV) : NAV.filter((n) => !n || n.key !== "teach");
+  const nav = ctxInfo ? (ctxInfo.staff ? (ctxInfo.cid === "admin" ? STAFF_NAV.map((n, i) => (i === 0 ? { ...n, icon: "admin_panel_settings", label: "総合管理者" } : n)) : STAFF_NAV) : CLASS_NAV) : NAV.filter((n) => !n || n.key !== "teach");
   drawer.replaceChildren(
     who,
     h("div", { class: "drawer-list" },
       nav.map((n) => (n === null ? h("hr", { class: "drawer-divider" }) : n.sub ? h("p", { class: "drawer-sub" }, n.sub) : item(n))),
       h("hr", { class: "drawer-divider" }),
       h("a", { class: "drawer-item", href: "#/settings", "data-nav": "settings" }, icon("settings"), h("span", null, "設定")),
-      h("a", { class: "drawer-item", href: "/account/" }, icon("manage_accounts"), h("span", null, "アカウント")),
+      h("a", { class: "drawer-item", href: "#/account", "data-nav": "account" }, icon("manage_accounts"), h("span", null, "アカウント")),
       h("button", { type: "button", class: "drawer-item", onclick: logout }, icon("logout"), h("span", null, "ログアウト"))),
-    h("p", { class: "drawer-foot" }, ctxInfo ? `${ctxInfo.staff ? "先生・総合管理者のプロファイル。" : "クラスのプロファイルでは、そのクラスの課題だけを表示します。"}学習の記録はオンラインに保存されます。` : "学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。"));
+    h("p", { class: "drawer-foot" }, ctxInfo ? `${ctxInfo.org ? (ctxInfo.staff ? "学校の先生のプロファイル。" : "学校の生徒のプロファイル。紐づいたすべてのクラスの課題を表示します。") : ctxInfo.staff ? "先生・総合管理者のプロファイル。" : "クラスのプロファイルでは、そのクラスの課題だけを表示します。"}学習の記録はオンラインに保存されます。` : "学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。"));
   markActive();
 }
 function setActive(key) { activeNav = key; markActive(); }
@@ -686,6 +727,47 @@ function choiceDialog(title, options, value, onPick) {
   return d;
 }
 
+const GOALS = [[10, "10 問"], [20, "20 問"], [30, "30 問"], [50, "50 問"], [100, "100 問"]];
+const SOONS = [[1, "1 日前から"], [2, "2 日前から"], [3, "3 日前から"], [5, "5 日前から"], [7, "7 日前から"]];
+const THEMES = [["auto", "端末の設定にあわせる"], ["light", "ライト"], ["dark", "ダーク"]];
+const TEXT_SIZES = [["small", "小さめ"], ["normal", "ふつう"], ["large", "大きめ"]];
+const MOTIONS = [["auto", "端末の設定にあわせる"], ["reduce", "動きを減らす"]];
+
+// 見た目の設定（テーマ・文字の大きさ・動き）を画面に反映する。はじめと、設定を変えたときに呼ぶ
+//   テーマは、サイト共通の sk_theme（mode）に入れる。auto のときは data-theme を外して、端末の設定にしたがう
+function readTheme() {
+  try { const m = (JSON.parse(localStorage.getItem("sk_theme") || "{}") || {}).mode; return m === "dark" || m === "auto" ? m : "light"; } catch (e) { return "light"; }
+}
+function applyPrefs() {
+  const p = store.getPrefs();
+  const root = document.documentElement;
+  const mode = readTheme();
+  if (mode === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", mode);
+  root.dataset.textSize = p.textSize || "normal";
+  if (p.motion === "reduce") root.dataset.reduceMotion = "1"; else delete root.dataset.reduceMotion;
+}
+function setTheme(mode) {
+  let t = {};
+  try { t = JSON.parse(localStorage.getItem("sk_theme") || "{}") || {}; } catch (e) { /* 空から */ }
+  try { localStorage.setItem("sk_theme", JSON.stringify({ ...t, mode })); } catch (e) { /* 残せなくても、この画面では変わる */ }
+  applyPrefs();
+}
+const motionReduced = () => motionOff.matches || store.getPrefs().motion === "reduce";
+
+// 学習の記録（いまのプロファイル）をファイルに書き出す
+function exportRecords() {
+  const data = {
+    app: "SK Study", exportedAt: new Date().toISOString(), profile: ctxInfo ? ctxInfo.profileName : "個人",
+    records: store.snapshotRecords(), settings: store.getPrefs()
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+  const a = h("a", { href: url, download: `sk-study-records-${new Date().toISOString().slice(0, 10)}.json` });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function renderSettings() {
   document.title = "設定 - SK Study";
   const root = h("div", { class: "settings" });
@@ -694,15 +776,30 @@ function renderSettings() {
   // 値を選ぶ行（2 行目は今の値）
   const choiceRow = (label, status, onclick, disabled = false) => h("button", { type: "button", class: "setting-item", onclick, disabled },
     h("strong", null, label), h("small", null, status));
+  const linkRow = (label, status, href) => h("a", { class: "setting-item", href }, h("strong", null, label), h("small", null, status));
   const find = (opts, v) => (opts.find(([x]) => String(x) === String(v)) || opts[0])[1];
+  const divider = () => h("hr", { class: "settings-divider" });
 
   function draw() {
     const prefs = store.getPrefs();
+    const set = (patch) => { store.setPrefs(patch); applyPrefs(); draw(); };
+    const pick = (label, opts, value, key, num = false) => choiceRow(label, find(opts, value), () => choiceDialog(label, opts, value, (v) => set({ [key]: num ? Number(v) : v })));
     const rows = [
       group("学習",
-        choiceRow("問題の数", find(COUNTS, prefs.count), () => choiceDialog("問題の数", COUNTS, prefs.count, (v) => { store.setPrefs({ count: Number(v) }); draw(); })),
-        choiceRow("問題の形式", find(FORMATS, prefs.format), () => choiceDialog("問題の形式", FORMATS, prefs.format, (v) => { store.setPrefs({ format: v }); draw(); })))
+        pick("問題の数", COUNTS, prefs.count, "count", true),
+        pick("問題の形式", FORMATS, prefs.format, "format"),
+        pick("1 日の目標", GOALS, prefs.dailyGoal, "dailyGoal", true))
     ];
+
+    if (ctxInfo) {
+      rows.push(divider(), group(ctxInfo.staff ? "指導者のホーム" : "クラスのホーム",
+        pick(ctxInfo.staff ? "締め切りが近い配信を知らせる" : "締め切りが近い課題を知らせる", SOONS, prefs.soonDays, "soonDays", true)));
+    }
+
+    rows.push(divider(), group("表示",
+      choiceRow("テーマ", find(THEMES, readTheme()), () => choiceDialog("テーマ", THEMES, readTheme(), (v) => { setTheme(v); draw(); })),
+      pick("文字の大きさ", TEXT_SIZES, prefs.textSize, "textSize"),
+      pick("画面の動き", MOTIONS, prefs.motion, "motion")));
 
     if (tts.supported) {
       const s = tts.getSettings();
@@ -726,13 +823,33 @@ function renderSettings() {
         }));
       });
       rows.push(
-        h("hr", { class: "settings-divider" }),
+        divider(),
         group("読み上げ",
           h("label", { class: "setting-item switch-row" }, auto,
             h("span", null, h("strong", null, "自動で読み上げ"), h("small", null, "外国語を声で再生する"))),
           choiceRow("速さ", find(tts.RATES, s.rate), () => choiceDialog("読み上げの速さ", tts.RATES, s.rate, (v) => { tts.saveSettings({ rate: Number(v) }); draw(); })),
           ...voiceRows));
     }
+
+    const o = store.overall();
+    rows.push(divider(), group("学習の記録",
+      choiceRow("記録を書き出す", `覚えた ${o.mastered} 語・連続 ${o.streak} 日。ファイル（JSON）に保存します`, exportRecords),
+      choiceRow("記録を消す", ctxInfo ? "クラス・先生のプロファイルの記録は、オンラインに保存されているので消せません" : "覚えぐあい・学習した日・小テストの記録を消します", async () => {
+        if (!await confirmDialog("学習の記録を消しますか？", "覚えぐあい・学習した日・小テストの記録がすべて消えます。マイ単語帳やプリントは消えません。元に戻せません。", "消す", true)) return;
+        store.clearRecords();
+        toast("学習の記録を消しました");
+        draw();
+      }, !!ctxInfo)));
+
+    rows.push(divider(), group("アカウント",
+      linkRow("アカウント", "名前・プロファイル・参加しているクラス", "#/account"),
+      choiceRow("プロファイルを切り替える", ctxInfo ? `いま: ${ctxInfo.profileName}（${ctxInfo.className}）` : "いま: 個人", openProfileSwitcher),
+      choiceRow("ログアウト", "このブラウザの学習の記録・単語帳は残ります", logout)));
+
+    rows.push(divider(), group("SK Study について",
+      h("div", { class: "setting-item static" }, h("strong", null, "SK Study"), h("small", null, "先行公開版。招待した方だけが使えます")),
+      linkRow("プライバシーポリシー", "個人情報の扱い", "/policies/privacy/"),
+      linkRow("ポリシー・規約の一覧", "利用規約など", "/policies/")));
     root.replaceChildren(...rows);
   }
   draw();
@@ -740,6 +857,70 @@ function renderSettings() {
   const leave = () => { window.removeEventListener("hashchange", leave); if (stopWatch) stopWatch(); tts.stop(); };
   window.addEventListener("hashchange", leave);
   app.append(pageHead("設定"), root);
+}
+
+// ---------- アカウント（SK Study の中の画面。名前・プロファイル・参加しているクラス・ログアウト） ----------
+
+async function renderAccount() {
+  document.title = "アカウント - SK Study";
+  const hint = readHint() || {};
+  const name = (auth && auth.name) || hint.name || "";
+  const email = hint.email || (auth && auth.user && auth.user.email) || "";
+  const color = /^(#[0-9a-f]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\))$/i.test(hint.color || "") ? hint.color : null;
+  const photo = hint.photo && /^https:\/\//.test(hint.photo) ? hint.photo : null;
+  const avatar = photo
+    ? h("img", { class: "acct-avatar", src: photo, alt: "", referrerpolicy: "no-referrer" })
+    : h("span", { class: "acct-avatar", style: color ? `background:${color}` : null, "aria-hidden": "true" }, hint.letter || name.slice(0, 1) || "?");
+  const body = h("div", { class: "acct" });
+  app.append(pageHead("アカウント", "SK Study で使っているアカウントと、プロファイルの管理です。"), body);
+
+  const o = store.overall();
+  const head = h("section", { class: "mk-card acct-card" },
+    h("div", { class: "acct-head" }, avatar,
+      h("div", { class: "acct-who" }, h("strong", null, name || "SK Hub Systems アカウント"), email ? h("span", null, email) : null,
+        h("small", null, "SK Hub Systems アカウントでログイン中"))),
+    h("ul", { class: "acct-facts" },
+      h("li", null, icon("local_fire_department"), h("span", null, h("strong", null, `${o.streak} 日`), "連続で学習")),
+      h("li", null, icon("verified"), h("span", null, h("strong", null, `${o.mastered} 語`), "記憶済み")),
+      h("li", null, icon("task_alt"), h("span", null, h("strong", null, `${o.today} 問`), "今日答えた"))));
+  body.append(head);
+
+  const profiles = h("section", { class: "mk-card" }, h("h2", null, icon("switch_account"), "プロファイル"), h("p", { class: "muted small" }, "確認中…"));
+  body.append(profiles);
+  // コードを入れる（学校の生徒・先生: 学校のコード / 従来: クラスの参加コード・指導者のコード）。入れると、そのプロファイルが加わる
+  body.append(h("section", { class: "mk-card" },
+    h("h2", null, icon("key"), "コードを入れる"),
+    h("p", { class: "muted small" }, "学校から渡された専用のコードを入れると、学校のプロファイルが加わります。クラスは、学校の先生が決めて、自動で入ります。"),
+    h("div", { class: "mk-row" },
+      button("filled", "学校のコード", "apartment", () => openOrgJoinDialog(printUi)),
+      button("outlined", "クラスの参加コード（従来）", "groups", () => openJoinDialog(printUi)),
+      button("outlined", "総合管理者のコード", "school", () => openStaffCodeDialog(printUi, () => document.dispatchEvent(new CustomEvent("sk-study:ctx")))))));
+  body.append(h("section", { class: "mk-card" },
+    h("h2", null, icon("manage_accounts"), "アカウントの操作"),
+    h("div", { class: "mk-row" },
+      linkButton("outlined", "設定", "settings", "#/settings"),
+      button("outlined", "学習の記録を書き出す", "download", exportRecords),
+      button("outlined", "ログアウト", "logout", logout, { "data-danger": "" })),
+    h("p", { class: "muted small" }, "メールアドレスやパスワードの変更は、SK Hub Systems アカウントで行います。", h("a", { href: "/account/" }, "SK Hub Systems アカウントを開く"), "。")));
+
+  if (!auth || auth.status !== "ready") { profiles.querySelector("p").textContent = "オフラインのため、プロファイルは表示できません。"; return; }
+  const hash = location.hash;
+  let classes = [], staff = [], orgs = [];
+  try { [classes, staff, orgs] = await Promise.all([legacyClassProfiles(), cloud.staffProfiles().catch(() => []), orgProfiles()]); } catch (e) { profiles.querySelector("p").textContent = cloud.explain(e); return; }
+  if (location.hash !== hash) return;
+  const cur = cloud.activeClass();
+  const row = (id, ic, title, sub) => h("div", { class: "set-row" },
+    h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon(ic)),
+    h("div", { class: "set-row-body" }, h("span", { class: "set-row-link" }, h("span", { class: "set-row-sub" }, h("span", null, sub)), h("span", { class: "set-row-title" }, title))),
+    h("div", { class: "set-row-end" }, cur === id ? h("span", { class: "dh-pill ok" }, icon("check"), "使用中") : button("tonal", "切り替える", null, () => cloud.setActiveClass(id))));
+  profiles.replaceChildren(h("h2", null, icon("switch_account"), `プロファイル（${1 + orgs.length + staff.length + classes.length}）`),
+    h("p", { class: "muted small" }, "プロファイルごとに、画面・教材・学習の記録が分かれます。クラス・先生のプロファイルの記録は、オンラインに保存されます。"),
+    h("div", { class: "set-list flat" },
+      row("", "person", name || "個人", "個人（この端末に保存）"),
+      orgs.map((o) => row(o.id, o.role === "teacher" ? "school" : "apartment", o.name, `${o.schoolName}・${o.role === "teacher" ? "先生" : "生徒"}`)),
+      staff.map((p) => row(p.id, p.id === "admin" ? "admin_panel_settings" : "school", p.name, p.orgName)),
+      classes.map((c) => row(c.id, "groups", c.profileName || c.name, `クラス: ${c.name}`))),
+    null);
 }
 
 // ---------- ホーム ----------
@@ -846,8 +1027,7 @@ function renderHome() {
       h("div", { class: "tile-grid" },
         tile("note_add", "単語帳を作る", "自分だけの単語帳", "#/edit/new"),
         tile("link", "リンクから追加", "友だちの単語帳を受け取る", openImportDialog),
-        tile("assignment", "プリント", "HTML・PDF のプリントに答える", "#/prints"),
-        tile("groups", "クラス", "参加コードでクラスに入る", "#/classes"))));
+        tile("assignment", "プリント", "HTML・PDF のプリントに答える", "#/prints"))));
 }
 
 // SK認定コンテンツ（言語でしぼりこむ）
@@ -1223,7 +1403,7 @@ function runSession(cfg) {
     sheetHost.replaceChildren(sheet);
     learnEl.classList.add("is-answered");
     body.style.paddingBottom = `${sheet.offsetHeight + 16}px`; // シートの下にかくれないように
-    requestAnimationFrame(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: motionOff.matches ? "auto" : "smooth" }));
+    requestAnimationFrame(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: motionReduced() ? "auto" : "smooth" }));
     return sheet;
   }
   function closeSheet() {
@@ -1796,10 +1976,13 @@ const printUi = {
   message: renderMessage,
   setKeys: (fn) => { keyHandler = fn; },
   staffCtx: () => !!(ctxInfo && ctxInfo.staff),
+  orgCtx: () => (ctxInfo && ctxInfo.org ? ctxInfo : null),
   backLink, shuffle, runSession: (cfg) => runSession(cfg)
 };
 
 // ---------- はじめ ----------
+
+applyPrefs();
 
 document.addEventListener("keydown", (e) => {
   if (!keyHandler || e.isComposing || e.altKey || e.ctrlKey || e.metaKey) return;
@@ -1857,6 +2040,8 @@ if ("serviceWorker" in navigator) {
     cloud.session().catch((e) => { console.error(e); return { status: "offline" }; })
   ]);
   auth = s;
+  // 組織モデルに移されたクラス・学校に入っていたら、自分の「入っている学校」の目印を作る（本人しか書けないため。なければ何もしない）
+  if (s.status === "ready") cloud.adoptOrgLinks().catch(() => {});
   await refreshCtx();
   records.switchTo(ctxInfo ? ctxInfo.cid : "");
   drawDrawer();

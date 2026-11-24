@@ -329,6 +329,11 @@ export function mergeRecords(remote) {
   const remoteStale = !remote || !same(progress, r.progress || {}) || !same(days, r.days || {}) || !same(tests, r.tests || []);
   return { localChanged, remoteStale };
 }
+// いまのプロファイルの学習の記録（覚えぐあい・学習した日・小テスト）をすべて消す
+export function clearRecords() {
+  try { for (const k of [PROGRESS_KEY, DAYS_KEY, TESTS_KEY]) localStorage.removeItem(K(k)); } catch (e) { /* 消せなくても動く */ }
+  recordsChanged();
+}
 export function testsOf(setId) {
   return read(K(TESTS_KEY), []).filter((t) => t.setId === setId);
 }
@@ -336,7 +341,9 @@ export function testsOf(setId) {
 // ---------- 設定（問題の数・形式など） ----------
 //   format: auto（難易度に合わせて 4 択と書き取りをまぜる）/ choice（4 択だけ）/ write（書き取りだけ）
 
-export const getPrefs = () => ({ count: 10, format: "auto", filter: "all", ...read(PREFS_KEY, {}) });
+//   dailyGoal: 1 日に答える問題の目標 / soonDays: 締め切りが近いとみなす日数（生徒・先生のホーム）
+//   theme: auto / light / dark / textSize: small / normal / large / motion: auto / reduce
+export const getPrefs = () => ({ count: 10, format: "auto", filter: "all", dailyGoal: 20, soonDays: 3, theme: "auto", textSize: "normal", motion: "auto", ...read(PREFS_KEY, {}) });
 export function setPrefs(patch) {
   write(PREFS_KEY, { ...getPrefs(), ...patch });
 }
