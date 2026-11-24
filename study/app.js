@@ -279,8 +279,8 @@ function go(path, replace = false) {
 }
 
 // 画面 → 横のメニューのどれを選んだ状態にするか
-const SECTION_OF = { "": "home", sets: "sets", mine: "mine", edit: "mine", import: "mine", prints: "prints", print: "prints", maker: "maker", classes: "classes", class: "classes", task: "classes", teach: "teach", settings: "settings", account: "account" };
-const TITLES = { home: "ホーム", sets: "SK認定コンテンツ", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定", account: "アカウント" };
+const SECTION_OF = { "": "home", sets: "sets", mine: "mine", edit: "mine", import: "mine", prints: "prints", print: "prints", maker: "maker", classes: "classes", class: "classes", task: "classes", teach: "teach", settings: "settings", about: "settings", account: "account" };
+const TITLES = { home: "ホーム", sets: "SK認定コンテンツ", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定", about: "アプリ情報", account: "アカウント" };
 
 // ---------- 画面の切りかえの動き（Android と同じ） ----------
 //   深さ: 0 = メニューの画面（ホーム・単語セット…）、1 = 中の画面（単語セットの中・編集・クラス…）、2 = 全面の画面（学習・プリント）
@@ -293,7 +293,7 @@ let lastNav = null;
 
 function depthOf(view, parts) {
   if (view === "learn" || view === "print") return 2;
-  if (["set", "edit", "import", "class", "task"].includes(view)) return 1;
+  if (["set", "edit", "import", "class", "task", "about"].includes(view)) return 1;
   if (view === "teach" && parts.length > 1) return 1;
   return 0;
 }
@@ -346,7 +346,7 @@ function renderRoute(nav) {
   }
   // 学校のプロファイルの生徒（組織モデル）: 紐づいた全クラスの課題をまとめた画面と、クラス・課題・学習の画面だけ
   if (cloud.activeClass() && ctxInfo && ctxInfo.org && !ctxInfo.staff) {
-    const ORG_VIEWS = ["class", "task", "set", "learn", "print", "settings", "account"];
+    const ORG_VIEWS = ["class", "task", "set", "learn", "print", "settings", "about", "account"];
     if (!view || !ORG_VIEWS.includes(view)) {
       document.body.dataset.view = "class";
       const k = !view && GROUPS[q.get("k")] ? q.get("k") : "";
@@ -359,7 +359,7 @@ function renderRoute(nav) {
   }
   // クラスのプロファイルでは、そのクラスの画面だけ（個人の単語帳・プリントなどは出さない）
   if (cloud.activeClass() && ctxInfo && !ctxInfo.staff && !ctxInfo.org) {
-    const CLASS_VIEWS = ["class", "task", "set", "learn", "print", "settings", "account"];
+    const CLASS_VIEWS = ["class", "task", "set", "learn", "print", "settings", "about", "account"];
     if (!view || !CLASS_VIEWS.includes(view)) {
       document.body.dataset.view = "class";
       const k = !view && GROUPS[q.get("k")] ? q.get("k") : "";
@@ -372,7 +372,7 @@ function renderRoute(nav) {
   }
   // 先生・総合管理者のプロファイルでは、指導者メニューと先生用の教材だけ（個人の画面・クラスの参加は出さない）
   if (cloud.activeClass() && ctxInfo && ctxInfo.staff) {
-    const STAFF_VIEWS = ["sets", "mine", "edit", "import", "prints", "print", "maker", "set", "learn", "settings", "account"];
+    const STAFF_VIEWS = ["sets", "mine", "edit", "import", "prints", "print", "maker", "set", "learn", "settings", "about", "account"];
     if (!STAFF_VIEWS.includes(view)) {
       document.body.dataset.view = "teach";
       setActive("home");
@@ -412,6 +412,7 @@ function renderRoute(nav) {
     else if (view === "task") renderTask(id, parts[2], printUi).catch(showError);
     else if (view === "teach") renderTeach(parts.slice(1), printUi).catch(showError);
     else if (view === "settings") renderSettings();
+    else if (view === "about") renderAbout();
     else if (view === "account") renderAccount().catch(showError);
     else renderMessage("ページが見つかりません", "リンクがまちがっているかもしれません。");
   } catch (e) {
@@ -850,10 +851,8 @@ function renderSettings() {
       choiceRow("プロファイルを切り替える", ctxInfo ? `いま: ${ctxInfo.profileName}（${ctxInfo.className}）` : "いま: 個人", openProfileSwitcher),
       choiceRow("ログアウト", "このブラウザの学習の記録・単語帳は残ります", logout)));
 
-    rows.push(divider(), group("SK Study について",
-      h("div", { class: "setting-item static" }, h("strong", null, "SK Study"), h("small", null, "先行公開版。招待した方だけが使えます")),
-      linkRow("プライバシーポリシー", "個人情報の扱い", "/policies/privacy/"),
-      linkRow("ポリシー・規約の一覧", "利用規約など", "/policies/")));
+    rows.push(divider(), group("アプリ",
+      linkRow("アプリ情報", "更新・バージョン・利用規約", "#/about")));
     root.replaceChildren(...rows);
   }
   draw();
@@ -861,6 +860,65 @@ function renderSettings() {
   const leave = () => { window.removeEventListener("hashchange", leave); if (stopWatch) stopWatch(); tts.stop(); };
   window.addEventListener("hashchange", leave);
   app.append(pageHead("設定"), root);
+}
+
+// ---------- アプリ情報（Nagi の「このアプリについて」と同じ内容・見た目。設定から開く） ----------
+const APP_VERSION = "1.0";
+
+function renderAbout() {
+  document.title = "アプリ情報 - SK Study";
+  const mark = icon("check");
+  const status = h("p", { class: "about-status-title" }, "SK Study は最新です");
+  const box = h("div", { class: "setting-item static about-status" }, h("span", { class: "about-status__mark", "aria-hidden": "true" }, mark));
+  const version = h("small", null, APP_VERSION);
+  let found = false;
+  const btn = h("button", { type: "button", class: "outlined-btn about-action" }, "更新を確認");
+  const setState = (state, text) => {
+    box.classList.toggle("is-checking", state === "checking");
+    box.classList.toggle("is-new", state === "new");
+    box.classList.toggle("is-error", state === "error");
+    mark.textContent = state === "checking" ? "progress_activity" : state === "new" ? "upgrade" : state === "error" ? "error" : "check";
+    status.textContent = text;
+  };
+  btn.addEventListener("click", () => {
+    if (found) { location.reload(); return; }
+    if (!("serviceWorker" in navigator)) { setState("error", "この端末では更新を確認できません"); return; }
+    btn.disabled = true;
+    setState("checking", "更新を確認しています…");
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (!reg) throw new Error("no registration");
+      return reg.update().then(() => reg);
+    }).then((reg) => {
+      found = !!(reg.installing || reg.waiting);
+      if (found) { setState("new", "新しい版が見つかりました"); btn.textContent = "再読み込み"; }
+      else setState("ok", "SK Study は最新です");
+    }).catch(() => setState("error", "更新を確認できませんでした。インターネットの接続を確かめてください"))
+      .then(() => { btn.disabled = false; });
+  });
+  box.append(h("div", null, status, h("small", null, "更新は、開いたときに自動で確かめて反映します。")), btn);
+
+  // バージョン。「1.0（ビルド 41）」… ビルドは、この端末に入っている Service Worker のキャッシュの番号（study/sw.js の CACHE_NAME）
+  if (window.caches && caches.keys) {
+    caches.keys().then((names) => {
+      let build = 0;
+      names.forEach((n) => { const m = /^study-v(\d+)$/.exec(n); if (m) build = Math.max(build, +m[1]); });
+      if (build) version.textContent = `${APP_VERSION}（ビルド ${build}）`;
+    }).catch(() => {});
+  }
+
+  const info = (title, ...rest) => h("div", { class: "setting-item static" }, h("strong", null, title), ...rest);
+  const link = (title, text, href, label) => h("div", { class: "setting-item static about-link" },
+    h("div", null, h("strong", null, title), h("small", null, text)),
+    h("a", { class: "outlined-btn about-action", href, target: "_blank", rel: "noopener" }, label));
+  app.append(pageHead("アプリ情報"), h("div", { class: "settings about" },
+    h("div", { class: "about-header" },
+      h("img", { class: "about-icon", src: "ico/icon-192.png", alt: "", width: 72, height: 72 }),
+      h("div", null, h("p", { class: "about-name" }, "SK Study"),
+        h("p", { class: "about-description" }, "単語を覚えたり、プリントを作ったり、クラスで課題を出したり受けたりできる学習アプリです。先行公開版。招待した方だけが使えます。"))),
+    box,
+    info("バージョン", version),
+    link("利用規約・プライバシーポリシー", "SK Study は SK 利用規約・SK プライバシーポリシーのもとで提供しています。", "/policies/", "開く"),
+    link("SK Study について", "使い方と、できること", "/products/study/", "詳しく")));
 }
 
 // ---------- アカウント（SK Study の中の画面。名前・プロファイル・参加しているクラス・ログアウト） ----------

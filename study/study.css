@@ -1164,6 +1164,22 @@ body[data-view="learn"] .install, body[data-view="print"] .install, body[data-vi
 .setting-item.switch-row { flex-direction: row; align-items: center; gap: 16px; }
 .setting-item.switch-row > span { flex: 1; min-width: 0; }
 .setting-item.switch-row input { margin-right: 0; }
+/* アプリ情報（Nagi の「このアプリについて」と同じ） */
+.about-header { display: flex; align-items: center; gap: 20px; padding: 8px 0 24px; }
+.about-icon { width: 72px; height: 72px; border-radius: 16px; flex: none; }
+.about-name { margin: 0 0 4px; font-size: 24px; line-height: 32px; font-weight: 400; color: var(--on-surface); }
+.about-description { margin: 0; font-size: 14px; line-height: 20px; color: var(--on-surface-variant); }
+.about .setting-item.static:hover { background: transparent; }
+.about-status, .about-link { flex-direction: row; align-items: center; gap: 16px; }
+.about-status > div, .about-link > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.about-status-title { margin: 0; font-size: 16px; line-height: 24px; }
+.about-status__mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; flex: none; background: var(--primary-container); color: var(--on-primary-container); }
+.about-status__mark .ms { font-size: 20px; }
+.about-status.is-checking .about-status__mark .ms { animation: spin 1s linear infinite; }
+.about-status.is-new .about-status__mark { background: var(--tertiary-container); color: var(--on-tertiary-container); }
+.about-status.is-error .about-status__mark { background: var(--error-container); color: var(--on-error-container); }
+.about-action { flex: none; text-decoration: none; }
+@media (max-width: 600px) { .about-status, .about-link { flex-wrap: wrap; } .about-action { margin-left: 56px; } .about-link .about-action { margin-left: 0; } }
 /* ラジオの簡単なダイアログ */
 .radio-list { display: flex; flex-direction: column; margin: 0 -16px; }
 .radio-row { display: flex; align-items: center; gap: 16px; min-height: 48px; padding: 0 16px; cursor: pointer; font-size: 16px; }
