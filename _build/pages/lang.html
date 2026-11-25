@@ -5,42 +5,32 @@
         <span class="lang-appbar-app"><img src="/assets/logo.svg" alt="" width="22" height="22" data-lang-app-icon><span data-lang-app-name>SK</span></span>
       </div>
       <div class="lang-card lang-card--loc" data-lang-card>
-        <div class="lang-head">
-          <div class="lang-globe" data-lang-globe aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>
-          </div>
-          <h1 class="lang-title" data-lang-title>Choose your location</h1>
-          <p class="lang-desc" data-lang-desc>Select your region and language</p>
-        </div>
-        <h2 class="loc-continent">Asia</h2>
-        <div class="loc-grid">
-          <section class="loc-region" data-i18n-skip data-region-block="jp" aria-label="Japan">
-            <h3 class="loc-name">日本<small>Japan</small></h3>
-            <div class="loc-langs">
-              <button type="button" class="loc-lang" data-i18n-skip data-region="jp" data-lang="ja" lang="ja">日本語</button>
-              <button type="button" class="loc-lang" data-i18n-skip data-region="jp" data-lang="en" lang="en">English</button>
-              <button type="button" class="loc-lang" data-i18n-skip data-region="jp" data-lang="ko" lang="ko">한국어</button>
-            </div>
-          </section>
-          <section class="loc-region" data-i18n-skip data-region-block="kr" aria-label="Korea">
-            <h3 class="loc-name">대한민국<small>Korea</small></h3>
-            <div class="loc-langs">
-              <button type="button" class="loc-lang" data-i18n-skip data-region="kr" data-lang="ko" lang="ko">한국어</button>
-              <button type="button" class="loc-lang" data-i18n-skip data-region="kr" data-lang="en" lang="en">English</button>
-              <button type="button" class="loc-lang" data-i18n-skip data-region="kr" data-lang="ja" lang="ja">日本語</button>
-            </div>
-          </section>
-        </div>
-        <h2 class="loc-continent">Other</h2>
-        <div class="loc-grid">
-          <section class="loc-region" data-i18n-skip data-region-block="global" aria-label="Global">
-            <h3 class="loc-name">Other regions<small>Global</small></h3>
-            <div class="loc-langs">
-              <button type="button" class="loc-lang" data-i18n-skip data-region="global" data-lang="en" lang="en">English</button>
-              <button type="button" class="loc-lang" data-i18n-skip data-region="global" data-lang="zh-CN" lang="zh-CN">简体中文</button>
-              <button type="button" class="loc-lang" data-i18n-skip data-region="global" data-lang="zh-TW" lang="zh-TW">繁體中文</button>
-            </div>
-          </section>
+        <div class="loc-band"><h1 class="lang-title" data-lang-title>Choose your location</h1></div>
+        <div class="loc-acc">
+        <details class="loc-group" data-group="jp">
+          <summary data-i18n-skip>日本</summary>
+          <ul class="loc-links">
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="ja" lang="ja">日本語</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="en" lang="en">English</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="ko" lang="ko">한국어</button></li>
+          </ul>
+        </details>
+        <details class="loc-group" data-group="kr">
+          <summary data-i18n-skip>한국</summary>
+          <ul class="loc-links">
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="ko" lang="ko">한국어</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="en" lang="en">English</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="ja" lang="ja">日本語</button></li>
+          </ul>
+        </details>
+        <details class="loc-group" data-group="global">
+          <summary data-i18n-skip>Global</summary>
+          <ul class="loc-links">
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="en" lang="en">English</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="zh-CN" lang="zh-CN">简体中文</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="zh-TW" lang="zh-TW">繁體中文</button></li>
+          </ul>
+        </details>
         </div>
         <p class="lang-note" data-lang-note>Applies to the SK website and all SK apps</p>
       </div>

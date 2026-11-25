@@ -11,9 +11,7 @@
   const card = document.querySelector("[data-lang-card]");
   if (!card || !window.SKI18N) return;
   const root = document.documentElement;
-  const globe = card.querySelector("[data-lang-globe]");
-  const buttons = [...card.querySelectorAll(".loc-lang")];
-  const blocks = [...card.querySelectorAll("[data-region-block]")];
+  const buttons = [...card.querySelectorAll(".loc-link")];
   const backs = [...document.querySelectorAll("[data-lang-back]")];
 
   const BACK = { ja: "戻る", en: "Back", "zh-CN": "返回", "zh-TW": "返回", ko: "뒤로" };
@@ -93,9 +91,16 @@
   buttons.forEach((b) => {
     const on = b.dataset.region === curRegion && b.dataset.lang === cur;
     b.classList.toggle("is-current", on);
-    if (on) b.setAttribute("aria-current", "true");
+    if (on) {
+      b.setAttribute("aria-current", "true");
+      const group = b.closest("details");
+      if (group) group.open = true;
+    }
   });
-  blocks.forEach((el) => el.classList.toggle("is-current", el.dataset.regionBlock === curRegion));
-
-  if (globe) globe.classList.add("is-in");
+  // 広い画面では、大陸ごとの見出しを開いたままにする（閉じられない）。狭い画面は、いまの地域だけ開いておく
+  const wide = window.matchMedia("(min-width: 720px)");
+  const groups = [...card.querySelectorAll("details.loc-group")];
+  function syncGroups() { if (wide.matches) groups.forEach((g) => { g.open = true; }); }
+  syncGroups();
+  if (wide.addEventListener) wide.addEventListener("change", syncGroups);
 })();
