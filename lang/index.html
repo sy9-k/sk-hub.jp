@@ -54,29 +54,45 @@
         <a class="lang-appbar-back" href="/" data-lang-back aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M5 12l6-6M5 12l6 6"/></svg></a>
         <span class="lang-appbar-app"><img src="/assets/logo.svg" alt="" width="22" height="22" data-lang-app-icon><span data-lang-app-name>SK</span></span>
       </div>
-      <div class="lang-card" data-lang-card>
+      <div class="lang-card lang-card--loc" data-lang-card>
         <div class="lang-head">
           <div class="lang-globe" data-lang-globe aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>
           </div>
-          <h1 class="lang-title" data-lang-title>Language</h1>
-          <p class="lang-desc" data-lang-desc>Please select your language</p>
+          <h1 class="lang-title" data-lang-title>Choose your location</h1>
+          <p class="lang-desc" data-lang-desc>Select your region and language</p>
         </div>
-        <p class="lang-label" data-lang-region-label>Region</p>
-        <div class="lang-list lang-region" role="radiogroup" aria-label="Region" data-lang-regions>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-region="jp" lang="ja">日本<small>Japan</small></button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-region="kr" lang="ko">대한민국<small>Korea</small></button>
+        <h2 class="loc-continent">Asia</h2>
+        <div class="loc-grid">
+          <section class="loc-region" data-i18n-skip data-region-block="jp" aria-label="Japan">
+            <h3 class="loc-name">日本<small>Japan</small></h3>
+            <div class="loc-langs">
+              <button type="button" class="loc-lang" data-i18n-skip data-region="jp" data-lang="ja" lang="ja">日本語</button>
+              <button type="button" class="loc-lang" data-i18n-skip data-region="jp" data-lang="en" lang="en">English</button>
+              <button type="button" class="loc-lang" data-i18n-skip data-region="jp" data-lang="ko" lang="ko">한국어</button>
+            </div>
+          </section>
+          <section class="loc-region" data-i18n-skip data-region-block="kr" aria-label="Korea">
+            <h3 class="loc-name">대한민국<small>Korea</small></h3>
+            <div class="loc-langs">
+              <button type="button" class="loc-lang" data-i18n-skip data-region="kr" data-lang="ko" lang="ko">한국어</button>
+              <button type="button" class="loc-lang" data-i18n-skip data-region="kr" data-lang="en" lang="en">English</button>
+              <button type="button" class="loc-lang" data-i18n-skip data-region="kr" data-lang="ja" lang="ja">日本語</button>
+            </div>
+          </section>
         </div>
-        <p class="lang-label" data-lang-language-label>Language</p>
-        <div class="lang-list" role="radiogroup" aria-label="Language">
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="ja" lang="ja">日本語<small>Japanese</small></button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="en" lang="en">English<small>English</small></button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="zh-CN" lang="zh-CN">简体中文<small>Chinese (Simplified)</small></button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="zh-TW" lang="zh-TW">繁體中文<small>Chinese (Traditional)</small></button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="ko" lang="ko">한국어<small>Korean</small></button>
+        <h2 class="loc-continent">Other</h2>
+        <div class="loc-grid">
+          <section class="loc-region" data-i18n-skip data-region-block="global" aria-label="Global">
+            <h3 class="loc-name">Other regions<small>Global</small></h3>
+            <div class="loc-langs">
+              <button type="button" class="loc-lang" data-i18n-skip data-region="global" data-lang="en" lang="en">English</button>
+              <button type="button" class="loc-lang" data-i18n-skip data-region="global" data-lang="zh-CN" lang="zh-CN">简体中文</button>
+              <button type="button" class="loc-lang" data-i18n-skip data-region="global" data-lang="zh-TW" lang="zh-TW">繁體中文</button>
+            </div>
+          </section>
         </div>
         <p class="lang-note" data-lang-note>Applies to the SK website and all SK apps</p>
-        <button type="button" class="lang-continue" data-lang-continue disabled>Continue</button>
       </div>
       <!-- サイトから開いたときの「戻る」（アプリから開いたときは上の帯の戻るボタン） -->
       <a class="lang-cancel" href="/" data-lang-back>Back</a>
