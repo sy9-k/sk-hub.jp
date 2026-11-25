@@ -57,7 +57,7 @@ export async function session({ fresh = false } = {}) {
     return { status: "offline" };
   }
   const base = { user, account, hub, fs, db: hub.db, name: hub.profileOf(user, account).name || user.email || "名前なし" };
-  if (!account || account.termsVersion !== hub.ACCOUNT_TERMS_VERSION) return (cached = { ...base, status: "unregistered" });
+  if (!hub.accountUsable(account)) return (cached = { ...base, status: "unregistered" });
   hub.rememberAccount(user, account);
   if (!hub.isConnected(account, "study")) return (cached = { ...base, status: "not-connected" });
   return (cached = { ...base, status: "ready" });

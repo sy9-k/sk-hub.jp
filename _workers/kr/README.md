@@ -15,7 +15,7 @@
 | ヨーロッパ | eu.sk-hub.jp | English | Nagi・SK's Toolbox（と、アカウントの SK Hub Systems） |
 | その他 | global.sk-hub.jp | English | Nagi・SK's Toolbox（と、アカウントの SK Hub Systems） |
 
-MALU・Y-FILTER.・SK's Lab・Sentaro さんとの提携は、日本だけです。SK Study・SK Hub Office は、日本と大韓民国だけです。**出すものを変えるときは、`src/worker.js` の `REGIONS` の `products` を直して deploy します**（HTML は直さない）。
+MALU・Y-FILTER.・SK's Lab・Sentaro さんとの提携は、日本だけです。SK Study・SK Hub Office は、日本と大韓民国だけです。招待制（早期アクセスの登録 `/waiting/` と招待の状況 `/account/invites/`）も、日本と大韓民国だけです（`invites`。ほかの地域では、ページもリンクも出さない）。**出すものを変えるときは、`src/worker.js` の `REGIONS` の `products` を直して deploy します**（HTML は直さない）。
 
 | 開いたもの | 出るもの |
 |---|---|
@@ -35,6 +35,10 @@ sk-hub.jp の HTML の要素に、次の印を付けます（Worker は直さな
 - `data-region="jp"` … 日本だけで出すもの（地域版では消す）。例: Sentaro さんとの提携、お知らせ
 - `data-region="kr"` ＋ `hidden` … 地域版だけで出す言い換えの文（地域版で `hidden` が外れる）。プロダクト名は並べない（地域ごとに出すものがちがうため）
 - ヘッダーのメニューとアップデート情報は HTML ではないので、Worker が入れる `window.SK_BLOCKED`・`window.SK_HIDDEN_CATEGORIES` で `assets/site.js` が出さないものを決める
+
+## アカウントの地域
+
+SK Hub Systems アカウントには、地域（`accounts/{UID}.region`。jp・kr・cn・tw・eu・global）があります。アカウントを作るとき（とアカウントのページの「設定」）に本人が選びます。**提供していない地域**（`assets/hub/account.js` の `REGIONS` で `provided: false`。いまは中国大陆）のアカウントでは、ログインしても「この地域では、まだ使えません」と出て、アカウントを使うアプリ（Nagi・SK's Toolbox・SK Study など）も使えません。提供する地域を広げるときは、`REGIONS` の `provided` を `true` にします（サイトの地域版は、この Worker の `REGIONS`）。地域を決めていない前からのアカウントは、止めません。Firestore のルール（y-filter リポジトリの `systems/firestore.rules`）が `region` に対応するまでは、地域は保存できず、この端末だけに覚えます（アカウントは作れます）。
 
 ## 整えるもの
 

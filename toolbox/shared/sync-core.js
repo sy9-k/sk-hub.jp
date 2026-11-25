@@ -8,7 +8,7 @@
 //   ・まとめ方は /toolbox/shared/sync-merge.js。2 台で同時に同期しても消えないよう、読み込みと書き込みはトランザクションで行う
 //   ・Memo の画像（IndexedDB）は同期しない
 //   ・同期を使っている端末では、SK Hub Systems アカウントのお知らせ（accounts/{UID}/notices。お問い合わせへの返事など）の未読も確かめる（notices()）
-import { ACCOUNT_TERMS_VERSION, countUnread, currentUser, db, isConnected, rememberAccount, setUnreadHint } from "/assets/hub/account.js";
+import { ACCOUNT_TERMS_VERSION, accountUsable, countUnread, currentUser, db, isConnected, rememberAccount, setUnreadHint } from "/assets/hub/account.js";
 import {
   Bytes, collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, runTransaction, serverTimestamp, setDoc, where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -73,7 +73,7 @@ export async function accountState() {
   const user = await currentUser();
   if (!user) return { status: "signed-out" };
   const snap = await getDoc(doc(db, "accounts", user.uid));
-  if (!snap.exists() || snap.data().termsVersion !== ACCOUNT_TERMS_VERSION) return { status: "unregistered", user };
+  if (!snap.exists() || !accountUsable(snap.data())) return { status: "unregistered", user };
   const account = snap.data();
   rememberAccount(user, account);
   if (!isConnected(account, "toolbox")) return { status: "not-connected", user, account };

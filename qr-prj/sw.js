@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qr-airdrop-v6';
+const CACHE_NAME = 'qr-airdrop-v7';
 const ASSETS = [
   './',
   './index.html',

@@ -163,7 +163,8 @@ RUNTIME_SOURCES = [
 # build で作らないページ（ブラウザでページごと訳す）
 STANDALONE_PAGES = [
     "usercheck/blocked.html", "usercheck/terms_not_accepted.html",
-    "dictionary/index.html", "dictionary/offline.html",
+    "dictionary/index.html", "dictionary/offline.html", "dictionary/result/index.html",
+    "products/toolbox/index.html",
     "nagi/index.html",
     "toolbox/clock/index.html", "toolbox/calc/index.html", "toolbox/memo/index.html", "toolbox/todo/index.html", "toolbox/countdown/index.html", "toolbox/settings/index.html",
     "toolbox/timetable/index.html", "toolbox/roulette/index.html", "toolbox/install/index.html", "toolbox/lang/index.html", "toolbox/naming/index.html",
