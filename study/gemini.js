@@ -2,6 +2,7 @@
 //   ・キーは使う人のもの。ブラウザから Google に直接送る（SK のサーバーは通らない）。保存するのは本人が選んだときだけ（この端末の localStorage）
 //   ・モデルの名前は変わっていくので決め打ちしない。キーで使えるモデルの一覧を読み、新しい Flash を選ぶ（無料枠は Flash 系）
 //   ・PDF はそのまま渡し、決まった形の JSON（printfmt.js のプリントのデータ）で返してもらう
+import { tx } from "./i18n.js";
 const API = "https://generativelanguage.googleapis.com/v1beta";
 const KEY_STORE = "sk_study_gemini_key";
 const MODEL_STORE = "sk_study_gemini_model";
@@ -21,9 +22,9 @@ async function call(path, key, body) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = (data.error && data.error.message) || `HTTP ${res.status}`;
-    const err = new Error(res.status === 429 ? "無料枠の回数の上限に達しました。少し待ってから（1 日の上限なら翌日に）やり直してください。"
-      : res.status === 400 && /API key/i.test(msg) ? "API キーが正しくないようです。"
-        : res.status === 403 ? "この API キーでは使えません（キーの設定を確かめてください）。" : msg);
+    const err = new Error(res.status === 429 ? tx("無料枠の回数の上限に達しました。少し待ってから（1 日の上限なら翌日に）やり直してください。")
+      : res.status === 400 && /API key/i.test(msg) ? tx("API キーが正しくないようです。")
+        : res.status === 403 ? tx("この API キーでは使えません（キーの設定を確かめてください）。") : msg);
     err.status = res.status;
     throw err;
   }
@@ -133,7 +134,7 @@ export async function convertPdf({ key, model, pdf, hint = "" }) {
       role: "user",
       parts: [
         { inline_data: { mime_type: "application/pdf", data: btoa(bin) } },
-        { text: PROMPT + (hint ? `\n\n補足: ${hint}` : "") }
+        { text: PROMPT + (hint ? tx("\n\n補足: {hint}", { hint }) : "") }
       ]
     }],
     generationConfig: { responseMimeType: "application/json", responseSchema: SCHEMA, temperature: 0.1 }
@@ -142,12 +143,12 @@ export async function convertPdf({ key, model, pdf, hint = "" }) {
   const cand = (data.candidates || [])[0];
   const text = cand && cand.content && (cand.content.parts || []).map((p) => p.text || "").join("");
   if (!text) {
-    const reason = (cand && cand.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) || "不明";
-    throw new Error(`読み取れませんでした（理由: ${reason}）`);
+    const reason = (cand && cand.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) || tx("不明");
+    throw new Error(tx("読み取れませんでした（理由: {reason}）", { reason }));
   }
   try {
     return JSON.parse(text);
   } catch (e) {
-    throw new Error(cand.finishReason === "MAX_TOKENS" ? "プリントが長すぎて、途中で切れました。ページを分けて読み取ってください。" : "AI の返事を読めませんでした。もう一度ためしてください。");
+    throw new Error(cand.finishReason === "MAX_TOKENS" ? tx("プリントが長すぎて、途中で切れました。ページを分けて読み取ってください。") : tx("AI の返事を読めませんでした。もう一度ためしてください。"));
   }
 }

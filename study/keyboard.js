@@ -3,6 +3,7 @@
 //   ・韓国語: ハングル（2 ベolsik。キーを押した順に、音節へ組み立てる。Shift で ㄲ ㅃ ㅆ ㅉ ㄸ ㅒ ㅖ）
 //   ・中国語: ピンイン（ü のキーつき。採点はピンインでも正解にする）
 //   日本語を答える問題は、かな漢字変換が要るので、このキーボードでは答えられない（出題のほうで外国語を答える形にする）
+import { tx } from "./i18n.js";
 export const KEYBOARD_LANGS = ["en", "ko", "zh"];
 
 // ---------- ハングルの組み立て ----------
@@ -65,7 +66,7 @@ export function createKeyboard({ h, lang, input, onEnter, touch }) {
   const ko = lang === "ko";
   let list = [...input.value];
   let shift = false;
-  const root = h("div", { class: `kbd kbd-${lang}`, role: "group", "aria-label": "画面のキーボード", lang: ko ? "ko" : "en" });
+  const root = h("div", { class: `kbd kbd-${lang}`, role: "group", "aria-label": tx("画面のキーボード"), lang: ko ? "ko" : "en" });
   if (touch) { input.readOnly = true; input.setAttribute("inputmode", "none"); }
 
   const sync = () => { input.value = ko ? assemble(list) : list.join(""); };
@@ -83,15 +84,15 @@ export function createKeyboard({ h, lang, input, onEnter, touch }) {
 
   function draw() {
     const rows = (ko ? HANGUL : QWERTY).map((row, i) => h("div", { class: "kbd-row" },
-      i === 2 && ko ? key("⇧", () => { shift = !shift; draw(); }, `kbd-wide${shift ? " is-on" : ""}`, "シフト") : null,
+      i === 2 && ko ? key("⇧", () => { shift = !shift; draw(); }, `kbd-wide${shift ? " is-on" : ""}`, tx("シフト")) : null,
       row.map((k) => { const shown = ko && shift && HANGUL_SHIFT[k] ? HANGUL_SHIFT[k] : k; return key(shown, () => push(shown)); }),
-      i === 2 ? key("⌫", back, "kbd-wide", "ひとつ消す") : null));
+      i === 2 ? key("⌫", back, "kbd-wide", tx("ひとつ消す")) : null));
     const bottom = h("div", { class: "kbd-row" },
       ko ? null : key("'", () => push("'")),
       ko ? null : key("-", () => push("-")),
       lang === "zh" ? key("ü", () => push("ü")) : null,
-      key("空白", () => push(" "), "kbd-space", "空白"),
-      key("確定", () => onEnter(), "kbd-enter", "答えを確定"));
+      key(tx("空白"), () => push(" "), "kbd-space", tx("空白")),
+      key(tx("確定"), () => onEnter(), "kbd-enter", tx("答えを確定")));
     root.replaceChildren(...rows, bottom);
   }
   draw();

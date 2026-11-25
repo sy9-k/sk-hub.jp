@@ -9,6 +9,7 @@
 //            まだ使われていないプロファイルは、結びつけずに名簿に入れ、新しい専用コードを付ける（従来のコードは、クラスの受け付けを止めて使えなくする）
 //     先生 … 学校の先生名簿（staff）を、先生のユーザーにする（ID は先生の UID）。コード待ちの先生は、新しいコードで名簿に入れ、従来のコードは消す
 //     クラス … orgModel: true にして、従来の参加の受け付けを止める（joinCode・members・profiles は残す）。担任は、クラスを作った先生
+import { tx } from "./i18n.js";
 import * as org from "./org.js";
 
 export const MIGRATE_BATCH = 4; // 結びつきずみのユーザーを作る書きこみは、確かめのアクセスが多いので少なめに
@@ -55,12 +56,12 @@ export async function planMigration(c, school) {
         person = studentByUid.get(pr.claimedBy) || null;
         if (!person) {
           const there = byId.get(pr.id);
-          if (there) { conflicts.push({ cls: k, profile: pr, reason: "移行のあとに、従来のコードで結びついたプロファイルです。結びつけを外して、新しいコードで入り直してください。" }); continue; }
+          if (there) { conflicts.push({ cls: k, profile: pr, reason: tx("移行のあとに、従来のコードで結びついたプロファイルです。結びつけを外して、新しいコードで入り直してください。") }); continue; }
           person = { id: pr.id, name: pr.name, role: "student", claimedBy: pr.claimedBy, status: "active", legacyClassId: k.id, isNew: true };
           studentByUid.set(pr.claimedBy, person);
           newStudents.push(person);
         } else if (person.name !== pr.name) {
-          warnings.push(`${k.name}: 「${pr.name}」は、同じアカウントの名簿の名前「${person.name}」と書き方がちがいます（名簿の名前を使います）`);
+          warnings.push(tx("{name}: 「{name2}」は、同じアカウントの名簿の名前「{name3}」と書き方がちがいます（名簿の名前を使います）", { name: k.name, name2: pr.name, name3: person.name }));
         }
       } else {
         person = byId.get(pr.id) || null;
@@ -87,7 +88,7 @@ export async function planMigration(c, school) {
 
   const classRows = planned.map(({ cls, rows, haveTeachers }) => {
     const teacher = teacherByUid.get(cls.ownerUid) || null;
-    if (!teacher) warnings.push(`${cls.name}: 担任（クラスを作った先生）が、学校の先生名簿にいません。担任なしで移します`);
+    if (!teacher) warnings.push(tx("{name}: 担任（クラスを作った先生）が、学校の先生名簿にいません。担任なしで移します", { name: cls.name }));
     return {
       cls, teacher, rows,
       convert: cls.orgModel !== true,
@@ -131,7 +132,7 @@ export async function runMigration(c, school, plan, { onProgress = () => {} } = 
       if (!p.claimedBy) org.setCodeOps(b, c, school, p.id, "student", p.name, org.newCode());
     }
     await commitWithRetry(b, group, c, school, "student");
-    tick("生徒のユーザー", group.length);
+    tick(tx("生徒のユーザー"), group.length);
   }
   // 2. 先生のユーザー（学校の先生名簿から）
   for (const group of chunks(plan.newTeachers, MIGRATE_BATCH)) {
@@ -140,7 +141,7 @@ export async function runMigration(c, school, plan, { onProgress = () => {} } = 
       b.set(fs.doc(db, "studySchools", school.id, "people", t.id), { name: t.name, role: "teacher", claimedBy: t.claimedBy, claimedAt: stamp(), legacyStaff: true, status: "active", createdAt: stamp(), updatedAt: stamp() });
     }
     await b.commit();
-    tick("先生のユーザー", group.length);
+    tick(tx("先生のユーザー"), group.length);
   }
   // 3. コード待ちの先生: 名簿に入れて新しいコードを付け、従来のコードを消す（同じ書きこみで）
   for (const t of plan.pendingTeachers) {
@@ -153,7 +154,7 @@ export async function runMigration(c, school, plan, { onProgress = () => {} } = 
       b.delete(fs.doc(db, "studyStaffCodes", t.staffCode));
       try { await b.commit(); break; } catch (e) { if (e.code !== "permission-denied" || attempt === 4) throw e; }
     }
-    tick("コード待ちの先生");
+    tick(tx("コード待ちの先生"));
   }
   // 4. クラス: 組織モデルに切りかえ（従来の参加の受け付けを止める）→ 担任 → 在籍
   for (const row of plan.classes) {
@@ -165,7 +166,7 @@ export async function runMigration(c, school, plan, { onProgress = () => {} } = 
       const slots = new Map(todo.filter((r) => r.slotId).map((r) => [r.person.id, r.slotId]));
       await org.enrollPeople(c, k, todo.map((r) => r.person), "student", { slots });
     }
-    tick(`クラス「${k.name}」`);
+    tick(tx("クラス「{name}」", { name: k.name }));
   }
   return { ok: true, uid: user.uid };
 }

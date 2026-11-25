@@ -11,6 +11,7 @@
 //       課題を開いたときに入れる（マイ単語帳には出さない。覚えぐあいはふつうのセットと同じく記録する）
 //   ・学習した日 … sk_study_days = { "2026-10-19": 答えた数 }（続けた日数に使う）
 //   SK Hub Systems アカウントへの保存はあとで決める。そのときはこのファイルの読み書きを差しかえる
+import { tx, JA_NAME } from "./i18n.js";
 const SETS_KEY = "sk_study_sets";
 const PROGRESS_KEY = "sk_study_progress";
 const DAYS_KEY = "sk_study_days";
@@ -22,15 +23,15 @@ const INTERVALS = [0, 1, 2, 4, 7, 15, 30];
 export const MASTERED_BOX = 4; // この箱まで来たら「覚えた」
 
 export const LANGS = {
-  en: { name: "英語", speech: "en-US", reading: "発音（任意）" },
-  ko: { name: "韓国語", speech: "ko-KR", reading: "読み（カタカナ・任意）" },
-  zh: { name: "中国語", speech: "zh-CN", reading: "ピンイン（任意）" },
-  custom: { name: "その他", speech: "", reading: "読み（任意）" }
+  en: { name: tx("英語"), speech: "en-US", reading: tx("発音（任意）") },
+  ko: { name: tx("韓国語"), speech: "ko-KR", reading: tx("読み（カタカナ・任意）") },
+  zh: { name: tx("中国語"), speech: "zh-CN", reading: tx("ピンイン（任意）") },
+  custom: { name: tx("その他"), speech: "", reading: tx("読み（任意）") }
 };
 // 「その他」の言語で選べる読み上げ
 export const SPEECH_CHOICES = [
-  ["", "読み上げない"], ["ja-JP", "日本語"], ["en-US", "英語"], ["ko-KR", "韓国語"], ["zh-CN", "中国語"],
-  ["fr-FR", "フランス語"], ["de-DE", "ドイツ語"], ["es-ES", "スペイン語"], ["it-IT", "イタリア語"], ["ru-RU", "ロシア語"]
+  ["", tx("読み上げない")], ["ja-JP", JA_NAME], ["en-US", tx("英語")], ["ko-KR", tx("韓国語")], ["zh-CN", tx("中国語")],
+  ["fr-FR", tx("フランス語")], ["de-DE", tx("ドイツ語")], ["es-ES", tx("スペイン語")], ["it-IT", tx("イタリア語")], ["ru-RU", tx("ロシア語")]
 ];
 
 export const LIMITS = { title: 60, description: 200, langName: 20, w: 100, m: 200, r: 100, ex: 300, words: 1000 };
@@ -121,7 +122,7 @@ export function cleanSet(input) {
     .slice(0, LIMITS.words)
     .map((x) => Object.fromEntries(Object.entries(x).filter(([, v]) => v)));
   const set = {
-    title: str(input.title, LIMITS.title) || "名前のない単語帳",
+    title: str(input.title, LIMITS.title) || tx("名前のない単語帳"),
     lang,
     description: str(input.description, LIMITS.description),
     words
@@ -149,7 +150,7 @@ export function saveMySet(input, id = null) {
     if (input.from) set.from = String(input.from).slice(0, LIMITS.title);
     sets.push(set);
   }
-  if (!write(K(SETS_KEY), sets)) throw new Error("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）");
+  if (!write(K(SETS_KEY), sets)) throw new Error(tx("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）"));
   return set;
 }
 

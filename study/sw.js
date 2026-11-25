@@ -2,13 +2,14 @@
 // 試作のあいだは変更が多いので、/study/ の中は通信優先（オフラインのときだけキャッシュ）。直してもすぐ届く
 // アイコンの書体（Google Fonts）はキャッシュ優先（オフラインでもアイコンが消えないように）
 // アクセスチェック（/frameworks/）・アカウント（/assets/hub/）・Firestore などほかのサイトはキャッシュしない
-const CACHE_NAME = 'study-v42';
+const CACHE_NAME = 'study-v43';
 const urlsToCache = [
   '/study/',
   '/study/index.html',
   '/study/study.css',
   '/study/app.js',
   '/study/store.js',
+  '/study/i18n.js',
   '/study/grade.js',
   '/study/share.js',
   '/study/speech.js',

@@ -7,10 +7,11 @@
 //     設定の声の名前が "sk" のとき。ネットにつながらない・Worker が使えないときは端末の声で読む
 //   ・設定は localStorage の sk_study_speech = { auto, rate, voices: { "en-US": 声の名前 or "sk", … } }
 //     auto（既定 true）… 外国語の単語が出たとき（問題・答え合わせ・カード）に自動で読み上げる。日本語は読まない
+import { tx } from "./i18n.js";
 const KEY = "sk_study_speech";
 
 export const supported = "speechSynthesis" in window && typeof SpeechSynthesisUtterance === "function";
-export const RATES = [[0.7, "ゆっくり"], [0.9, "ふつう"], [1.1, "はやい"]];
+export const RATES = [[0.7, tx("ゆっくり")], [0.9, tx("ふつう")], [1.1, tx("はやい")]];
 
 // 使わない声（効果音のような声・古い声）。名前の一部でも当てはまれば外す
 const NOVELTY = /albert|bad news|bahh|bells?|boing|bubbles|cellos|deranged|good news|hysterical|jester|junior|organ|ralph|superstar|trinoids|whisper|wobble|zarvox|fred|grandma|grandpa|rocko|ささやき|オルガン|スーパースター|トリノイド|ベル|道化|震え|おばあさん|おじいさん/i;
@@ -26,7 +27,7 @@ const GOOD = [
 // SK の声（tts.sk-hub.jp）。対応している言語だけ
 const SK_URL = "https://tts.sk-hub.jp/";
 const SK_LANGS = ["en-US", "ko-KR", "zh-CN"];
-export const SK_VOICES = [["sk", "SK の声"]];
+export const SK_VOICES = [["sk", tx("SK の声")]];
 export const hasSkVoice = (lang) => SK_LANGS.includes(lang);
 export const isSkVoice = (id) => id === "sk";
 const skFailed = new Set(); // 使えなかった言語（今回の起動のあいだは端末の声にする）

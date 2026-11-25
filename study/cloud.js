@@ -6,6 +6,7 @@
 //       accounts/{UID}/studyClasses/{cid}（本人の、参加しているクラスの一覧）
 //       組織モデル（学校の名簿 people → クラスの担任・在籍）は org.js。下の「組織モデル」でそのまま使える形にしてある
 //   ・クラスに参加するには、アカウントを SK Study に接続しておく（/account/?connect=study）
+import { tx } from "./i18n.js";
 import * as org from "./org.js";
 import * as migrate from "./org-migrate.js";
 const FIRESTORE = "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -56,7 +57,7 @@ export async function session({ fresh = false } = {}) {
   } catch (e) {
     return { status: "offline" };
   }
-  const base = { user, account, hub, fs, db: hub.db, name: hub.profileOf(user, account).name || user.email || "名前なし" };
+  const base = { user, account, hub, fs, db: hub.db, name: hub.profileOf(user, account).name || user.email || tx("名前なし") };
   if (!account || account.termsVersion !== hub.ACCOUNT_TERMS_VERSION) return (cached = { ...base, status: "unregistered" });
   hub.rememberAccount(user, account);
   if (!hub.isConnected(account, "study")) return (cached = { ...base, status: "not-connected" });
@@ -83,12 +84,12 @@ const withId = (d) => ({ id: d.id, ...d.data() });
 // エラーの説明
 export function explain(err) {
   const code = (err && err.code) || "";
-  if (code === "permission-denied") return "この操作をする権限がありません。";
-  if (code === "unavailable" || code === "offline") return "SK Hub Systems に接続できませんでした。ネットワークを確かめてください。";
-  if (code === "signed-out") return "SK Hub Systems アカウントでログインしてください。";
-  if (code === "not-connected") return "SK Hub Systems アカウントを SK Study に接続してください。";
-  if (code === "not-found") return "見つかりませんでした。";
-  return (err && err.message) || "うまくいきませんでした。";
+  if (code === "permission-denied") return tx("この操作をする権限がありません。");
+  if (code === "unavailable" || code === "offline") return tx("SK Hub Systems に接続できませんでした。ネットワークを確かめてください。");
+  if (code === "signed-out") return tx("SK Hub Systems アカウントでログインしてください。");
+  if (code === "not-connected") return tx("SK Hub Systems アカウントを SK Study に接続してください。");
+  if (code === "not-found") return tx("見つかりませんでした。");
+  return (err && err.message) || tx("うまくいきませんでした。");
 }
 
 // ---------- 生徒 ----------
@@ -104,13 +105,13 @@ export const normCode = (s) => String(s || "").normalize("NFKC").toUpperCase().r
 export async function lookupCode(code) {
   const { fs, db } = await ready();
   const snap = await fs.getDoc(fs.doc(db, "studyJoinCodes", normCode(code)));
-  if (!snap.exists()) { const e = new Error("参加コードが見つかりません。"); e.code = "bad-code"; throw e; }
+  if (!snap.exists()) { const e = new Error(tx("参加コードが見つかりません。")); e.code = "bad-code"; throw e; }
   return { code: snap.id, ...snap.data() };
 }
 
 // 専用コードで、生徒プロファイル（指導者が名簿として作ったもの）を自分のアカウントに結びつける
 export async function joinClass(info) {
-  if (!info.profileId) { const e = new Error("このコードは使えません。先生に新しいコードを聞いてください。"); e.code = "bad-code"; throw e; }
+  if (!info.profileId) { const e = new Error(tx("このコードは使えません。先生に新しいコードを聞いてください。")); e.code = "bad-code"; throw e; }
   const { fs, db, user } = await ready();
   const b = fs.writeBatch(db);
   b.set(fs.doc(db, "studyClasses", info.classId, "members", user.uid), { name: info.profileName, code: info.code, profileId: info.profileId, joinedAt: fs.serverTimestamp() });
@@ -119,7 +120,7 @@ export async function joinClass(info) {
   try {
     await b.commit();
   } catch (e) {
-    if (e.code === "permission-denied") { const err = new Error("参加できませんでした（このコードはもう使われているか、参加の受け付けが終わっているかもしれません）。"); err.code = "closed"; throw err; }
+    if (e.code === "permission-denied") { const err = new Error(tx("参加できませんでした（このコードはもう使われているか、参加の受け付けが終わっているかもしれません）。")); err.code = "closed"; throw err; }
     throw e;
   }
   slots.delete(info.classId);
@@ -222,7 +223,7 @@ export async function submit(cid, aid, score, data, { update = false } = {}) {
   const { fs, db } = await ready();
   const name = await myProfileName(cid);
   const json = JSON.stringify(data || {});
-  if (json.length > 200000) throw new Error("提出する内容が大きすぎます。");
+  if (json.length > 200000) throw new Error(tx("提出する内容が大きすぎます。"));
   const ok = Number(score.ok) || 0, total = Number(score.total) || 0;
   const body = { name: String(name).slice(0, 40), score: { ok, total, pct: total ? Math.round((ok / total) * 100) : 0 }, data: json, updatedAt: fs.serverTimestamp() };
   const ref = fs.doc(db, "studyClasses", cid, "assignments", aid, "submissions", await slotOf(cid));
@@ -289,7 +290,7 @@ export async function createClass(name, teacherName, schoolId) {
     b.set(fs.doc(db, "studyJoinCodes", code), { classId: cid, ownerUid: user.uid, className: String(name).trim().slice(0, 60), teacherName: String(teacherName || "").slice(0, 40), createdAt: fs.serverTimestamp() });
     try { await b.commit(); return cid; } catch (e) { if (e.code !== "permission-denied") throw e; }
   }
-  throw new Error("クラスを作れませんでした。もう一度ためしてください。");
+  throw new Error(tx("クラスを作れませんでした。もう一度ためしてください。"));
 }
 
 export async function updateClass(cls, patch) {
@@ -309,7 +310,7 @@ export async function renewCode(cls) {
     b.delete(fs.doc(db, "studyJoinCodes", cls.joinCode));
     try { await b.commit(); return code; } catch (e) { if (e.code !== "permission-denied") throw e; }
   }
-  throw new Error("参加コードを作り直せませんでした。");
+  throw new Error(tx("参加コードを作り直せませんでした。"));
 }
 
 async function deleteAll(refs) {
@@ -352,13 +353,13 @@ export async function removeMember(cid, uid) {
 export async function lookupStaffCode(code) {
   const { fs, db } = await ready();
   const snap = await fs.getDoc(fs.doc(db, "studyStaffCodes", normCode(code)));
-  if (!snap.exists()) { const e = new Error("コードが見つかりません。"); e.code = "bad-code"; throw e; }
+  if (!snap.exists()) { const e = new Error(tx("コードが見つかりません。")); e.code = "bad-code"; throw e; }
   return { code: snap.id, ...snap.data() };
 }
 
 // コードを使って、総合管理者・先生になる
 export async function redeemStaffCode(info) {
-  if (info.claimedBy) { const e = new Error("このコードはもう使われています。"); e.code = "bad-code"; throw e; }
+  if (info.claimedBy) { const e = new Error(tx("このコードはもう使われています。")); e.code = "bad-code"; throw e; }
   const { fs, db, user } = await ready();
   const b = fs.writeBatch(db);
   if (info.role === "admin") {
@@ -371,7 +372,7 @@ export async function redeemStaffCode(info) {
   }
   b.update(fs.doc(db, "studyStaffCodes", info.code), { claimedBy: user.uid, claimedAt: fs.serverTimestamp() });
   try { await b.commit(); } catch (e) {
-    if (e.code === "permission-denied") { const err = new Error("使えませんでした（このコードはもう使われているか、取り消されたかもしれません）。"); err.code = "bad-code"; throw err; }
+    if (e.code === "permission-denied") { const err = new Error(tx("使えませんでした（このコードはもう使われているか、取り消されたかもしれません）。")); err.code = "bad-code"; throw err; }
     throw e;
   }
 }
@@ -393,7 +394,7 @@ export async function issueStaffCodes(role, names, school = null) {
       const body = { role, name, ownerUid: user.uid, claimedBy: null, createdAt: fs.serverTimestamp(), ...(role === "teacher" ? { schoolId: school.id, schoolName: school.name } : {}) };
       try { await fs.setDoc(fs.doc(db, "studyStaffCodes", newCode()), body); done = true; } catch (e) { if (e.code !== "permission-denied") throw e; }
     }
-    if (!done) throw new Error("コードを作れませんでした。もう一度ためしてください。");
+    if (!done) throw new Error(tx("コードを作れませんでした。もう一度ためしてください。"));
   }
   return list.length;
 }
@@ -432,7 +433,7 @@ export async function renameSchool(school, name) {
 export async function deleteSchool(school) {
   const { fs, db } = await ready();
   const [classes, staff, codes] = await Promise.all([schoolClasses(school.id), schoolStaff(school.id), myStaffCodes()]);
-  if (classes.length) throw new Error("クラスが残っている学校は削除できません。先にクラスを削除してください。");
+  if (classes.length) throw new Error(tx("クラスが残っている学校は削除できません。先にクラスを削除してください。"));
   await deleteAll([
     ...staff.map((m) => fs.doc(db, "studySchools", school.id, "staff", m.id)),
     ...codes.filter((c) => c.schoolId === school.id).map((c) => fs.doc(db, "studyStaffCodes", c.id)),
@@ -450,7 +451,7 @@ export async function schoolStaff(sid) {
 export async function renameStaff(sid, uid, name) {
   const { fs, db } = await ready();
   const n = String(name || "").trim().slice(0, 40);
-  if (!n) throw new Error("名前を入れてください。");
+  if (!n) throw new Error(tx("名前を入れてください。"));
   await fs.updateDoc(fs.doc(db, "studySchools", sid, "staff", uid), { name: n });
 }
 
@@ -476,13 +477,13 @@ export const isStaffCtx = (c) => c === "admin" || String(c || "").startsWith("st
 export async function staffProfiles() {
   const ts = await teacherState();
   const out = [];
-  if (ts.admin) out.push({ id: "admin", name: ts.admin.name, orgName: "総合管理者" });
+  if (ts.admin) out.push({ id: "admin", name: ts.admin.name, orgName: tx("総合管理者") });
   const { fs, db, user } = await ready();
   for (const sc of ts.schools) {
     // 学校ごとの先生名簿の名前（総合管理者が直せる）。読めなければ、先生の申し込みの名前
     const mine = await fs.getDoc(fs.doc(db, "studySchools", sc.id, "staff", user.uid)).catch(() => null);
-    const name = mine && mine.exists() && mine.data().name ? mine.data().name : ts.teacher ? ts.teacher.name : ts.admin ? ts.admin.name : "先生";
-    out.push({ id: `staff-${sc.id}`, name, orgName: `${sc.name} の先生` });
+    const name = mine && mine.exists() && mine.data().name ? mine.data().name : ts.teacher ? ts.teacher.name : ts.admin ? ts.admin.name : tx("先生");
+    out.push({ id: `staff-${sc.id}`, name, orgName: tx("{name} の先生", { name: sc.name }) });
   }
   return out;
 }
@@ -499,7 +500,7 @@ export async function loadRecords(ctx) {
 export async function saveRecords(ctx, rec) {
   const { fs, db, user } = await ready();
   const body = { progress: JSON.stringify(rec.progress || {}), days: JSON.stringify(rec.days || {}), tests: JSON.stringify(rec.tests || []), updatedAt: fs.serverTimestamp() };
-  if (body.progress.length > 600000 || body.days.length > 50000 || body.tests.length > 200000) throw new Error("記録が大きすぎて保存できません。");
+  if (body.progress.length > 600000 || body.days.length > 50000 || body.tests.length > 200000) throw new Error(tx("記録が大きすぎて保存できません。"));
   await fs.setDoc(fs.doc(db, "accounts", user.uid, "studyRecords", ctx), body);
 }
 
@@ -537,7 +538,7 @@ export async function createProfiles(cls, names) {
       b.set(fs.doc(db, "studyJoinCodes", code), { classId: cls.id, profileId: pid, profileName: name, ownerUid: user.uid, className: cls.name, teacherName: cls.teacherName || "", createdAt: fs.serverTimestamp() });
     }
     try { await b.commit(); } catch (e) {
-      if (e.code === "permission-denied") throw new Error("プロファイルを作れませんでした。もう一度ためしてください（コードが重なったときも、やり直すと直ります）。");
+      if (e.code === "permission-denied") throw new Error(tx("プロファイルを作れませんでした。もう一度ためしてください（コードが重なったときも、やり直すと直ります）。"));
       throw e;
     }
   }
@@ -569,7 +570,7 @@ export async function resetProfile(cls, p, { release = false, name = p.name } = 
     if (release && p.claimedBy) b.delete(fs.doc(db, "studyClasses", cls.id, "members", p.claimedBy));
     try { await b.commit(); return code; } catch (e) { if (e.code !== "permission-denied") throw e; }
   }
-  throw new Error("コードを作り直せませんでした。");
+  throw new Error(tx("コードを作り直せませんでした。"));
 }
 
 export async function deleteProfile(cls, p) {
