@@ -1199,34 +1199,30 @@ a.acct-notice-title:hover { color: var(--acct-link); text-decoration: underline;
 .lang-card.is-switching .lang-title, .lang-card.is-switching .lang-desc, .lang-card.is-switching .lang-note { opacity: 0; transform: translateY(6px); }
 .lang-card.is-chosen .lang-globe { animation: lang-pop .5s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes lang-pop { 40% { transform: scale(.86); } }
-/* 地域と言語の選択（Samsung の「Visit Your Location」のように、全幅の暗い帯と、大陸ごとの 3 列のリスト。狭い画面は開閉できる形） */
-.lang-screen:has(.lang-card--loc) { display: block; min-height: calc(100vh - 52px); padding: 0 0 72px; }
+/* 地域と言語の選択（上に暗い帯、地域をカードで選ぶと、その地域の言語のボタンが出る。押したらそのまま移る） */
+.lang-screen:has(.lang-card--loc) { display: block; align-content: start; min-height: calc(100vh - 52px); padding: 0 0 72px; }
 .lang-card--loc { max-width: none; padding: 0; background: transparent; border-radius: 0; box-shadow: none; text-align: left; }
 .loc-band { display: grid; place-items: center; min-height: 64px; padding: 14px 20px; background: #383838; color: #fff; text-align: center; }
 .loc-band .lang-title { margin: 0; font-size: 18px; font-weight: 400; letter-spacing: .02em; color: inherit; }
-.loc-acc { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
-.loc-group { border-bottom: 1px solid var(--line); }
-.loc-group summary { display: flex; align-items: center; justify-content: space-between; padding: 20px 4px; font-size: 20px; font-weight: 400; letter-spacing: .01em; color: var(--ink); cursor: pointer; list-style: none; }
-.loc-group summary::-webkit-details-marker { display: none; }
-.loc-group summary::after { content: ""; width: 10px; height: 10px; margin-right: 4px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-3px); transition: transform .2s ease; }
-.loc-group[open] summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
-.loc-links { list-style: none; margin: 0; padding: 0 4px 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 20px; }
-.loc-link { font: inherit; font-size: 13px; line-height: 1.5; width: 100%; padding: 4px 0; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
-.loc-link:hover { text-decoration: underline; }
-.loc-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-.loc-link.is-current { font-weight: 800; }
-.loc-link.is-current::after { content: " ✓"; color: var(--accent); }
-.lang-card--loc .lang-note { margin: 0; padding: 22px 24px 0; text-align: left; max-width: 1040px; margin-inline: auto; }
-@media (min-width: 720px) {
-  .loc-acc { max-width: 1120px; padding: 0 clamp(32px, 7vw, 76px); }
-  .loc-group { border-bottom: 0; padding-top: 56px; }
-  .loc-group + .loc-group { padding-top: 48px; }
-  .loc-group summary { padding: 0 0 22px; font-size: 26px; cursor: default; pointer-events: none; }
-  .loc-group summary::after { display: none; }
-  .loc-links { grid-template-columns: repeat(3, minmax(0, 210px)); gap: 4px 28px; padding: 0 0 8px; }
-  .lang-card--loc .lang-note { max-width: 1120px; padding: 40px clamp(32px, 7vw, 76px) 0; }
-}
-}
+.loc-acc { max-width: 880px; margin: 0 auto; padding: 36px 20px 0; }
+.loc-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.loc-card { font: inherit; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 18px 18px 16px; border: 0; border-radius: 16px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); text-align: left; cursor: pointer; transition: background .2s ease, box-shadow .2s ease, transform .15s ease; }
+.loc-card:hover { background: var(--surface-3); }
+.loc-card:active { transform: scale(.98); }
+.loc-card[aria-checked="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
+.loc-card-name { font-size: 20px; font-weight: 700; }
+.loc-card-sub { font-size: 13px; color: var(--muted); }
+.loc-panel { margin-top: 26px; }
+.loc-panel[hidden] { display: none; }
+.loc-panel-label { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.loc-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.loc-link { font: inherit; font-size: 15px; font-weight: 700; height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--surface-2); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; transition: background .2s ease, color .2s ease, transform .15s ease; }
+.loc-link:hover { background: var(--surface-3); }
+.loc-link:active { transform: scale(.97); }
+.loc-link.is-current { background: var(--ink); color: var(--bg); box-shadow: none; }
+.loc-link:focus-visible, .loc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lang-card--loc .lang-note { max-width: 880px; margin: 0 auto; padding: 28px 20px 0; text-align: left; }
+.lang-screen:has(.lang-card--loc) .lang-cancel { display: block; max-width: 880px; margin: 6px auto 0; padding: 8px 20px; text-align: left; border-radius: 0; }
 .lang-continue { font: inherit; font-size: 16px; font-weight: 800; width: 100%; height: 0; margin-top: 0; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); cursor: pointer; opacity: 0; overflow: hidden; transform: translateY(8px); transition: height .35s cubic-bezier(.22, 1, .36, 1), margin .35s cubic-bezier(.22, 1, .36, 1), opacity .3s ease, transform .35s cubic-bezier(.22, 1, .36, 1); }
 .lang-card.is-chosen .lang-continue { height: 54px; margin-top: 18px; opacity: 1; transform: none; box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--accent) 70%, transparent); }
 .lang-continue:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }

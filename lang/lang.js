@@ -93,14 +93,15 @@
     b.classList.toggle("is-current", on);
     if (on) {
       b.setAttribute("aria-current", "true");
-      const group = b.closest("details");
-      if (group) group.open = true;
     }
   });
-  // 広い画面では、大陸ごとの見出しを開いたままにする（閉じられない）。狭い画面は、いまの地域だけ開いておく
-  const wide = window.matchMedia("(min-width: 720px)");
-  const groups = [...card.querySelectorAll("details.loc-group")];
-  function syncGroups() { if (wide.matches) groups.forEach((g) => { g.open = true; }); }
-  syncGroups();
-  if (wide.addEventListener) wide.addEventListener("change", syncGroups);
+  // 地域のカード: 選ぶと、その地域の言語のボタンを出す（いまの地域から始める）
+  const cards = [...card.querySelectorAll(".loc-card")];
+  const panels = [...card.querySelectorAll(".loc-panel")];
+  function showRegion(code) {
+    cards.forEach((c) => c.setAttribute("aria-checked", String(c.dataset.region === code)));
+    panels.forEach((p) => { p.hidden = p.dataset.panel !== code; });
+  }
+  cards.forEach((c) => c.addEventListener("click", () => showRegion(c.dataset.region)));
+  showRegion(curRegion);
 })();
