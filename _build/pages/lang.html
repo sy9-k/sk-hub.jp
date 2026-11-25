@@ -7,30 +7,88 @@
       <div class="lang-card lang-card--loc" data-lang-card>
         <div class="loc-band"><h1 class="lang-title" data-lang-title>Choose your location</h1></div>
         <div class="loc-acc">
-        <details class="loc-group" data-group="jp">
-          <summary data-i18n-skip>日本</summary>
-          <ul class="loc-links">
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="ja" lang="ja">日本語</button></li>
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="en" lang="en">English</button></li>
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="ko" lang="ko">한국어</button></li>
-          </ul>
-        </details>
-        <details class="loc-group" data-group="kr">
-          <summary data-i18n-skip>한국</summary>
-          <ul class="loc-links">
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="ko" lang="ko">한국어</button></li>
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="en" lang="en">English</button></li>
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="ja" lang="ja">日本語</button></li>
-          </ul>
-        </details>
-        <details class="loc-group" data-group="global">
-          <summary data-i18n-skip>Global</summary>
-          <ul class="loc-links">
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="en" lang="en">English</button></li>
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="zh-CN" lang="zh-CN">简体中文</button></li>
-            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="zh-TW" lang="zh-TW">繁體中文</button></li>
-          </ul>
-        </details>
+          <p class="loc-intro">Pick a region, then a language.</p>
+          <div class="loc-cards" role="radiogroup" aria-label="Region">
+            <button type="button" class="loc-card" role="radio" aria-checked="false" data-i18n-skip data-loc="jp">
+              <span class="loc-card-badge" aria-hidden="true">Current</span>
+              <span class="loc-card-name">日本</span><span class="loc-card-sub">Japan</span>
+              <span class="loc-card-desc">All SK products and support</span>
+              <span class="loc-card-code" aria-hidden="true">JP</span>
+            </button>
+            <button type="button" class="loc-card" role="radio" aria-checked="false" data-i18n-skip data-loc="kr">
+              <span class="loc-card-badge" aria-hidden="true">Current</span>
+              <span class="loc-card-name">대한민국</span><span class="loc-card-sub">Korea</span>
+              <span class="loc-card-desc">Nagi, SK's Toolbox, SK Study, SK Hub Office</span>
+              <span class="loc-card-code" aria-hidden="true">KR</span>
+            </button>
+            <button type="button" class="loc-card" role="radio" aria-checked="false" data-i18n-skip data-loc="cn">
+              <span class="loc-card-badge" aria-hidden="true">Current</span>
+              <span class="loc-card-name">中国大陆</span><span class="loc-card-sub">China</span>
+              <span class="loc-card-desc">Nagi and SK's Toolbox. No account needed</span>
+              <span class="loc-card-code" aria-hidden="true">CN</span>
+            </button>
+            <button type="button" class="loc-card" role="radio" aria-checked="false" data-i18n-skip data-loc="tw">
+              <span class="loc-card-badge" aria-hidden="true">Current</span>
+              <span class="loc-card-name">台灣・香港</span><span class="loc-card-sub">Taiwan and Hong Kong</span>
+              <span class="loc-card-desc">Nagi and SK's Toolbox</span>
+              <span class="loc-card-code" aria-hidden="true">TW</span>
+            </button>
+            <button type="button" class="loc-card" role="radio" aria-checked="false" data-i18n-skip data-loc="eu">
+              <span class="loc-card-badge" aria-hidden="true">Current</span>
+              <span class="loc-card-name">Europe</span><span class="loc-card-sub">EEA, UK, Switzerland</span>
+              <span class="loc-card-desc">Nagi and SK's Toolbox</span>
+              <span class="loc-card-code" aria-hidden="true">EU</span>
+            </button>
+            <button type="button" class="loc-card" role="radio" aria-checked="false" data-i18n-skip data-loc="global">
+              <span class="loc-card-badge" aria-hidden="true">Current</span>
+              <span class="loc-card-name">Other regions</span><span class="loc-card-sub">Everywhere else</span>
+              <span class="loc-card-desc">Nagi and SK's Toolbox</span>
+              <span class="loc-card-code" aria-hidden="true">GL</span>
+            </button>
+          </div>
+          <div class="loc-panel" data-panel="jp" hidden>
+            <p class="loc-panel-label">Language</p>
+            <div class="loc-chips">
+              <button type="button" class="loc-link" data-i18n-skip data-loc="jp" data-lang="ja" lang="ja"><span class="loc-link-name">日本語</span><span class="loc-link-hello">こんにちは</span></button>
+              <button type="button" class="loc-link" data-i18n-skip data-loc="jp" data-lang="en" lang="en"><span class="loc-link-name">English</span><span class="loc-link-hello">Hello</span></button>
+              <button type="button" class="loc-link" data-i18n-skip data-loc="jp" data-lang="ko" lang="ko"><span class="loc-link-name">한국어</span><span class="loc-link-hello">안녕하세요</span></button>
+            </div>
+          </div>
+          <div class="loc-panel" data-panel="kr" hidden>
+            <p class="loc-panel-label">Language</p>
+            <div class="loc-chips">
+              <button type="button" class="loc-link" data-i18n-skip data-loc="kr" data-lang="ko" lang="ko"><span class="loc-link-name">한국어</span><span class="loc-link-hello">안녕하세요</span></button>
+              <button type="button" class="loc-link" data-i18n-skip data-loc="kr" data-lang="en" lang="en"><span class="loc-link-name">English</span><span class="loc-link-hello">Hello</span></button>
+              <button type="button" class="loc-link" data-i18n-skip data-loc="kr" data-lang="ja" lang="ja"><span class="loc-link-name">日本語</span><span class="loc-link-hello">こんにちは</span></button>
+            </div>
+          </div>
+          <div class="loc-panel" data-panel="cn" hidden>
+            <p class="loc-panel-label">Language</p>
+            <div class="loc-chips">
+              <button type="button" class="loc-link" data-i18n-skip data-loc="cn" data-lang="zh-CN" lang="zh-CN"><span class="loc-link-name">简体中文</span><span class="loc-link-hello">你好</span></button>
+              <button type="button" class="loc-link" data-i18n-skip data-loc="cn" data-lang="en" lang="en"><span class="loc-link-name">English</span><span class="loc-link-hello">Hello</span></button>
+            </div>
+          </div>
+          <div class="loc-panel" data-panel="tw" hidden>
+            <p class="loc-panel-label">Language</p>
+            <div class="loc-chips">
+              <button type="button" class="loc-link" data-i18n-skip data-loc="tw" data-lang="zh-TW" lang="zh-TW"><span class="loc-link-name">繁體中文</span><span class="loc-link-hello">你好</span></button>
+              <button type="button" class="loc-link" data-i18n-skip data-loc="tw" data-lang="en" lang="en"><span class="loc-link-name">English</span><span class="loc-link-hello">Hello</span></button>
+            </div>
+          </div>
+          <div class="loc-panel" data-panel="eu" hidden>
+            <p class="loc-panel-label">Language</p>
+            <div class="loc-chips">
+              <button type="button" class="loc-link" data-i18n-skip data-loc="eu" data-lang="en" lang="en"><span class="loc-link-name">English</span><span class="loc-link-hello">Hello</span></button>
+            </div>
+          </div>
+          <div class="loc-panel" data-panel="global" hidden>
+            <p class="loc-panel-label">Language</p>
+            <div class="loc-chips">
+              <button type="button" class="loc-link" data-i18n-skip data-loc="global" data-lang="en" lang="en"><span class="loc-link-name">English</span><span class="loc-link-hello">Hello</span></button>
+              <button type="button" class="loc-link" data-i18n-skip data-loc="global" data-lang="ja" lang="ja"><span class="loc-link-name">日本語</span><span class="loc-link-hello">こんにちは</span></button>
+            </div>
+          </div>
         </div>
         <p class="lang-note" data-lang-note>Applies to the SK website and all SK apps</p>
       </div>
