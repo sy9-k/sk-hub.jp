@@ -22,6 +22,7 @@
 //   ・プリントの HTML は人が作ったものなので、そのままこのページに入れない
 //       右の問題文 … 決まったタグ・クラスだけを作り直す（safe()）
 //       左のプリント … スクリプトを動かさない iframe（sandbox）。外のファイルは CSP で止める
+import { tx, locale, isJa } from "./i18n.js";
 import { openAnswers, readPrintMeta } from "./printfmt.js";
 import * as cloud from "./cloud.js";
 import { ctxKey } from "./store.js";
@@ -80,9 +81,9 @@ export async function getHtml(id) {
 export async function addPrint(html, title) {
   const parsed = parsePrint(html);
   const s = stats(parsed);
-  if (!s.total) throw new Error("解答欄が見つかりませんでした");
+  if (!s.total) throw new Error(tx("解答欄が見つかりませんでした"));
   const id = "pr-" + [...crypto.getRandomValues(new Uint8Array(6))].map((b) => b.toString(16).padStart(2, "0")).join("");
-  try { await idb("readwrite", (st) => st.put(html, id)); } catch (e) { throw new Error("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）"); }
+  try { await idb("readwrite", (st) => st.put(html, id)); } catch (e) { throw new Error(tx("保存できませんでした（ブラウザの保存容量がいっぱいかもしれません）")); }
   const list = listPrints();
   list.unshift({ id, title: String(title || parsed.title).slice(0, 80), addedAt: Date.now(), blanks: s.total, exam: parsed.exam, minutes: parsed.exam ? parsed.meta.minutes || 0 : 0 });
   writeJSON(ctxKey(LIST_KEY), list);
@@ -115,7 +116,7 @@ export function parsePrint(html) {
   const meta = readPrintMeta(doc);
   const exam = !!(meta && meta.mode === "exam" && meta.sealed);
   doc.querySelectorAll("script, iframe, object, embed, base, meta[http-equiv]").forEach((e) => e.remove());
-  const title = txt(doc.querySelector("title")) || txt(doc.querySelector("h1")) || "プリント";
+  const title = txt(doc.querySelector("title")) || txt(doc.querySelector("h1")) || tx("プリント");
   let pages = [...doc.querySelectorAll(".page")];
   if (!pages.length) pages = [doc.body];
 
@@ -425,9 +426,9 @@ function stats(parsed) {
 function examStatus(p) {
   const st = loadState(p.id);
   const ex = st.exam || {};
-  if (ex.submittedAt) return st.graded ? "採点ずみ" : "提出ずみ";
-  if (ex.startedAt) return "受験中";
-  return "未受験";
+  if (ex.submittedAt) return st.graded ? tx("採点ずみ") : tx("提出ずみ");
+  if (ex.startedAt) return tx("受験中");
+  return tx("未受験");
 }
 
 export function printSection(ui) {
@@ -449,71 +450,71 @@ export function printSection(ui) {
       h("div", { class: "set-row-body" },
         h("a", { class: "set-row-link", href: `#/print/${encodeURIComponent(p.id)}` },
           h("span", { class: "set-row-sub" },
-            p.exam ? h("span", { class: "exam-pill" }, "試験") : h("span", null, "プリント"),
+            p.exam ? h("span", { class: "exam-pill" }, tx("試験")) : h("span", null, tx("プリント")),
             p.exam ? h("span", null, examStatus(p)) : null),
           h("span", { class: "set-row-title" }, p.title)),
         h("span", { class: "set-row-meta" },
-          h("span", null, icon("edit_square"), `${answered} / ${p.blanks} 問 回答`),
-          p.exam && p.minutes ? h("span", null, icon("timer"), `${p.minutes} 分`) : null,
-          last ? h("span", null, icon("grading"), `${p.exam ? "得点" : "前回"} ${last.pct}%`) : null)),
+          h("span", null, icon("edit_square"), tx("{answered} / {blanks} 問 回答", { answered, blanks: p.blanks })),
+          p.exam && p.minutes ? h("span", null, icon("timer"), tx("{minutes} 分", { minutes: p.minutes })) : null,
+          last ? h("span", null, icon("grading"), `${p.exam ? tx("得点") : tx("前回")} ${last.pct}%`) : null)),
       h("div", { class: "set-row-end" },
         last ? ui.ring(pct / 100, { size: 52, stroke: 5, color: pct >= 80 ? "var(--st-mastered)" : "var(--primary)", label: `${pct}%` })
-          : ui.ring(p.blanks ? answered / p.blanks : 0, { size: 52, stroke: 5, color: "var(--outline)", label: "未採点" })));
+          : ui.ring(p.blanks ? answered / p.blanks : 0, { size: 52, stroke: 5, color: "var(--outline)", label: tx("未採点") })));
   });
   return h("section", { class: "section" },
     h("div", { class: "section-head" },
-      h("h2", null, "プリント", h("span", { class: "soon-pill" }, "テスト中")),
+      h("h2", null, tx("プリント"), h("span", { class: "soon-pill" }, tx("テスト中"))),
       h("div", { class: "section-actions" },
-        linkButton("text", "PDF から作る", "picture_as_pdf", "#/maker"),
-        button("tonal", "プリントを追加", "upload_file", () => input.click()), input)),
+        linkButton("text", tx("PDF から作る"), "picture_as_pdf", "#/maker"),
+        button("tonal", tx("プリントを追加"), "upload_file", () => input.click()), input)),
     rows.length ? h("div", { class: "set-list" }, rows)
       : h("div", { class: "empty-card" },
         icon("assignment", "empty-icon"),
-        h("p", null, "試験対策などの HTML のプリントを追加すると、四角の解答欄を見つけて、どんどん答えられます。最後のほうにある解答は隠して、自動で採点します。"),
-        h("p", { class: "muted" }, "PDF のプリントは「PDF から作る」で変換できます。プリントはこのブラウザの中だけに保存されます（サーバーには送りません）。")));
+        h("p", null, tx("試験対策などの HTML のプリントを追加すると、四角の解答欄を見つけて、どんどん答えられます。最後のほうにある解答は隠して、自動で採点します。")),
+        h("p", { class: "muted" }, tx("PDF のプリントは「PDF から作る」で変換できます。プリントはこのブラウザの中だけに保存されます（サーバーには送りません）。"))));
 }
 
 async function importFile(file, ui) {
   const { h, icon, button, toast, openDialog, go } = ui;
-  if (file.size > MAX_FILE * 8) { toast("ファイルが大きすぎます（16MB まで）"); return; }
+  if (file.size > MAX_FILE * 8) { toast(tx("ファイルが大きすぎます（16MB まで）")); return; }
   let html, parsed;
   try {
     html = await file.text();
     parsed = parsePrint(html);
   } catch (e) {
-    toast("ファイルを読めませんでした");
+    toast(tx("ファイルを読めませんでした"));
     return;
   }
   const s = stats(parsed);
   if (!s.total) {
-    const d = openDialog("解答欄が見つかりませんでした",
+    const d = openDialog(tx("解答欄が見つかりませんでした"),
       h("div", null,
-        h("p", null, "このプリントの形では、解答欄（四角・罫線・漢字のかっこ）を見つけられませんでした。"),
-        h("p", { class: "muted small" }, "PDF のプリントは「PDF から作る」で変換できます。HTML は、解答欄に box・lines・ksp、問題に q・qn、解答に ans・a・ka のクラスを使ったものに対応しています。")),
-      [button("filled", "閉じる", null, () => d.close())]);
+        h("p", null, tx("このプリントの形では、解答欄（四角・罫線・漢字のかっこ）を見つけられませんでした。")),
+        h("p", { class: "muted small" }, tx("PDF のプリントは「PDF から作る」で変換できます。HTML は、解答欄に box・lines・ksp、問題に q・qn、解答に ans・a・ka のクラスを使ったものに対応しています。"))),
+      [button("filled", tx("閉じる"), null, () => d.close())]);
     return;
   }
-  const titleInput = h("input", { type: "text", class: "field-input", value: parsed.title, maxlength: "80", "aria-label": "プリントの名前" });
+  const titleInput = h("input", { type: "text", class: "field-input", value: parsed.title, maxlength: "80", "aria-label": tx("プリントの名前") });
   const line = (ic, label, n, cls = "") => h("li", { class: cls }, icon(ic), h("span", null, label), h("strong", null, `${n}`));
-  const d = openDialog(parsed.exam ? "試験用のプリントを追加" : "プリントを追加",
+  const d = openDialog(parsed.exam ? tx("試験用のプリントを追加") : tx("プリントを追加"),
     h("div", { class: "import-print" },
-      h("label", { class: "field" }, h("span", { class: "field-label" }, "名前"), titleInput),
+      h("label", { class: "field" }, h("span", { class: "field-label" }, tx("名前")), titleInput),
       parsed.exam ? h("p", { class: "exam-box" }, icon("timer"),
-        `試験用のプリントです（${parsed.meta.minutes ? `制限時間 ${parsed.meta.minutes} 分・` : ""}全画面で解く・提出は 1 回だけ）。答えは提出するまで見られません。`) : null,
-      parsed.tampered ? h("p", { class: "warn small" }, icon("warning"), "このファイルは書きかえられているようです（試験の設定が消されています）。") : null,
-      h("p", null, `${s.groups} 問・解答欄 ${s.total} 個を見つけました。`),
+        tx("試験用のプリントです（{n}全画面で解く・提出は 1 回だけ）。答えは提出するまで見られません。", { n: parsed.meta.minutes ? tx("制限時間 {minutes} 分・", { minutes: parsed.meta.minutes }) : "" })) : null,
+      parsed.tampered ? h("p", { class: "warn small" }, icon("warning"), tx("このファイルは書きかえられているようです（試験の設定が消されています）。")) : null,
+      h("p", null, tx("{groups} 問・解答欄 {total} 個を見つけました。", { groups: s.groups, total: s.total })),
       h("ul", { class: "found-list" },
-        line("spellcheck", "自動で採点（漢字・抜き出しなど）", s.auto),
-        line("radio_button_checked", "記号を選ぶ", s.choice),
-        line("edit_note", "記述（模範解答を見て自分で採点）", s.self),
-        s.none ? line("help", "答えが見つからない（採点しない）", s.none, "warn") : null),
-      h("p", { class: "muted small" }, parsed.exam ? "プリントはこのブラウザの中だけに保存されます。" : "解答のページは隠して、採点にだけ使います。プリントはこのブラウザの中だけに保存されます。")),
-    [button("text", "やめる", null, () => d.close()),
-      button("filled", "追加する", "add", async () => {
+        line("spellcheck", tx("自動で採点（漢字・抜き出しなど）"), s.auto),
+        line("radio_button_checked", tx("記号を選ぶ"), s.choice),
+        line("edit_note", tx("記述（模範解答を見て自分で採点）"), s.self),
+        s.none ? line("help", tx("答えが見つからない（採点しない）"), s.none, "warn") : null),
+      h("p", { class: "muted small" }, parsed.exam ? tx("プリントはこのブラウザの中だけに保存されます。") : tx("解答のページは隠して、採点にだけ使います。プリントはこのブラウザの中だけに保存されます。"))),
+    [button("text", tx("やめる"), null, () => d.close()),
+      button("filled", tx("追加する"), "add", async () => {
         try {
           const id = await addPrint(html, titleInput.value.trim() || parsed.title);
           d.close();
-          toast("プリントを追加しました");
+          toast(tx("プリントを追加しました"));
           go(`/print/${encodeURIComponent(id)}`);
         } catch (e) {
           toast(e.message);
@@ -528,20 +529,20 @@ const fmtTime = (ms) => {
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
   return `${h ? `${h}:${String(m).padStart(2, "0")}` : m}:${String(sec).padStart(2, "0")}`;
 };
-const clock = (t) => new Date(t).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-const AWAY_LABEL = { fullscreen: "全画面をやめた", hidden: "ほかのタブ・アプリに移った", blur: "ほかのウィンドウを使った", reload: "読み込み直した" };
+const clock = (t) => new Date(t).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const AWAY_LABEL = { fullscreen: tx("全画面をやめた"), hidden: tx("ほかのタブ・アプリに移った"), blur: tx("ほかのウィンドウを使った"), reload: tx("読み込み直した") };
 
 export async function renderPrint(id, ui) {
   const { h, icon, button, toast, confirmDialog, go, app } = ui;
   const hash = location.hash;
   const meta = listPrints().find((p) => p.id === id);
-  app.replaceChildren(h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), "読み込み中…"));
+  app.replaceChildren(h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), tx("読み込み中…")));
   const html = meta ? await getHtml(id) : null;
   if (location.hash !== hash) return; // 読みこんでいるあいだに、ほかの画面へ移った
-  if (!meta || !html) { ui.message("プリントが見つかりません", "消されたか、ほかのブラウザで追加したプリントかもしれません。"); return; }
+  if (!meta || !html) { ui.message(tx("プリントが見つかりません"), tx("消されたか、ほかのブラウザで追加したプリントかもしれません。")); return; }
   const P = parsePrint(html);
   const B = P.blanks;
-  if (!B.length) { ui.message("解答欄が見つかりません", "このプリントでは解答欄を見つけられませんでした。"); return; }
+  if (!B.length) { ui.message(tx("解答欄が見つかりません"), tx("このプリントでは解答欄を見つけられませんでした。")); return; }
   document.title = `${meta.title} - SK Study`;
   const exam = P.exam;
 
@@ -591,26 +592,26 @@ export async function renderPrint(id, ui) {
     const fsOk = !!document.documentElement.requestFullscreen;
     const agree = h("input", { type: "checkbox" });
     app.replaceChildren(h("section", { class: "exam-lobby" },
-      h("a", { class: "back-link", href: "#/" }, icon("arrow_back"), h("span", null, "ホーム")),
+      h("a", { class: "back-link", href: "#/" }, icon("arrow_back"), h("span", null, tx("ホーム"))),
       h("div", { class: "lobby-card" },
-        h("p", { class: "exam-pill big" }, "試験"),
+        h("p", { class: "exam-pill big" }, tx("試験")),
         h("h1", null, meta.title),
         h("ul", { class: "lobby-facts" },
-          h("li", null, icon("timer"), minutes ? `制限時間 ${minutes} 分（時間になると自動で提出）` : "制限時間なし"),
-          h("li", null, icon("edit_square"), `解答欄 ${B.length} 個`),
-          h("li", null, icon("fullscreen"), "全画面で解きます"),
-          h("li", null, icon("send"), "提出は 1 回だけ。提出したら答えは直せません")),
+          h("li", null, icon("timer"), minutes ? tx("制限時間 {minutes} 分（時間になると自動で提出）", { minutes }) : tx("制限時間なし")),
+          h("li", null, icon("edit_square"), tx("解答欄 {length} 個", { length: B.length })),
+          h("li", null, icon("fullscreen"), tx("全画面で解きます")),
+          h("li", null, icon("send"), tx("提出は 1 回だけ。提出したら答えは直せません"))),
         h("div", { class: "lobby-rules" },
-          h("strong", null, "試験の決まり"),
-          h("p", null, "全画面をやめる・ほかのタブやアプリに移る・ページを読み込み直すと、そのあいだ問題が隠れ、回数と時間が記録されます。記録は結果といっしょに表示されます。"),
-          h("p", null, "はじめると時間が進みます。とちゅうで閉じても時間は止まりません。")),
-        P.tampered ? h("p", { class: "warn" }, icon("warning"), "このファイルは書きかえられているようです。") : null,
-        small ? h("p", { class: "warn" }, icon("computer"), "試験はパソコンで受けてください（画面が小さすぎます）。") : null,
-        !fsOk ? h("p", { class: "warn" }, icon("warning"), "このブラウザは全画面に対応していません。") : null,
-        h("label", { class: "switch-row" }, agree, h("span", null, "決まりを読みました")),
-        button("filled", "全画面ではじめる", "fullscreen", async () => {
-          if (!agree.checked) { toast("決まりを読んで、チェックを入れてください"); return; }
-          try { await document.documentElement.requestFullscreen(); } catch (e) { toast("全画面にできませんでした"); return; }
+          h("strong", null, tx("試験の決まり")),
+          h("p", null, tx("全画面をやめる・ほかのタブやアプリに移る・ページを読み込み直すと、そのあいだ問題が隠れ、回数と時間が記録されます。記録は結果といっしょに表示されます。")),
+          h("p", null, tx("はじめると時間が進みます。とちゅうで閉じても時間は止まりません。"))),
+        P.tampered ? h("p", { class: "warn" }, icon("warning"), tx("このファイルは書きかえられているようです。")) : null,
+        small ? h("p", { class: "warn" }, icon("computer"), tx("試験はパソコンで受けてください（画面が小さすぎます）。")) : null,
+        !fsOk ? h("p", { class: "warn" }, icon("warning"), tx("このブラウザは全画面に対応していません。")) : null,
+        h("label", { class: "switch-row" }, agree, h("span", null, tx("決まりを読みました"))),
+        button("filled", tx("全画面ではじめる"), "fullscreen", async () => {
+          if (!agree.checked) { toast(tx("決まりを読んで、チェックを入れてください")); return; }
+          try { await document.documentElement.requestFullscreen(); } catch (e) { toast(tx("全画面にできませんでした")); return; }
           st.exam.startedAt = Date.now();
           save();
           renderPrint(id, ui);
@@ -621,46 +622,46 @@ export async function renderPrint(id, ui) {
   // ---- 枠 ----
   const progressEl = h("span", { class: "print-progress" });
   const timerEl = h("span", { class: "exam-timer", hidden: !(examActive() && minutes) });
-  const gradeBtn = exam ? button("filled", "提出する", "send", () => submit(false))
-    : classRef ? button("filled", "提出する", "send", () => submitPractice())
-      : button("filled", "採点する", "grading", () => gradeAll());
-  const modeSel = h("select", { class: "field-select mode-select", "aria-label": "答え合わせのしかた", onchange: (e) => { st.instant = e.target.value === "instant"; save(); draw(); } },
-    h("option", { value: "end", selected: !st.instant }, "最後にまとめて採点"),
-    h("option", { value: "instant", selected: st.instant }, "1 問ずつ答え合わせ"));
+  const gradeBtn = exam ? button("filled", tx("提出する"), "send", () => submit(false))
+    : classRef ? button("filled", tx("提出する"), "send", () => submitPractice())
+      : button("filled", tx("採点する"), "grading", () => gradeAll());
+  const modeSel = h("select", { class: "field-select mode-select", "aria-label": tx("答え合わせのしかた"), onchange: (e) => { st.instant = e.target.value === "instant"; save(); draw(); } },
+    h("option", { value: "end", selected: !st.instant }, tx("最後にまとめて採点")),
+    h("option", { value: "instant", selected: st.instant }, tx("1 問ずつ答え合わせ")));
   const tabs = h("div", { class: "print-tabs", role: "tablist" });
   const view = h("section", { class: `print-view${exam ? " is-exam" : ""}`, "data-tab": "answer" });
-  const frame = h("iframe", { class: "sheet-frame", sandbox: "allow-same-origin", title: "プリント" });
+  const frame = h("iframe", { class: "sheet-frame", sandbox: "allow-same-origin", title: tx("プリント") });
   const sheet = h("div", { class: "print-sheet" }, frame);
   const summaryEl = h("div", { class: "pp-summary" });
   const contextEl = h("p", { class: "pp-context" });
   const promptEl = h("div", { class: "pp-prompt" });
   const answerEl = h("div", { class: "pp-answer" });
-  const prevBtn = button("outlined", "前へ", "arrow_back", () => select(st.cur - 1));
-  const nextBtn = button("filled", "次へ", "arrow_forward", () => next());
+  const prevBtn = button("outlined", (isJa ? "前へ" : tx("前の問題へ")), "arrow_back", () => select(st.cur - 1));
+  const nextBtn = button("filled", tx("次へ"), "arrow_forward", () => next());
   const mapEl = h("div", { class: "pp-map" });
   const panel = h("div", { class: "print-panel" },
-    window.innerWidth < 900 && !exam ? h("p", { class: "pc-note" }, icon("computer"), "プリントはパソコン向けの画面です。") : null,
+    window.innerWidth < 900 && !exam ? h("p", { class: "pc-note" }, icon("computer"), tx("プリントはパソコン向けの画面です。")) : null,
     summaryEl, contextEl, promptEl, answerEl,
     h("div", { class: "pp-nav" }, prevBtn, nextBtn),
-    h("details", { class: "pp-map-wrap", open: exam }, h("summary", null, icon("grid_view"), "解答欄の一覧"), mapEl),
+    h("details", { class: "pp-map-wrap", open: exam }, h("summary", null, icon("grid_view"), tx("解答欄の一覧")), mapEl),
     h("div", { class: "pp-tools" },
-      classRef ? h("span", { class: "muted small tools-note" }, icon("groups"), exam ? "クラスの試験" : "クラスの課題（提出は 1 回）")
-        : exam ? h("span", { class: "muted small tools-note" }, icon("lock"), "試験用のプリント") : modeSel,
-      exam || classRef ? null : button("text", "全部消す", "restart_alt", async () => {
-        if (await confirmDialog("答えを全部消しますか？", "このプリントの答えと採点を消して、最初からやり直します。", "全部消す", true)) reset(false);
+      classRef ? h("span", { class: "muted small tools-note" }, icon("groups"), exam ? tx("クラスの試験") : tx("クラスの課題（提出は 1 回）"))
+        : exam ? h("span", { class: "muted small tools-note" }, icon("lock"), tx("試験用のプリント")) : modeSel,
+      exam || classRef ? null : button("text", tx("全部消す"), "restart_alt", async () => {
+        if (await confirmDialog(tx("答えを全部消しますか？"), tx("このプリントの答えと採点を消して、最初からやり直します。"), tx("全部消す"), true)) reset(false);
       }),
-      examActive() || classRef ? null : button("text", "プリントを削除", "delete", async () => {
-        if (await confirmDialog("このプリントを削除しますか？", `「${meta.title}」と、その答えを消します。もとに戻せません。`, "削除する", true)) {
+      examActive() || classRef ? null : button("text", tx("プリントを削除"), "delete", async () => {
+        if (await confirmDialog(tx("このプリントを削除しますか？"), tx("「{title}」と、その答えを消します。もとに戻せません。", { title: meta.title }), tx("削除する"), true)) {
           await deletePrint(id);
-          toast("削除しました");
+          toast(tx("削除しました"));
           go("/", true);
         }
       }, { "data-danger": "" })));
   const guardEl = h("div", { class: "exam-guard", hidden: true },
     icon("fullscreen_exit", "guard-icon"),
-    h("h2", null, "全画面に戻ってください"),
-    h("p", null, "試験中は、全画面でしか問題を見られません。全画面をやめたこと・ほかの画面に移ったことは記録されます。"),
-    button("filled", "全画面に戻る", "fullscreen", () => document.documentElement.requestFullscreen().catch(() => toast("全画面にできませんでした"))));
+    h("h2", null, tx("全画面に戻ってください")),
+    h("p", null, tx("試験中は、全画面でしか問題を見られません。全画面をやめたこと・ほかの画面に移ったことは記録されます。")),
+    button("filled", tx("全画面に戻る"), "fullscreen", () => document.documentElement.requestFullscreen().catch(() => toast(tx("全画面にできませんでした")))));
 
   function showTab(tab) {
     view.dataset.tab = tab;
@@ -668,13 +669,13 @@ export async function renderPrint(id, ui) {
     if (tab === "sheet") { fitSheet(); scrollSheet(); }
   }
   tabs.append(
-    h("button", { type: "button", role: "tab", "data-tab": "answer", "aria-selected": "true", onclick: () => showTab("answer") }, icon("edit"), "答える"),
-    h("button", { type: "button", role: "tab", "data-tab": "sheet", "aria-selected": "false", onclick: () => showTab("sheet") }, icon("description"), "プリント"));
+    h("button", { type: "button", role: "tab", "data-tab": "answer", "aria-selected": "true", onclick: () => showTab("answer") }, icon("edit"), tx("答える")),
+    h("button", { type: "button", role: "tab", "data-tab": "sheet", "aria-selected": "false", onclick: () => showTab("sheet") }, icon("description"), tx("プリント")));
 
   add(view,
     h("header", { class: "print-head" },
-      examActive() ? h("span", { class: "icon-btn", "aria-hidden": "true" }, icon("lock")) : h("a", { class: "icon-btn", href: "#/", "aria-label": "ホームへ", title: "ホームへ" }, icon("close")),
-      h("span", { class: "print-title" }, exam ? h("span", { class: "exam-pill" }, "試験") : null, meta.title),
+      examActive() ? h("span", { class: "icon-btn", "aria-hidden": "true" }, icon("lock")) : h("a", { class: "icon-btn", href: "#/", "aria-label": tx("ホームへ"), title: tx("ホームへ") }, icon("close")),
+      h("span", { class: "print-title" }, exam ? h("span", { class: "exam-pill" }, tx("試験")) : null, meta.title),
       timerEl, progressEl, gradeBtn),
     tabs,
     h("div", { class: "print-body" }, sheet, panel),
@@ -770,7 +771,7 @@ export async function renderPrint(id, ui) {
     if (!examActive() || !minutes) { timerEl.hidden = true; return; }
     const remain = st.exam.startedAt + minutes * 60000 - Date.now();
     timerEl.hidden = false;
-    timerEl.textContent = `残り ${fmtTime(remain)}`;
+    timerEl.textContent = tx("残り {remain}", { remain: fmtTime(remain) });
     timerEl.classList.toggle("is-low", remain < 60000);
     if (remain <= 0) submit(true);
   }
@@ -797,7 +798,7 @@ export async function renderPrint(id, ui) {
     if (!examActive()) return;
     if (!auto) {
       const empty = B.length - answeredCount();
-      if (!(await confirmDialog("提出しますか？", `提出は 1 回だけです。提出したあとは答えを直せません。${empty ? `まだ答えていない解答欄が ${empty} 個あります。` : ""}`, "提出する"))) return;
+      if (!(await confirmDialog(tx("提出しますか？"), tx("提出は 1 回だけです。提出したあとは答えを直せません。{n}", { n: empty ? tx("まだ答えていない解答欄が {empty} 個あります。", { empty }) : "" }), tx("提出する")))) return;
       if (!examActive()) return;
     }
     back();
@@ -807,7 +808,7 @@ export async function renderPrint(id, ui) {
     clearInterval(timer);
     guard();
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    if (auto) toast("時間になったので、提出しました");
+    if (auto) toast(tx("時間になったので、提出しました"));
     await openAndGrade(classRef && cls.assign && cls.assign.answerKey ? cls.assign.answerKey : "");
     if (classRef) await sendToClass();
     draw();
@@ -817,7 +818,7 @@ export async function renderPrint(id, ui) {
   async function submitPractice() {
     if (submittedClass()) return;
     const empty = B.length - answeredCount();
-    if (!(await confirmDialog("提出しますか？", `提出は 1 回だけです。提出すると採点して、答えと点数が先生に届きます。${empty ? `まだ答えていない解答欄が ${empty} 個あります。` : ""}`, "提出する"))) return;
+    if (!(await confirmDialog(tx("提出しますか？"), tx("提出は 1 回だけです。提出すると採点して、答えと点数が先生に届きます。{n}", { n: empty ? tx("まだ答えていない解答欄が {empty} 個あります。", { empty }) : "" }), tx("提出する")))) return;
     await gradeAll(true);
     await sendToClass();
     draw();
@@ -836,12 +837,12 @@ export async function renderPrint(id, ui) {
       await cloud.submit(classRef.cid, classRef.aid, st.graded ? s : { ok: 0, total: s.total }, data);
       st.classSubmitted = true;
       st.classPending = false;
-      toast("先生に提出しました");
+      toast(tx("先生に提出しました"));
     } catch (e) {
       // すでに提出していた（ほかの端末など）ときは、提出ずみとして扱う
       const sub = await cloud.mySubmission(classRef.cid, classRef.aid).catch(() => null);
       if (sub) { st.classSubmitted = true; st.classPending = false; }
-      else { st.classPending = true; toast(`先生に送れませんでした。${cloud.explain(e)}`); }
+      else { st.classPending = true; toast(tx("先生に送れませんでした。{e}", { e: cloud.explain(e) })); }
     }
     save();
   }
@@ -874,7 +875,7 @@ export async function renderPrint(id, ui) {
       type: "button",
       class: `pchip${x === B[st.cur] ? " is-cur" : ""}${v ? " is-filled" : ""}${m ? ` is-${m}` : ""}${x.kind === "lines" ? " is-lines" : ""}`,
       onclick: () => select(B.indexOf(x)),
-      "aria-label": `解答欄 ${x.label || ""}`
+      "aria-label": tx("解答欄 {n}", { n: x.label || "" })
     }, x.label && x.kind !== "kanji" ? h("small", null, x.label) : null, h("span", null, v ? (v.length > 24 ? v.slice(0, 24) + "…" : v) : "　"));
   }
 
@@ -894,28 +895,28 @@ export async function renderPrint(id, ui) {
   function verdictBlock(b) {
     const m = st.marks[b.id];
     const g = b.group;
-    const ex = g.explanation && g.explanation.length ? h("div", { class: "pp-ex" }, h("span", { class: "pp-ex-tag" }, "解説"), g.explanation.map((t) => h("p", null, t))) : null;
-    if (b.type === "none") return [h("p", { class: "muted small" }, icon("help"), "このプリントには、この解答欄の答えがありません（採点しません）。")];
+    const ex = g.explanation && g.explanation.length ? h("div", { class: "pp-ex" }, h("span", { class: "pp-ex-tag" }, tx("解説")), g.explanation.map((t) => h("p", null, t))) : null;
+    if (b.type === "none") return [h("p", { class: "muted small" }, icon("help"), tx("このプリントには、この解答欄の答えがありません（採点しません）。"))];
     if (b.type === "self" && !m) {
       const pick = (mark) => { st.marks[b.id] = mark; save(); draw(); };
       return [
-        h("div", { class: "model" }, h("span", { class: "model-tag" }, "模範解答"), h("p", null, b.answer)),
-        h("p", { class: "muted small" }, "自分の答えと見くらべて、採点してください。"),
+        h("div", { class: "model" }, h("span", { class: "model-tag" }, tx("模範解答")), h("p", null, b.answer)),
+        h("p", { class: "muted small" }, tx("自分の答えと見くらべて、採点してください。")),
         h("div", { class: "self-grade" },
-          button("outlined", "○ 正解", null, () => pick("ok"), { class: "outlined-btn sg-ok" }),
-          button("outlined", "△ 部分正解", null, () => pick("partial"), { class: "outlined-btn sg-partial" }),
-          button("outlined", "× まちがい", null, () => pick("ng"), { class: "outlined-btn sg-ng" })),
+          button("outlined", tx("○ 正解"), null, () => pick("ok"), { class: "outlined-btn sg-ok" }),
+          button("outlined", tx("△ 部分正解"), null, () => pick("partial"), { class: "outlined-btn sg-partial" }),
+          button("outlined", tx("× まちがい"), null, () => pick("ng"), { class: "outlined-btn sg-ng" })),
         ex];
     }
-    const label = { ok: "正解！", partial: "部分正解", ng: answerOf(b).trim() ? "ざんねん…" : "答えていません" }[m];
+    const label = { ok: tx("正解！"), partial: tx("部分正解"), ng: answerOf(b).trim() ? tx("ざんねん…") : tx("答えていません") }[m];
     // 試験では「正解にする」は使えない（自分で点を変えられないように）
-    const fix = !exam && m === "ng" && answerOf(b).trim() && b.type !== "self" ? button("text", "正解にする", "done", () => { st.marks[b.id] = "ok"; st.manual[b.id] = true; save(); draw(); }) : null;
+    const fix = !exam && m === "ng" && answerOf(b).trim() && b.type !== "self" ? button("text", tx("正解にする"), "done", () => { st.marks[b.id] = "ok"; st.manual[b.id] = true; save(); draw(); }) : null;
     const r = m === "ng" && b.type !== "self" ? check(b, answerOf(b)) : null;
     const correct = [...(b.anyOf || [b.answer]), ...(b.alts || [])].filter(Boolean);
     return [
-      h("p", { class: `verdict ${m === "ok" ? "ok" : m === "partial" ? "partial" : "ng"}` }, r && r.close ? "おしい！" : label),
-      m !== "ok" || b.type === "self" ? h("div", { class: "model" }, h("span", { class: "model-tag" }, b.type === "self" ? "模範解答" : "正解"), h("p", null, correct.join(" / "))) : null,
-      fix ? h("p", { class: "fix-row" }, fix, h("span", { class: "muted small" }, "書き方がちがうだけのとき")) : null,
+      h("p", { class: `verdict ${m === "ok" ? "ok" : m === "partial" ? "partial" : "ng"}` }, r && r.close ? tx("おしい！") : label),
+      m !== "ok" || b.type === "self" ? h("div", { class: "model" }, h("span", { class: "model-tag" }, b.type === "self" ? tx("模範解答") : tx("正解")), h("p", null, correct.join(" / "))) : null,
+      fix ? h("p", { class: "fix-row" }, fix, h("span", { class: "muted small" }, tx("書き方がちがうだけのとき"))) : null,
       ex];
   }
 
@@ -924,8 +925,8 @@ export async function renderPrint(id, ui) {
     const isLocked = locked() || (st.instant && (m !== undefined || (b.type === "self" && st.checked && st.checked[b.id])));
     const showVerdict = st.graded || (st.instant && isLocked);
     const out = [];
-    const where = b.label ? `${b.label} の答え` : "答え";
-    const typeLabel = { choice: "記号を選ぶ", auto: exam && !st.graded ? "答えを書く" : "自動で採点", self: "記述", none: "採点なし" }[b.type];
+    const where = b.label ? tx("{label} の答え", { label: b.label }) : tx("答え");
+    const typeLabel = { choice: tx("記号を選ぶ"), auto: exam && !st.graded ? tx("答えを書く") : tx("自動で採点"), self: tx("記述"), none: tx("採点なし") }[b.type];
     out.push(h("p", { class: "pa-label" }, h("strong", null, where), h("span", { class: `type-pill type-${b.type}` }, typeLabel)));
     if (b.type === "choice") {
       out.push(h("div", { class: "pa-options" }, b.options.map((k) => h("button", {
@@ -937,7 +938,7 @@ export async function renderPrint(id, ui) {
       const field = h(multi ? "textarea" : "input", {
         class: "field-input pa-input", rows: multi ? "4" : null, type: multi ? null : "text",
         autocomplete: "off", spellcheck: "false", disabled: isLocked, "aria-label": where,
-        placeholder: b.kind === "kanji" ? "読み・漢字を書く" : multi ? "記述で答える（Ctrl + Enter で次へ）" : "答えを書く（Enter で次へ）"
+        placeholder: b.kind === "kanji" ? tx("読み・漢字を書く") : multi ? tx("記述で答える（Ctrl + Enter で次へ）") : tx("答えを書く（Enter で次へ）")
       });
       field.value = answerOf(b);
       field.addEventListener("input", () => setAnswer(b, field.value, false));
@@ -949,7 +950,7 @@ export async function renderPrint(id, ui) {
         else next();
       });
       out.push(field);
-      if (st.instant && !isLocked) out.push(button("tonal", "答え合わせ", "check", () => checkOne(b), { class: "tonal-btn" }));
+      if (st.instant && !isLocked) out.push(button("tonal", tx("答え合わせ"), "check", () => checkOne(b), { class: "tonal-btn" }));
       setTimeout(() => { if (!isLocked && !narrow()) field.focus({ preventScroll: true }); }, 0);
     }
     if (showVerdict) out.push(h("div", { class: "feedback" }, verdictBlock(b)));
@@ -998,7 +999,7 @@ export async function renderPrint(id, ui) {
 
   async function gradeAll(skipConfirm = false) {
     const empty = B.length - answeredCount();
-    if (!skipConfirm && !st.graded && empty > 0 && !(await confirmDialog("採点しますか？", `まだ答えていない解答欄が ${empty} 個あります。答えていないところはまちがいになります。`, "採点する"))) return;
+    if (!skipConfirm && !st.graded && empty > 0 && !(await confirmDialog(tx("採点しますか？"), tx("まだ答えていない解答欄が {empty} 個あります。答えていないところはまちがいになります。", { empty }), tx("採点する")))) return;
     for (const b of B) {
       if (b.type === "none") continue;
       if (b.type === "self") {
@@ -1017,7 +1018,7 @@ export async function renderPrint(id, ui) {
     if (firstTodo >= 0) st.cur = firstTodo;
     save();
     draw();
-    toast(`採点しました: ${s.pct}%`);
+    toast(tx("採点しました: {pct}%", { pct: s.pct }));
   }
 
   function reset(onlyWrong) {
@@ -1046,11 +1047,11 @@ export async function renderPrint(id, ui) {
     const ev = st.exam.events || [];
     const total = ev.reduce((a, e) => a + (e.ms || 0), 0);
     return h("div", { class: "exam-log" },
-      h("p", null, icon("schedule"), `かかった時間 ${fmtTime(st.exam.submittedAt - st.exam.startedAt)}${st.exam.auto ? "（時間切れで自動提出）" : ""}`),
+      h("p", null, icon("schedule"), tx("かかった時間 {n}{n2}", { n: fmtTime(st.exam.submittedAt - st.exam.startedAt), n2: st.exam.auto ? tx("（時間切れで自動提出）") : "" })),
       h("p", { class: ev.length ? "warn" : "" }, icon(ev.length ? "visibility_off" : "verified_user"),
-        ev.length ? `画面を離れた記録 ${ev.length} 回（合計 ${fmtTime(total)}）` : "画面を離れた記録はありません"),
+        ev.length ? tx("画面を離れた記録 {length} 回（合計 {total}）", { length: ev.length, total: fmtTime(total) }) : tx("画面を離れた記録はありません")),
       ev.length ? h("ul", null, ev.slice(0, 30).map((e) => h("li", null, `${clock(e.at)}　${AWAY_LABEL[e.type] || e.type}（${fmtTime(e.ms)}）`))) : null,
-      st.exam.tampered || P.tampered ? h("p", { class: "warn" }, icon("warning"), "このプリントは書きかえられているようです。") : null);
+      st.exam.tampered || P.tampered ? h("p", { class: "warn" }, icon("warning"), tx("このプリントは書きかえられているようです。")) : null);
   }
 
   // クラスの課題: 先生に届いたか・先生の採点
@@ -1058,28 +1059,28 @@ export async function renderPrint(id, ui) {
     if (!classRef) return null;
     const g = cls.grade;
     return h("div", { class: "class-box" },
-      st.classPending ? h("p", { class: "warn small" }, icon("cloud_off"), "まだ先生に届いていません。",
-        button("text", "もう一度送る", "send", async () => { await sendToClass(); draw(); }))
-        : submittedClass() ? h("p", { class: "small" }, icon("task_alt"), "先生に提出しました") : null,
-      g ? h("p", { class: "teacher-grade" }, icon("school"), `先生の採点: ${g.ok} / ${g.total}（${g.pct}%）`) : null,
+      st.classPending ? h("p", { class: "warn small" }, icon("cloud_off"), tx("まだ先生に届いていません。"),
+        button("text", tx("もう一度送る"), "send", async () => { await sendToClass(); draw(); }))
+        : submittedClass() ? h("p", { class: "small" }, icon("task_alt"), tx("先生に提出しました")) : null,
+      g ? h("p", { class: "teacher-grade" }, icon("school"), tx("先生の採点: {ok} / {total}（{pct}%）", { ok: g.ok, total: g.total, pct: g.pct })) : null,
       g && g.note ? h("p", { class: "small" }, g.note) : null,
       cls.error ? h("p", { class: "warn small" }, icon("cloud_off"), cloud.explain(cls.error)) : null);
   }
 
   function summary() {
     if (exam && submitted() && !st.graded) {
-      const pass = h("input", { type: "password", class: "field-input", placeholder: "答え合わせの合言葉", autocomplete: "off", "aria-label": "答え合わせの合言葉" });
+      const pass = h("input", { type: "password", class: "field-input", placeholder: tx("答え合わせの合言葉"), autocomplete: "off", "aria-label": tx("答え合わせの合言葉") });
       const go2 = async () => {
         if (!pass.value.trim()) { pass.focus(); return; }
-        if (await openAndGrade(pass.value)) { toast("答え合わせをしました"); draw(); }
-        else toast("合言葉がちがいます");
+        if (await openAndGrade(pass.value)) { toast(tx("答え合わせをしました")); draw(); }
+        else toast(tx("合言葉がちがいます"));
       };
       pass.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) go2(); });
       return h("div", { class: "pp-score exam-done" },
         h("div", { class: "pp-score-text" },
-          h("strong", null, icon("task_alt"), "提出しました"),
-          h("span", { class: "small" }, "先生から合言葉を聞いたら、入れると答え合わせができます。"),
-          h("div", { class: "pass-row" }, pass, button("filled", "答え合わせ", "lock_open", go2)),
+          h("strong", null, icon("task_alt"), tx("提出しました")),
+          h("span", { class: "small" }, tx("先生から合言葉を聞いたら、入れると答え合わせができます。")),
+          h("div", { class: "pass-row" }, pass, button("filled", tx("答え合わせ"), "lock_open", go2)),
           examLog(),
           classBox()));
     }
@@ -1087,11 +1088,11 @@ export async function renderPrint(id, ui) {
     return h("div", { class: "pp-score" },
       ui.ring(s.pct / 100, { size: 64, stroke: 6, color: s.pct >= 80 ? "var(--st-mastered)" : "var(--primary)", label: `${s.pct}%` }),
       h("div", { class: "pp-score-text" },
-        h("strong", null, `${s.total} 問中 ${s.ok} 問 正解`),
-        s.pending ? h("span", { class: "warn small" }, `記述の自己採点があと ${s.pending} 問`) : h("span", { class: "muted small" }, s.wrong ? `まちがい ${s.wrong} 問` : "全問正解！"),
+        h("strong", null, tx("{total} 問中 {ok} 問 正解", { total: s.total, ok: s.ok })),
+        s.pending ? h("span", { class: "warn small" }, tx("記述の自己採点があと {pending} 問", { pending: s.pending })) : h("span", { class: "muted small" }, s.wrong ? tx("まちがい {wrong} 問", { wrong: s.wrong }) : tx("全問正解！")),
         exam ? examLog() : classRef ? null : h("div", { class: "pp-score-actions" },
-          s.wrong ? button("filled", "まちがいを解き直す", "replay", () => reset(true)) : null,
-          button("text", "全部やり直す", "restart_alt", () => reset(false))),
+          s.wrong ? button("filled", tx("まちがいを解き直す"), "replay", () => reset(true)) : null,
+          button("text", tx("全部やり直す"), "restart_alt", () => reset(false))),
         classBox()));
   }
 
@@ -1115,13 +1116,13 @@ export async function renderPrint(id, ui) {
     put(contextEl, 
       g.article ? h("span", null, g.article) : null,
       g.section ? h("span", null, g.section) : null,
-      g.qn && g.qn !== "・" ? h("span", null, `問 ${g.qn}`) : null,
+      g.qn && g.qn !== "・" ? h("span", null, tx("問 {qn}", { qn: g.qn })) : null,
       h("span", { class: "pp-index" }, `${st.cur + 1} / ${B.length}`));
     promptEl.replaceChildren(renderPrompt(b));
     answerEl.replaceChildren(...answerArea(b).filter(Boolean));
     prevBtn.disabled = st.cur === 0;
     const last = st.cur === B.length - 1;
-    nextBtn.querySelector("span:last-child").textContent = last ? (locked() ? "最初へ" : exam ? "提出へ" : "採点へ") : "次へ";
+    nextBtn.querySelector("span:last-child").textContent = last ? (locked() ? tx("最初へ") : exam ? tx("提出へ") : tx("採点へ")) : tx("次へ");
     drawMap();
     syncSheet();
     const cur = promptEl.querySelector(".pchip.is-cur");

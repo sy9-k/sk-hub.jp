@@ -25,6 +25,7 @@
 //     ・まちがえた単語は、少しあとにもう一度出す（同じ単語は 2 回まで）
 //   データの保存は store.js、書き取りの採点は grade.js
 //   ほかの人が作った単語帳も表示するので、文字は必ず textContent で入れる（innerHTML は数字だけの SVG に使う）
+import { tx, locale, JA_NAME, DAY_UNIT } from "./i18n.js";
 import * as store from "./store.js";
 import * as cloud from "./cloud.js";
 import { grade, hint } from "./grade.js";
@@ -42,13 +43,13 @@ const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
 let keyHandler = null;
 
-const COUNTS = [[10, "10 問"], [20, "20 問"], [30, "30 問"], [0, "すべて"]];
-const FORMATS = [["auto", "おまかせ（難易度を自動で調整）"], ["choice", "4 択だけ"], ["write", "書き取りだけ"]];
+const COUNTS = [[10, tx("10 問")], [20, tx("20 問")], [30, tx("30 問")], [0, tx("すべて")]];
+const FORMATS = [["auto", tx("おまかせ（難易度を自動で調整）")], ["choice", tx("4 択だけ")], ["write", tx("書き取りだけ")]];
 const STATUS = {
-  mastered: { label: "記憶済み", color: "var(--st-mastered)" },
-  learning: { label: "記憶中", color: "var(--st-learning)" },
-  weak: { label: "弱点", color: "var(--st-weak)" },
-  new: { label: "未学習", color: "var(--st-new)" }
+  mastered: { label: tx("記憶済み"), color: "var(--st-mastered)" },
+  learning: { label: tx("記憶中"), color: "var(--st-learning)" },
+  weak: { label: tx("弱点"), color: "var(--st-weak)" },
+  new: { label: tx("未学習"), color: "var(--st-new)" }
 };
 const NONE = "\u0000none"; // 「この中にはない」の選択肢
 const RETRY_GAP = 3;       // まちがえた単語を何問あとにもう一度出すか
@@ -144,9 +145,9 @@ function donut(s, size = 168) {
     offset += len;
   }
   const el = h("div", { class: "donut", style: `width:${size}px;height:${size}px`, role: "img",
-    "aria-label": `記憶度 ${s.memory}%（記憶済み ${s.mastered}・記憶中 ${s.learning}・弱点 ${s.weak}・未学習 ${s.new}）` });
+    "aria-label": tx("記憶度 {memory}%（記憶済み {mastered}・記憶中 {learning}・弱点 {weak}・未学習 {new}）", { memory: s.memory, mastered: s.mastered, learning: s.learning, weak: s.weak, new: s.new }) });
   el.innerHTML = `<svg viewBox="0 0 ${size} ${size}" aria-hidden="true">${arcs}</svg>`;
-  el.append(h("div", { class: "donut-center" }, h("strong", null, String(s.memory), h("small", null, "%")), h("span", null, "記憶度")));
+  el.append(h("div", { class: "donut-center" }, h("strong", null, String(s.memory), h("small", null, "%")), h("span", null, tx("記憶度"))));
   return el;
 }
 
@@ -163,7 +164,7 @@ function wordRing(rec) {
 function speakButton(text, speech) {
   if (!tts.canSpeak(speech)) return null;
   const b = h("button", {
-    type: "button", class: "icon-btn speak", "aria-label": "読み上げ", title: "読み上げ",
+    type: "button", class: "icon-btn speak", "aria-label": tx("読み上げ"), title: tx("読み上げ"),
     onclick: (e) => { e.stopPropagation(); tts.speak(text, speech, { button: b }); }
   }, icon("volume_up"));
   return b;
@@ -175,7 +176,7 @@ function autoSpeak(text, speech, near) {
   tts.speak(text, speech, { button: b });
 }
 
-const VOICE_LANGS = [["en-US", "英語", "Hello. Nice to meet you."], ["ko-KR", "韓国語", "안녕하세요. 반갑습니다."], ["zh-CN", "中国語", "你好，很高兴认识你。"]];
+const VOICE_LANGS = [["en-US", tx("英語"), "Hello. Nice to meet you."], ["ko-KR", tx("韓国語"), "안녕하세요. 반갑습니다."], ["zh-CN", tx("中国語"), tx("你好，很高兴认识你。")]];
 
 // 読み上げの設定の中身（ダイアログと設定画面の両方で使う）。stop() で後始末
 function speechPanel() {
@@ -183,7 +184,7 @@ function speechPanel() {
   function draw() {
     const s = tts.getSettings();
     const auto = h("input", { type: "checkbox", checked: s.auto, onchange: (e) => tts.saveSettings({ auto: e.target.checked }) });
-    const rates = h("div", { class: "segmented small", role: "radiogroup", "aria-label": "速さ" });
+    const rates = h("div", { class: "segmented small", role: "radiogroup", "aria-label": tx("速さ") });
     const drawRates = (rate) => rates.replaceChildren(...tts.RATES.map(([v, label]) => h("button", {
       type: "button", role: "radio", "aria-checked": String(rate === v),
       onclick: () => { tts.saveSettings({ rate: v }); drawRates(v); }
@@ -195,27 +196,27 @@ function speechPanel() {
       const best = list[0];
       if (!list.length && !sk.length) {
         return h("div", { class: "voice-row" }, h("span", { class: "voice-name" }, name),
-          h("p", { class: "muted small" }, icon("info"), `この端末には${name}の声がありません。端末の設定で追加できます。`));
+          h("p", { class: "muted small" }, icon("info"), tx("この端末には{name}の声がありません。端末の設定で追加できます。", { name })));
       }
-      const sel = h("select", { class: "field-select", "aria-label": `${name}の声`, onchange: (e) => {
+      const sel = h("select", { class: "field-select", "aria-label": tx("{name}の声", { name }), onchange: (e) => {
         const voicesSaved = { ...tts.getSettings().voices };
         if (e.target.value) voicesSaved[lang] = e.target.value; else delete voicesSaved[lang];
         tts.saveSettings({ voices: voicesSaved });
         tts.speak(sample, lang);
       } },
-      h("option", { value: "" }, best ? `おまかせ（${best.name}）` : "おまかせ"),
+      h("option", { value: "" }, best ? tx("おまかせ（{name}）", { name: best.name }) : tx("おまかせ")),
       sk.map(([id, label]) => h("option", { value: id, selected: s.voices[lang] === id }, label)),
-      list.map((v) => h("option", { value: v.name, selected: s.voices[lang] === v.name }, `${v.name}${v.localService ? "" : "（ネット）"}`)));
-      const test = h("button", { type: "button", class: "icon-btn speak", "aria-label": `${name}を試しに聞く`, title: "試しに聞く",
+      list.map((v) => h("option", { value: v.name, selected: s.voices[lang] === v.name }, `${v.name}${v.localService ? "" : tx("（ネット）")}`)));
+      const test = h("button", { type: "button", class: "icon-btn speak", "aria-label": tx("{name}を試しに聞く", { name }), title: tx("試しに聞く"),
         onclick: () => tts.speak(sample, lang, { button: test }) }, icon("play_arrow"));
       return h("div", { class: "voice-row" }, h("span", { class: "voice-name" }, name), h("div", { class: "voice-pick" }, sel, test));
     });
     body.replaceChildren(
-      h("label", { class: "switch-row" }, auto, h("span", null, h("strong", null, "自動で読み上げる"), h("small", null, "問題や答えに外国語が出たとき"))),
-      h("div", { class: "setting-block" }, h("span", { class: "field-label" }, "速さ"), rates),
-      h("div", { class: "setting-block" }, h("span", { class: "field-label" }, "声"), rows),
+      h("label", { class: "switch-row" }, auto, h("span", null, h("strong", null, tx("自動で読み上げる")), h("small", null, tx("問題や答えに外国語が出たとき")))),
+      h("div", { class: "setting-block" }, h("span", { class: "field-label" }, tx("速さ")), rates),
+      h("div", { class: "setting-block" }, h("span", { class: "field-label" }, tx("声")), rows),
       h("p", { class: "muted small" }, icon("tips_and_updates"),
-        "声は端末に入っているものを使います。Mac・iPhone は設定の「アクセシビリティ」→「読み上げコンテンツ」→「声」で「拡張」「プレミアム」の声を追加すると、より自然になります。"));
+        tx("声は端末に入っているものを使います。Mac・iPhone は設定の「アクセシビリティ」→「読み上げコンテンツ」→「声」で「拡張」「プレミアム」の声を追加すると、より自然になります。")));
   }
   draw();
   const stopWatch = tts.onVoicesChanged(draw);
@@ -224,11 +225,11 @@ function speechPanel() {
 
 function openSpeechSettings() {
   if (!tts.supported) {
-    const d0 = openDialog("読み上げ", h("p", null, "このブラウザは読み上げに対応していません。"), [button("filled", "閉じる", null, () => d0.close())]);
+    const d0 = openDialog(tx("読み上げ"), h("p", null, tx("このブラウザは読み上げに対応していません。")), [button("filled", tx("閉じる"), null, () => d0.close())]);
     return;
   }
   const panel = speechPanel();
-  const d = openDialog("読み上げの設定", panel.body, [button("filled", "閉じる", null, () => d.close())]);
+  const d = openDialog(tx("読み上げの設定"), panel.body, [button("filled", tx("閉じる"), null, () => d.close())]);
   d.addEventListener("close", panel.stop);
 }
 
@@ -260,7 +261,7 @@ function confirmDialog(title, message, okLabel, danger = false) {
   return new Promise((resolve) => {
     let result = false;
     const d = openDialog(title, h("p", null, message), [
-      button("text", "やめる", null, () => d.close()),
+      button("text", tx("やめる"), null, () => d.close()),
       button(danger ? "danger" : "filled", okLabel, null, () => { result = true; d.close(); })
     ]);
     d.addEventListener("close", () => resolve(result));
@@ -280,7 +281,7 @@ function go(path, replace = false) {
 
 // 画面 → 横のメニューのどれを選んだ状態にするか
 const SECTION_OF = { "": "home", sets: "sets", mine: "mine", edit: "mine", import: "mine", prints: "prints", print: "prints", maker: "maker", classes: "classes", class: "classes", task: "classes", teach: "teach", settings: "settings", about: "settings", account: "account" };
-const TITLES = { home: "ホーム", sets: "SK認定コンテンツ", mine: "マイ単語帳", prints: "プリント", maker: "PDF からプリントを作る", classes: "クラス", teach: "指導者メニュー", settings: "設定", about: "アプリ情報", account: "アカウント" };
+const TITLES = { home: tx("ホーム"), sets: tx("SK認定コンテンツ"), mine: tx("マイ単語帳"), prints: tx("プリント"), maker: tx("PDF からプリントを作る"), classes: tx("クラス"), teach: tx("指導者メニュー"), settings: tx("設定"), about: tx("アプリ情報"), account: tx("アカウント") };
 
 // ---------- 画面の切りかえの動き（Android と同じ） ----------
 //   深さ: 0 = メニューの画面（ホーム・単語セット…）、1 = 中の画面（単語セットの中・編集・クラス…）、2 = 全面の画面（学習・プリント）
@@ -384,7 +385,7 @@ function renderRoute(nav) {
   }
   // 個人のプロファイルでは、クラス・指導者の画面は開けない（クラス・先生のプロファイルに切り替えて使う。コードは「アカウント」から入れる）
   if (!cloud.activeClass() && ["classes", "class", "task", "teach"].includes(view)) {
-    toast("クラス・先生の画面は、クラス・先生のプロファイルで開けます");
+    toast(tx("クラス・先生の画面は、クラス・先生のプロファイルで開けます"));
     go("/account", true);
     return;
   }
@@ -400,13 +401,13 @@ function renderRoute(nav) {
     if (!view) renderHome();
     else if (view === "sets") renderSets();
     else if (view === "mine") renderMine();
-    else if (view === "prints") { document.title = "プリント - SK Study"; app.append(printSection(printUi)); }
-    else if (view === "classes") { document.title = "クラス - SK Study"; app.append(classSection(printUi)); }
+    else if (view === "prints") { document.title = tx("プリント - SK Study"); app.append(printSection(printUi)); }
+    else if (view === "classes") { document.title = tx("クラス - SK Study"); app.append(classSection(printUi)); }
     else if (view === "set") renderSet(id);
     else if (view === "learn") renderLearn(id, q);
     else if (view === "edit") renderEdit(id);
     else if (view === "import") renderImport(parts.slice(1).join("/"));
-    else if (view === "print") renderPrint(id, printUi).catch((e) => { console.error(e); renderMessage("うまく表示できませんでした", String(e && e.message || e)); });
+    else if (view === "print") renderPrint(id, printUi).catch((e) => { console.error(e); renderMessage(tx("うまく表示できませんでした"), String(e && e.message || e)); });
     else if (view === "maker") renderMaker(printUi);
     else if (view === "class") renderClass(id, printUi).catch(showError);
     else if (view === "task") renderTask(id, parts[2], printUi).catch(showError);
@@ -414,17 +415,17 @@ function renderRoute(nav) {
     else if (view === "settings") renderSettings();
     else if (view === "about") renderAbout();
     else if (view === "account") renderAccount().catch(showError);
-    else renderMessage("ページが見つかりません", "リンクがまちがっているかもしれません。");
+    else renderMessage(tx("ページが見つかりません"), tx("リンクがまちがっているかもしれません。"));
   } catch (e) {
     console.error(e);
-    renderMessage("うまく表示できませんでした", String(e && e.message || e));
+    renderMessage(tx("うまく表示できませんでした"), String(e && e.message || e));
   }
   app.focus({ preventScroll: true });
 }
 
 function showError(e) {
   console.error(e);
-  renderMessage("うまく表示できませんでした", String(e && e.message || e));
+  renderMessage(tx("うまく表示できませんでした"), String(e && e.message || e));
 }
 
 function renderMessage(title, text) {
@@ -434,7 +435,7 @@ function renderMessage(title, text) {
     icon("sentiment_dissatisfied", "message-icon"),
     h("h1", null, title),
     h("p", null, text),
-    linkButton("filled", "ホームへ", "home", "#/")));
+    linkButton("filled", tx("ホームへ"), "home", "#/")));
 }
 
 // ---------- ログイン（SK Hub Systems アカウント。cloud.js） ----------
@@ -449,15 +450,15 @@ function readHint() {
 const allowed = (s) => !!s && (s.status === "ready" || (s.status === "offline" && !!readHint() && cloud.wasInvited()));
 
 const GATE = {
-  "not-invited": ["招待制です", "SK Study は、いまは招待した方だけが使えます。順番待ちに登録しておくと、順番がきたらメールでお知らせします。", "順番待ちに登録する", "hourglass_top"],
-  "signed-out": ["ログインしてください", "SK Study を使うには、SK Hub Systems アカウントでログインします。アカウントは無料で作れます。", "ログイン", "login"],
-  unregistered: ["アカウントの登録を完了してください", "SK Hub Systems アカウントの利用規約に同意すると、SK Study を使えるようになります。", "登録を続ける", "how_to_reg"],
-  "not-connected": ["SK Study に接続してください", "SK Hub Systems アカウントを SK Study に接続すると、学習をはじめられます。", "SK Study に接続する", "link"],
-  offline: ["接続できませんでした", "SK Hub Systems に接続できませんでした。ネットワークを確かめて、もう一度お試しください。", "もう一度", "refresh"]
+  "not-invited": [tx("招待制です"), tx("SK Study は、いまは招待した方だけが使えます。順番待ちに登録しておくと、順番がきたらメールでお知らせします。"), tx("順番待ちに登録する"), "hourglass_top"],
+  "signed-out": [tx("ログインしてください"), tx("SK Study を使うには、SK Hub Systems アカウントでログインします。アカウントは無料で作れます。"), tx("ログイン"), "login"],
+  unregistered: [tx("アカウントの登録を完了してください"), tx("SK Hub Systems アカウントの利用規約に同意すると、SK Study を使えるようになります。"), tx("登録を続ける"), "how_to_reg"],
+  "not-connected": [tx("SK Study に接続してください"), tx("SK Hub Systems アカウントを SK Study に接続すると、学習をはじめられます。"), tx("SK Study に接続する"), "link"],
+  offline: [tx("接続できませんでした"), tx("SK Hub Systems に接続できませんでした。ネットワークを確かめて、もう一度お試しください。"), tx("もう一度"), "refresh"]
 };
 
 function renderGate(s) {
-  document.title = "ログイン - SK Study";
+  document.title = tx("ログイン - SK Study");
   document.body.dataset.view = "gate";
   setActive(null);
   const status = s ? s.status : "checking";
@@ -467,23 +468,23 @@ function renderGate(s) {
     h("div", { class: "gate-card" },
       h("div", { class: "gate-hero" },
         h("img", { src: "icon.svg", alt: "", width: 64, height: 64 }),
-        h("p", { class: "gate-name" }, "SK Study", h("span", { class: "beta" }, "先行公開"))),
+        h("p", { class: "gate-name" }, "SK Study", h("span", { class: "beta" }, tx("先行公開")))),
       h("div", { class: "gate-body" },
         info ? [
           h("h1", null, info[0]),
           h("p", null, info[1]),
           status === "not-invited" && s.reason === "not-google"
-            ? h("p", null, "招待された Google アカウントでログインしてください。Google 以外のログインでは開けません。")
+            ? h("p", null, tx("招待された Google アカウントでログインしてください。Google 以外のログインでは開けません。"))
             : null,
           status === "offline"
             ? button("filled", info[2], info[3], recheckAuth, { class: "filled-btn gate-btn" })
             : linkButton("filled", info[2], info[3], status === "not-invited" ? "/waiting/?product=study" : cloud.accountUrl(true)),
-          status === "not-invited" ? linkButton("outlined", "別のアカウントでログイン", "switch_account", cloud.accountUrl(false)) : null
-        ] : h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), "ログインを確かめています…"),
+          status === "not-invited" ? linkButton("outlined", tx("別のアカウントでログイン"), "switch_account", cloud.accountUrl(false)) : null
+        ] : h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), tx("ログインを確かめています…")),
         h("ul", { class: "gate-features", "aria-hidden": "true" },
-          feature("style", "単語"),
-          feature("assignment", "プリント"),
-          feature("groups", "クラス"))))));
+          feature("style", tx("単語")),
+          feature("assignment", tx("プリント")),
+          feature("groups", tx("クラス")))))));
   app.querySelectorAll(".gate-body > a, .gate-body > button").forEach((b) => b.classList.add("gate-btn"));
 }
 
@@ -499,13 +500,13 @@ async function recheckAuth() {
 
 async function logout() {
   closeDrawer();
-  if (!await confirmDialog("ログアウトしますか？", "学習の記録・マイ単語帳・プリントは、このブラウザに残ります。もう一度ログインすると続きから使えます。", "ログアウト")) return;
+  if (!await confirmDialog(tx("ログアウトしますか？"), tx("学習の記録・マイ単語帳・プリントは、このブラウザに残ります。もう一度ログインすると続きから使えます。"), tx("ログアウト"))) return;
   try {
     const hub = await import("/assets/hub/account.js");
     await hub.signOutAccount();
   } catch (e) {
     console.error(e);
-    toast("ログアウトできませんでした");
+    toast(tx("ログアウトできませんでした"));
     return;
   }
   cloud.resetSession();
@@ -516,24 +517,24 @@ async function logout() {
 // ---------- 横のメニュー（MD1 の navigation drawer） ----------
 
 const NAV = [
-  { key: "home", href: "#/", icon: "home", label: "ホーム" },
-  { key: "sets", href: "#/sets", icon: "library_books", label: "SK認定コンテンツ" },
-  { key: "mine", href: "#/mine", icon: "bookmarks", label: "マイ単語帳" },
-  { key: "prints", href: "#/prints", icon: "assignment", label: "プリント" },
+  { key: "home", href: "#/", icon: "home", label: tx("ホーム") },
+  { key: "sets", href: "#/sets", icon: "library_books", label: tx("SK認定コンテンツ") },
+  { key: "mine", href: "#/mine", icon: "bookmarks", label: tx("マイ単語帳") },
+  { key: "prints", href: "#/prints", icon: "assignment", label: tx("プリント") },
   null,
-  { sub: "ツール" },
-  { key: "maker", href: "#/maker", icon: "picture_as_pdf", label: "PDF からプリントを作る" },
-  { key: "teach", href: "#/teach", icon: "school", label: "指導者メニュー" }
+  { sub: tx("ツール") },
+  { key: "maker", href: "#/maker", icon: "picture_as_pdf", label: tx("PDF からプリントを作る") },
+  { key: "teach", href: "#/teach", icon: "school", label: tx("指導者メニュー") }
 ];
 // 先生・総合管理者のプロファイル: 指導者メニューと、先生用の教材（マイ単語帳・プリントはプロファイルごとに別）だけ
 const STAFF_NAV = [
-  { key: "home", href: "#/", icon: "school", label: "指導者メニュー" },
-  { key: "sets", href: "#/sets", icon: "library_books", label: "SK認定コンテンツ" },
-  { key: "mine", href: "#/mine", icon: "bookmarks", label: "マイ単語帳" },
-  { key: "prints", href: "#/prints", icon: "assignment", label: "プリント" },
+  { key: "home", href: "#/", icon: "school", label: tx("指導者メニュー") },
+  { key: "sets", href: "#/sets", icon: "library_books", label: tx("SK認定コンテンツ") },
+  { key: "mine", href: "#/mine", icon: "bookmarks", label: tx("マイ単語帳") },
+  { key: "prints", href: "#/prints", icon: "assignment", label: tx("プリント") },
   null,
-  { sub: "ツール" },
-  { key: "maker", href: "#/maker", icon: "picture_as_pdf", label: "PDF からプリントを作る" }
+  { sub: tx("ツール") },
+  { key: "maker", href: "#/maker", icon: "picture_as_pdf", label: tx("PDF からプリントを作る") }
 ];
 const drawer = document.getElementById("drawer");
 const scrim = document.getElementById("scrim");
@@ -546,7 +547,7 @@ let activeNav = null;
 // いま使っているプロファイル。個人なら null、クラスのプロファイルなら { cid, className, profileName }
 let ctxInfo = null;
 const CLASS_NAV = [
-  { key: "home", href: "#/", icon: "home", label: "ホーム" },
+  { key: "home", href: "#/", icon: "home", label: tx("ホーム") },
   null,
   ...Object.entries(GROUPS).map(([k, g]) => ({ key: k, href: `#/?k=${k}`, icon: g.icon, label: g.name }))
 ];
@@ -564,7 +565,7 @@ async function refreshCtx() {
       const pid = o ? cloud.linkPid(o, role) : "";
       const person = pid ? await cloud.myPerson(sid, pid) : null;
       if (!o || !person) { ctxInfo = null; cloud.setActiveClass(""); return; }
-      ctxInfo = { cid, org: true, sid, personId: pid, role, staff: role === "teacher", className: o.schoolName || "学校", profileName: person.name, suspended: person.status === "suspended" };
+      ctxInfo = { cid, org: true, sid, personId: pid, role, staff: role === "teacher", className: o.schoolName || tx("学校"), profileName: person.name, suspended: person.status === "suspended" };
       return;
     }
     if (cloud.isStaffCtx(cid)) {
@@ -586,7 +587,7 @@ async function orgProfiles() {
   // 同じ学校で、先生と生徒の両方のとき、プロファイルも 2 つ（主な役割は org-<学校の ID>、もう一方は org-<学校の ID>:<役割>）
   return Promise.all(orgs.flatMap((o) => cloud.linkRoles(o).map(async (role) => {
     const p = await cloud.myPerson(o.id, cloud.linkPid(o, role)).catch(() => null);
-    return { id: role === o.role ? `org-${o.id}` : `org-${o.id}:${role}`, sid: o.id, role, schoolName: o.schoolName || "学校", name: p ? p.name : "" };
+    return { id: role === o.role ? `org-${o.id}` : `org-${o.id}:${role}`, sid: o.id, role, schoolName: o.schoolName || tx("学校"), name: p ? p.name : "" };
   }))).then((l) => l.filter((x) => x.name));
 }
 // 従来のクラスのプロファイル。組織モデルに移されたクラスは、学校のプロファイルに入るので、ここには出さない
@@ -596,13 +597,13 @@ async function legacyClassProfiles() {
   return list.filter((c, i) => !moved[i]);
 }
 async function openProfileSwitcher() {
-  if (!auth || auth.status !== "ready") { toast("ログインしてから切り替えられます"); return; }
+  if (!auth || auth.status !== "ready") { toast(tx("ログインしてから切り替えられます")); return; }
   let classes = [], staff = [], orgs = [];
   try { [classes, staff, orgs] = await Promise.all([legacyClassProfiles(), cloud.staffProfiles().catch(() => []), orgProfiles()]); } catch (e) { toast(cloud.explain(e)); return; }
   const cur = cloud.activeClass();
-  const options = [["", `個人（${auth.name}）`], ...orgs.map((o) => [o.id, `${o.name}（${o.schoolName}・${o.role === "teacher" ? "先生" : "生徒"}）`]), ...staff.map((p) => [p.id, `${p.name}（${p.orgName}）`]), ...classes.map((c) => [c.id, `${c.profileName || c.name}（${c.name}）`])];
-  const d = choiceDialog("プロファイルを切り替え", options, cur, (v) => { cloud.setActiveClass(v); });
-  d.querySelector(".radio-list").after(h("p", { class: "muted small" }, classes.length || staff.length || orgs.length ? "組織（学校・クラス・先生）のプロファイルの学習の記録は、オンラインに保存され、どの端末でも同じものを使えます。クラスのプロファイルでは、そのクラスの課題だけが表示されます。" : "組織のプロファイルはまだありません。「クラス」で専用コードで参加すると、クラスのプロファイルが加わります。先生・総合管理者は、指導者メニューでコードを入れると加わります。"));
+  const options = [["", tx("個人（{name}）", { name: auth.name })], ...orgs.map((o) => [o.id, tx("{name}（{schoolName}・{n}）", { name: o.name, schoolName: o.schoolName, n: o.role === "teacher" ? tx("先生") : tx("生徒") })]), ...staff.map((p) => [p.id, `${p.name}（${p.orgName}）`]), ...classes.map((c) => [c.id, `${c.profileName || c.name}（${c.name}）`])];
+  const d = choiceDialog(tx("プロファイルを切り替え"), options, cur, (v) => { cloud.setActiveClass(v); });
+  d.querySelector(".radio-list").after(h("p", { class: "muted small" }, classes.length || staff.length || orgs.length ? tx("組織（学校・クラス・先生）のプロファイルの学習の記録は、オンラインに保存され、どの端末でも同じものを使えます。クラスのプロファイルでは、そのクラスの課題だけが表示されます。") : tx("組織のプロファイルはまだありません。「クラス」で専用コードで参加すると、クラスのプロファイルが加わります。先生・総合管理者は、指導者メニューでコードを入れると加わります。")));
 }
 document.addEventListener("sk-study:ctx", async () => {
   await refreshCtx();
@@ -623,23 +624,23 @@ function drawDrawer() {
     : h("span", { class: "drawer-avatar", style: !ctxInfo && color ? `background:${color}` : null, "aria-hidden": "true" }, ctxInfo ? shown.slice(0, 1) || "?" : hint.letter || name.slice(0, 1) || "?");
   const item = (n) => h("a", { class: "drawer-item", href: n.href, "data-nav": n.key }, icon(n.icon), h("span", null, n.label));
   const canSwitch = !!auth && auth.status === "ready";
-  const who = h(canSwitch ? "button" : "div", canSwitch ? { type: "button", class: `drawer-head drawer-switch${ctxInfo ? " is-class" : ""}`, "aria-label": "プロファイルを切り替え", onclick: openProfileSwitcher } : { class: `drawer-head${ctxInfo ? " is-class" : ""}` },
+  const who = h(canSwitch ? "button" : "div", canSwitch ? { type: "button", class: `drawer-head drawer-switch${ctxInfo ? " is-class" : ""}`, "aria-label": tx("プロファイルを切り替え"), onclick: openProfileSwitcher } : { class: `drawer-head${ctxInfo ? " is-class" : ""}` },
     avatar,
     h("div", { class: "drawer-who" },
-      h("strong", null, shown || "SK Hub Systems アカウント"),
-      ctxInfo ? h("span", null, `${ctxInfo.staff || ctxInfo.org ? "" : "クラス: "}${ctxInfo.className}`) : email ? h("span", null, email) : null),
+      h("strong", null, shown || tx("SK Hub Systems アカウント")),
+      ctxInfo ? h("span", null, `${ctxInfo.staff || ctxInfo.org ? "" : (tx("クラス:") + " ")}${ctxInfo.className}`) : email ? h("span", null, email) : null),
     canSwitch ? icon("unfold_more", "drawer-switch-icon") : null);
   // 個人には指導者メニューを出さない（先生・総合管理者は、自分のプロファイルに切り替えて使う）
-  const nav = ctxInfo ? (ctxInfo.staff ? (ctxInfo.cid === "admin" ? STAFF_NAV.map((n, i) => (i === 0 ? { ...n, icon: "admin_panel_settings", label: "総合管理者" } : n)) : STAFF_NAV) : CLASS_NAV) : NAV.filter((n) => !n || n.key !== "teach");
+  const nav = ctxInfo ? (ctxInfo.staff ? (ctxInfo.cid === "admin" ? STAFF_NAV.map((n, i) => (i === 0 ? { ...n, icon: "admin_panel_settings", label: tx("総合管理者") } : n)) : STAFF_NAV) : CLASS_NAV) : NAV.filter((n) => !n || n.key !== "teach");
   drawer.replaceChildren(
     who,
     h("div", { class: "drawer-list" },
       nav.map((n) => (n === null ? h("hr", { class: "drawer-divider" }) : n.sub ? h("p", { class: "drawer-sub" }, n.sub) : item(n))),
       h("hr", { class: "drawer-divider" }),
-      h("a", { class: "drawer-item", href: "#/settings", "data-nav": "settings" }, icon("settings"), h("span", null, "設定")),
-      h("a", { class: "drawer-item", href: "#/account", "data-nav": "account" }, icon("manage_accounts"), h("span", null, "アカウント")),
-      h("button", { type: "button", class: "drawer-item", onclick: logout }, icon("logout"), h("span", null, "ログアウト"))),
-    h("p", { class: "drawer-foot" }, ctxInfo ? `${ctxInfo.org ? (ctxInfo.staff ? "学校の先生のプロファイル。" : "学校の生徒のプロファイル。紐づいたすべてのクラスの課題を表示します。") : ctxInfo.staff ? "先生・総合管理者のプロファイル。" : "クラスのプロファイルでは、そのクラスの課題だけを表示します。"}学習の記録はオンラインに保存されます。` : "学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。"));
+      h("a", { class: "drawer-item", href: "#/settings", "data-nav": "settings" }, icon("settings"), h("span", null, tx("設定"))),
+      h("a", { class: "drawer-item", href: "#/account", "data-nav": "account" }, icon("manage_accounts"), h("span", null, tx("アカウント"))),
+      h("button", { type: "button", class: "drawer-item", onclick: logout }, icon("logout"), h("span", null, tx("ログアウト")))),
+    h("p", { class: "drawer-foot" }, ctxInfo ? tx("{n}学習の記録はオンラインに保存されます。", { n: ctxInfo.org ? (ctxInfo.staff ? tx("学校の先生のプロファイル。") : tx("学校の生徒のプロファイル。紐づいたすべてのクラスの課題を表示します。")) : ctxInfo.staff ? tx("先生・総合管理者のプロファイル。") : tx("クラスのプロファイルでは、そのクラスの課題だけを表示します。") }) : tx("学習の記録・マイ単語帳・プリントは、このブラウザの中に保存されます。")));
   markActive();
 }
 function setActive(key) { activeNav = key; markActive(); }
@@ -732,11 +733,11 @@ function choiceDialog(title, options, value, onPick) {
   return d;
 }
 
-const GOALS = [[10, "10 問"], [20, "20 問"], [30, "30 問"], [50, "50 問"], [100, "100 問"]];
-const SOONS = [[1, "1 日前から"], [2, "2 日前から"], [3, "3 日前から"], [5, "5 日前から"], [7, "7 日前から"]];
-const THEMES = [["auto", "端末の設定にあわせる"], ["light", "ライト"], ["dark", "ダーク"]];
-const TEXT_SIZES = [["small", "小さめ"], ["normal", "ふつう"], ["large", "大きめ"]];
-const MOTIONS = [["auto", "端末の設定にあわせる"], ["reduce", "動きを減らす"]];
+const GOALS = [[10, tx("10 問")], [20, tx("20 問")], [30, tx("30 問")], [50, tx("50 問")], [100, tx("100 問")]];
+const SOONS = [[1, tx("1 日前から")], [2, tx("2 日前から")], [3, tx("3 日前から")], [5, tx("5 日前から")], [7, tx("7 日前から")]];
+const THEMES = [["auto", tx("端末の設定にあわせる")], ["light", tx("ライト")], ["dark", tx("ダーク")]];
+const TEXT_SIZES = [["small", tx("小さめ")], ["normal", tx("ふつう")], ["large", tx("大きめ")]];
+const MOTIONS = [["auto", tx("端末の設定にあわせる")], ["reduce", tx("動きを減らす")]];
 
 // 見た目の設定（テーマ・文字の大きさ・動き）を画面に反映する。はじめと、設定を変えたときに呼ぶ
 //   テーマは、サイト共通の sk_theme（mode）に入れる。auto のときは data-theme を外して、端末の設定にしたがう
@@ -762,7 +763,7 @@ const motionReduced = () => motionOff.matches || store.getPrefs().motion === "re
 // 学習の記録（いまのプロファイル）をファイルに書き出す
 function exportRecords() {
   const data = {
-    app: "SK Study", exportedAt: new Date().toISOString(), profile: ctxInfo ? ctxInfo.profileName : "個人",
+    app: "SK Study", exportedAt: new Date().toISOString(), profile: ctxInfo ? ctxInfo.profileName : tx("個人"),
     records: store.snapshotRecords(), settings: store.getPrefs()
   };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
@@ -774,7 +775,7 @@ function exportRecords() {
 }
 
 function renderSettings() {
-  document.title = "設定 - SK Study";
+  document.title = tx("設定 - SK Study");
   const root = h("div", { class: "settings" });
   const group = (title, ...rows) => h("section", { class: "settings-group" }, title ? h("h2", null, title) : null, ...rows.filter(Boolean));
 
@@ -790,36 +791,36 @@ function renderSettings() {
     const set = (patch) => { store.setPrefs(patch); applyPrefs(); draw(); };
     const pick = (label, opts, value, key, num = false) => choiceRow(label, find(opts, value), () => choiceDialog(label, opts, value, (v) => set({ [key]: num ? Number(v) : v })));
     const rows = [
-      group("学習",
-        pick("問題の数", COUNTS, prefs.count, "count", true),
-        pick("問題の形式", FORMATS, prefs.format, "format"),
-        pick("1 日の目標", GOALS, prefs.dailyGoal, "dailyGoal", true))
+      group(tx("学習"),
+        pick(tx("問題の数"), COUNTS, prefs.count, "count", true),
+        pick(tx("問題の形式"), FORMATS, prefs.format, "format"),
+        pick(tx("1 日の目標"), GOALS, prefs.dailyGoal, "dailyGoal", true))
     ];
 
     if (ctxInfo) {
-      rows.push(divider(), group(ctxInfo.staff ? "指導者のホーム" : "クラスのホーム",
-        pick(ctxInfo.staff ? "締め切りが近い配信を知らせる" : "締め切りが近い課題を知らせる", SOONS, prefs.soonDays, "soonDays", true)));
+      rows.push(divider(), group(ctxInfo.staff ? tx("指導者のホーム") : tx("クラスのホーム"),
+        pick(ctxInfo.staff ? tx("締め切りが近い配信を知らせる") : tx("締め切りが近い課題を知らせる"), SOONS, prefs.soonDays, "soonDays", true)));
     }
 
-    rows.push(divider(), group("表示",
-      choiceRow("テーマ", find(THEMES, readTheme()), () => choiceDialog("テーマ", THEMES, readTheme(), (v) => { setTheme(v); draw(); })),
-      pick("文字の大きさ", TEXT_SIZES, prefs.textSize, "textSize"),
-      pick("画面の動き", MOTIONS, prefs.motion, "motion")));
+    rows.push(divider(), group(tx("表示"),
+      choiceRow(tx("テーマ"), find(THEMES, readTheme()), () => choiceDialog(tx("テーマ"), THEMES, readTheme(), (v) => { setTheme(v); draw(); })),
+      pick(tx("文字の大きさ"), TEXT_SIZES, prefs.textSize, "textSize"),
+      pick(tx("画面の動き"), MOTIONS, prefs.motion, "motion")));
 
     if (tts.supported) {
       const s = tts.getSettings();
-      const auto = h("input", { type: "checkbox", checked: s.auto, "aria-label": "自動で読み上げる",
+      const auto = h("input", { type: "checkbox", checked: s.auto, "aria-label": tx("自動で読み上げる"),
         onchange: (e) => { tts.saveSettings({ auto: e.target.checked }); draw(); } });
       const voiceRows = VOICE_LANGS.map(([lang, name, sample]) => {
         const list = tts.voicesFor(lang);
         const sk = tts.hasSkVoice(lang) ? tts.SK_VOICES : [];
-        if (!list.length && !sk.length) return choiceRow(`${name}の声`, "この端末には入っていません", null, true);
+        if (!list.length && !sk.length) return choiceRow(tx("{name}の声", { name }), tx("この端末には入っていません"), null, true);
         const current = s.voices[lang];
-        const auto = list.length ? `おまかせ（${list[0].name}）` : "おまかせ";
-        const opts = [["", auto], ...sk, ...list.map((v) => [v.name, `${v.name}${v.localService ? "" : "（ネット）"}`])];
+        const auto = list.length ? tx("おまかせ（{name}）", { name: list[0].name }) : tx("おまかせ");
+        const opts = [["", auto], ...sk, ...list.map((v) => [v.name, `${v.name}${v.localService ? "" : tx("（ネット）")}`])];
         const shown = opts.some(([v]) => v && v === current) ? current : null;
         const status = shown ? opts.find(([v]) => v === shown)[1] : auto;
-        return choiceRow(`${name}の声`, status, () => choiceDialog(`${name}の声`, opts, shown || "", (v) => {
+        return choiceRow(tx("{name}の声", { name }), status, () => choiceDialog(tx("{name}の声", { name }), opts, shown || "", (v) => {
           const saved = { ...tts.getSettings().voices };
           if (v) saved[lang] = v; else delete saved[lang];
           tts.saveSettings({ voices: saved });
@@ -829,50 +830,50 @@ function renderSettings() {
       });
       rows.push(
         divider(),
-        group("読み上げ",
+        group(tx("読み上げ"),
           h("label", { class: "setting-item switch-row" }, auto,
-            h("span", null, h("strong", null, "自動で読み上げ"), h("small", null, "外国語を声で再生する"))),
-          choiceRow("速さ", find(tts.RATES, s.rate), () => choiceDialog("読み上げの速さ", tts.RATES, s.rate, (v) => { tts.saveSettings({ rate: Number(v) }); draw(); })),
+            h("span", null, h("strong", null, tx("自動で読み上げ")), h("small", null, tx("外国語を声で再生する")))),
+          choiceRow(tx("速さ"), find(tts.RATES, s.rate), () => choiceDialog(tx("読み上げの速さ"), tts.RATES, s.rate, (v) => { tts.saveSettings({ rate: Number(v) }); draw(); })),
           ...voiceRows));
     }
 
     const o = store.overall();
-    rows.push(divider(), group("学習の記録",
-      choiceRow("記録を書き出す", `覚えた ${o.mastered} 語・連続 ${o.streak} 日。ファイル（JSON）に保存します`, exportRecords),
-      choiceRow("記録を消す", ctxInfo ? "クラス・先生のプロファイルの記録は、オンラインに保存されているので消せません" : "覚えぐあい・学習した日・小テストの記録を消します", async () => {
-        if (!await confirmDialog("学習の記録を消しますか？", "覚えぐあい・学習した日・小テストの記録がすべて消えます。マイ単語帳やプリントは消えません。元に戻せません。", "消す", true)) return;
+    rows.push(divider(), group(tx("学習の記録"),
+      choiceRow(tx("記録を書き出す"), tx("覚えた {mastered} 語・連続 {streak} 日。ファイル（JSON）に保存します", { mastered: o.mastered, streak: o.streak }), exportRecords),
+      choiceRow(tx("記録を消す"), ctxInfo ? tx("クラス・先生のプロファイルの記録は、オンラインに保存されているので消せません") : tx("覚えぐあい・学習した日・小テストの記録を消します"), async () => {
+        if (!await confirmDialog(tx("学習の記録を消しますか？"), tx("覚えぐあい・学習した日・小テストの記録がすべて消えます。マイ単語帳やプリントは消えません。元に戻せません。"), tx("消す"), true)) return;
         store.clearRecords();
-        toast("学習の記録を消しました");
+        toast(tx("学習の記録を消しました"));
         draw();
       }, !!ctxInfo)));
 
-    rows.push(divider(), group("アカウント",
-      linkRow("アカウント", "名前・プロファイル・参加しているクラス", "#/account"),
-      choiceRow("プロファイルを切り替える", ctxInfo ? `いま: ${ctxInfo.profileName}（${ctxInfo.className}）` : "いま: 個人", openProfileSwitcher),
-      choiceRow("ログアウト", "このブラウザの学習の記録・単語帳は残ります", logout)));
+    rows.push(divider(), group(tx("アカウント"),
+      linkRow(tx("アカウント"), tx("名前・プロファイル・参加しているクラス"), "#/account"),
+      choiceRow(tx("プロファイルを切り替える"), ctxInfo ? tx("いま: {profileName}（{className}）", { profileName: ctxInfo.profileName, className: ctxInfo.className }) : tx("いま: 個人"), openProfileSwitcher),
+      choiceRow(tx("ログアウト"), tx("このブラウザの学習の記録・単語帳は残ります"), logout)));
 
-    rows.push(divider(), group("アプリ",
-      linkRow("アプリ情報", "更新・バージョン・利用規約", "#/about")));
+    rows.push(divider(), group(tx("アプリ"),
+      linkRow(tx("アプリ情報"), tx("更新・バージョン・利用規約"), "#/about")));
     root.replaceChildren(...rows);
   }
   draw();
   const stopWatch = tts.supported ? tts.onVoicesChanged(draw) : null;
   const leave = () => { window.removeEventListener("hashchange", leave); if (stopWatch) stopWatch(); tts.stop(); };
   window.addEventListener("hashchange", leave);
-  app.append(pageHead("設定"), root);
+  app.append(pageHead(tx("設定")), root);
 }
 
 // ---------- アプリ情報（Nagi の「このアプリについて」と同じ内容・見た目。設定から開く） ----------
 const APP_VERSION = "1.0";
 
 function renderAbout() {
-  document.title = "アプリ情報 - SK Study";
+  document.title = tx("アプリ情報 - SK Study");
   const mark = icon("check");
-  const status = h("p", { class: "about-status-title" }, "SK Study は最新です");
+  const status = h("p", { class: "about-status-title" }, tx("SK Study は最新です"));
   const box = h("div", { class: "setting-item static about-status" }, h("span", { class: "about-status__mark", "aria-hidden": "true" }, mark));
   const version = h("small", null, APP_VERSION);
   let found = false;
-  const btn = h("button", { type: "button", class: "outlined-btn about-action" }, "更新を確認");
+  const btn = h("button", { type: "button", class: "outlined-btn about-action" }, tx("更新を確認"));
   const setState = (state, text) => {
     box.classList.toggle("is-checking", state === "checking");
     box.classList.toggle("is-new", state === "new");
@@ -882,27 +883,27 @@ function renderAbout() {
   };
   btn.addEventListener("click", () => {
     if (found) { location.reload(); return; }
-    if (!("serviceWorker" in navigator)) { setState("error", "この端末では更新を確認できません"); return; }
+    if (!("serviceWorker" in navigator)) { setState("error", tx("この端末では更新を確認できません")); return; }
     btn.disabled = true;
-    setState("checking", "更新を確認しています…");
+    setState("checking", tx("更新を確認しています…"));
     navigator.serviceWorker.getRegistration().then((reg) => {
       if (!reg) throw new Error("no registration");
       return reg.update().then(() => reg);
     }).then((reg) => {
       found = !!(reg.installing || reg.waiting);
-      if (found) { setState("new", "新しい版が見つかりました"); btn.textContent = "再読み込み"; }
-      else setState("ok", "SK Study は最新です");
-    }).catch(() => setState("error", "更新を確認できませんでした。インターネットの接続を確かめてください"))
+      if (found) { setState("new", tx("新しい版が見つかりました")); btn.textContent = tx("再読み込み"); }
+      else setState("ok", tx("SK Study は最新です"));
+    }).catch(() => setState("error", tx("更新を確認できませんでした。インターネットの接続を確かめてください")))
       .then(() => { btn.disabled = false; });
   });
-  box.append(h("div", null, status, h("small", null, "更新は、開いたときに自動で確かめて反映します。")), btn);
+  box.append(h("div", null, status, h("small", null, tx("更新は、開いたときに自動で確かめて反映します。"))), btn);
 
   // バージョン。「1.0（ビルド 41）」… ビルドは、この端末に入っている Service Worker のキャッシュの番号（study/sw.js の CACHE_NAME）
   if (window.caches && caches.keys) {
     caches.keys().then((names) => {
       let build = 0;
       names.forEach((n) => { const m = /^study-v(\d+)$/.exec(n); if (m) build = Math.max(build, +m[1]); });
-      if (build) version.textContent = `${APP_VERSION}（ビルド ${build}）`;
+      if (build) version.textContent = tx("{APP_VERSION}（ビルド {build}）", { APP_VERSION, build });
     }).catch(() => {});
   }
 
@@ -910,21 +911,21 @@ function renderAbout() {
   const link = (title, text, href, label) => h("div", { class: "setting-item static about-link" },
     h("div", null, h("strong", null, title), h("small", null, text)),
     h("a", { class: "outlined-btn about-action", href, target: "_blank", rel: "noopener" }, label));
-  app.append(pageHead("アプリ情報"), h("div", { class: "settings about" },
+  app.append(pageHead(tx("アプリ情報")), h("div", { class: "settings about" },
     h("div", { class: "about-header" },
       h("img", { class: "about-icon", src: "ico/icon-192.png", alt: "", width: 72, height: 72 }),
       h("div", null, h("p", { class: "about-name" }, "SK Study"),
-        h("p", { class: "about-description" }, "単語を覚えたり、プリントを作ったり、クラスで課題を出したり受けたりできる学習アプリです。先行公開版。招待した方だけが使えます。"))),
+        h("p", { class: "about-description" }, tx("単語を覚えたり、プリントを作ったり、クラスで課題を出したり受けたりできる学習アプリです。先行公開版。招待した方だけが使えます。")))),
     box,
-    info("バージョン", version),
-    link("利用規約・プライバシーポリシー", "SK Study は SK 利用規約・SK プライバシーポリシーのもとで提供しています。", "/policies/", "開く"),
-    link("SK Study について", "使い方と、できること", "/products/study/", "詳しく")));
+    info(tx("バージョン"), version),
+    link(tx("利用規約・プライバシーポリシー"), tx("SK Study は SK 利用規約・SK プライバシーポリシーのもとで提供しています。"), "/policies/", tx("開く")),
+    link(tx("SK Study について"), tx("使い方と、できること"), "/products/study/", tx("詳しく"))));
 }
 
 // ---------- アカウント（SK Study の中の画面。名前・プロファイル・参加しているクラス・ログアウト） ----------
 
 async function renderAccount() {
-  document.title = "アカウント - SK Study";
+  document.title = tx("アカウント - SK Study");
   const hint = readHint() || {};
   const name = (auth && auth.name) || hint.name || "";
   const email = hint.email || (auth && auth.user && auth.user.email) || "";
@@ -934,38 +935,38 @@ async function renderAccount() {
     ? h("img", { class: "acct-avatar", src: photo, alt: "", referrerpolicy: "no-referrer" })
     : h("span", { class: "acct-avatar", style: color ? `background:${color}` : null, "aria-hidden": "true" }, hint.letter || name.slice(0, 1) || "?");
   const body = h("div", { class: "acct" });
-  app.append(pageHead("アカウント", "SK Study で使っているアカウントと、プロファイルの管理です。"), body);
+  app.append(pageHead(tx("アカウント"), tx("SK Study で使っているアカウントと、プロファイルの管理です。")), body);
 
   const o = store.overall();
   const head = h("section", { class: "mk-card acct-card" },
     h("div", { class: "acct-head" }, avatar,
-      h("div", { class: "acct-who" }, h("strong", null, name || "SK Hub Systems アカウント"), email ? h("span", null, email) : null,
-        h("small", null, "SK Hub Systems アカウントでログイン中"))),
+      h("div", { class: "acct-who" }, h("strong", null, name || tx("SK Hub Systems アカウント")), email ? h("span", null, email) : null,
+        h("small", null, tx("SK Hub Systems アカウントでログイン中")))),
     h("ul", { class: "acct-facts" },
-      h("li", null, icon("local_fire_department"), h("span", null, h("strong", null, `${o.streak} 日`), "連続で学習")),
-      h("li", null, icon("verified"), h("span", null, h("strong", null, `${o.mastered} 語`), "記憶済み")),
-      h("li", null, icon("task_alt"), h("span", null, h("strong", null, `${o.today} 問`), "今日答えた"))));
+      h("li", null, icon("local_fire_department"), h("span", null, h("strong", null, tx("{streak} 日", { streak: o.streak })), tx("連続で学習"))),
+      h("li", null, icon("verified"), h("span", null, h("strong", null, tx("{mastered} 語", { mastered: o.mastered })), tx("記憶済み"))),
+      h("li", null, icon("task_alt"), h("span", null, h("strong", null, tx("{today} 問", { today: o.today })), tx("今日答えた")))));
   body.append(head);
 
-  const profiles = h("section", { class: "mk-card" }, h("h2", null, icon("switch_account"), "プロファイル"), h("p", { class: "muted small" }, "確認中…"));
+  const profiles = h("section", { class: "mk-card" }, h("h2", null, icon("switch_account"), tx("プロファイル")), h("p", { class: "muted small" }, tx("確認中…")));
   body.append(profiles);
   // コードを入れる（学校の生徒・先生: 学校のコード / 従来: クラスの参加コード・指導者のコード）。入れると、そのプロファイルが加わる
   body.append(h("section", { class: "mk-card" },
-    h("h2", null, icon("key"), "コードを入れる"),
-    h("p", { class: "muted small" }, "学校から渡された専用のコードを入れると、学校のプロファイルが加わります。クラスは、学校の先生が決めて、自動で入ります。"),
+    h("h2", null, icon("key"), tx("コードを入れる")),
+    h("p", { class: "muted small" }, tx("学校から渡された専用のコードを入れると、学校のプロファイルが加わります。クラスは、学校の先生が決めて、自動で入ります。")),
     h("div", { class: "mk-row" },
-      button("filled", "学校のコード", "apartment", () => openOrgJoinDialog(printUi)),
-      button("outlined", "クラスの参加コード（従来）", "groups", () => openJoinDialog(printUi)),
-      button("outlined", "総合管理者のコード", "school", () => openStaffCodeDialog(printUi, () => document.dispatchEvent(new CustomEvent("sk-study:ctx")))))));
+      button("filled", tx("学校のコード"), "apartment", () => openOrgJoinDialog(printUi)),
+      button("outlined", tx("クラスの参加コード（従来）"), "groups", () => openJoinDialog(printUi)),
+      button("outlined", tx("総合管理者のコード"), "school", () => openStaffCodeDialog(printUi, () => document.dispatchEvent(new CustomEvent("sk-study:ctx")))))));
   body.append(h("section", { class: "mk-card" },
-    h("h2", null, icon("manage_accounts"), "アカウントの操作"),
+    h("h2", null, icon("manage_accounts"), tx("アカウントの操作")),
     h("div", { class: "mk-row" },
-      linkButton("outlined", "設定", "settings", "#/settings"),
-      button("outlined", "学習の記録を書き出す", "download", exportRecords),
-      button("outlined", "ログアウト", "logout", logout, { "data-danger": "" })),
-    h("p", { class: "muted small" }, "メールアドレスやパスワードの変更は、SK Hub Systems アカウントで行います。", h("a", { href: "/account/" }, "SK Hub Systems アカウントを開く"), "。")));
+      linkButton("outlined", tx("設定"), "settings", "#/settings"),
+      button("outlined", tx("学習の記録を書き出す"), "download", exportRecords),
+      button("outlined", tx("ログアウト"), "logout", logout, { "data-danger": "" })),
+    h("p", { class: "muted small" }, tx("メールアドレスやパスワードの変更は、SK Hub Systems アカウントで行います。"), h("a", { href: "/account/" }, tx("SK Hub Systems アカウントを開く")), "。")));
 
-  if (!auth || auth.status !== "ready") { profiles.querySelector("p").textContent = "オフラインのため、プロファイルは表示できません。"; return; }
+  if (!auth || auth.status !== "ready") { profiles.querySelector("p").textContent = tx("オフラインのため、プロファイルは表示できません。"); return; }
   const hash = location.hash;
   let classes = [], staff = [], orgs = [];
   try { [classes, staff, orgs] = await Promise.all([legacyClassProfiles(), cloud.staffProfiles().catch(() => []), orgProfiles()]); } catch (e) { profiles.querySelector("p").textContent = cloud.explain(e); return; }
@@ -974,23 +975,23 @@ async function renderAccount() {
   const row = (id, ic, title, sub) => h("div", { class: "set-row" },
     h("span", { class: "thumb class-thumb", "aria-hidden": "true" }, icon(ic)),
     h("div", { class: "set-row-body" }, h("span", { class: "set-row-link" }, h("span", { class: "set-row-sub" }, h("span", null, sub)), h("span", { class: "set-row-title" }, title))),
-    h("div", { class: "set-row-end" }, cur === id ? h("span", { class: "dh-pill ok" }, icon("check"), "使用中") : button("tonal", "切り替える", null, () => cloud.setActiveClass(id))));
-  profiles.replaceChildren(h("h2", null, icon("switch_account"), `プロファイル（${1 + orgs.length + staff.length + classes.length}）`),
-    h("p", { class: "muted small" }, "プロファイルごとに、画面・教材・学習の記録が分かれます。クラス・先生のプロファイルの記録は、オンラインに保存されます。"),
+    h("div", { class: "set-row-end" }, cur === id ? h("span", { class: "dh-pill ok" }, icon("check"), tx("使用中")) : button("tonal", tx("切り替える"), null, () => cloud.setActiveClass(id))));
+  profiles.replaceChildren(h("h2", null, icon("switch_account"), tx("プロファイル（{n}）", { n: 1 + orgs.length + staff.length + classes.length })),
+    h("p", { class: "muted small" }, tx("プロファイルごとに、画面・教材・学習の記録が分かれます。クラス・先生のプロファイルの記録は、オンラインに保存されます。")),
     h("div", { class: "set-list flat" },
-      row("", "person", name || "個人", "個人（この端末に保存）"),
-      orgs.map((o) => row(o.id, o.role === "teacher" ? "school" : "apartment", o.name, `${o.schoolName}・${o.role === "teacher" ? "先生" : "生徒"}`)),
+      row("", "person", name || tx("個人"), tx("個人（この端末に保存）")),
+      orgs.map((o) => row(o.id, o.role === "teacher" ? "school" : "apartment", o.name, tx("{schoolName}・{n}", { schoolName: o.schoolName, n: o.role === "teacher" ? tx("先生") : tx("生徒") }))),
       staff.map((p) => row(p.id, p.id === "admin" ? "admin_panel_settings" : "school", p.name, p.orgName)),
-      classes.map((c) => row(c.id, "groups", c.profileName || c.name, `クラス: ${c.name}`))),
+      classes.map((c) => row(c.id, "groups", c.profileName || c.name, tx("クラス: {name}", { name: c.name })))),
     null);
 }
 
 // ---------- ホーム ----------
 
 function sourceLabel(set) {
-  if (set.source === "sk") return set.level ? `SK ・ ${set.level}` : "SK";
-  if (set.source === "shared") return "共有された単語帳";
-  return "マイ単語帳";
+  if (set.source === "sk") return set.level ? tx("SK ・ {level}", { level: set.level }) : "SK";
+  if (set.source === "shared") return tx("共有された単語帳");
+  return tx("マイ単語帳");
 }
 
 // 単語セットの行。start があれば右に「学習」ボタンを出す
@@ -1004,11 +1005,11 @@ function setRow(set, { start = false } = {}) {
         h("span", { class: "set-row-sub" }, langBadge(lang), h("span", null, sourceLabel(set))),
         h("span", { class: "set-row-title" }, set.title)),
       h("span", { class: "set-row-meta" },
-        h("span", null, icon("format_list_bulleted"), `${s.total} 語`),
-        s.due ? h("span", { class: "due" }, icon("event_repeat"), `復習 ${s.due}`) : null)),
+        h("span", null, icon("format_list_bulleted"), tx("{total} 語", { total: s.total })),
+        s.due ? h("span", { class: "due" }, icon("event_repeat"), tx("復習 {due}", { due: s.due })) : null)),
     h("div", { class: "set-row-end" },
       ring(s.memory / 100, { size: 52, stroke: 5, color: s.memory >= 100 ? "var(--st-mastered)" : "var(--primary)", label: `${s.memory}%` }),
-      start ? button("pill", "学習", null, () => go(`/learn/${encodeURIComponent(set.id)}?mode=learn`)) : null));
+      start ? button("pill", tx("学習"), null, () => go(`/learn/${encodeURIComponent(set.id)}?mode=learn`)) : null));
 }
 
 // カードの形の単語セット（ホームの「続きから」「おすすめ」）
@@ -1024,11 +1025,11 @@ function setCard(set) {
       h("span", { class: "set-row-sub" }, langBadge(lang), h("span", null, sourceLabel(set))),
       h("span", { class: "set-card-title" }, set.title),
       h("span", { class: "set-row-meta" },
-        h("span", null, icon("format_list_bulleted"), `${s.total} 語`),
-        s.due ? h("span", { class: "due" }, icon("event_repeat"), `復習 ${s.due}`) : null)),
+        h("span", null, icon("format_list_bulleted"), tx("{total} 語", { total: s.total })),
+        s.due ? h("span", { class: "due" }, icon("event_repeat"), tx("復習 {due}", { due: s.due })) : null)),
     h("div", { class: "set-card-actions" },
-      linkButton("text", "開く", null, href),
-      button("text", "学習する", null, () => go(`/learn/${encodeURIComponent(set.id)}?mode=learn`))));
+      linkButton("text", tx("開く"), null, href),
+      button("text", tx("学習する"), null, () => go(`/learn/${encodeURIComponent(set.id)}?mode=learn`))));
 }
 
 function renderHome() {
@@ -1037,19 +1038,19 @@ function renderHome() {
   const o = store.overall();
   const name = (auth && auth.name) || (readHint() || {}).name || "";
   const hour = new Date().getHours();
-  const hello = hour >= 5 && hour < 11 ? "おはようございます" : hour >= 11 && hour < 18 ? "こんにちは" : "こんばんは";
-  const dateText = new Date().toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "long" });
+  const hello = hour >= 5 && hour < 11 ? tx("おはようございます") : hour >= 11 && hour < 18 ? tx("こんにちは") : tx("こんばんは");
+  const dateText = new Date().toLocaleDateString(locale, { month: "long", day: "numeric", weekday: "long" });
 
   const today = h("section", { class: "today" },
     h("div", { class: "today-main" },
-      h("p", { class: "today-label" }, icon("event_repeat"), "今日の復習"),
-      h("p", { class: "today-count" }, String(due.length), h("small", null, "語")),
+      h("p", { class: "today-label" }, icon("event_repeat"), tx("今日の復習")),
+      h("p", { class: "today-count" }, String(due.length), h("small", null, tx("語"))),
       h("p", { class: "today-sub" },
-        due.length ? "忘れかけたころに復習すると、記憶に残ります。"
-          : o.learned ? "今日の復習はおわりました。新しい単語に進みましょう。"
-            : "SK認定コンテンツを選んで、学習をはじめましょう。")),
-    due.length ? button("filled", "復習する", "play_arrow", () => go("/learn/review?mode=learn"), { class: "filled-btn today-start" })
-      : linkButton("filled", "SK認定コンテンツを選ぶ", "library_books", "#/sets"));
+        due.length ? tx("忘れかけたころに復習すると、記憶に残ります。")
+          : o.learned ? tx("今日の復習はおわりました。新しい単語に進みましょう。")
+            : tx("SK認定コンテンツを選んで、学習をはじめましょう。"))),
+    due.length ? button("filled", tx("復習する"), "play_arrow", () => go("/learn/review?mode=learn"), { class: "filled-btn today-start" })
+      : linkButton("filled", tx("SK認定コンテンツを選ぶ"), "library_books", "#/sets"));
   const startBtn = today.querySelector("a.filled-btn");
   if (startBtn) startBtn.classList.add("today-start");
 
@@ -1072,72 +1073,72 @@ function renderHome() {
   app.append(
     h("header", { class: "home-head" },
       h("p", { class: "home-date" }, dateText),
-      h("h1", null, name ? `${hello}、${name} さん` : hello)),
+      h("h1", null, name ? tx("{hello}、{name} さん", { hello, name }) : hello)),
     h("div", { class: "home-top" },
       today,
       h("div", { class: "stat-grid" },
-        stat("local_fire_department", o.streak, "日", "連続で学習", "fire"),
-        stat("verified", o.mastered, "語", "記憶済み", "good"),
-        stat("task_alt", o.today, "問", "今日答えた", "primary"))),
+        stat("local_fire_department", o.streak, DAY_UNIT, tx("連続で学習"), "fire"),
+        stat("verified", o.mastered, tx("語"), tx("記憶済み"), "good"),
+        stat("task_alt", o.today, tx("問"), tx("今日答えた"), "primary"))),
     h("section", { class: "section" },
       h("div", { class: "section-head" },
-        h("h2", null, started.length ? "続きから" : "おすすめの単語セット"),
-        linkButton("text", "すべて見る", null, "#/sets")),
+        h("h2", null, started.length ? tx("続きから") : tx("おすすめの単語セット")),
+        linkButton("text", tx("すべて見る"), null, "#/sets")),
       h("div", { class: "card-grid" }, picks.map(setCard))),
     h("section", { class: "section" },
-      h("div", { class: "section-head" }, h("h2", null, "ショートカット")),
+      h("div", { class: "section-head" }, h("h2", null, tx("ショートカット"))),
       h("div", { class: "tile-grid" },
-        tile("note_add", "単語帳を作る", "自分だけの単語帳", "#/edit/new"),
-        tile("link", "リンクから追加", "友だちの単語帳を受け取る", openImportDialog),
-        tile("assignment", "プリント", "HTML・PDF のプリントに答える", "#/prints"))));
+        tile("note_add", tx("単語帳を作る"), tx("自分だけの単語帳"), "#/edit/new"),
+        tile("link", tx("リンクから追加"), tx("友だちの単語帳を受け取る"), openImportDialog),
+        tile("assignment", tx("プリント"), tx("HTML・PDF のプリントに答える"), "#/prints"))));
 }
 
 // SK認定コンテンツ（言語でしぼりこむ）
 function renderSets() {
-  document.title = "SK認定コンテンツ - SK Study";
+  document.title = tx("SK認定コンテンツ - SK Study");
   const prefs = store.getPrefs();
-  const filters = [["all", "すべて"], ["en", "英語"], ["ko", "韓国語"], ["zh", "中国語"]];
+  const filters = [["all", tx("すべて")], ["en", tx("英語")], ["ko", tx("韓国語")], ["zh", tx("中国語")]];
   const list = h("div", { class: "set-list" });
-  const chips = h("div", { class: "chips", role: "group", "aria-label": "言語でしぼりこむ" });
+  const chips = h("div", { class: "chips", role: "group", "aria-label": tx("言語でしぼりこむ") });
   function draw(filter) {
     chips.replaceChildren(...filters.map(([key, label]) => h("button", {
       type: "button", class: "chip", "aria-pressed": String(filter === key),
       onclick: () => { store.setPrefs({ filter: key }); draw(key); }
     }, filter === key ? icon("check") : null, label)));
     const sets = store.getSkSets().filter((s) => filter === "all" || s.lang === filter);
-    list.replaceChildren(...(sets.length ? sets.map((s) => setRow(s, { start: true })) : [h("p", { class: "empty" }, "この言語のセットはまだありません。")]));
+    list.replaceChildren(...(sets.length ? sets.map((s) => setRow(s, { start: true })) : [h("p", { class: "empty" }, tx("この言語のセットはまだありません。"))]));
   }
   draw(prefs.filter);
   app.append(
-    pageHead("SK認定コンテンツ", "SK が認定したコンテンツです。「自分用にコピー」すると、自由に編集できます。"),
+    pageHead(tx("SK認定コンテンツ"), tx("SK が認定したコンテンツです。「自分用にコピー」すると、自由に編集できます。")),
     chips, list);
 }
 
 // マイ単語帳（自分で作ったもの・共有リンクで受け取ったもの）
 function renderMine() {
-  document.title = "マイ単語帳 - SK Study";
+  document.title = tx("マイ単語帳 - SK Study");
   const mine = store.getMySets().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   app.append(
-    pageHead("マイ単語帳", "自分で作った単語帳と、共有リンクで受け取った単語帳です。",
-      [button("text", "リンクから追加", "link", openImportDialog), linkButton("filled", "新しく作る", "add", "#/edit/new")]),
+    pageHead(tx("マイ単語帳"), tx("自分で作った単語帳と、共有リンクで受け取った単語帳です。"),
+      [button("text", tx("リンクから追加"), "link", openImportDialog), linkButton("filled", tx("新しく作る"), "add", "#/edit/new")]),
     mine.length ? h("div", { class: "set-list" }, mine.map((s) => setRow(s, { start: true })))
       : h("div", { class: "empty-card" },
         icon("library_add", "empty-icon"),
-        h("p", null, "自分の単語帳を作れます。テストに出る言葉、好きな言語、漢字や理科の用語など、なんでも。"),
-        h("p", { class: "muted" }, "作った単語帳は、リンクで友だちに共有できます。"),
-        linkButton("filled", "新しく作る", "add", "#/edit/new")),
+        h("p", null, tx("自分の単語帳を作れます。テストに出る言葉、好きな言語、漢字や理科の用語など、なんでも。")),
+        h("p", { class: "muted" }, tx("作った単語帳は、リンクで友だちに共有できます。")),
+        linkButton("filled", tx("新しく作る"), "add", "#/edit/new")),
     // MD1 の FAB（スマートフォン）
-    h("a", { class: "fab", href: "#/edit/new", "aria-label": "新しい単語帳を作る", title: "新しい単語帳を作る" }, icon("add")));
+    h("a", { class: "fab", href: "#/edit/new", "aria-label": tx("新しい単語帳を作る"), title: tx("新しい単語帳を作る") }, icon("add")));
 }
 
 function openImportDialog() {
-  const input = h("input", { type: "url", class: "field-input", placeholder: "https://sk-hub.jp/study/#/import/…", "aria-label": "共有リンク" });
-  const d = openDialog("共有リンクから追加",
-    h("div", null, h("p", null, "友だちから受け取った単語帳のリンクを貼りつけてください。"), input),
-    [button("text", "やめる", null, () => d.close()),
-      button("filled", "開く", null, () => {
+  const input = h("input", { type: "url", class: "field-input", placeholder: "https://sk-hub.jp/study/#/import/…", "aria-label": tx("共有リンク") });
+  const d = openDialog(tx("共有リンクから追加"),
+    h("div", null, h("p", null, tx("友だちから受け取った単語帳のリンクを貼りつけてください。")), input),
+    [button("text", tx("やめる"), null, () => d.close()),
+      button("filled", tx("開く"), null, () => {
         const code = extractCode(input.value);
-        if (!code) { toast("SK Study の共有リンクではないようです"); input.focus(); return; }
+        if (!code) { toast(tx("SK Study の共有リンクではないようです")); input.focus(); return; }
         d.close();
         go(`/import/${code}`);
       })]);
@@ -1148,27 +1149,27 @@ function openImportDialog() {
 // ---------- 単語セット ----------
 
 function sourceText(set) {
-  if (set.source === "sk") return "SK認定コンテンツ";
-  if (set.source === "class") return set.teacherName ? `${set.teacherName} 先生が配信` : "先生が配信";
-  if (set.source === "shared") return `共有リンクから追加${set.from && set.from !== set.title ? `（もとの名前: ${set.from}）` : ""}`;
-  if (set.source === "copy") return `SK認定コンテンツの「${set.from || ""}」をコピー`;
-  return "マイ単語帳";
+  if (set.source === "sk") return tx("SK認定コンテンツ");
+  if (set.source === "class") return set.teacherName ? tx("{teacherName} 先生が配信", { teacherName: set.teacherName }) : tx("先生が配信");
+  if (set.source === "shared") return tx("共有リンクから追加{n}", { n: set.from && set.from !== set.title ? tx("（もとの名前: {from}）", { from: set.from }) : "" });
+  if (set.source === "copy") return tx("SK認定コンテンツの「{n}」をコピー", { n: set.from || "" });
+  return tx("マイ単語帳");
 }
 
 // 小テストの前回・最高の点
 function testNote(set) {
   const tests = store.testsOf(set.id);
-  if (!tests.length) return h("p", { class: "start-note" }, "小テスト: 答え合わせは最後にまとめて。点数が記録されます。");
+  if (!tests.length) return h("p", { class: "start-note" }, tx("小テスト: 答え合わせは最後にまとめて。点数が記録されます。"));
   const pct = (t) => (t.total ? Math.round((t.ok / t.total) * 100) : 0);
   const last = tests[tests.length - 1];
   const best = Math.max(...tests.map(pct));
-  return h("p", { class: "start-note test-note" }, icon("quiz"), `小テスト ${tests.length} 回 ・ 前回 ${pct(last)}%（${last.ok}/${last.total}）・ 最高 ${best}%`);
+  return h("p", { class: "start-note test-note" }, icon("quiz"), tx("小テスト {length} 回 ・ 前回 {last}%（{ok}/{total}）・ 最高 {best}%", { length: tests.length, last: pct(last), ok: last.ok, total: last.total, best }));
 }
 
 function renderSet(id) {
   const set = store.getSet(id);
   if (!set) {
-    renderMessage("単語セットが見つかりません", "消されたか、ほかのブラウザで作ったマイ単語帳かもしれません。");
+    renderMessage(tx("単語セットが見つかりません"), tx("消されたか、ほかのブラウザで作ったマイ単語帳かもしれません。"));
     return;
   }
   document.title = `${set.title} - SK Study`;
@@ -1178,25 +1179,25 @@ function renderSet(id) {
   const la = langAttr(lang);
   const learnUrl = (mode) => `/learn/${encodeURIComponent(set.id)}?mode=${mode}`;
 
-  const countSelect = h("select", { class: "field-select", "aria-label": "問題の数", onchange: (e) => store.setPrefs({ count: Number(e.target.value) }) },
+  const countSelect = h("select", { class: "field-select", "aria-label": tx("問題の数"), onchange: (e) => store.setPrefs({ count: Number(e.target.value) }) },
     COUNTS.map(([v, label]) => h("option", { value: String(v), selected: prefs.count === v }, label)));
-  const formatSelect = h("select", { class: "field-select", "aria-label": "問題の形式", onchange: (e) => store.setPrefs({ format: e.target.value }) },
+  const formatSelect = h("select", { class: "field-select", "aria-label": tx("問題の形式"), onchange: (e) => store.setPrefs({ format: e.target.value }) },
     FORMATS.map(([v, label]) => h("option", { value: v, selected: prefs.format === v }, label)));
 
   const mine = set.source !== "sk" && set.source !== "class";
   const fromClass = set.source === "class" && set.classRef;
   const actions = h("div", { class: "set-actions" },
-    mine ? linkButton("outlined", "編集", "edit", `#/edit/${encodeURIComponent(set.id)}`) : null,
-    fromClass ? null : button("outlined", "共有", "share", () => openShare(set)),
-    !mine && !set.noCopy ? button("outlined", "自分用にコピー", "content_copy", () => {
+    mine ? linkButton("outlined", tx("編集"), "edit", `#/edit/${encodeURIComponent(set.id)}`) : null,
+    fromClass ? null : button("outlined", tx("共有"), "share", () => openShare(set)),
+    !mine && !set.noCopy ? button("outlined", tx("自分用にコピー"), "content_copy", () => {
       const copy = store.copySet(set);
-      toast("マイ単語帳にコピーしました。自由に編集できます");
+      toast(tx("マイ単語帳にコピーしました。自由に編集できます"));
       go(`/set/${encodeURIComponent(copy.id)}`);
     }) : null,
-    mine ? button("outlined", "削除", "delete", async () => {
-      if (await confirmDialog("この単語帳を削除しますか？", `「${set.title}」と、その学習の記録を消します。もとに戻せません。`, "削除する", true)) {
+    mine ? button("outlined", tx("削除"), "delete", async () => {
+      if (await confirmDialog(tx("この単語帳を削除しますか？"), tx("「{title}」と、その学習の記録を消します。もとに戻せません。", { title: set.title }), tx("削除する"), true)) {
         store.deleteMySet(set.id);
-        toast("削除しました");
+        toast(tx("削除しました"));
         go("/mine", true);
       }
     }, { "data-danger": "" }) : null);
@@ -1213,7 +1214,7 @@ function renderSet(id) {
             h("span", { class: "word-w", lang: la }, w.w),
             w.r ? h("span", { class: "word-r" }, w.r) : null)),
         h("div", { class: "word-line" },
-          h("span", { class: "word-tag lang-ja" }, "日本語"),
+          h("span", { class: "word-tag lang-ja" }, JA_NAME),
           h("span", { class: "word-text" }, h("span", { class: "word-m" }, w.m))),
         w.ex ? h("div", { class: "word-ex" }, h("span", { lang: la }, w.ex), w.exm ? h("span", null, w.exm) : null) : null),
       speakButton(w.w, lang.speech),
@@ -1222,17 +1223,17 @@ function renderSet(id) {
 
   if (set.noCopy) for (const t of ["copy", "cut", "contextmenu", "dragstart", "selectstart"]) list.addEventListener(t, (e) => e.preventDefault());
   app.append(
-    fromClass ? backLink("クラス", `#/class/${encodeURIComponent(set.classRef.cid)}`) : set.source === "sk" ? backLink("SK認定コンテンツ", "#/sets") : backLink("マイ単語帳", "#/mine"),
-    fromClass ? h("p", { class: "class-banner" }, icon("groups"), `${set.teacherName ? `${set.teacherName} 先生が配信した` : "先生が配信した"}課題「${set.assignTitle || set.title}」。学習すると、覚えた語の数が先生に届きます。${set.noCopy ? "この単語帳はコピーできません。" : ""}`) : "",
+    fromClass ? backLink(tx("クラス"), `#/class/${encodeURIComponent(set.classRef.cid)}`) : set.source === "sk" ? backLink(tx("SK認定コンテンツ"), "#/sets") : backLink(tx("マイ単語帳"), "#/mine"),
+    fromClass ? h("p", { class: "class-banner" }, icon("groups"), tx("{n}課題「{n2}」。学習すると、覚えた語の数が先生に届きます。{n3}", { n: set.teacherName ? tx("{teacherName} 先生が配信した", { teacherName: set.teacherName }) : tx("先生が配信した"), n2: set.assignTitle || set.title, n3: set.noCopy ? tx("この単語帳はコピーできません。") : "" })) : "",
     h("section", { class: "set-head" },
       thumb(lang),
       h("div", null,
         h("p", { class: "set-row-sub" }, langBadge(lang), set.level ? h("span", null, set.level) : null),
         h("h1", null, set.title),
         set.description ? h("p", { class: "set-desc" }, set.description) : null,
-        h("p", { class: "muted small" }, icon(set.source === "sk" ? "verified" : set.source === "class" ? "school" : "person"), sourceText(set), set.noCopy ? " ・ コピー禁止" : ""))),
+        h("p", { class: "muted small" }, icon(set.source === "sk" ? "verified" : set.source === "class" ? "school" : "person"), sourceText(set), set.noCopy ? (" " + tx("・ コピー禁止")) : ""))),
     h("section", { class: "memory-card" },
-      h("h2", null, "記憶度"),
+      h("h2", null, tx("記憶度")),
       h("div", { class: "memory-body" },
         donut(s),
         h("ul", { class: "legend" },
@@ -1240,20 +1241,20 @@ function renderSet(id) {
             h("i", { style: `background:${STATUS[key].color}` }),
             h("span", null, STATUS[key].label),
             h("strong", null, String(s[key])))),
-          h("li", { class: "legend-due" }, icon("event_repeat"), h("span", null, "今日の復習"), h("strong", null, String(s.due)))))),
+          h("li", { class: "legend-due" }, icon("event_repeat"), h("span", null, tx("今日の復習")), h("strong", null, String(s.due)))))),
     h("section", { class: "start-card" },
-      button("filled", "学習する", "play_arrow", () => go(learnUrl("learn")), { class: "filled-btn start-btn" }),
-      h("p", { class: "start-note" }, `${lang.name} ↔ 日本語 を両方向でまぜて出題。4 択・書き取りの難易度は、覚えぐあいに合わせて自動で変わります。`),
+      button("filled", tx("学習する"), "play_arrow", () => go(learnUrl("learn")), { class: "filled-btn start-btn" }),
+      h("p", { class: "start-note" }, tx("{name} ↔ 日本語 を両方向でまぜて出題。4 択・書き取りの難易度は、覚えぐあいに合わせて自動で変わります。", { name: lang.name })),
       h("div", { class: "start-options" },
-        h("label", { class: "option" }, h("span", null, "問題の数"), countSelect),
-        h("label", { class: "option" }, h("span", null, "形式"), formatSelect)),
+        h("label", { class: "option" }, h("span", null, tx("問題の数")), countSelect),
+        h("label", { class: "option" }, h("span", null, tx("形式")), formatSelect)),
       h("div", { class: "start-more" },
-        button("tonal", "単語カードで覚える", "style", () => go(learnUrl("card")), { class: "tonal-btn" }),
-        button("outlined", "小テスト", "quiz", () => go(learnUrl("test")), { class: "outlined-btn" })),
+        button("tonal", tx("単語カードで覚える"), "style", () => go(learnUrl("card")), { class: "tonal-btn" }),
+        button("outlined", tx("小テスト"), "quiz", () => go(learnUrl("test")), { class: "outlined-btn" })),
       testNote(set)),
     actions,
     h("section", { class: "section" },
-      h("h2", null, `単語（${set.words.length}）`),
+      h("h2", null, tx("単語（{length}）", { length: set.words.length })),
       list));
 }
 
@@ -1263,21 +1264,21 @@ async function openShare(set) {
   try {
     url = isSk ? `${location.origin}/study/#/set/${encodeURIComponent(set.id)}` : shareUrl(await encodeSet(set));
   } catch (e) {
-    toast("共有リンクを作れませんでした");
+    toast(tx("共有リンクを作れませんでした"));
     return;
   }
-  const field = h("textarea", { class: "field-input share-url", readonly: true, rows: "3", "aria-label": "共有リンク" }, url);
+  const field = h("textarea", { class: "field-input share-url", readonly: true, rows: "3", "aria-label": tx("共有リンク") }, url);
   const notes = isSk
-    ? [h("p", null, "SK認定コンテンツのページへのリンクです。")]
-    : [h("p", null, "リンクに単語帳がまるごと入っています（サーバーには保存しません）。受け取った人は、自分のマイ単語帳にコピーして使えます。"),
-      h("p", { class: "muted small" }, "リンクを知っている人はだれでも見られます。あとで単語帳を直しても、送ったリンクの中身は変わりません。"),
-      url.length > 6000 ? h("p", { class: "warn small" }, icon("warning"), "単語が多いのでリンクが長くなっています。アプリによっては途中で切れることがあります。") : null];
-  const d = openDialog("共有する", h("div", null, notes, field), [
-    navigator.share ? button("text", "ほかのアプリで", "ios_share", () => navigator.share({ title: set.title, url }).catch(() => {})) : null,
-    button("text", "閉じる", null, () => d.close()),
-    button("filled", "コピー", "content_copy", async () => {
-      try { await navigator.clipboard.writeText(url); toast("リンクをコピーしました"); }
-      catch (e) { field.select(); toast("選んだ文字をコピーしてください"); }
+    ? [h("p", null, tx("SK認定コンテンツのページへのリンクです。"))]
+    : [h("p", null, tx("リンクに単語帳がまるごと入っています（サーバーには保存しません）。受け取った人は、自分のマイ単語帳にコピーして使えます。")),
+      h("p", { class: "muted small" }, tx("リンクを知っている人はだれでも見られます。あとで単語帳を直しても、送ったリンクの中身は変わりません。")),
+      url.length > 6000 ? h("p", { class: "warn small" }, icon("warning"), tx("単語が多いのでリンクが長くなっています。アプリによっては途中で切れることがあります。")) : null];
+  const d = openDialog(tx("共有する"), h("div", null, notes, field), [
+    navigator.share ? button("text", tx("ほかのアプリで"), "ios_share", () => navigator.share({ title: set.title, url }).catch(() => {})) : null,
+    button("text", tx("閉じる"), null, () => d.close()),
+    button("filled", tx("コピー"), "content_copy", async () => {
+      try { await navigator.clipboard.writeText(url); toast(tx("リンクをコピーしました")); }
+      catch (e) { field.select(); toast(tx("選んだ文字をコピーしてください")); }
     })
   ]);
   field.addEventListener("focus", () => field.select());
@@ -1311,15 +1312,15 @@ function renderLearn(id, q) {
   if (id === "review") {
     const items = store.dueItems().slice(0, 20).map(({ set, word }) => ({ set, word }));
     if (!items.length) {
-      renderMessage("今日の復習はありません", "単語セットを選んで、新しい単語を学習しましょう。");
+      renderMessage(tx("今日の復習はありません"), tx("単語セットを選んで、新しい単語を学習しましょう。"));
       return;
     }
-    runSession({ items: shuffle(items), mode, format: prefs.format, title: "今日の復習", backHref: "#/" });
+    runSession({ items: shuffle(items), mode, format: prefs.format, title: tx("今日の復習"), backHref: "#/" });
     return;
   }
   const set = store.getSet(id);
   if (!set) {
-    renderMessage("単語セットが見つかりません", "消されたか、ほかのブラウザで作ったマイ単語帳かもしれません。");
+    renderMessage(tx("単語セットが見つかりません"), tx("消されたか、ほかのブラウザで作ったマイ単語帳かもしれません。"));
     return;
   }
   // 小テストは、覚えぐあいに関係なく全体からえらぶ
@@ -1394,10 +1395,10 @@ function showFsGuard() {
   app.inert = true;
   document.body.append(h("div", { id: "fs-guard", class: "fs-guard", role: "alertdialog", "aria-labelledby": "fs-guard-title" },
     icon("fullscreen", "fs-guard-icon"),
-    h("h2", { id: "fs-guard-title" }, "全画面で受けてください"),
-    h("p", null, "全画面ではありません。小テストは、全画面で受けます。続けるには、全画面にしてください。"),
-    button("filled", "全画面にする", "fullscreen", () => document.documentElement.requestFullscreen().catch(() => toast("全画面にできませんでした。ブラウザの設定を確かめてください"))),
-    h("p", { class: "muted small" }, "ブラウザが全画面を許可していないときは、設定で許可してください。")));
+    h("h2", { id: "fs-guard-title" }, tx("全画面で受けてください")),
+    h("p", null, tx("全画面ではありません。小テストは、全画面で受けます。続けるには、全画面にしてください。")),
+    button("filled", tx("全画面にする"), "fullscreen", () => document.documentElement.requestFullscreen().catch(() => toast(tx("全画面にできませんでした。ブラウザの設定を確かめてください")))),
+    h("p", { class: "muted small" }, tx("ブラウザが全画面を許可していないときは、設定で許可してください。"))));
 }
 document.addEventListener("fullscreenchange", () => {
   if (!testMode.fs) return;
@@ -1424,7 +1425,7 @@ function runSession(cfg) {
   let pos = 0;
   let pending = null; // いまの問題の結果（次へ進むときに記録する。「正解にする」で変えられる）
   let autoNext = 0;
-  document.title = `${{ card: "単語カード", test: "小テスト" }[mode] || "学習"} - SK Study`;
+  document.title = `${{ card: tx("単語カード"), test: tx("小テスト") }[mode] || tx("学習")} - SK Study`;
 
   const barFill = h("span");
   const counter = h("span", { class: "learn-count" });
@@ -1433,11 +1434,11 @@ function runSession(cfg) {
   const judge = h("div", { class: "judge", "aria-hidden": "true" });
   app.replaceChildren(h("section", { class: `learn learn-${mode}` },
     h("header", { class: "learn-head" },
-      h("a", { class: "icon-btn", href: cfg.backHref, "aria-label": "やめる", title: "やめる" }, icon("close")),
-      h("span", { class: "learn-title" }, isTest ? h("span", { class: "test-pill" }, "小テスト") : null, cfg.title),
+      h("a", { class: "icon-btn", href: cfg.backHref, "aria-label": tx("やめる"), title: tx("やめる") }, icon("close")),
+      h("span", { class: "learn-title" }, isTest ? h("span", { class: "test-pill" }, tx("小テスト")) : null, cfg.title),
       levelEl,
       counter,
-      h("button", { type: "button", class: "icon-btn", "aria-label": "読み上げの設定", title: "読み上げの設定", onclick: openSpeechSettings }, icon("record_voice_over"))),
+      h("button", { type: "button", class: "icon-btn", "aria-label": tx("読み上げの設定"), title: tx("読み上げの設定"), onclick: openSpeechSettings }, icon("record_voice_over"))),
     h("div", { class: "learn-line", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": String(cfg.items.length) }, barFill),
     body));
 
@@ -1456,7 +1457,7 @@ function runSession(cfg) {
     sheet.querySelector(".sheet-verdict").replaceChildren(icon(ok ? "check_circle" : "cancel"), h("span", null, title));
   }
   function openSheet(ok, title, children, nextBtn) {
-    const sheet = h("section", { class: "result-sheet", "aria-label": "答え合わせ" },
+    const sheet = h("section", { class: "result-sheet", "aria-label": tx("答え合わせ") },
       h("p", { class: "sheet-verdict" }),
       h("div", { class: "sheet-body" }, children),
       nextBtn);
@@ -1516,8 +1517,8 @@ function runSession(cfg) {
     curQn = qn;
     given = "";
     levelEl.replaceChildren(...[
-      retry ? h("span", { class: "retry-pill" }, icon("replay"), "もう一度") : null,
-      h("span", { class: "level-dots", title: `難易度 ${qn.tier}`, "aria-label": `難易度 ${qn.tier}` },
+      retry ? h("span", { class: "retry-pill" }, icon("replay"), tx("もう一度")) : null,
+      h("span", { class: "level-dots", title: tx("難易度 {tier}", { tier: qn.tier }), "aria-label": tx("難易度 {tier}", { tier: qn.tier }) },
         [1, 2, 3].map((n) => h("i", { class: n <= qn.tier ? "on" : "" })))
     ].filter(Boolean));
     if (qn.type === "choice") showChoice(item, qn);
@@ -1530,8 +1531,8 @@ function runSession(cfg) {
     const lang = store.langOf(item.set);
     const fw = dir === "fw";
     return h("div", { class: "q-area" },
-      h("p", { class: "q-tag" }, h("span", { class: `lang-badge ${fw ? `lang-${lang.key}` : "lang-ja"}` }, fw ? lang.name : "日本語"),
-        icon("sync_alt"), h("span", { class: `lang-badge ${fw ? "lang-ja" : `lang-${lang.key}`}` }, fw ? "日本語" : lang.name)),
+      h("p", { class: "q-tag" }, h("span", { class: `lang-badge ${fw ? `lang-${lang.key}` : "lang-ja"}` }, fw ? lang.name : JA_NAME),
+        icon("sync_alt"), h("span", { class: `lang-badge ${fw ? "lang-ja" : `lang-${lang.key}`}` }, fw ? JA_NAME : lang.name)),
       h("p", { class: "q-text", lang: fw ? langAttr(lang) : "ja" }, fw ? item.word.w : item.word.m),
       fw && item.word.r ? h("p", { class: "q-reading" }, item.word.r) : null,
       fw ? speakButton(item.word.w, lang.speech) : null);
@@ -1556,12 +1557,12 @@ function runSession(cfg) {
     const lang = store.langOf(item.set);
     const answerLang = qn.dir === "fw" ? "ja" : langAttr(lang);
     const host = newSheetHost();
-    const nextBtn = button("filled", "次へ", "arrow_forward", next, { class: "filled-btn next-btn", hidden: true });
+    const nextBtn = button("filled", tx("次へ"), "arrow_forward", next, { class: "filled-btn next-btn", hidden: true });
     let answered = false;
     const optionEls = qn.options.map((text, i) => h("button", {
       type: "button", class: `choice${text === NONE ? " choice-none" : ""}`, lang: text === NONE ? "ja" : answerLang,
       onclick: () => pick(i)
-    }, h("span", { class: "choice-num" }, String(i + 1)), h("span", { class: "choice-text" }, text === NONE ? "この中にはない" : text)));
+    }, h("span", { class: "choice-num" }, String(i + 1)), h("span", { class: "choice-text" }, text === NONE ? tx("この中にはない") : text)));
     function pick(i) {
       if (answered) return;
       answered = true;
@@ -1569,7 +1570,7 @@ function runSession(cfg) {
       pending = ok;
       if (isTest) {
         // 小テスト: 正解は見せずに次へ
-        given = qn.options[i] === NONE ? "この中にはない" : qn.options[i];
+        given = qn.options[i] === NONE ? tx("この中にはない") : qn.options[i];
         optionEls.forEach((el, j) => { el.disabled = true; if (j === i) el.classList.add("is-picked"); });
         autoNext = setTimeout(next, 250);
         return;
@@ -1580,7 +1581,7 @@ function runSession(cfg) {
         else if (j === i) el.classList.add("is-wrong");
       });
       showJudge(ok);
-      const sheet = openSheet(ok, ok ? "正解！" : qn.answer === NONE ? "正解は「この中にはない」でした" : "ざんねん…", detail(item), nextBtn);
+      const sheet = openSheet(ok, ok ? tx("正解！") : qn.answer === NONE ? tx("正解は「この中にはない」でした") : tx("ざんねん…"), detail(item), nextBtn);
       if (qn.dir === "bw") autoSpeak(item.word.w, lang.speech, sheet);
       nextBtn.focus({ preventScroll: true });
       if (ok) autoNext = setTimeout(next, 1100);
@@ -1603,21 +1604,21 @@ function runSession(cfg) {
     const reading = !fw && lang.key === "zh" ? item.word.r || "" : "";
     const input = h("input", {
       type: "text", class: "write-input", autocomplete: "off", autocapitalize: "off", autocorrect: "off", spellcheck: "false",
-      lang: fw ? "ja" : langAttr(lang), "aria-label": "答え", inputmode: "text", enterkeyhint: "done",
-      placeholder: fw ? "日本語で答える" : reading ? `${lang.name}で（ピンインでも OK）` : `${lang.name}で答える`
+      lang: fw ? "ja" : langAttr(lang), "aria-label": tx("答え"), inputmode: "text", enterkeyhint: "done",
+      placeholder: fw ? tx("日本語で答える") : reading ? tx("{name}で（ピンインでも OK）", { name: lang.name }) : tx("{name}で答える", { name: lang.name })
     });
     const hintEl = h("p", { class: "hint", hidden: true });
     const host = newSheetHost();
-    const submitBtn = h("button", { type: "submit", class: "filled-btn" }, h("span", null, "確定"));
+    const submitBtn = h("button", { type: "submit", class: "filled-btn" }, h("span", null, tx("確定")));
     // 外国語を答える問題は、端末のキーボードではなく、画面のキーボード（keyboard.js）で答える。日本語を答える問題だけ、端末のキーボード
     const touch = window.matchMedia("(pointer: coarse)").matches;
     const useKb = !fw && KEYBOARD_LANGS.includes(lang.key);
-    const kbBtn = !useKb && touch ? button("tonal", "キーボードを表示", "keyboard", () => input.focus()) : null;
+    const kbBtn = !useKb && touch ? button("tonal", tx("キーボードを表示"), "keyboard", () => input.focus()) : null;
     const helpers = h("div", { class: "write-helpers" },
       kbBtn,
-      isTest ? null : button("text", "ヒント", "lightbulb", () => { hintEl.textContent = hint(target); hintEl.hidden = false; input.focus(); }),
-      button("text", isTest ? "わからない（とばす）" : "わからない", "help", () => settle(false, "")));
-    const nextBtn = button("filled", "次へ", "arrow_forward", next, { class: "filled-btn next-btn", hidden: true });
+      isTest ? null : button("text", tx("ヒント"), "lightbulb", () => { hintEl.textContent = hint(target); hintEl.hidden = false; input.focus(); }),
+      button("text", isTest ? tx("わからない（とばす）") : tx("わからない"), "help", () => settle(false, "")));
+    const nextBtn = button("filled", tx("次へ"), "arrow_forward", next, { class: "filled-btn next-btn", hidden: true });
     let answered = false;
 
     function settle(ok, typed, close = false) {
@@ -1629,16 +1630,16 @@ function runSession(cfg) {
       helpers.hidden = true;
       if (typed) showJudge(ok);
       let sheet = null;
-      const fix = !ok && typed ? button("text", "正解にする", "done", () => {
+      const fix = !ok && typed ? button("text", tx("正解にする"), "done", () => {
         pending = true;
-        setVerdict(sheet, true, "正解にしました");
+        setVerdict(sheet, true, tx("正解にしました"));
         fix.closest(".fix-row").remove();
         nextBtn.focus({ preventScroll: true });
       }) : null;
-      sheet = openSheet(ok, ok ? "正解！" : close ? "おしい！" : typed ? "ざんねん…" : "答え", [
-        !ok && typed ? h("p", { class: "your-answer" }, "あなたの答え: ", h("span", { lang: input.lang }, typed)) : null,
+      sheet = openSheet(ok, ok ? tx("正解！") : close ? tx("おしい！") : typed ? tx("ざんねん…") : tx("答え"), [
+        !ok && typed ? h("p", { class: "your-answer" }, (tx("あなたの答え:") + " "), h("span", { lang: input.lang }, typed)) : null,
         detail(item),
-        fix ? h("p", { class: "fix-row" }, fix, h("span", { class: "muted small" }, "打ちまちがい・同じ意味の言葉のとき")) : null
+        fix ? h("p", { class: "fix-row" }, fix, h("span", { class: "muted small" }, tx("打ちまちがい・同じ意味の言葉のとき"))) : null
       ], nextBtn);
       if (!fw) autoSpeak(item.word.w, lang.speech, sheet);
       nextBtn.focus({ preventScroll: true });
@@ -1680,16 +1681,16 @@ function runSession(cfg) {
       fw ? h("p", { class: "face-sub", lang: la }, item.word.w, item.word.r ? `（${item.word.r}）` : "") : speakButton(item.word.w, lang.speech),
       item.word.ex ? h("p", { class: "face-ex" }, h("span", { lang: la }, item.word.ex), item.word.exm ? h("span", null, item.word.exm) : null) : null);
     const front = h("div", { class: "face face-front" },
-      h("span", { class: `lang-badge ${fw ? `lang-${lang.key}` : "lang-ja"}` }, fw ? lang.name : "日本語"),
+      h("span", { class: `lang-badge ${fw ? `lang-${lang.key}` : "lang-ja"}` }, fw ? lang.name : JA_NAME),
       h("p", { class: "face-big", lang: fw ? la : "ja" }, fw ? item.word.w : item.word.m),
       fw ? speakButton(item.word.w, lang.speech) : null,
-      h("p", { class: "face-tap" }, icon("touch_app"), "タップでめくる"));
-    const card = h("div", { class: "flashcard", role: "button", tabindex: "0", "aria-label": "カードをめくる", "aria-pressed": "false" },
+      h("p", { class: "face-tap" }, icon("touch_app"), tx("タップでめくる")));
+    const card = h("div", { class: "flashcard", role: "button", tabindex: "0", "aria-label": tx("カードをめくる"), "aria-pressed": "false" },
       h("div", { class: "flashcard-inner" }, front, back));
-    const flipBtn = button("filled", "めくる", "flip", flip, { class: "filled-btn next-btn" });
+    const flipBtn = button("filled", tx("めくる"), "flip", flip, { class: "filled-btn next-btn" });
     const rate = h("div", { class: "rate", hidden: true },
-      button("outlined", "まだ", "close", () => { pending = false; next(); }, { class: "outlined-btn rate-ng" }),
-      button("filled", "覚えた", "check", () => { pending = true; next(); }, { class: "filled-btn rate-ok" }));
+      button("outlined", tx("まだ"), "close", () => { pending = false; next(); }, { class: "outlined-btn rate-ng" }),
+      button("filled", tx("覚えた"), "check", () => { pending = true; next(); }, { class: "filled-btn rate-ok" }));
     function flip() {
       flipped = !flipped;
       card.classList.toggle("is-flipped", flipped);
@@ -1703,7 +1704,7 @@ function runSession(cfg) {
     card.addEventListener("click", flip);
     card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } });
     body.append(h("div", { class: "card-area" }, card), h("div", { class: "a-area" }, flipBtn, rate,
-      h("p", { class: "shortcuts" }, h("kbd", null, "Space"), "めくる ", h("kbd", null, "←"), "まだ ", h("kbd", null, "→"), "覚えた")));
+      h("p", { class: "shortcuts" }, h("kbd", null, "Space"), (tx("めくる") + " "), h("kbd", null, "←"), (tx("まだ") + " "), h("kbd", null, "→"), tx("覚えた"))));
     if (fw) autoSpeak(item.word.w, lang.speech, front);
     keyHandler = (e) => {
       if (isTyping(e)) return;
@@ -1729,23 +1730,23 @@ function runSession(cfg) {
     const pct = total ? Math.round((ok / total) * 100) : 0;
     const wrong = results.filter((r) => !r.ok).map((r) => r.item);
     const isCard = mode === "card";
-    const message = pct === 100 ? "パーフェクト！" : pct >= 80 ? "よくできました！" : pct >= 50 ? "その調子！" : "くり返せば、きっと覚えられます";
+    const message = pct === 100 ? tx("パーフェクト！") : pct >= 80 ? tx("よくできました！") : pct >= 50 ? tx("その調子！") : tx("くり返せば、きっと覚えられます");
     const again = (list, m = mode) => runSession({ ...cfg, mode: m, items: shuffle(list) });
 
     body.replaceChildren(h("div", { class: "result" },
       ring(pct / 100, { size: 150, stroke: 12, color: pct >= 80 ? "var(--st-mastered)" : "var(--primary)", label: `${pct}%` }),
       h("h2", null, message),
-      h("p", { class: "result-score" }, isCard ? `覚えた ${ok} 語 ・ まだ ${total - ok} 語` : `${total} 語中 ${ok} 語を 1 回目で正解`),
+      h("p", { class: "result-score" }, isCard ? tx("覚えた {ok} 語 ・ まだ {n} 語", { ok, n: total - ok }) : tx("{total} 語中 {ok} 語を 1 回目で正解", { total, ok })),
       h("div", { class: "result-actions" },
-        wrong.length ? button("filled", isCard ? "「まだ」の単語をもう一度" : "まちがえた単語をもう一度", "replay", () => again(wrong)) : null,
-        button(wrong.length ? "tonal" : "filled", "もう一度", "restart_alt", () => again(cfg.items)),
-        isCard ? button("outlined", "学習でたしかめる", "play_arrow", () => again(cfg.items, "learn")) : button("outlined", "単語カード", "style", () => again(cfg.items, "card")),
-        linkButton("text", "もどる", "arrow_back", cfg.backHref)),
+        wrong.length ? button("filled", isCard ? tx("「まだ」の単語をもう一度") : tx("まちがえた単語をもう一度"), "replay", () => again(wrong)) : null,
+        button(wrong.length ? "tonal" : "filled", tx("もう一度"), "restart_alt", () => again(cfg.items)),
+        isCard ? button("outlined", tx("学習でたしかめる"), "play_arrow", () => again(cfg.items, "learn")) : button("outlined", tx("単語カード"), "style", () => again(cfg.items, "card")),
+        linkButton("text", tx("もどる"), "arrow_back", cfg.backHref)),
       h("ul", { class: "result-list" }, results.map(({ item, ok: right }) => {
         const lang = store.langOf(item.set);
         const rec = store.progressOf(item.set.id)[item.word.w];
         return h("li", { class: "result-row" },
-          h("span", { class: `mark ${right ? "ok" : "ng"}`, "aria-label": right ? "正解" : "まちがい" }, right ? "○" : "×"),
+          h("span", { class: `mark ${right ? "ok" : "ng"}`, "aria-label": right ? tx("正解") : tx("まちがい") }, right ? "○" : "×"),
           h("div", { class: "word-pair" },
             h("span", { class: "word-w", lang: langAttr(lang) }, item.word.w),
             h("span", { class: "word-m" }, item.word.m)),
@@ -1769,11 +1770,11 @@ function runSession(cfg) {
         h("span", { class: "review-num" }, String(i + 1)),
         h("div", { class: "test-q" },
           h("span", { class: "test-prompt", lang: fw ? langAttr(lang) : "ja" }, fw ? item.word.w : item.word.m),
-          h("span", { class: "test-type" }, r.qn && r.qn.type === "write" ? "書き取り" : "4 択"),
-          h("span", { class: "review-given" }, "あなたの答え: ", h("strong", null, r.given || "（答えなし）"))),
-        button("text", "直す", "edit", () => { editing = i; pos = i; show(); }));
+          h("span", { class: "test-type" }, r.qn && r.qn.type === "write" ? tx("書き取り") : tx("4 択")),
+          h("span", { class: "review-given" }, (tx("あなたの答え:") + " "), h("strong", null, r.given || tx("（答えなし）")))),
+        button("text", tx("直す"), "edit", () => { editing = i; pos = i; show(); }));
     }));
-    const sendBtn = button("filled", "この内容で提出する", "send", async () => {
+    const sendBtn = button("filled", tx("この内容で提出する"), "send", async () => {
       sendBtn.disabled = true;
       const results = queue.map(({ item }) => firstTry.get(keyOf(item)));
       endTestMode();
@@ -1781,14 +1782,14 @@ function runSession(cfg) {
       try { sent = cfg.onTestDone ? await cfg.onTestDone(results) : true; } catch (e) { sent = false; }
       body.replaceChildren(h("div", { class: "result" },
         icon(sent ? "task_alt" : "schedule_send", "message-icon"),
-        h("h2", null, sent ? "提出しました" : "あとで送ります"),
-        h("p", { class: "result-score" }, sent ? "結果は、先生が返却すると見られます。" : "送れなかったので、この端末に残しました。次にこの課題を開いたときに送り直します。"),
-        h("div", { class: "result-actions" }, linkButton("filled", "もどる", "arrow_back", cfg.backHref))));
+        h("h2", null, sent ? tx("提出しました") : tx("あとで送ります")),
+        h("p", { class: "result-score" }, sent ? tx("結果は、先生が返却すると見られます。") : tx("送れなかったので、この端末に残しました。次にこの課題を開いたときに送り直します。")),
+        h("div", { class: "result-actions" }, linkButton("filled", tx("もどる"), "arrow_back", cfg.backHref))));
     });
     body.replaceChildren(h("div", { class: "result review" },
-      h("p", { class: "test-pill big" }, "提出前の確認"),
-      h("h2", null, "答えを確かめましょう"),
-      h("p", { class: "result-score" }, `${queue.length} 問。提出すると、あとから変えられません。`),
+      h("p", { class: "test-pill big" }, tx("提出前の確認")),
+      h("h2", null, tx("答えを確かめましょう")),
+      h("p", { class: "result-score" }, tx("{length} 問。提出すると、あとから変えられません。", { length: queue.length })),
       list,
       h("div", { class: "result-actions" }, sendBtn)));
     window.scrollTo(0, 0);
@@ -1807,27 +1808,27 @@ function runSession(cfg) {
     const setIds = new Set(results.map((r) => r.item.set.id));
     if (setIds.size === 1) store.recordTest([...setIds][0], ok, total);
     if (cfg.onTestDone) cfg.onTestDone(results);
-    const message = pct === 100 ? "満点！" : pct >= 80 ? "合格ライン！" : pct >= 50 ? "あと少し" : "学習してから、もう一度";
+    const message = pct === 100 ? tx("満点！") : pct >= 80 ? tx("合格ライン！") : pct >= 50 ? tx("あと少し") : tx("学習してから、もう一度");
     body.replaceChildren(h("div", { class: "result" },
-      h("p", { class: "test-pill big" }, "小テストの結果"),
+      h("p", { class: "test-pill big" }, tx("小テストの結果")),
       ring(pct / 100, { size: 150, stroke: 12, color: pct >= 80 ? "var(--st-mastered)" : "var(--primary)", label: `${ok}/${total}` }),
-      h("h2", null, `${pct} 点`),
+      h("h2", null, tx("{pct} 点", { pct })),
       h("p", { class: "result-score" }, message),
       h("div", { class: "result-actions" },
-        wrong.length ? button("filled", "まちがえた単語を学習する", "school", () => runSession({ ...cfg, mode: "learn", items: shuffle(wrong) })) : null,
-        button(wrong.length ? "tonal" : "filled", "もう一度テスト", "restart_alt", () => runSession({ ...cfg, items: shuffle(cfg.items) })),
-        linkButton("text", "もどる", "arrow_back", cfg.backHref)),
+        wrong.length ? button("filled", tx("まちがえた単語を学習する"), "school", () => runSession({ ...cfg, mode: "learn", items: shuffle(wrong) })) : null,
+        button(wrong.length ? "tonal" : "filled", tx("もう一度テスト"), "restart_alt", () => runSession({ ...cfg, items: shuffle(cfg.items) })),
+        linkButton("text", tx("もどる"), "arrow_back", cfg.backHref)),
       h("ol", { class: "test-list" }, results.map(({ item, ok: right, qn, given: g }) => {
         const lang = store.langOf(item.set);
         const fw = qn && qn.dir === "fw";
-        const correct = qn && qn.answer === NONE ? "この中にはない" : qn ? qn.answer : item.word.w;
+        const correct = qn && qn.answer === NONE ? tx("この中にはない") : qn ? qn.answer : item.word.w;
         return h("li", { class: `test-row ${right ? "ok" : "ng"}` },
-          h("span", { class: `mark ${right ? "ok" : "ng"}`, "aria-label": right ? "正解" : "まちがい" }, right ? "○" : "×"),
+          h("span", { class: `mark ${right ? "ok" : "ng"}`, "aria-label": right ? tx("正解") : tx("まちがい") }, right ? "○" : "×"),
           h("div", { class: "test-q" },
             h("span", { class: "test-prompt", lang: fw ? langAttr(lang) : "ja" }, fw ? item.word.w : item.word.m),
-            h("span", { class: "test-type" }, qn && qn.type === "write" ? "書き取り" : "4 択"),
-            right ? null : h("span", { class: "test-given" }, "あなた: ", h("s", null, g || "（答えなし）")),
-            h("span", { class: "test-correct" }, "正解: ", h("strong", { lang: fw ? "ja" : langAttr(lang) }, correct))),
+            h("span", { class: "test-type" }, qn && qn.type === "write" ? tx("書き取り") : tx("4 択")),
+            right ? null : h("span", { class: "test-given" }, (tx("あなた:") + " "), h("s", null, g || tx("（答えなし）"))),
+            h("span", { class: "test-correct" }, (tx("正解:") + " "), h("strong", { lang: fw ? "ja" : langAttr(lang) }, correct))),
           speakButton(item.word.w, lang.speech));
       }))));
   }
@@ -1844,52 +1845,52 @@ function textField(label, input, note) {
 function renderEdit(id) {
   const editing = id && id !== "new" ? store.getMySets().find((s) => s.id === id) : null;
   if (id !== "new" && !editing) {
-    renderMessage("単語帳が見つかりません", "編集できるのは、マイ単語帳だけです。");
+    renderMessage(tx("単語帳が見つかりません"), tx("編集できるのは、マイ単語帳だけです。"));
     return;
   }
-  document.title = `${editing ? "単語帳を編集" : "単語帳を作る"} - SK Study`;
+  document.title = `${editing ? tx("単語帳を編集") : tx("単語帳を作る")} - SK Study`;
   const L = store.LIMITS;
   let dirty = false;
   const rows = (editing ? editing.words : [{}, {}, {}]).map((w) => ({ w: w.w || "", m: w.m || "", r: w.r || "", ex: w.ex || "", exm: w.exm || "" }));
 
-  const title = h("input", { type: "text", class: "field-input", maxlength: String(L.title), value: editing ? editing.title : "", placeholder: "例: 英語 期末テスト範囲" });
+  const title = h("input", { type: "text", class: "field-input", maxlength: String(L.title), value: editing ? editing.title : "", placeholder: tx("例: 英語 期末テスト範囲") });
   const langSel = h("select", { class: "field-select" },
     Object.entries(store.LANGS).map(([key, l]) => h("option", { value: key, selected: (editing ? editing.lang : "en") === key }, l.name)));
-  const langName = h("input", { type: "text", class: "field-input", maxlength: String(L.langName), value: editing && editing.langName || "", placeholder: "例: フランス語・漢字・理科" });
+  const langName = h("input", { type: "text", class: "field-input", maxlength: String(L.langName), value: editing && editing.langName || "", placeholder: tx("例: フランス語・漢字・理科") });
   const speechSel = h("select", { class: "field-select" },
     store.SPEECH_CHOICES.map(([v, label]) => h("option", { value: v, selected: (editing && editing.speech || "") === v }, label)));
-  const customRow = h("div", { class: "field-row" }, textField("言語・教科の名前", langName), textField("読み上げ", speechSel));
-  const desc = h("textarea", { class: "field-input", rows: "2", maxlength: String(L.description), placeholder: "どんな単語帳か（任意）" }, editing && editing.description || "");
+  const customRow = h("div", { class: "field-row" }, textField(tx("言語・教科の名前"), langName), textField(tx("読み上げ"), speechSel));
+  const desc = h("textarea", { class: "field-input", rows: "2", maxlength: String(L.description), placeholder: tx("どんな単語帳か（任意）") }, editing && editing.description || "");
 
   const rowsEl = h("ol", { class: "edit-rows" });
   const countEl = h("span", { class: "muted small" });
 
   function readingLabel() { return (store.LANGS[langSel.value] || store.LANGS.custom).reading; }
-  function wordLabel() { return langSel.value === "custom" ? "問題（単語）" : `${store.LANGS[langSel.value].name}の単語`; }
+  function wordLabel() { return langSel.value === "custom" ? tx("問題（単語）") : tx("{name}の単語", { name: store.LANGS[langSel.value].name }); }
 
   function drawRows() {
     rowsEl.replaceChildren(...rows.map((row, i) => {
       const inp = (k, ph, max, la) => {
-        const el = h("input", { type: "text", class: "field-input", value: row[k], placeholder: ph, maxlength: String(max), "aria-label": `${i + 1} 行目の${ph}`, lang: la });
+        const el = h("input", { type: "text", class: "field-input", value: row[k], placeholder: ph, maxlength: String(max), "aria-label": tx("{n} 行目の{ph}", { n: i + 1, ph }), lang: la });
         el.addEventListener("input", () => { row[k] = el.value; dirty = true; updateCount(); });
         return el;
       };
       const la = langSel.value === "en" ? "en" : langSel.value === "ko" ? "ko" : langSel.value === "zh" ? "zh-CN" : null;
       const extra = h("div", { class: "edit-extra", hidden: !(row.ex || row.exm) },
-        inp("ex", "例文（任意）", L.ex, la), inp("exm", "例文の訳（任意）", L.ex, "ja"));
+        inp("ex", tx("例文（任意）"), L.ex, la), inp("exm", tx("例文の訳（任意）"), L.ex, "ja"));
       return h("li", { class: "edit-row" },
         h("span", { class: "edit-num" }, String(i + 1)),
         h("div", { class: "edit-fields" },
-          inp("w", wordLabel(), L.w, la), inp("m", "意味（答え）", L.m, "ja"), inp("r", readingLabel(), L.r, null), extra),
+          inp("w", wordLabel(), L.w, la), inp("m", tx("意味（答え）"), L.m, "ja"), inp("r", readingLabel(), L.r, null), extra),
         h("div", { class: "edit-tools" },
-          h("button", { type: "button", class: "icon-btn", "aria-label": "例文", title: "例文", onclick: () => { extra.hidden = !extra.hidden; } }, icon("notes")),
-          h("button", { type: "button", class: "icon-btn", "aria-label": `${i + 1} 行目を消す`, title: "この行を消す", onclick: () => { rows.splice(i, 1); dirty = true; drawRows(); } }, icon("delete"))));
+          h("button", { type: "button", class: "icon-btn", "aria-label": tx("例文"), title: tx("例文"), onclick: () => { extra.hidden = !extra.hidden; } }, icon("notes")),
+          h("button", { type: "button", class: "icon-btn", "aria-label": tx("{n} 行目を消す", { n: i + 1 }), title: tx("この行を消す"), onclick: () => { rows.splice(i, 1); dirty = true; drawRows(); } }, icon("delete"))));
     }));
     updateCount();
   }
   function updateCount() {
     const n = rows.filter((r) => r.w.trim() && r.m.trim()).length;
-    countEl.textContent = `${n} 語`;
+    countEl.textContent = tx("{n} 語", { n });
   }
   function addRows(list) {
     // 空の行しかないときは置きかえる
@@ -1903,21 +1904,21 @@ function renderEdit(id) {
   customRow.hidden = langSel.value !== "custom";
   for (const el of [title, langName, speechSel, desc]) el.addEventListener("input", () => { dirty = true; });
 
-  const paste = h("textarea", { class: "field-input", rows: "5", placeholder: "apple\tりんご\nbanana\tバナナ" });
+  const paste = h("textarea", { class: "field-input", rows: "5", placeholder: "apple\t" + tx("りんご") + "\nbanana\t" + tx("バナナ") });
   const pasteBox = h("details", { class: "paste" },
-    h("summary", null, icon("content_paste"), "まとめて貼りつけ"),
-    h("p", { class: "muted small" }, "1 行に 1 語。「単語」「意味」「読み」「例文」「例文の訳」の順に、タブかカンマで区切ります。Excel・Google スプレッドシートの列をそのままコピーして貼りつけられます。"),
+    h("summary", null, icon("content_paste"), tx("まとめて貼りつけ")),
+    h("p", { class: "muted small" }, tx("1 行に 1 語。「単語」「意味」「読み」「例文」「例文の訳」の順に、タブかカンマで区切ります。Excel・Google スプレッドシートの列をそのままコピーして貼りつけられます。")),
     paste,
-    button("tonal", "取りこむ", "download", () => {
+    button("tonal", tx("取りこむ"), "download", () => {
       const list = paste.value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => {
         const cols = (l.includes("\t") ? l.split("\t") : l.split(/\s*[,，]\s*/)).map((c) => c.trim());
         return { w: cols[0] || "", m: cols[1] || "", r: cols[2] || "", ex: cols[3] || "", exm: cols[4] || "" };
       }).filter((r) => r.w || r.m);
-      if (!list.length) { toast("取りこめる行がありません"); return; }
+      if (!list.length) { toast(tx("取りこめる行がありません")); return; }
       addRows(list);
       paste.value = "";
       pasteBox.open = false;
-      toast(`${list.length} 行を取りこみました`);
+      toast(tx("{length} 行を取りこみました", { length: list.length }));
     }));
 
   const errorEl = h("p", { class: "form-error", role: "alert", hidden: true });
@@ -1925,17 +1926,17 @@ function renderEdit(id) {
   function save() {
     const showError = (msg) => { errorEl.textContent = msg; errorEl.hidden = false; errorEl.scrollIntoView({ block: "center", behavior: "smooth" }); };
     errorEl.hidden = true;
-    if (!title.value.trim()) { showError("タイトルを入れてください"); title.focus(); return; }
-    if (langSel.value === "custom" && !langName.value.trim()) { showError("言語・教科の名前を入れてください"); langName.focus(); return; }
+    if (!title.value.trim()) { showError(tx("タイトルを入れてください")); title.focus(); return; }
+    if (langSel.value === "custom" && !langName.value.trim()) { showError(tx("言語・教科の名前を入れてください")); langName.focus(); return; }
     const filled = rows.map((r, i) => ({ ...r, line: i + 1 })).filter((r) => r.w.trim() || r.m.trim());
     const half = filled.find((r) => !r.w.trim() || !r.m.trim());
-    if (half) { showError(`${half.line} 行目: 単語と意味の両方を入れてください`); return; }
-    if (!filled.length) { showError("単語を 1 つ以上入れてください"); return; }
-    if (filled.length > L.words) { showError(`単語は ${L.words} 語までです`); return; }
+    if (half) { showError(tx("{line} 行目: 単語と意味の両方を入れてください", { line: half.line })); return; }
+    if (!filled.length) { showError(tx("単語を 1 つ以上入れてください")); return; }
+    if (filled.length > L.words) { showError(tx("単語は {words} 語までです", { words: L.words })); return; }
     const seen = new Map();
     for (const r of filled) {
       const k = r.w.trim().replace(/\s+/g, " ");
-      if (seen.has(k)) { showError(`「${k}」が 2 回あります（${seen.get(k)} 行目と ${r.line} 行目）`); return; }
+      if (seen.has(k)) { showError(tx("「{k}」が 2 回あります（{k2} 行目と {line} 行目）", { k, k2: seen.get(k), line: r.line })); return; }
       seen.set(k, r.line);
     }
     try {
@@ -1944,7 +1945,7 @@ function renderEdit(id) {
         words: filled
       }, editing ? editing.id : null);
       dirty = false;
-      toast("保存しました");
+      toast(tx("保存しました"));
       go(`/set/${encodeURIComponent(saved.id)}`, true);
     } catch (e) {
       showError(e.message);
@@ -1955,30 +1956,30 @@ function renderEdit(id) {
   const cancel = h("a", { class: "back-link", href: cancelHref, onclick: async (e) => {
     if (!dirty) return;
     e.preventDefault();
-    if (await confirmDialog("編集をやめますか？", "保存していない変更は消えます。", "変更を捨てる", true)) { dirty = false; location.hash = cancelHref.slice(1); }
-  } }, icon("close"), h("span", null, "やめる"));
+    if (await confirmDialog(tx("編集をやめますか？"), tx("保存していない変更は消えます。"), tx("変更を捨てる"), true)) { dirty = false; location.hash = cancelHref.slice(1); }
+  } }, icon("close"), h("span", null, tx("やめる")));
 
   drawRows();
   app.append(
-    h("div", { class: "edit-bar" }, cancel, button("filled", "保存", "save", save)),
-    h("h1", { class: "edit-title" }, editing ? "単語帳を編集" : "単語帳を作る"),
+    h("div", { class: "edit-bar" }, cancel, button("filled", tx("保存"), "save", save)),
+    h("h1", { class: "edit-title" }, editing ? tx("単語帳を編集") : tx("単語帳を作る")),
     errorEl,
     h("section", { class: "edit-card" },
-      textField("タイトル", title),
-      h("div", { class: "field-row" }, textField("言語", langSel)),
+      textField(tx("タイトル"), title),
+      h("div", { class: "field-row" }, textField(tx("言語"), langSel)),
       customRow,
-      textField("説明", desc)),
+      textField(tx("説明"), desc)),
     h("section", { class: "edit-card" },
-      h("div", { class: "section-head" }, h("h2", null, "単語"), countEl),
+      h("div", { class: "section-head" }, h("h2", null, tx("単語")), countEl),
       pasteBox,
       rowsEl,
-      button("tonal", "行を足す", "add", () => {
+      button("tonal", tx("行を足す"), "add", () => {
         rows.push({ w: "", m: "", r: "", ex: "", exm: "" });
         drawRows();
         const inputs = rowsEl.lastElementChild.querySelectorAll("input");
         if (inputs[0]) inputs[0].focus();
       }, { class: "tonal-btn wide" })),
-    h("div", { class: "edit-bottom" }, button("filled", "保存", "save", save)));
+    h("div", { class: "edit-bottom" }, button("filled", tx("保存"), "save", save)));
   if (!editing) title.focus();
 
   const onBeforeUnload = (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } };
@@ -1989,16 +1990,16 @@ function renderEdit(id) {
 // ---------- 共有リンクで受け取る ----------
 
 async function renderImport(code) {
-  document.title = "共有された単語帳 - SK Study";
-  app.append(h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), "読み込み中…"));
+  document.title = tx("共有された単語帳 - SK Study");
+  app.append(h("p", { class: "loading" }, h("span", { class: "spinner", "aria-hidden": "true" }), tx("読み込み中…")));
   let data;
   try {
     data = store.cleanSet(await decodeSet(code));
     if (!data.words.length) throw new Error("empty");
   } catch (e) {
-    renderMessage("単語帳を開けませんでした", e && e.message === "unsupported"
-      ? "このブラウザでは開けません。新しいブラウザで開いてください。"
-      : "リンクがまちがっているか、途中で切れているかもしれません。もう一度コピーしてもらってください。");
+    renderMessage(tx("単語帳を開けませんでした"), e && e.message === "unsupported"
+      ? tx("このブラウザでは開けません。新しいブラウザで開いてください。")
+      : tx("リンクがまちがっているか、途中で切れているかもしれません。もう一度コピーしてもらってください。"));
     return;
   }
   const lang = store.langOf(data);
@@ -2006,29 +2007,29 @@ async function renderImport(code) {
   const shown = data.words.slice(0, 12);
   app.replaceChildren(
     h("section", { class: "import" },
-      h("p", { class: "import-label" }, icon("move_to_inbox"), "共有された単語帳"),
+      h("p", { class: "import-label" }, icon("move_to_inbox"), tx("共有された単語帳")),
       h("div", { class: "set-head" }, thumb(lang), h("div", null,
-        h("p", { class: "set-row-sub" }, langBadge(lang), h("span", null, `${data.words.length} 語`)),
+        h("p", { class: "set-row-sub" }, langBadge(lang), h("span", null, tx("{length} 語", { length: data.words.length }))),
         h("h1", null, data.title),
         data.description ? h("p", { class: "set-desc" }, data.description) : null)),
       h("ol", { class: "word-list" }, shown.map((w) => h("li", { class: "word-row" },
         h("div", { class: "word-pair" },
           h("div", { class: "word-line" }, h("span", { class: `word-tag lang-${lang.key}` }, lang.name),
             h("span", { class: "word-text" }, h("span", { class: "word-w", lang: la }, w.w), w.r ? h("span", { class: "word-r" }, w.r) : null)),
-          h("div", { class: "word-line" }, h("span", { class: "word-tag lang-ja" }, "日本語"), h("span", { class: "word-text" }, h("span", { class: "word-m" }, w.m))))))),
-      data.words.length > shown.length ? h("p", { class: "muted small" }, `ほか ${data.words.length - shown.length} 語`) : null,
-      h("p", { class: "muted small" }, "マイ単語帳にコピーして追加します。追加したあとは自由に編集できます（共有した人には伝わりません）。"),
+          h("div", { class: "word-line" }, h("span", { class: "word-tag lang-ja" }, JA_NAME), h("span", { class: "word-text" }, h("span", { class: "word-m" }, w.m))))))),
+      data.words.length > shown.length ? h("p", { class: "muted small" }, tx("ほか {n} 語", { n: data.words.length - shown.length })) : null,
+      h("p", { class: "muted small" }, tx("マイ単語帳にコピーして追加します。追加したあとは自由に編集できます（共有した人には伝わりません）。")),
       h("div", { class: "result-actions" },
-        button("filled", "マイ単語帳に追加", "library_add", () => {
+        button("filled", tx("マイ単語帳に追加"), "library_add", () => {
           try {
             const saved = store.saveMySet({ ...data, source: "shared", from: data.title });
-            toast("マイ単語帳に追加しました");
+            toast(tx("マイ単語帳に追加しました"));
             go(`/set/${encodeURIComponent(saved.id)}`, true);
           } catch (e) {
             toast(e.message);
           }
         }),
-        button("text", "追加しない", null, () => go("/", true)))));
+        button("text", tx("追加しない"), null, () => go("/", true)))));
 }
 
 // ---------- プリント（print.js）に渡す部品 ----------
@@ -2098,7 +2099,7 @@ if ("serviceWorker" in navigator) {
 (async () => {
   renderGate(null); // ログインを確かめているあいだ
   const [, s] = await Promise.all([
-    store.loadSkSets().catch((e) => { console.error(e); toast("SK認定コンテンツを読み込めませんでした"); }),
+    store.loadSkSets().catch((e) => { console.error(e); toast(tx("SK認定コンテンツを読み込めませんでした")); }),
     cloud.session().catch((e) => { console.error(e); return { status: "offline" }; })
   ]);
   auth = s;

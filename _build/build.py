@@ -159,6 +159,7 @@ RUNTIME_SOURCES = [
     "move/move.js", "moved/moved.js",
     "view/view.js",
     "office/shared/office.js", "office/shared/templates.js",
+    "study/app.js", "study/classroom.js", "study/cloud.js", "study/gemini.js", "study/grade.js", "study/invite-pdf.js", "study/keyboard.js", "study/maker.js", "study/org-migrate.js", "study/org.js", "study/print.js", "study/printfmt.js", "study/speech.js", "study/store.js", "study/teach-dash.js", "study/teach-school.js", "study/teach.js", "study/i18n.js",
 ]
 # build で作らないページ（ブラウザでページごと訳す）
 STANDALONE_PAGES = [
@@ -172,6 +173,7 @@ STANDALONE_PAGES = [
     "view/index.html",
     "office/index.html", "office/doc/index.html", "office/sheet/index.html", "office/slide/index.html",
     "support/index.html", "support/contact/index.html",
+    "study/index.html",
 ]
 # 英語だけに訳すページ（SK's Lab のツール。<html data-i18n-langs="ja en">）。ページの文とスクリプトの t("…") の両方を探す
 EN_ONLY_PAGES = ["qr-prj/index.html", "smart-dash/index.html"]

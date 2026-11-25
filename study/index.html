@@ -19,6 +19,8 @@
 <link rel="apple-touch-icon" href="ico/apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="SK Study" />
+<!-- 多言語: /lang/ で選んだ言語で表示する（/assets/i18n.js。body の最後で translatePage()。画面を作る文字は study/i18n.js の tx("…")） -->
+<script src="/assets/i18n.js"></script>
 </head>
 <body>
   <!-- 上の帯（MD1 の app bar。左にメニュー、まん中にいまの画面の名前） -->
@@ -57,6 +59,7 @@
     <button type="button" id="install-button" class="filled-btn">追加</button>
   </div>
 
+  <script>window.SKI18N && SKI18N.translatePage();</script>
   <script type="module" src="app.js"></script>
   <script src="/assets/hub/account-button.js" defer></script>
   <!-- SK Hub Systems アカウントの設定の同期（ログイン中だけ） -->

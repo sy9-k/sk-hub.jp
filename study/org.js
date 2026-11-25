@@ -8,6 +8,7 @@
 //     accounts/{UID}/studyOrgs/{sid}                   本人の「入っている学校」{ personId, role, code, schoolName }
 //   どの関数も、第 1 引数 c = { fs, db, user }（cloud.js の ready() の結果。ブラウザの外（ルールの確かめ）でも動くように、ここでは Firebase を読み込まない）
 //   ルールの上限（1 回の書きこみで、確かめのためのアクセスが 20 回まで）があるので、まとめて書くときは BATCH 人ずつに分ける
+import { tx } from "./i18n.js";
 export const BATCH = 6;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 見まちがえやすい I・O・0・1 は使わない
 
@@ -50,9 +51,9 @@ export async function myOrgs(c) {
 export async function lookupOrgCode(c, code) {
   const { fs, db } = c;
   const snap = await fs.getDoc(fs.doc(db, "studyJoinCodes", normCode(code)));
-  if (!snap.exists()) throw fail("bad-code", "コードが見つかりません。");
+  if (!snap.exists()) throw fail("bad-code", tx("コードが見つかりません。"));
   const d = snap.data();
-  if (!d.schoolId || !d.personId) throw fail("not-org-code", "このコードは、クラスの参加コードです。");
+  if (!d.schoolId || !d.personId) throw fail("not-org-code", tx("このコードは、クラスの参加コードです。"));
   return { code: snap.id, ...d };
 }
 
@@ -72,7 +73,7 @@ export async function joinOrg(c, info) {
   try {
     await b.commit();
   } catch (e) {
-    if (e.code === "permission-denied") throw fail("closed", "入れませんでした（このコードはもう使われているか、停止されているかもしれません）。");
+    if (e.code === "permission-denied") throw fail("closed", tx("入れませんでした（このコードはもう使われているか、停止されているかもしれません）。"));
     throw e;
   }
 }
@@ -129,7 +130,7 @@ export function setCodeOps(b, c, school, pid, role, name, code) {
 // 名前（複数）から、ユーザーと専用コードを作る。[{ id, name, code }] を返す（コードが重なったら作り直す）
 export async function createPeople(c, school, role, names) {
   const { fs, db } = c;
-  if (!["student", "teacher"].includes(role)) throw fail("bad-role", "役割がまちがっています。");
+  if (!["student", "teacher"].includes(role)) throw fail("bad-role", tx("役割がまちがっています。"));
   const list = [...new Set(names.map((n) => trim(n, 40)).filter(Boolean))];
   const made = [];
   for (const group of chunks(list, BATCH)) {
@@ -153,7 +154,7 @@ export async function createPeople(c, school, role, names) {
 export async function renamePerson(c, school, person, name) {
   const { fs, db } = c;
   const n = trim(name, 40);
-  if (!n) throw fail("empty", "名前を入れてください。");
+  if (!n) throw fail("empty", tx("名前を入れてください。"));
   if (person.claimedBy) {
     await fs.updateDoc(fs.doc(db, "studySchools", school.id, "people", person.id), { name: n, updatedAt: fs.serverTimestamp() });
     return null;
@@ -164,7 +165,7 @@ export async function renamePerson(c, school, person, name) {
 // 専用コードを作り直す（前のコードは使えなくなる。まだ使われていないユーザーだけ）。新しいコードを返す
 export async function reissueCode(c, school, person, name = person.name) {
   const { fs, db } = c;
-  if (person.claimedBy) throw fail("claimed", "もう使われているユーザーのコードは作り直せません。先に結びつけを外してください。");
+  if (person.claimedBy) throw fail("claimed", tx("もう使われているユーザーのコードは作り直せません。先に結びつけを外してください。"));
   const old = await fs.getDoc(fs.doc(db, "studySchools", school.id, "people", person.id, "secret", "code")).catch(() => null);
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = newCode();
@@ -180,7 +181,7 @@ export async function reissueCode(c, school, person, name = person.name) {
 // 停止する・戻す（停止すると、そのユーザーは使えなくなる。提出は残る）
 export async function setPersonStatus(c, sid, person, status) {
   const { fs, db } = c;
-  if (!["active", "suspended"].includes(status)) throw fail("bad-status", "状態がまちがっています。");
+  if (!["active", "suspended"].includes(status)) throw fail("bad-status", tx("状態がまちがっています。"));
   await fs.updateDoc(fs.doc(db, "studySchools", sid, "people", person.id), { status, updatedAt: fs.serverTimestamp() });
 }
 
@@ -237,7 +238,7 @@ export async function createOrgClass(c, school, name, { me = null } = {}) {
   const { fs, db, user } = c;
   const cid = newId();
   const n = trim(name, 60);
-  if (!n) throw fail("empty", "クラスの名前を入れてください。");
+  if (!n) throw fail("empty", tx("クラスの名前を入れてください。"));
   const b = fs.writeBatch(db);
   b.set(fs.doc(db, "studyClasses", cid), { ownerUid: user.uid, name: n, teacherName: me ? trim(me.name, 40) : "", schoolId: school.id, schoolName: trim(school.name, 60), orgModel: true, createdAt: fs.serverTimestamp(), updatedAt: fs.serverTimestamp() });
   if (me) {
@@ -252,7 +253,7 @@ export async function createOrgClass(c, school, name, { me = null } = {}) {
 export async function renameOrgClass(c, cls, name) {
   const { fs, db } = c;
   const n = trim(name, 60);
-  if (!n) throw fail("empty", "クラスの名前を入れてください。");
+  if (!n) throw fail("empty", tx("クラスの名前を入れてください。"));
   await fs.updateDoc(fs.doc(db, "studyClasses", cls.id), { name: n, updatedAt: fs.serverTimestamp() });
 }
 

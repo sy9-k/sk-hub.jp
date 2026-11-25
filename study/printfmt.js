@@ -10,6 +10,7 @@
 //       試験 … 解答のページは付けず、答えを暗号化して <script type="application/json" id="sk-print-data"> に入れる
 //              合言葉があれば、合言葉を入れるまで答えは出せない（PBKDF2 + AES-GCM）。なければ鍵もファイルに入れる（のぞき見よけ）
 //              暗号の中にも「試験・制限時間」を入れておき、ファイルの書きかえ（試験の設定を消すなど）を見つける
+import { tx, lang } from "./i18n.js";
 export const CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛㉜㉝㉞㉟";
 const CHOICES = "アイウエオカキクケコ";
 const enc = new TextEncoder();
@@ -164,12 +165,12 @@ export async function buildPrintHtml(data, opt = {}) {
   const minutes = exam ? Math.max(0, Math.round(Number(opt.minutes) || 0)) : 0;
   const parts = [];
   for (const img of opt.images || []) {
-    parts.push(`<section class="page page-image"><img src="${esc(img.src)}" alt="${esc(img.page)} ページ"></section>`);
+    parts.push(`<section class="page page-image"><img src="${esc(img.src)}" alt="${esc(img.page)} ${tx("ページ")}"></section>`);
   }
   for (const a of data.articles || []) {
     const qs = (a.sections || []).map((s) => `${s.name ? `<div class="sec">◆${esc(s.name)}◆</div>` : ""}${(s.questions || []).map(questionHtml).join("")}`).join("");
-    parts.push(`<section class="page qpage"><div class="title"><h1>${esc(a.title || data.title)}</h1><div class="tag">問　題</div></div>` +
-      (exam ? `<div class="exam-note">試験用のプリントです。SK Study の全画面で解きます${minutes ? `（制限時間 ${minutes} 分）` : ""}。提出は 1 回だけです。</div>` : "") +
+    parts.push(`<section class="page qpage"><div class="title"><h1>${esc(a.title || data.title)}</h1><div class="tag">${tx("問　題")}</div></div>` +
+      (exam ? `<div class="exam-note">${tx("試験用のプリントです。SK Study の全画面で解きます{n}。提出は 1 回だけです。", { n: minutes ? tx("（制限時間 {minutes} 分）", { minutes }) : "" })}</div>` : "") +
       `<div class="cols">${qs}</div></section>`);
   }
   let meta = { v: 1, mode: exam ? "exam" : "practice", generator: "SK Study" };
@@ -187,15 +188,15 @@ export async function buildPrintHtml(data, opt = {}) {
     for (const a of data.articles || []) {
       const body = (a.sections || []).map((s) => `${s.name ? `<div class="sec">◆${esc(s.name)}◆</div>` : ""}${(s.questions || []).filter((q) => (q.blanks || []).length).map((q) =>
         `<div class="ans"><span class="body"><span class="qn">${esc(q.n)}</span><span class="a">${esc(answerText(q))}</span></span>${q.explanation ? `<span class="ex">${esc(q.explanation)}</span>` : ""}</div>`).join("")}`).join("");
-      parts.push(`<section class="page"><div class="title"><h1>${esc(a.title || data.title)}</h1><div class="tag">解答・解説</div></div><div class="cols">${body}</div></section>`);
+      parts.push(`<section class="page"><div class="title"><h1>${esc(a.title || data.title)}</h1><div class="tag">${tx("解答・解説")}</div></div><div class="cols">${body}</div></section>`);
     }
   }
   const json = JSON.stringify(meta).replace(/</g, "\\u003c");
   return `<!doctype html>
-<html lang="ja">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8">
-<title>${esc(data.title || "プリント")}</title>
+<title>${esc(data.title || tx("プリント"))}</title>
 <meta name="generator" content="SK Study プリント変換">
 <style>${TEMPLATE_CSS}</style>
 <script type="application/json" id="sk-print-data">${json}</script>
