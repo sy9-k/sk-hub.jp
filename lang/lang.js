@@ -103,5 +103,6 @@
     panels.forEach((p) => { p.hidden = p.dataset.panel !== code; });
   }
   cards.forEach((c) => c.addEventListener("click", () => showRegion(c.dataset.region)));
+  cards.forEach((c) => c.classList.toggle("is-current", c.dataset.region === curRegion));
   showRegion(curRegion);
 })();
