@@ -164,7 +164,7 @@ async function localize(res, code, regionUrl) {
   }
   if (regionUrl) {
     const path = new URL(regionUrl).pathname;
-    const dict = r.lang === "en" ? {} : await dictFor(r.lang);
+    const dict = await dictFor(r.lang);
     const tr = (text) => dict[text] || text;
     const desc = (text) => (DESC[code] && DESC[code][path]) || tr(text);
     let title = "";
