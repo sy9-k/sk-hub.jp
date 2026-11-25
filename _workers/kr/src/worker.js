@@ -66,11 +66,13 @@ function blockedRegex(r) {
 const SHARED = [
   /^\/assets\//, /^\/frameworks\//, /^\/icons\//, /^\/lang\//, /^\/about\/(about\.css|about\.js)$/, /^\/korea\/[^/]+\.[a-z0-9]+$/,
   /^\/policies\/docs\//, /^\/y-filter\/(firebase-config\.js|shared\/)/, /^\/updates\/updates\.json$/,
-  /^\/(waiting|account\/invites)\/[^/]+\.(css|js)$/,
+  /^\/(waiting|account|account\/invites)\/[^/]+\.(css|js|png)$/,
   /^\/(dictionary\/ico|nagi\/ico|toolbox\/icon|study\/ico|products\/[a-z]+\/[^/]+\.(css|js|png|webp|svg))/
 ];
 // 地域版で、そのまま出すページ（読むだけのページ。アプリやログインが要るものは sk-hub.jp へ移す）
-const MIRROR = [/^\/(products|policies|updates|brand|credits|sk-hub-systems|waiting)\/?$/, /^\/(products|policies|brand)\/.+\/$/, /^\/account\/invites\/?$/];
+// アカウントのページ（/account/・/account/invites/・/sk-hub-systems/account/）も出す。アカウントを出さない地域（cn）では、systems が隠されているので出ない。
+//   ログインは地域のサイトでもできる（Google・GitHub。ログインの状態はアドレスごとなので、sk-hub.jp のアプリでは、もう一度ログインする）
+const MIRROR = [/^\/(products|policies|updates|brand|credits|sk-hub-systems|waiting|account)\/?$/, /^\/(products|policies|brand|sk-hub-systems)\/.+\/$/, /^\/account\/invites\/?$/];
 const CACHE_SECONDS = 60; // GitHub Pages から取ったものを Cloudflare に置いておく時間（直してから出るまで最大これだけかかる）
 const SKIP_COOKIE = "sk_site";
 const SKIP_DAYS = 30;

@@ -377,6 +377,7 @@
   "LINE はもうつながっています。LINE のトークに戻ってください。": "LINE is already connected. Please go back to the LINE chat.",
   "LINE をつなぎます…": "Connecting LINE…",
   "LINE ミニアプリ": "LINE mini app",
+  "LINE・Kakao・パスキー・0F8 でのログインは、<a data-acct-regional-link=\"\" href=\"https://sk-hub.jp/account/\">sk-hub.jp</a> で行ってください。": "To sign in with LINE, Kakao, a passkey, or 0F8, use <a data-acct-regional-link=\"\" href=\"https://sk-hub.jp/account/\">sk-hub.jp</a>.",
   "Lab のツールは実験中です": "Lab tools are experimental",
   "Lab を見る": "Explore the Lab",
   "Lyrics Flow の画面。左にジャケットと再生ボタン、右に歌詞が並び、いま歌っている行だけが白く光っている": "The Lyrics Flow screen. Cover art and playback buttons on the left, lyrics on the right, with only the line being sung glowing white.",

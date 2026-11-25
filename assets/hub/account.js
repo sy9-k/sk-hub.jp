@@ -214,7 +214,11 @@ const LOGIN_FLAGS = { github: GITHUB_LOGIN, microsoft: MICROSOFT_LOGIN, line: LI
 const passkeySupported = () => typeof window !== "undefined" && !!window.PublicKeyCredential && !!navigator.credentials;
 // LINE の中のブラウザ（ミニアプリ・トークで開いたリンク）では、LINE だけ（Google などのログインの画面は LINE の中では開けない）
 export const inLineApp = () => typeof navigator !== "undefined" && /\bLine\/\d/.test(navigator.userAgent);
-export const availableLogins = () => Object.keys(LOGIN_PROVIDERS).filter((k) => LOGIN_FLAGS[k] !== false && (k !== "passkey" || passkeySupported()) && (!inLineApp() || k === "line"));
+// 地域のサイト（kr.sk-hub.jp など）では、api.sk-hub.jp（sk-api）を呼べる場所に入っていないので、Firebase だけで済むログイン（Google・GitHub）に絞る。
+//   LINE・Kakao・パスキー・0F8 は、sk-api が地域のサイトを許したら、ここの REGIONAL_LOGINS に足す
+export const REGIONAL_HOST = /^(kr|cn|tw|eu|global)\.sk-hub\.jp$/.test(typeof location !== "undefined" ? location.hostname : "");
+const REGIONAL_LOGINS = ["google", "github", "microsoft"];
+export const availableLogins = () => Object.keys(LOGIN_PROVIDERS).filter((k) => LOGIN_FLAGS[k] !== false && (!REGIONAL_HOST || REGIONAL_LOGINS.includes(k)) && (k !== "passkey" || passkeySupported()) && (!inLineApp() || k === "line"));
 const isExternal = (key) => !!LOGIN_PROVIDERS[key]?.external;
 function provider(key = "google") {
   if (key === "github") {
