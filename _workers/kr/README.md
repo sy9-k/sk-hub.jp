@@ -11,11 +11,11 @@
 | 日本 | sk-hub.jp | 日本語 | すべて |
 | 大韓民国 | kr.sk-hub.jp | 한국어 | Nagi・SK's Toolbox・SK Study・SK Hub Office・SK Hub Systems |
 | 中国大陆 | cn.sk-hub.jp | 简体中文 | Nagi・SK's Toolbox（アカウントのいらないものだけ。Google Fonts とアナリティクスも外す） |
-| 台灣・香港 | tw.sk-hub.jp | 繁體中文 | 韓国のもの＋ MALU |
-| ヨーロッパ | eu.sk-hub.jp | English | 韓国のもの＋ MALU |
-| その他 | global.sk-hub.jp | English | 韓国のもの＋ MALU |
+| 台灣・香港 | tw.sk-hub.jp | 繁體中文 | Nagi・SK's Toolbox（と、アカウントの SK Hub Systems） |
+| ヨーロッパ | eu.sk-hub.jp | English | Nagi・SK's Toolbox（と、アカウントの SK Hub Systems） |
+| その他 | global.sk-hub.jp | English | Nagi・SK's Toolbox（と、アカウントの SK Hub Systems） |
 
-Y-FILTER.・SK's Lab・Sentaro さんとの提携は、日本だけです。**出すものを変えるときは、`src/worker.js` の `REGIONS` の `products` を直して deploy します**（HTML は直さない）。
+MALU・Y-FILTER.・SK's Lab・Sentaro さんとの提携は、日本だけです。SK Study・SK Hub Office は、日本と大韓民国だけです。**出すものを変えるときは、`src/worker.js` の `REGIONS` の `products` を直して deploy します**（HTML は直さない）。
 
 | 開いたもの | 出るもの |
 |---|---|
@@ -23,8 +23,9 @@ Y-FILTER.・SK's Lab・Sentaro さんとの提携は、日本だけです。**�
 | `<地域>.sk-hub.jp/assets/…` など（`SHARED`） | sk-hub.jp の同じパス |
 | その地域で出さないプロダクトのページ・アプリ | `<地域>.sk-hub.jp/` に移す |
 | それ以外（アプリ・ログイン・`/about/` など） | sk-hub.jp の同じページに移す（`?hl=<言語>` を付けて、地域の言語のまま開く） |
-| `sk-hub.jp/`（その国から） | その地域のトップ（アドレスは `sk-hub.jp` のまま。トップだけ） |
-| `sk-hub.jp/?site=jp` | 日本語のトップ。30 日のあいだ（cookie `sk_site=jp`）出し分けをやめる |
+| `sk-hub.jp/` と読むページ（その国から） | その地域のサイトの同じページへ移す（`wrangler.jsonc` の route に並べたパスだけ） |
+| `sk-hub.jp` のその地域で出さないプロダクト（その国から） | その地域のサイトのトップへ移す |
+| `sk-hub.jp/?site=jp` | 日本のサイト。30 日のあいだ（cookie `sk_site=jp`）地域サイトへ移すのをやめる |
 
 ## HTML 側の印
 
@@ -71,5 +72,5 @@ wrangler は sakueinakai2023@gmail.com の Cloudflare アカウントにログ�
 
 - 各地域のサイト（`kr.sk-hub.jp/` など）を開く → その地域の言語のトップ（出さないプロダクトがない）。
 - その地域で出さないプロダクトのページ（例: `cn.sk-hub.jp/products/study/`）を開く → その地域のトップに移る。
-- `sk-hub.jp/` を、その国の VPN で開く → 同じ地域のトップ（アドレスは `sk-hub.jp` のまま）。`sk-hub.jp/?site=jp` で日本語のトップに戻れる。
+- `sk-hub.jp/` を、その国の VPN で開く → その地域のサイトへ移る。`sk-hub.jp/?site=jp` で日本のサイトに戻れる。
 - 出し分けが効かないとき: sk-hub.jp の DNS がプロキシ済みか、Workers の route に `sk-hub.jp/` があるかを見る（Cloudflare → Workers → sk-kr → 設定 → ドメインとルート）。

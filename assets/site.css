@@ -1233,6 +1233,18 @@ a.acct-notice-title:hover { color: var(--acct-link); text-decoration: underline;
 .loc-link:focus-visible, .loc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lang-card--loc .lang-note { max-width: 880px; margin: 0 auto; padding: 28px 20px 0; text-align: left; }
 .lang-screen:has(.lang-card--loc) .lang-cancel { display: block; max-width: 880px; margin: 6px auto 0; padding: 8px 20px; text-align: left; border-radius: 0; }
+/* 「この地域ではありませんか？」の案内（assets/region-hint.js） */
+.region-hint { position: fixed; z-index: 90; top: 68px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px 18px; flex-wrap: wrap; justify-content: space-between; width: calc(100% - 24px); max-width: 620px; padding: 14px 16px 14px 20px; border-radius: 18px; background: var(--surface); box-shadow: 0 18px 50px -18px rgba(13, 16, 20, .35), 0 0 0 1px var(--line); color: var(--ink); animation: region-hint-in .4s cubic-bezier(.22, 1, .36, 1); }
+.region-hint-text { display: flex; flex-direction: column; gap: 2px; min-width: 200px; flex: 1 1 220px; font-size: 13.5px; color: var(--muted); }
+.region-hint-text strong { font-size: 15px; font-weight: 800; color: var(--ink); }
+.region-hint-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.region-hint-go, .region-hint-stay { font: inherit; font-size: 13.5px; font-weight: 700; height: 38px; display: inline-flex; align-items: center; padding: 0 16px; border: 0; border-radius: 999px; text-decoration: none; cursor: pointer; }
+.region-hint-go { background: var(--accent); color: var(--accent-ink); }
+.region-hint-stay { background: var(--surface-2); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.region-hint-go:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }
+.region-hint-stay:hover { background: var(--surface-3); }
+@keyframes region-hint-in { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .region-hint { animation: none; } }
 .lang-continue { font: inherit; font-size: 16px; font-weight: 800; width: 100%; height: 0; margin-top: 0; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); cursor: pointer; opacity: 0; overflow: hidden; transform: translateY(8px); transition: height .35s cubic-bezier(.22, 1, .36, 1), margin .35s cubic-bezier(.22, 1, .36, 1), opacity .3s ease, transform .35s cubic-bezier(.22, 1, .36, 1); }
 .lang-card.is-chosen .lang-continue { height: 54px; margin-top: 18px; opacity: 1; transform: none; box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--accent) 70%, transparent); }
 .lang-continue:hover { background: color-mix(in srgb, var(--accent) 85%, #000); }

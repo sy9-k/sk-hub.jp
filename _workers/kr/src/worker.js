@@ -8,8 +8,8 @@
 //   <地域>.sk-hub.jp/assets/ など     → sk-hub.jp の同じパス（共通の部品。SHARED）
 //   <地域>.sk-hub.jp/出さないもの      → <地域>.sk-hub.jp のトップへ移す
 //   <地域>.sk-hub.jp/それ以外          → sk-hub.jp の同じページへ移す（アプリ・ログインが要るもの。?hl=言語 を付ける）
-//   sk-hub.jp/（その国から）           → 同じ整え方で出す（アドレスは sk-hub.jp のまま。トップだけ）
-//   sk-hub.jp/（ほかの国から）          → いつもの日本語のトップ（Worker は何もしない）
+//   sk-hub.jp/（その国から）           → その地域のサイトへ移す（トップ・読むページは同じページへ、出さないプロダクトはトップへ）
+//   sk-hub.jp/（ほかの国から）          → いつもの日本語のトップ（Worker は何もしない）。日本を選んだ人（?site=jp）にも何もしない
 //
 // 地域ごとに出すプロダクトは、下の REGIONS の products で決める（ここだけ直せばよい）。
 // 「地域向けに整える」の中身（HTMLRewriter）
@@ -21,7 +21,7 @@
 //   ・中国（cn）は、Google Fonts と Google アナリティクスを読み込む部品を外す（中国から届かないため）
 // 隠したいものがあるときは、sk-hub.jp の HTML にその要素へ data-region / data-product を付けるだけでよい（Worker は直さない）。
 //
-// その国から開いても日本語のトップを見たいとき: sk-hub.jp/?site=jp を開く（30 日のあいだ、出し分けをやめる）。
+// その国から開いても日本のサイトを見たいとき: sk-hub.jp/?site=jp を開く（30 日のあいだ、地域サイトへ移すのをやめる）。
 // 検索エンジンのクローラー（UA に bot・crawler・spider を含むもの）には、sk-hub.jp では出し分けをしない。
 const ORIGIN = "https://sk-hub.jp";
 const MAIN = ["nagi", "toolbox", "study", "office", "systems"];
@@ -35,9 +35,9 @@ const REGIONS = {
   kr: { host: "kr.sk-hub.jp", lang: "ko", locale: "ko_KR", hreflang: "ko", countries: ["KR"], products: [...MAIN] },
   // 中国: Google・Firebase に届かないので、アカウントのいらない Nagi と SK's Toolbox だけ
   cn: { host: "cn.sk-hub.jp", lang: "zh-CN", locale: "zh_CN", hreflang: "zh-CN", countries: ["CN"], products: ["nagi", "toolbox"], dropGoogle: true },
-  tw: { host: "tw.sk-hub.jp", lang: "zh-TW", locale: "zh_TW", hreflang: "zh-TW", countries: ["TW", "HK", "MO"], products: [...MAIN, "malu"] },
-  eu: { host: "eu.sk-hub.jp", lang: "en", locale: "en_GB", hreflang: "", countries: EEA, products: [...MAIN, "malu"] },
-  global: { host: "global.sk-hub.jp", lang: "en", locale: "en_US", hreflang: "", countries: [], products: [...MAIN, "malu"] }
+  tw: { host: "tw.sk-hub.jp", lang: "zh-TW", locale: "zh_TW", hreflang: "zh-TW", countries: ["TW", "HK", "MO"], products: ["nagi", "toolbox", "systems"] },
+  eu: { host: "eu.sk-hub.jp", lang: "en", locale: "en_GB", hreflang: "", countries: EEA, products: ["nagi", "toolbox", "systems"] },
+  global: { host: "global.sk-hub.jp", lang: "en", locale: "en_US", hreflang: "", countries: [], products: ["nagi", "toolbox", "systems"] }
 };
 const HOSTS = Object.fromEntries(Object.entries(REGIONS).map(([code, r]) => [r.host, code]));
 
@@ -84,16 +84,16 @@ const DESC = {
     "/products/": "SK 开发的应用列表。专注计时器 Nagi、小应用工具箱 SK's Toolbox。"
   },
   tw: {
-    "/": "高中生 SK 開發的專注計時器 Nagi、小應用工具箱 SK's Toolbox、學習應用 SK Study、辭典 MALU 的介紹與支援資訊。",
-    "/products/": "SK 開發的應用列表。專注計時器 Nagi、SK's Toolbox、SK Study、SK Hub Office、辭典 MALU。"
+    "/": "高中生 SK 開發的專注計時器 Nagi 和小應用工具箱 SK's Toolbox 的介紹與支援資訊。",
+    "/products/": "SK 開發的應用列表。專注計時器 Nagi、小應用工具箱 SK's Toolbox。"
   },
   eu: {
-    "/": "Apps by SK, a high school student: the Nagi focus timer, SK's Toolbox, SK Study, SK Hub Office and the MALU dictionary.",
-    "/products/": "The apps SK builds: Nagi, SK's Toolbox, SK Study, SK Hub Office and MALU."
+    "/": "Apps by SK, a high school student: the Nagi focus timer and SK's Toolbox.",
+    "/products/": "The apps SK builds: Nagi and SK's Toolbox."
   },
   global: {
-    "/": "Apps by SK, a high school student: the Nagi focus timer, SK's Toolbox, SK Study, SK Hub Office and the MALU dictionary.",
-    "/products/": "The apps SK builds: Nagi, SK's Toolbox, SK Study, SK Hub Office and MALU."
+    "/": "Apps by SK, a high school student: the Nagi focus timer and SK's Toolbox.",
+    "/products/": "The apps SK builds: Nagi and SK's Toolbox."
   }
 };
 
@@ -253,10 +253,9 @@ async function regionHost(request, url, code) {
 }
 
 async function apexHost(request, url, country) {
-  // sk-hub.jp/ だけを扱う（route もそうしてある）。ほかは何もしない
-  if (url.pathname !== "/" || (request.method !== "GET" && request.method !== "HEAD")) return fetch(request);
+  if (request.method !== "GET" && request.method !== "HEAD") return fetch(request);
 
-  // ?site=jp … 日本語のトップを見る。30 日のあいだ出し分けをやめる印をつける
+  // ?site=jp … 日本のサイトを見る。30 日のあいだ、現地の地域サイトへ移すのをやめる印をつける
   if (url.searchParams.get("site") === "jp") {
     const res = await fetch(request);
     const out = new Response(res.body, res);
@@ -264,15 +263,23 @@ async function apexHost(request, url, country) {
     out.headers.set("Cache-Control", "private, no-cache");
     return out;
   }
+  // 現地（その地域の国）から開いたら、その地域の専用サイトを出す。
+  //   トップ・読むだけのページ → 地域サイトの同じページ、その地域で出さないプロダクト → 地域サイトのトップ。
+  //   アプリ（出すもの）・共通の部品は、そのまま。検索エンジンのクローラーと、日本を選んだ人（?site=jp）には何もしない
   const code = regionForCountry(country);
   if (!code || wantsJapanese(request) || isBot(request)) return fetch(request);
-
-  const res = await fetch(request);
-  if (res.status !== 200 || !isHtml(res)) return res;
-  const out = clean(await localize(res, code, null));
-  out.headers.set("Cache-Control", "private, no-cache");
-  out.headers.set("Vary", "Cookie");
-  return out;
+  const r = REGIONS[code];
+  const path = url.pathname;
+  if (SHARED.some((re) => re.test(path))) return fetch(request);
+  let to = "";
+  if (path === "/") to = "/";
+  else if (blockedRegex(r).test(path)) to = "/";
+  else if (MIRROR.some((re) => re.test(path))) to = path + url.search;
+  if (!to) return fetch(request);
+  return new Response(null, {
+    status: 302,
+    headers: { Location: `https://${r.host}${to}`, "Cache-Control": "private, no-cache", "Vary": "Cookie" }
+  });
 }
 
 export default {

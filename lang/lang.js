@@ -75,8 +75,9 @@
     const path = pathname === "/" || GENERIC.test(pathname) ? back : "/";
     const u = new URL(path, SITES[region]);
     u.searchParams.set("setlang", lang);
-    // 日本のトップは、その国から開くと地域版に出し分けられる。日本を選んだことを覚えさせる（30 日）
-    if (region === "jp" && u.pathname === "/") u.searchParams.set("site", "jp");
+    u.searchParams.set("nohint", "1");
+    // 日本のサイトは、その国から開くと地域サイトへ移される。日本を選んだことを覚えさせる（30 日）
+    if (region === "jp") u.searchParams.set("site", "jp");
     location.href = u.toString();
   }
 

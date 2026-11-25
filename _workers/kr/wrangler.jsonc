@@ -12,7 +12,22 @@
     { "pattern": "tw.sk-hub.jp", "custom_domain": true },
     { "pattern": "eu.sk-hub.jp", "custom_domain": true },
     { "pattern": "global.sk-hub.jp", "custom_domain": true },
-    { "pattern": "sk-hub.jp/", "zone_name": "sk-hub.jp" }
+    { "pattern": "sk-hub.jp/", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/products/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/policies/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/updates/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/brand/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/credits/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/sk-hub-systems/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/lab/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/y-filter/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/dictionary/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/qr-prj/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/smart-dash/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/study/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/office/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/account/*", "zone_name": "sk-hub.jp" },
+    { "pattern": "sk-hub.jp/waiting/*", "zone_name": "sk-hub.jp" }
   ],
   "workers_dev": false,
   "observability": { "enabled": true }
