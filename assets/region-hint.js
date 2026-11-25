@@ -18,6 +18,9 @@
   // ?nohint=1 … 地域を選んで移ってきたとき。案内をしばらく出さない（URL からは消す）
   try {
     var qs = new URLSearchParams(location.search);
+    // ?site=jp … 日本を選んだ。30 日のあいだ、現地の地域サイトへ移さない印（cookie sk_site=jp）をつける。
+    //   Cloudflare の route はクエリ付きのアドレスに当たらず、Worker で cookie を付けられないので、ここで付ける（Worker が読む）
+    if (qs.get("site") === "jp") document.cookie = "sk_site=jp; Path=/; Max-Age=" + (30 * 24 * 60 * 60) + "; Secure; SameSite=Lax";
     if (qs.get("nohint")) {
       localStorage.setItem(KEY, JSON.stringify({ all: Date.now() + 30 * DAY }));
       qs.delete("nohint");
