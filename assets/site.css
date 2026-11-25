@@ -1233,6 +1233,8 @@ a.acct-notice-title:hover { color: var(--acct-link); text-decoration: underline;
 .loc-link:focus-visible, .loc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lang-card--loc .lang-note { max-width: 880px; margin: 0 auto; padding: 28px 20px 0; text-align: left; }
 .lang-screen:has(.lang-card--loc) .lang-cancel { display: block; max-width: 880px; margin: 6px auto 0; padding: 8px 20px; text-align: left; border-radius: 0; }
+.acct-center-note { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+.acct-center-note a { color: var(--accent); font-weight: 700; }
 /* アカウントの地域（アカウントのページ） */
 .acct-region { display: grid; gap: 6px; margin: 16px 0 6px; text-align: left; }
 .acct-region-label { font-size: 13px; font-weight: 800; color: var(--muted); }

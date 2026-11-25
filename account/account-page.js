@@ -4,7 +4,7 @@
 import {
   LOGIN_PROVIDERS, PROFILE_COLORS, PROFILE_NAME_MAX, SERVICES, SYNC_AT_KEY, agreeLatestTerms, availableLogins, confirmIdentity,
   connectService, disconnectService, externalLoginsOf, externalResult, isConnected, db, deleteLogin, linkLogin, loadExternalLogins, loadOf8, checkOf8, loginsOf, markNoticesSeen,
-  REGIONS, guessRegion, localRegion, profileOf, regionOf, register, rememberAccount, saveRegion,
+  REGIONAL_HOST, REGIONS, guessRegion, localRegion, profileOf, regionOf, register, rememberAccount, saveRegion,
   safeNext, saveLanguage, saveProfile, signIn, signInAndLinkPending, signOutAccount, syncSettings, unlinkLogin, watchAccount
 } from "/assets/hub/account.js";
 import {
@@ -1032,6 +1032,8 @@ async function renderConsole(user) {
 // ---------- 操作 ----------
 
 // ログインのボタン（data-acct-signin="google" | "github" | "microsoft"）。使える方法（/assets/hub/account.js の availableLogins）だけ出す
+// 地域のサイトでは、LINE などでのログインは sk-hub.jp で行う、と案内する
+if (REGIONAL_HOST) $("[data-acct-regional-note]").hidden = false;
 const logins = availableLogins();
 root.querySelectorAll("[data-acct-signin]").forEach((btn) => { btn.hidden = !logins.includes(btn.dataset.acctSignin || "google"); });
 // 0F8 のポップアップは、ボタンを押した瞬間に開く必要があるので、SDK は先に読んでおく（このページだけ）
