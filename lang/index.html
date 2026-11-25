@@ -54,23 +54,35 @@
         <a class="lang-appbar-back" href="/" data-lang-back aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M5 12l6-6M5 12l6 6"/></svg></a>
         <span class="lang-appbar-app"><img src="/assets/logo.svg" alt="" width="22" height="22" data-lang-app-icon><span data-lang-app-name>SK</span></span>
       </div>
-      <div class="lang-card" data-lang-card>
-        <div class="lang-head">
-          <div class="lang-globe" data-lang-globe aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>
-          </div>
-          <h1 class="lang-title" data-lang-title>Language</h1>
-          <p class="lang-desc" data-lang-desc>Please select your language</p>
-        </div>
-        <div class="lang-list" role="radiogroup" aria-label="Language">
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="ja" lang="ja">日本語</button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="en" lang="en">English</button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="zh-CN" lang="zh-CN">简体中文</button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="zh-TW" lang="zh-TW">繁體中文</button>
-          <button type="button" class="lang-item" role="radio" aria-checked="false" data-lang="ko" lang="ko">한국어</button>
+      <div class="lang-card lang-card--loc" data-lang-card>
+        <div class="loc-band"><h1 class="lang-title" data-lang-title>Choose your location</h1></div>
+        <div class="loc-acc">
+        <details class="loc-group" data-group="jp">
+          <summary data-i18n-skip>日本</summary>
+          <ul class="loc-links">
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="ja" lang="ja">日本語</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="en" lang="en">English</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="jp" data-lang="ko" lang="ko">한국어</button></li>
+          </ul>
+        </details>
+        <details class="loc-group" data-group="kr">
+          <summary data-i18n-skip>한국</summary>
+          <ul class="loc-links">
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="ko" lang="ko">한국어</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="en" lang="en">English</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="kr" data-lang="ja" lang="ja">日本語</button></li>
+          </ul>
+        </details>
+        <details class="loc-group" data-group="global">
+          <summary data-i18n-skip>Global</summary>
+          <ul class="loc-links">
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="en" lang="en">English</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="zh-CN" lang="zh-CN">简体中文</button></li>
+            <li><button type="button" class="loc-link" data-i18n-skip data-region="global" data-lang="zh-TW" lang="zh-TW">繁體中文</button></li>
+          </ul>
+        </details>
         </div>
         <p class="lang-note" data-lang-note>Applies to the SK website and all SK apps</p>
-        <button type="button" class="lang-continue" data-lang-continue disabled>Continue</button>
       </div>
       <!-- サイトから開いたときの「戻る」（アプリから開いたときは上の帯の戻るボタン） -->
       <a class="lang-cancel" href="/" data-lang-back>Back</a>
