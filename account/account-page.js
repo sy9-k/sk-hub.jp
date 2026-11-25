@@ -1056,9 +1056,14 @@ function setSigninMode(mode, updateUrl) {
   $("[data-acct-signin-lead]").textContent = signup
     ? t("いつもの {names} のアカウントで、SK Hub Systems アカウントを作れます。パスワードを新しく作る必要はありません。", { names: accountList })
     : t("SK のサービスを、ひとつのアカウントで。前に使った方法でログインしてください。");
+  // 地域のサイトでは、パスキーは使えないので、説明にも入れない
   $("[data-acct-signin-note]").textContent = signup
-    ? t("選んだアカウントでログインしたあと、規約を確認して同意すると、アカウントができます。パスキーは、アカウントを作ったあとに登録できます。")
-    : t("{names} のアカウントか、登録したパスキーでログインします。", { names: accountList });
+    ? (REGIONAL_HOST
+      ? t("選んだアカウントでログインしたあと、規約を確認して同意すると、アカウントができます。")
+      : t("選んだアカウントでログインしたあと、規約を確認して同意すると、アカウントができます。パスキーは、アカウントを作ったあとに登録できます。"))
+    : (REGIONAL_HOST
+      ? t("{names} のアカウントでログインします。", { names: accountList })
+      : t("{names} のアカウントか、登録したパスキーでログインします。", { names: accountList }));
   $("[data-acct-link]").hidden = true;
   message("");
   if (updateUrl) {
