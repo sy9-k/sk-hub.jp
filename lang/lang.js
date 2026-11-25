@@ -67,27 +67,38 @@
   const KR_NG = /^\/(products\/(y-filter|malu)|lab|y-filter|dictionary|qr-prj|smart-dash)(\/|$)/;
 
   // 別の地域のサイトへ移る（戻り先は、その地域で開けるページなら同じページ、なければトップ。選んだ言語は ?setlang= で引き継ぐ）
-  function switchSite(site, lang) {
+  function switchSite(site, lang, region) {
     let path = back;
     const pathname = new URL(back, location.origin).pathname;
     if (site === "kr" && (KR_NG.test(pathname) || !(pathname === "/" || KR_OK.some((re) => re.test(pathname))))) path = "/";
     const u = new URL(path, SITES[site]);
     u.searchParams.set("setlang", lang);
+    u.searchParams.set("setregion", region);
     // 日本のトップは、韓国から開くと韓国版に出し分けられる。日本を選んだことを覚えさせる（30 日）
     if (site === "jp" && u.pathname === "/") u.searchParams.set("site", "jp");
     location.href = u.toString();
   }
 
+  // 選んだ地域を覚える（日本・中国・台湾と香港・ヨーロッパ・その他は、サイトが同じ sk-hub.jp なので、どれを選んだかを残す）
+  function saveRegion(code) { try { localStorage.setItem("sk_region", code); } catch (e) { /* 保存できなくても移る */ } }
+  function storedRegion() { try { return localStorage.getItem("sk_region") || ""; } catch (e) { return ""; } }
+
   buttons.forEach((b) => b.addEventListener("click", () => {
     const lang = b.dataset.lang;
-    const site = b.dataset.region === "kr" ? "kr" : "jp";
-    if (onProd && site !== hereSite) switchSite(site, lang);
+    const region = b.dataset.region;
+    const site = region === "kr" ? "kr" : "jp";
+    saveRegion(region);
+    if (onProd && site !== hereSite) switchSite(site, lang, region);
     else window.SKI18N.setLang(lang, back);
   }));
 
   // いま使っている地域と言語に印を付ける
   const cur = window.SKI18N.stored() || window.SKI18N.lang;
-  const curRegion = hereSite === "kr" ? "kr" : (cur === "zh-CN" || cur === "zh-TW" ? "global" : "jp");
+  const REGION_CODES = [...card.querySelectorAll(".loc-card")].map((c) => c.dataset.region);
+  const savedRegion = storedRegion();
+  const curRegion = hereSite === "kr" ? "kr"
+    : (savedRegion && savedRegion !== "kr" && REGION_CODES.includes(savedRegion) ? savedRegion
+      : (cur === "zh-CN" ? "cn" : cur === "zh-TW" ? "tw" : "jp"));
   buttons.forEach((b) => {
     const on = b.dataset.region === curRegion && b.dataset.lang === cur;
     b.classList.toggle("is-current", on);
