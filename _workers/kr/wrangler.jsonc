@@ -1,4 +1,4 @@
-// SK Hub Korea（kr.sk-hub.jp と、韓国から開いた sk-hub.jp）の Worker。手順は README.md
+// SK Hub の地域版（kr / cn / tw / eu / global.sk-hub.jp と、その国から開いた sk-hub.jp）の Worker。手順は README.md（名前は sk-kr のまま）
 {
   "name": "sk-kr",
   "main": "src/worker.js",
@@ -8,6 +8,10 @@
   //   sk-hub.jp/   … 韓国から開いた人に韓国向けのページを出すための route。sk-hub.jp の DNS が「プロキシ済み」（オレンジの雲）でないと動かない（README）
   "routes": [
     { "pattern": "kr.sk-hub.jp", "custom_domain": true },
+    { "pattern": "cn.sk-hub.jp", "custom_domain": true },
+    { "pattern": "tw.sk-hub.jp", "custom_domain": true },
+    { "pattern": "eu.sk-hub.jp", "custom_domain": true },
+    { "pattern": "global.sk-hub.jp", "custom_domain": true },
     { "pattern": "sk-hub.jp/", "zone_name": "sk-hub.jp" }
   ],
   "workers_dev": false,

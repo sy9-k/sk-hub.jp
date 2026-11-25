@@ -256,7 +256,7 @@ DEV_NAV = (
 )
 
 
-# kr.sk-hub.jp（_workers/kr/）でも出すページ。検索エンジンに日本版と韓国版を伝える（hreflang）
+# 地域の専用サイト（kr / cn / tw .sk-hub.jp。_workers/kr/）でも出すページ。検索エンジンに日本版と韓国版を伝える（hreflang）
 KR_ALT = {
     "products/index.html", "products/nagi/index.html", "products/office/index.html", "products/study/index.html",
     "policies/index.html", "policies/privacy/index.html", "updates/index.html", "brand/index.html",
@@ -269,6 +269,8 @@ def kr_alt_links(dst):
     return (
         f'  <link rel="alternate" hreflang="ja" href="{ORIGIN}{path}">\n'
         f'  <link rel="alternate" hreflang="ko" href="https://kr.sk-hub.jp{path}">\n'
+        f'  <link rel="alternate" hreflang="zh-CN" href="https://cn.sk-hub.jp{path}">\n'
+        f'  <link rel="alternate" hreflang="zh-TW" href="https://tw.sk-hub.jp{path}">\n'
         f'  <link rel="alternate" hreflang="x-default" href="{ORIGIN}{path}">\n'
     )
 

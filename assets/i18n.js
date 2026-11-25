@@ -29,10 +29,7 @@
     var qs = new URLSearchParams(location.search), sl = qs.get("setlang");
     if (sl) {
       if (byCode(sl)) localStorage.setItem(STORAGE_KEY, sl);
-      var sr = qs.get("setregion");
-      if (sr && /^[a-z]{2,6}$/.test(sr)) localStorage.setItem("sk_region", sr);
       qs.delete("setlang");
-      qs.delete("setregion");
       history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs.toString() : "") + location.hash);
     }
   } catch (e) {}

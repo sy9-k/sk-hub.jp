@@ -216,9 +216,9 @@
       title.textContent = text;
       return title;
     };
-    // 韓国版（kr.sk-hub.jp。Worker が window.SK_REGION = "kr" を入れる）で出さないもの
-    const REGION_HIDDEN_KR = /^\/(products\/(y-filter|malu)\/|lab\/)/;
-    const inRegion = item => window.SK_REGION !== "kr" || !REGION_HIDDEN_KR.test(String(Array.isArray(item) ? item[1] : item.href || ""));
+    // 地域版（kr.sk-hub.jp など）で出さないもの。Worker が window.SK_BLOCKED（出さないページの正規表現の文字列）を入れる（_workers/kr/）
+    const REGION_BLOCKED = (window.SK_BLOCKED || []).map(src => new RegExp(src));
+    const inRegion = item => !REGION_BLOCKED.length || !REGION_BLOCKED.some(re => re.test(String(Array.isArray(item) ? item[1] : item.href || "")));
     const toEntries = items => items.filter(inRegion).map(item => {
       if (Array.isArray(item)) return item;
       if (!item.action) return [item.label, item.href];
@@ -849,7 +849,8 @@
     fetch("/updates/updates.json", { cache: "no-cache" })
       .then((res) => res.json())
       .then((data) => {
-        const items = (data.items || []).map(localize).sort((a, b) => b.date.localeCompare(a.date));
+        const hiddenCategories = window.SK_HIDDEN_CATEGORIES || [];
+        const items = (data.items || []).filter((it) => !hiddenCategories.includes(it.category)).map(localize).sort((a, b) => b.date.localeCompare(a.date));
         updateLists.forEach((list) => renderUpdates(list, items));
         // カテゴリで絞り込むボタン（アップデートのページ）
         document.querySelectorAll("[data-updates-filter]").forEach((btn) => {
