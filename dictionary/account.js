@@ -73,7 +73,7 @@ async function refresh() {
     return;
   }
   const account = state.account;
-  if (!account || account.termsVersion !== hub.ACCOUNT_TERMS_VERSION) state.status = "unregistered";
+  if (!hub.accountUsable(account)) state.status = "unregistered";
   else if (!hub.isConnected(account, "malu")) state.status = "not-connected";
   else state.status = "connected";
   if (state.status !== "unregistered") hub.rememberAccount(user, account);

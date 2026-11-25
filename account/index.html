@@ -43,7 +43,7 @@
     <a class="hd-item" href="/about/">私について</a>
     <a class="hd-item" href="/products/" data-menu="products">プロダクト</a>
     <a class="hd-item" href="https://support.sk-hub.jp/" data-menu="support" data-no-navigation="true">サポートと情報</a>
-    <a class="hd-item hd-account" href="/account/" data-menu="account" data-account-link>アカウント</a>
+    <a class="hd-item hd-account" data-product="systems" href="/account/" data-menu="account" data-account-link>アカウント</a>
     <a class="hd-item hd-lang" href="/lang/" data-lang-link><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg><span class="hd-lang-label">言語</span></a>
     <button class="hd-menu-btn" type="button" aria-expanded="false" aria-controls="hd-menu" aria-label="メニュー"><span></span><span></span></button>
   </header>
@@ -138,6 +138,7 @@
               <ul class="acct-list acct-list--yes">
                 <li>ログインに使うアカウント（Google・GitHub）の識別子・名前・メールアドレス・アイコン、LINE・Kakao の識別子・名前・アイコン、登録したパスキーの公開鍵（ログインに使います。LINE・Kakao からメールアドレスは受け取りません。指紋・顔などの情報は端末から出ません）</li>
                 <li>アカウントの作成日と、規約に同意した日</li>
+                <li>選んだ地域（日本・大韓民国など）</li>
                 <li>プロフィール（決めた場合の表示名とアイコン）と、端末のあいだで同期する設定（表示言語・アプリの設定）</li>
                 <li>SK からのお知らせ（お問い合わせへの返事など）</li>
                 <li>使ったブラウザのタイムゾーン（おおまかな地域）とサポートID（お問い合わせ・不正な利用への対応に使います）</li>
@@ -153,6 +154,12 @@
               </ul>
             </div>
           </div>
+          <!-- 地域（アカウントを作るときだけ。地域で使えるサービスがちがう。提供していない地域では、アカウントを作れない） -->
+          <div class="acct-region" data-acct-region-row>
+            <label class="acct-region-label" for="acct-region">お住まいの地域</label>
+            <select class="acct-select" id="acct-region" data-acct-region></select>
+            <small data-acct-region-note>地域によって、使えるサービスがちがいます。</small>
+          </div>
           <label class="acct-agree">
             <input type="checkbox" data-acct-agree>
             <span><a href="/policies/#sk-terms" target="_blank" rel="noopener">SK 利用規約</a>・<a href="/policies/privacy/" target="_blank" rel="noopener">SK プライバシーポリシー</a>・<a href="/policies/#sk-hub-account" target="_blank" rel="noopener">SK Hub Systems アカウント規約</a>に同意します</span>
@@ -167,6 +174,18 @@
             <button class="acct-pill" type="button" data-acct-cancel>別のアカウントでログイン</button>
           </div>
           <p class="acct-msg" data-acct-msg role="alert"></p>
+        </div>
+
+        <!-- 提供していない地域のアカウント（ログインしても使えない） -->
+        <div class="acct-center" data-acct-view="unavailable" hidden>
+          <div class="acct-user" data-acct-user-unavailable></div>
+          <h1 class="acct-center-title">この地域では、まだ使えません</h1>
+          <p class="acct-center-lead" data-acct-unavailable-lead>いまは、この地域で SK Hub Systems アカウントを使えません。提供する地域は、これから広げていく予定です。</p>
+          <p class="acct-center-lead">地域を間違えて選んだときは、お問い合わせからお知らせください。</p>
+          <div class="acct-center-actions">
+            <button class="acct-pill acct-pill--primary" type="button" data-acct-signout>ログアウト</button>
+            <a class="acct-pill" href="https://support.sk-hub.jp/contact/">お問い合わせ</a>
+          </div>
         </div>
 
         <!-- サービスへの接続の確認（/account/?connect=yfilter&next=/y-filter/。サービスを最初に使うとき） -->
@@ -398,6 +417,11 @@
                   <span class="acct-tile-title">表示言語</span>
                   <span class="acct-tile-note">サイト・MALU・SK's Lab の言語。ここで変えると、ほかの端末にも反映されます。</span>
                   <select class="acct-select" data-acct-lang aria-label="表示言語"></select>
+                </div>
+                <div class="acct-tile is-static">
+                  <span class="acct-tile-title">地域</span>
+                  <span class="acct-tile-note">使えるサービスは、地域で変わります。提供していない地域には、変えられません。</span>
+                  <select class="acct-select" data-acct-region-set aria-label="地域"></select>
                 </div>
                 <div class="acct-tile is-static">
                   <span class="acct-tile-title">アプリの設定</span>

@@ -9,7 +9,7 @@
 //   ・timetables/{ID}/joins/{UID}      … { email（ない人は ""）, name, photo, color, code, joinedAt }。参加している人（一覧は管理者だけ）
 //                                       招待コードで参加したとき、またはメールアドレスの配信先の人が時間割を開いたとき（code は ""）に、本人が作る
 //   権限は y-filter リポジトリの systems/firestore.rules（「SK's Toolbox の時間割の配信」）
-import { ACCOUNT_TERMS_VERSION, currentUser, db, profileOf } from "/assets/hub/account.js";
+import { ACCOUNT_TERMS_VERSION, accountUsable, currentUser, db, profileOf } from "/assets/hub/account.js";
 import {
   arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -41,7 +41,7 @@ export async function receive() {
   const user = await currentUser();
   if (!user) return { status: "signed-out", items: [] };
   const acc = await getDoc(doc(db, "accounts", user.uid));
-  if (!acc.exists() || acc.data().termsVersion !== ACCOUNT_TERMS_VERSION) return { status: "unregistered", items: [] };
+  if (!acc.exists() || !accountUsable(acc.data())) return { status: "unregistered", items: [] };
   // メールアドレスあて（管理者が配信先に入れた）と、アカウントあて（招待コードで参加した）の両方
   const email = (user.email || "").toLowerCase();
   const [byEmail, byUid] = await Promise.all([
@@ -169,7 +169,7 @@ export async function checkInvite(text) {
   const user = await currentUser();
   if (!user) return { status: "signed-out", code };
   const acc = await getDoc(doc(db, "accounts", user.uid));
-  if (!acc.exists() || acc.data().termsVersion !== ACCOUNT_TERMS_VERSION) return { status: "unregistered", code };
+  if (!acc.exists() || !accountUsable(acc.data())) return { status: "unregistered", code };
   if (code.length < 8) return { status: "not-found", code };
   let snap;
   try { snap = await getDoc(invite(code)); } catch (e) { return { status: "not-found", code }; }
