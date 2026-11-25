@@ -18,12 +18,41 @@
   // ?nohint=1 … 地域を選んで移ってきたとき。案内をしばらく出さない（URL からは消す）
   try {
     var qs = new URLSearchParams(location.search);
+    // ?site=jp … 日本を選んだ。30 日のあいだ、現地の地域サイトへ移さない印（cookie sk_site=jp）をつける。
+    //   Cloudflare の route はクエリ付きのアドレスに当たらず、Worker で cookie を付けられないので、ここで付ける（Worker が読む）
+    if (qs.get("site") === "jp") document.cookie = "sk_site=jp; Path=/; Max-Age=" + (30 * 24 * 60 * 60) + "; Secure; SameSite=Lax";
     if (qs.get("nohint")) {
       localStorage.setItem(KEY, JSON.stringify({ all: Date.now() + 30 * DAY }));
       qs.delete("nohint");
       history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs.toString() : "") + location.hash);
     }
   } catch (e) { /* 保存できなくても続ける */ }
+
+  // 別のサイトへ移るリンクに、いまの言語（?setlang=）を付ける。
+  //   言語は、アドレスごとに別に保存される（kr.sk-hub.jp・sk-hub.jp・support.sk-hub.jp は別の場所）ので、
+  //   リンクで移ったとき、移った先で日本語に戻らないようにする（assets/i18n.js が ?setlang= を読んで、保存して、URL から消す）。
+  //   付けるのは、①ほかの sk-hub.jp のサブドメインへのリンク、②地域のサイトで、そのサイトに置かれていないページ（アプリ・ログインなど。Worker が sk-hub.jp へ移す）へのリンク。
+  //   リンクの組み立ては、押したとき（click・auxclick・contextmenu・Enter）に行う（あとから足されるメニューにも効く）
+  var HERE_MIRRORED = [/^\/$/, /^\/(products|policies|updates|brand|credits|sk-hub-systems|waiting)\/?$/, /^\/(products|policies|brand)\/.+\/$/, /^\/account\/invites\/?$/, /^\/(assets|frameworks|icons|lang)\//];
+  function currentLang() {
+    try { return (window.SKI18N && window.SKI18N.lang) || localStorage.getItem("sk_lang") || ""; } catch (e) { return ""; }
+  }
+  function decorate(a) {
+    if (!a || !a.getAttribute || !a.getAttribute("href") || a.hasAttribute("data-no-lang")) return;
+    var u;
+    try { u = new URL(a.href, location.href); } catch (e) { return; }
+    if (!/(^|\.)sk-hub\.jp$/.test(u.hostname) || u.searchParams.has("setlang") || /\.(js|css|png|jpe?g|webp|svg|ico|json|txt|xml|pdf)$/i.test(u.pathname)) return;
+    var lang = currentLang();
+    if (!lang) return;
+    var cross = u.hostname !== location.hostname;
+    var regional = !!window.SK_REGION && !cross && !HERE_MIRRORED.some(function (re) { return re.test(u.pathname); });
+    if (!cross && !regional) return;
+    u.searchParams.set("setlang", lang);
+    a.href = u.toString();
+  }
+  function onLink(e) { decorate(e.target && e.target.closest ? e.target.closest("a[href]") : null); }
+  ["click", "auxclick", "contextmenu"].forEach(function (n) { document.addEventListener(n, onLink, true); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Enter") onLink(e); }, true);
 
   var SITES = {
     jp: "https://sk-hub.jp", kr: "https://kr.sk-hub.jp", cn: "https://cn.sk-hub.jp",

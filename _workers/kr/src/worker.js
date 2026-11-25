@@ -32,7 +32,7 @@ const MAIN = ["nagi", "toolbox", "study", "office", "systems"];
 // countries: その国から sk-hub.jp/ を開いたとき、この地域のトップを出す（ISO の国コード）
 const EEA = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MT", "NL", "NO", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "GB", "CH"];
 const REGIONS = {
-  kr: { host: "kr.sk-hub.jp", lang: "ko", locale: "ko_KR", hreflang: "ko", countries: ["KR"], products: [...MAIN] },
+  kr: { host: "kr.sk-hub.jp", lang: "ko", locale: "ko_KR", hreflang: "ko", countries: ["KR"], products: [...MAIN, "invites"] },
   // 中国: Google・Firebase に届かないので、アカウントのいらない Nagi と SK's Toolbox だけ
   cn: { host: "cn.sk-hub.jp", lang: "zh-CN", locale: "zh_CN", hreflang: "zh-CN", countries: ["CN"], products: ["nagi", "toolbox"], dropGoogle: true },
   tw: { host: "tw.sk-hub.jp", lang: "zh-TW", locale: "zh_TW", hreflang: "zh-TW", countries: ["TW", "HK", "MO"], products: ["nagi", "toolbox", "systems"] },
@@ -50,7 +50,9 @@ const PRODUCT_PATHS = {
   office: /^\/(products\/office|office)(\/|$)/,
   nagi: /^\/(products\/nagi|nagi)(\/|$)/,
   toolbox: /^\/(products\/toolbox|toolbox)(\/|$)/,
-  systems: /^\/(sk-hub-systems|account|waiting)(\/|$)/
+  systems: /^\/(sk-hub-systems|account|waiting)(\/|$)/,
+  // 招待制（早期アクセスの登録と招待の状況）は、日本と大韓民国だけ
+  invites: /^\/(waiting|account\/invites)(\/|$)/
 };
 // アップデート情報の category
 const PRODUCT_CATEGORY = { "y-filter": "Y-FILTER.", malu: "MALU", lab: "Lab", nagi: "Nagi", systems: "SK Hub Systems" };
@@ -64,10 +66,11 @@ function blockedRegex(r) {
 const SHARED = [
   /^\/assets\//, /^\/frameworks\//, /^\/icons\//, /^\/lang\//, /^\/about\/(about\.css|about\.js)$/, /^\/korea\/[^/]+\.[a-z0-9]+$/,
   /^\/policies\/docs\//, /^\/y-filter\/(firebase-config\.js|shared\/)/, /^\/updates\/updates\.json$/,
+  /^\/(waiting|account\/invites)\/[^/]+\.(css|js)$/,
   /^\/(dictionary\/ico|nagi\/ico|toolbox\/icon|study\/ico|products\/[a-z]+\/[^/]+\.(css|js|png|webp|svg))/
 ];
 // 地域版で、そのまま出すページ（読むだけのページ。アプリやログインが要るものは sk-hub.jp へ移す）
-const MIRROR = [/^\/(products|policies|updates|brand|credits|sk-hub-systems)\/?$/, /^\/(products|policies|brand)\/.+\/$/];
+const MIRROR = [/^\/(products|policies|updates|brand|credits|sk-hub-systems|waiting)\/?$/, /^\/(products|policies|brand)\/.+\/$/, /^\/account\/invites\/?$/];
 const CACHE_SECONDS = 60; // GitHub Pages から取ったものを Cloudflare に置いておく時間（直してから出るまで最大これだけかかる）
 const SKIP_COOKIE = "sk_site";
 const SKIP_DAYS = 30;

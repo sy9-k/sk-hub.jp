@@ -4,7 +4,7 @@
 import {
   LOGIN_PROVIDERS, PROFILE_COLORS, PROFILE_NAME_MAX, SERVICES, SYNC_AT_KEY, agreeLatestTerms, availableLogins, confirmIdentity,
   connectService, disconnectService, externalLoginsOf, externalResult, isConnected, db, deleteLogin, linkLogin, loadExternalLogins, loadOf8, checkOf8, loginsOf, markNoticesSeen,
-  profileOf, register, rememberAccount,
+  REGIONS, guessRegion, localRegion, profileOf, regionOf, register, rememberAccount, saveRegion,
   safeNext, saveLanguage, saveProfile, signIn, signInAndLinkPending, signOutAccount, syncSettings, unlinkLogin, watchAccount
 } from "/assets/hub/account.js";
 import {
@@ -252,6 +252,14 @@ function renderView(state) {
     $("[data-acct-error]").textContent = errText(state.error);
     return;
   }
+  if (status === "unavailable") {
+    // 提供していない地域のアカウント: 使えないことを知らせる（ログアウトか、お問い合わせだけ）
+    showView("unavailable");
+    $("[data-acct-user-unavailable]").replaceChildren(userChip(user));
+    const r = regionOf(account);
+    $("[data-acct-unavailable-lead]").textContent = t("「{region}」では、いまは SK Hub Systems アカウントを使えません。提供する地域は、これから広げていく予定です。", { region: t(REGIONS[r].name) });
+    return;
+  }
   if (status === "unregistered" || status === "outdated") {
     showView("register");
     $("[data-acct-user]").replaceChildren(userChip(user));
@@ -265,6 +273,10 @@ function renderView(state) {
         : t("このアカウントで SK Hub Systems アカウントを作成します。内容を確認して、同意してください。");
     $("[data-acct-register]").textContent = outdated ? t("同意して続ける") : t("アカウントを作成");
     $("[data-acct-agree]").checked = false;
+    // 地域の選択は、アカウントを作るときだけ（はじめは、タイムゾーンから推し量った地域）
+    $("[data-acct-region-row]").hidden = outdated;
+    if (!outdated) fillRegionSelect($("[data-acct-region]"), true, guessRegion());
+    updateRegionNote();
     // 年齢の確認は、アカウントを作るときだけ
     $("[data-acct-age-row]").hidden = outdated;
     $("[data-acct-age]").checked = false;
@@ -679,12 +691,69 @@ $("[data-acct-support-id]").addEventListener("click", async () => {
   }
 });
 
+// ---------- 地域 ----------
+// 地域の選択肢を並べる。提供していない地域は「まだ提供していません」と添える（設定では選べない）
+function fillRegionSelect(select, withPlaceholder, guess) {
+  select.replaceChildren();
+  if (withPlaceholder) {
+    const ph = new Option(t("地域を選んでください"), "");
+    ph.disabled = true;
+    select.appendChild(ph);
+  }
+  Object.keys(REGIONS).forEach((code) => {
+    const r = REGIONS[code];
+    const label = r.provided ? t(r.name) : `${t(r.name)}（${t("まだ提供していません")}）`;
+    const opt = new Option(label, code);
+    if (!r.provided && !withPlaceholder) opt.disabled = true;
+    select.appendChild(opt);
+  });
+  select.value = withPlaceholder ? (REGIONS[guess] ? guess : "") : select.value;
+}
+function regionChoiceOk() {
+  const code = $("[data-acct-region]").value;
+  return !!REGIONS[code] && REGIONS[code].provided;
+}
+function updateRegionNote() {
+  const code = $("[data-acct-region]").value;
+  const note = $("[data-acct-region-note]");
+  if (code && REGIONS[code] && !REGIONS[code].provided) {
+    note.textContent = t("この地域では、いまは SK Hub Systems アカウントを作れません。提供する地域は、これから広げていく予定です。");
+    note.classList.add("is-error");
+  } else {
+    note.textContent = t("地域によって、使えるサービスがちがいます。");
+    note.classList.remove("is-error");
+  }
+}
+$("[data-acct-region]").addEventListener("change", () => {
+  updateRegionNote();
+  $("[data-acct-register]").disabled = !canRegister() || busy;
+});
+$("[data-acct-region-set]").addEventListener("change", async (e) => {
+  const select = e.currentTarget;
+  const code = select.value;
+  if (busy || !current.user || !REGIONS[code]) return;
+  setBusy(true, select);
+  try {
+    await saveRegion(current.user, code);
+    current.account = { ...current.account, region: code };
+    message(t("地域を変えました。"));
+  } catch (err) {
+    message(errText(err));
+    select.value = regionOf(current.account) || "";
+  } finally {
+    setBusy(false, select);
+  }
+});
+
 function renderSettings() {
   const select = $("[data-acct-lang]");
   if (!select.options.length) {
     I18N.LANGS.forEach((l) => select.appendChild(new Option(l.name, l.code)));
   }
   select.value = I18N.stored() || "ja";
+  const regionSelect = $("[data-acct-region-set]");
+  fillRegionSelect(regionSelect, false, "");
+  regionSelect.value = regionOf(current.account) || localRegion() || "";
   let at = 0;
   try { at = Number(localStorage.getItem(SYNC_AT_KEY) || 0); } catch (e) { at = 0; }
   $("[data-acct-sync-at]").textContent = at ? new Date(at).toLocaleString(I18N.locale) : "-";
@@ -1055,7 +1124,8 @@ $$("[data-acct-signout], [data-acct-cancel]").forEach((btn) => btn.addEventListe
 $("[data-acct-retry]").addEventListener("click", () => location.reload());
 
 // 規約への同意と（アカウントを作るときは）年齢の確認の両方がそろったら押せる
-const canRegister = () => $("[data-acct-agree]").checked && ($("[data-acct-age-row]").hidden || $("[data-acct-age]").checked);
+const canRegister = () => $("[data-acct-agree]").checked && ($("[data-acct-age-row]").hidden || $("[data-acct-age]").checked)
+  && ($("[data-acct-region-row]").hidden || regionChoiceOk());
 $$("[data-acct-agree], [data-acct-age]").forEach((box) => box.addEventListener("change", () => {
   $("[data-acct-register]").disabled = !canRegister() || busy;
 }));
@@ -1066,7 +1136,7 @@ $("[data-acct-register]").addEventListener("click", async (e) => {
   setBusy(true, btn);
   try {
     if (current.status === "outdated") await agreeLatestTerms(current.user);
-    else await register(current.user);
+    else await register(current.user, $("[data-acct-region]").value);
     const snap = await getDoc(doc(db, "accounts", current.user.uid));
     render({ status: "ready", user: current.user, account: snap.data() });
   } catch (err) {

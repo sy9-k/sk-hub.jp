@@ -387,7 +387,7 @@ async function classView(cid, ui) {
               h("a", { class: "set-row-link", href: `#/teach/${encodeURIComponent(cid)}/${encodeURIComponent(a.id)}` },
                 h("span", { class: "set-row-sub" },
                   h("span", { class: "kind-pill" }, k.name),
-                  h("span", { class: a.published ? "pub-pill on" : "pub-pill" }, a.published ? tx("公開中") : tx("非公開")),
+                  h("span", { class: a.published ? "pub-pill on" : "pub-pill" }, a.published ? (isJa ? "公開中" : tx("結果を公開中")) : tx("非公開")),
                   a.resultsOpen ? h("span", { class: "pub-pill on" }, a.kind === "wordtest" ? tx("返却ずみ") : tx("結果を公開")) : null,
                   a.due ? h("span", null, tx("締め切り {due}", { due: fmtDue(a.due) })) : null),
                 h("span", { class: "set-row-title" }, a.title)),

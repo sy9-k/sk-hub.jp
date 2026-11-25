@@ -62,6 +62,52 @@ export async function saveProfile(user, profile) {
   });
 }
 
+// ---------- 地域 ----------
+// アカウントの地域は、アカウントを作るとき（と、アカウントのページの「設定」）に本人が選ぶ（accounts/{UID}.region）。
+//   提供していない地域（provided: false）のアカウントでは、ログインしても使えない（「この地域ではまだ使えません」と出す）。
+//   提供する地域を広げるときは、ここの provided を true にするだけでよい（サイトの地域版は _workers/kr/src/worker.js の REGIONS）。
+//   地域を決めていない（前からある）アカウントは、止めない
+export const REGIONS = {
+  jp: { name: "日本", provided: true },
+  kr: { name: "大韓民国", provided: true },
+  cn: { name: "中国大陆", provided: false },
+  tw: { name: "台灣・香港", provided: true },
+  eu: { name: "ヨーロッパ（EEA・英国・スイス）", provided: true },
+  global: { name: "その他の地域", provided: true }
+};
+export const regionOf = (account) => (account && REGIONS[account.region] ? account.region : "");
+export const regionProvided = (account) => { const r = regionOf(account); return !r || REGIONS[r].provided; };
+// アカウントが使える（規約に同意済みで、提供している地域）
+export const accountUsable = (account) => !!account && account.termsVersion === ACCOUNT_TERMS_VERSION && regionProvided(account);
+
+// 端末のタイムゾーンから、いまいる地域を推し量る（アカウントを作るときの、はじめの選択）
+export function guessRegion() {
+  let tz = "";
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; }
+  if (tz === "Asia/Tokyo") return "jp";
+  if (tz === "Asia/Seoul") return "kr";
+  if (/^Asia\/(Shanghai|Chongqing|Harbin|Urumqi|Kashgar)$/.test(tz)) return "cn";
+  if (/^Asia\/(Taipei|Hong_Kong|Macau|Macao)$/.test(tz)) return "tw";
+  if (/^(Europe|Atlantic)\//.test(tz) && !/\/(Moscow|Minsk|Kaliningrad|Samara|Volgograd|Kirov|Astrakhan|Saratov|Ulyanovsk|Simferopol|Kyiv|Kiev|Chisinau|Istanbul|Belgrade|Tirane|Sarajevo|Skopje|Podgorica|Andorra|Monaco|San_Marino|Vatican)$/.test(tz)) return "eu";
+  return tz ? "global" : "";
+}
+
+// 地域を保存する。Firestore のルールが地域の項目に対応していないとき（permission-denied）でも、止めずに続ける（この端末だけに覚える）
+const REGION_LOCAL_KEY = "skhub_region";
+export function localRegion() { try { return localStorage.getItem(REGION_LOCAL_KEY) || ""; } catch (e) { return ""; } }
+function rememberRegion(region) { try { localStorage.setItem(REGION_LOCAL_KEY, region); } catch (e) { /* なくてもよい */ } }
+export async function saveRegion(user, region) {
+  if (!REGIONS[region]) return false;
+  rememberRegion(region);
+  try {
+    await updateDoc(accountRef(user.uid), { region });
+    return true;
+  } catch (e) {
+    if (e && e.code === "permission-denied") return false;
+    throw e;
+  }
+}
+
 // ---------- サービスの接続 ----------
 // サービス（管理コンソールなど）は、最初に使うときに「このアカウントで使いますか？」と確かめてから接続する
 // （/account/?connect=<key>&next=<サービスの URL>）。接続した記録は accounts/{UID}.services.<key> = { connectedAt }
@@ -692,6 +738,12 @@ function watchAuth(callback) {
         return;
       }
       const account = snap.data();
+      // 提供していない地域のアカウントは、使えない（ログインしても「この地域ではまだ使えません」と出す）
+      if (!regionProvided(account)) {
+        clearHint();
+        callback({ status: "unavailable", user, account });
+        return;
+      }
       saveHint(user, account);
       const ready = account.termsVersion === ACCOUNT_TERMS_VERSION;
       if (ready) {
@@ -717,7 +769,7 @@ export function backgroundSync() {
       if (!user) { clearHint(); resolve(null); return; }
       try {
         const snap = await getDoc(accountRef(user.uid));
-        if (!snap.exists() || snap.data().termsVersion !== ACCOUNT_TERMS_VERSION) { resolve(null); return; }
+        if (!snap.exists() || !accountUsable(snap.data())) { clearHint(); resolve(null); return; }
         const account = snap.data();
         saveHint(user, account);
         const result = await syncSettings(user, account);
@@ -731,12 +783,20 @@ export function backgroundSync() {
 }
 
 // アカウントを作る（規約に同意する）
-export async function register(user) {
-  await setDoc(accountRef(user.uid), {
-    createdAt: serverTimestamp(),
-    termsVersion: ACCOUNT_TERMS_VERSION,
-    termsAgreedAt: serverTimestamp()
-  });
+export async function register(user, region = "") {
+  const base = { createdAt: serverTimestamp(), termsVersion: ACCOUNT_TERMS_VERSION, termsAgreedAt: serverTimestamp() };
+  if (REGIONS[region]) {
+    rememberRegion(region);
+    try {
+      await setDoc(accountRef(user.uid), { ...base, region });
+      saveHint(user, null);
+      return;
+    } catch (e) {
+      // ルールが地域の項目に対応する前でも、アカウントは作れるようにする
+      if (!(e && e.code === "permission-denied")) throw e;
+    }
+  }
+  await setDoc(accountRef(user.uid), base);
   saveHint(user, null);
 }
 
