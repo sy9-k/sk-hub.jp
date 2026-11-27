@@ -179,10 +179,11 @@ export async function renderClass(cid, ui, group = "") {
   const hash = location.hash;
   loading(ui);
   if (!(await needReady(ui))) return;
-  let cls, assigns;
+  let cls, assigns, notices = [];
   try {
     cls = await cloud.getClass(cid);
     assigns = await cloud.publishedAssignments(cid);
+    notices = await cloud.announcements(cid).catch(() => []);
   } catch (e) {
     if (location.hash !== hash) return;
     app.replaceChildren(h("section", { class: "message" },
@@ -209,7 +210,7 @@ export async function renderClass(cid, ui, group = "") {
   if (!g && cloud.activeClass() === cid) {
     const name = await cloud.myProfileName(cid).catch(() => "");
     if (location.hash !== hash) return;
-    app.replaceChildren(...studentHome({ cid, cls, assigns: allAssigns, subs, name }, ui).filter(Boolean), h("div", { class: "set-actions" }, leave));
+    app.replaceChildren(...[noticeSection(notices, ui)].filter(Boolean), ...studentHome({ cid, cls, assigns: allAssigns, subs, name }, ui).filter(Boolean), h("div", { class: "set-actions" }, leave));
     return;
   }
   app.replaceChildren(
@@ -219,10 +220,25 @@ export async function renderClass(cid, ui, group = "") {
       h("div", null,
         h("p", { class: "set-row-sub" }, h("span", null, cls.teacherName ? tx("{teacherName} 先生", { teacherName: cls.teacherName }) : tx("クラス"))),
         h("h1", null, cls.name))),
+    g ? null : noticeSection(notices, ui),
     h("section", { class: "section" },
       h("h2", null, `${g ? g.name : tx("配られたもの")}（${assigns.length}）`),
       assigns.length ? h("div", { class: "set-list" }, assigns.map((a, i) => assignRow(cid, a, subs[i], now, ui))) : h("p", { class: "muted" }, g ? g.empty : tx("まだ配られたものはありません。"))),
     cls.orgModel === true ? null : h("div", { class: "set-actions" }, leave));
+}
+
+// 先生からのお知らせ（新しい順・固定が先頭）。なければ何も出さない。classNames があれば、クラス名も添える
+function noticeSection(list, ui) {
+  const { h, icon } = ui;
+  if (!list.length) return null;
+  return h("section", { class: "section" },
+    h("h2", null, icon("campaign"), tx("先生からのお知らせ（{length}）", { length: list.length })),
+    h("div", { class: "set-list" }, list.map((n) => h("div", { class: "set-row" },
+      h("span", { class: "thumb", "aria-hidden": "true" }, icon(n.pinned ? "push_pin" : "campaign")),
+      h("div", { class: "set-row-body" },
+        h("span", { class: "set-row-sub" }, n.className ? h("span", null, n.className) : null, h("span", null, fmtDue(n.createdAt))),
+        h("span", { class: "set-row-title" }, n.title),
+        n.body ? h("span", { class: "muted small", style: "white-space:pre-wrap" }, n.body) : null)))));
 }
 
 // 配られたものの 1 行
@@ -374,9 +390,9 @@ export async function renderOrgStudent(info, ui, group = "") {
   }
   const loaded = (await Promise.all(list.map(async (k) => {
     try {
-      const [cls, assigns] = await Promise.all([cloud.getClass(k.id), cloud.publishedAssignments(k.id)]);
+      const [cls, assigns, notices] = await Promise.all([cloud.getClass(k.id), cloud.publishedAssignments(k.id), cloud.announcements(k.id).catch(() => [])]);
       const subs = await Promise.all(assigns.map((a) => cloud.mySubmission(k.id, a.id).catch(() => null)));
-      return { cls, assigns, subs };
+      return { cls, assigns, subs, notices };
     } catch (e) { return null; } // 消されたクラスなどは飛ばす
   }))).filter(Boolean);
   if (location.hash !== hash) return;
@@ -391,7 +407,9 @@ export async function renderOrgStudent(info, ui, group = "") {
       part.length ? h("div", { class: "set-list" }, part.map((it) => assignRow(it.cid, it.a, it.sub, now, ui, it.className))) : h("p", { class: "muted" }, g.empty)));
     return;
   }
-  app.replaceChildren(...studentHomeFrom({
+  const allNotices = loaded.flatMap(({ cls, notices }) => notices.map((n) => ({ ...n, className: cls.name })))
+    .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (cloud.toMillis(b.createdAt) || 0) - (cloud.toMillis(a.createdAt) || 0));
+  app.replaceChildren(...[noticeSection(allNotices, ui)].filter(Boolean), ...studentHomeFrom({
     items, head: `${info.className}${loaded.length ? tx("・{length} クラス", { length: loaded.length }) : ""}`, name: info.profileName,
     classRows: loaded.map(({ cls, assigns, subs }) => ({ cls, total: assigns.length, done: subs.filter(Boolean).length }))
   }, ui).filter(Boolean));
