@@ -326,6 +326,8 @@ export async function deleteClass(cls) {
   const { fs, db } = await ready();
   const assigns = await fs.getDocs(fs.collection(db, "studyClasses", cls.id, "assignments"));
   for (const a of assigns.docs) await deleteAssignment(cls.id, a.id);
+  const notices = await fs.getDocs(fs.collection(db, "studyClasses", cls.id, "announcements"));
+  await deleteAll(notices.docs.map((d) => d.ref));
   const members = await fs.getDocs(fs.collection(db, "studyClasses", cls.id, "members"));
   await deleteAll(members.docs.map((d) => d.ref));
   const profs = await fs.getDocs(fs.collection(db, "studyClasses", cls.id, "profiles"));
@@ -614,6 +616,34 @@ export async function deleteAssignment(cid, aid) {
     fs.getDocs(fs.collection(db, "studyClasses", cid, "assignments", aid, "grades"))
   ]);
   await deleteAll([...subs.docs.map((d) => d.ref), ...grades.docs.map((d) => d.ref), fs.doc(db, "studyClasses", cid, "assignments", aid)]);
+}
+
+// ---------- お知らせ（先生がクラスの生徒に配る連絡。studyClasses/{cid}/announcements/{nid}） ----------
+// 新しい順。固定（pinned）したものを先に
+export async function announcements(cid) {
+  const { fs, db } = await ready();
+  const snap = await fs.getDocs(fs.collection(db, "studyClasses", cid, "announcements"));
+  return snap.docs.map(withId).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (ms(b.createdAt) || 0) - (ms(a.createdAt) || 0));
+}
+
+// data = { title, body, pinned }。nid が空なら新しく作る
+export async function saveAnnouncement(cid, nid, data, existing = null) {
+  const { fs, db } = await ready();
+  const body = {
+    title: String(data.title).trim().slice(0, 80),
+    body: String(data.body || "").trim().slice(0, 2000),
+    pinned: !!data.pinned,
+    updatedAt: fs.serverTimestamp(),
+    createdAt: existing ? existing.createdAt : fs.serverTimestamp()
+  };
+  const id = nid || newId();
+  await fs.setDoc(fs.doc(db, "studyClasses", cid, "announcements", id), body);
+  return id;
+}
+
+export async function deleteAnnouncement(cid, nid) {
+  const { fs, db } = await ready();
+  await fs.deleteDoc(fs.doc(db, "studyClasses", cid, "announcements", nid));
 }
 
 export async function submissions(cid, aid) {

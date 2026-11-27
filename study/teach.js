@@ -350,13 +350,29 @@ async function schoolView(sid, s, ui) {
 
 async function classView(cid, ui) {
   const { h, icon, button, linkButton, toast, confirmDialog, go, app, openDialog } = ui;
-  const [cls, members, assigns, sess] = await Promise.all([cloud.getClass(cid), cloud.roster(cid), cloud.allAssignments(cid), cloud.session()]);
+  const [cls, members, assigns, sess, notices] = await Promise.all([cloud.getClass(cid), cloud.roster(cid), cloud.allAssignments(cid), cloud.session(), cloud.announcements(cid).catch(() => [])]);
   const org = cls.orgModel === true; // 組織モデル: 担任は teachers、生徒は学校の名簿からの在籍
   const ro = org ? !(await cloud.isTeacherOf(cls)) : cls.ownerUid !== sess.user.uid; // 学校の総合管理者は読むだけ（書き換えられるのはクラスの持ち主・担任の先生）
   const counts = await Promise.all(assigns.map((a) => cloud.submissions(cid, a.id).then((x) => x.length).catch(() => null)));
   document.title = tx("{name} - 指導者メニュー", { name: cls.name });
   const reload = () => classView(cid, ui);
   const copy = async (text) => { try { await navigator.clipboard.writeText(text); toast(tx("コピーしました")); } catch (e) { toast(tx("コピーできませんでした")); } };
+  // お知らせを作る・直す（n が null なら新規）
+  const editNotice = (n) => {
+    const title = h("input", { type: "text", class: "field-input", maxlength: "80", value: n ? n.title : "", placeholder: tx("題名（例: 来週の小テストについて）") });
+    const body = h("textarea", { class: "field-input", rows: "6", maxlength: "2000", placeholder: tx("本文（省略できます）") });
+    body.value = n ? n.body || "" : "";
+    const pin = h("input", { type: "checkbox", checked: !!(n && n.pinned) });
+    const d = openDialog(n ? tx("お知らせを直す") : tx("お知らせを配信する"),
+      h("div", null, title, body, h("label", { class: "switch-row" }, pin, h("span", null, h("strong", null, tx("先頭に固定する")), h("small", null, tx("大事なお知らせを、いちばん上に出し続けます")))),
+        h("p", { class: "muted small" }, tx("「{name}」の生徒の画面に出ます。", { name: cls.name }))), [
+      button("text", tx("やめる"), null, () => d.close()),
+      button("filled", n ? tx("保存") : tx("配信する"), "send", async () => {
+        if (!title.value.trim()) { title.focus(); return; }
+        try { await cloud.saveAnnouncement(cid, n ? n.id : null, { title: title.value, body: body.value, pinned: pin.checked }, n); d.close(); toast(n ? tx("保存しました") : tx("配信しました")); reload(); } catch (e) { toast(cloud.explain(e)); }
+      })]);
+    title.focus();
+  };
   const joinUrl = `${location.origin}/study/#/`;
   // 参加の案内 PDF（コードの入れ方つき。1 人 1 枚）
   const sheet = (list) => {
@@ -377,6 +393,21 @@ async function classView(cid, ui) {
             try { await cloud.updateClass(cls, { open: e.target.checked }); toast(e.target.checked ? tx("参加を受け付けます") : tx("参加の受け付けを終えました")); reload(); } catch (err) { toast(cloud.explain(err)); }
           } }),
           h("span", null, h("strong", null, tx("参加を受け付ける")), h("small", null, tx("生徒がそろったら止めておくと安心です"))))),
+      h("section", { class: "mk-card" },
+        h("div", { class: "section-head" }, h("h2", null, icon("campaign"), tx("お知らせ（{length}）", { length: notices.length })),
+          ro ? null : button("filled", tx("お知らせを配信する"), "add", () => editNotice(null))),
+        notices.length ? h("div", { class: "set-list flat" }, notices.map((n) => h("div", { class: "set-row" },
+          h("span", { class: "thumb", "aria-hidden": "true" }, icon(n.pinned ? "push_pin" : "campaign")),
+          h("div", { class: "set-row-body" },
+            h("span", { class: "set-row-sub" }, n.pinned ? h("span", { class: "pub-pill on" }, tx("固定")) : null, h("span", null, fmtDue(n.createdAt))),
+            h("span", { class: "set-row-title" }, n.title),
+            n.body ? h("span", { class: "muted small", style: "white-space:pre-wrap" }, n.body) : null),
+          ro ? null : h("div", { class: "set-row-end" },
+            button("text", tx("直す"), "edit", () => editNotice(n)),
+            button("text", tx("削除"), "delete", async () => {
+              if (!(await confirmDialog(tx("このお知らせを削除しますか？"), tx("生徒の画面からも消えます。もとに戻せません。"), tx("削除する"), true))) return;
+              try { await cloud.deleteAnnouncement(cid, n.id); toast(tx("削除しました")); reload(); } catch (e) { toast(cloud.explain(e)); }
+            }))))) : h("p", { class: "muted" }, tx("まだお知らせはありません。連絡事項を、クラスの生徒に配れます。"))),
       h("section", { class: "mk-card" },
         h("div", { class: "section-head" }, h("h2", null, icon("assignment"), tx("配信（{length}）", { length: assigns.length })), linkButton("filled", tx("配信する"), "add", `#/teach/${encodeURIComponent(cid)}/new`)),
         assigns.length ? h("div", { class: "set-list flat" }, assigns.map((a, i) => {

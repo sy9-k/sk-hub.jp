@@ -328,6 +328,8 @@ export async function deleteOrgClass(c, cls) {
     ]);
     await deleteAll(c, [...subs.docs.map((d) => d.ref), ...grades.docs.map((d) => d.ref), a.ref]);
   }
+  const notices = await fs.getDocs(fs.collection(db, "studyClasses", cls.id, "announcements"));
+  await deleteAll(c, notices.docs.map((d) => d.ref));
   const { teachers, students } = await classPeople(c, cls.id);
   for (const p of students) await unenroll(c, cls.id, cls.schoolId, p.id, "student");
   for (const p of teachers) await unenroll(c, cls.id, cls.schoolId, p.id, "teacher");
